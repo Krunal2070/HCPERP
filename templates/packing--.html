@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>HCP — Packing Entry</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8B%3C/text%3E%3C/svg%3E">
+<style>
+/* ════════════════════════════════════════════════════
+   THEME VARIABLES — embedded so themes always work
+   even if hcptheme.css path changes
+════════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing: border-box; }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--scrollbar,#ccc); border-radius:99px; }
+
+[data-theme="dark"] {
+  --bg:#0a0e1a; --surface:#151c2e; --surface2:#1a2238;
+  --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.12);
+  --text:#f8fafc; --muted:#64748b; --muted2:#94a3b8;
+  --teal:#00c9b1; --teal-dim:#00a896;
+  --teal-glow:rgba(0,201,177,.16); --teal-glow2:rgba(0,201,177,.08);
+  --green-bg:rgba(16,185,129,.14); --green-text:#34d399;
+  --amber-bg:rgba(245,158,11,.14); --amber-text:#fbbf24;
+  --red-bg:rgba(244,63,94,.14);    --red-text:#fb7185;
+  --shadow-sm:0 4px 16px rgba(0,0,0,.35); --shadow-md:0 8px 32px rgba(0,0,0,.4);
+  --scrollbar:rgba(255,255,255,.12);
+}
+[data-theme="light"] {
+  --bg:#f0f4f8; --surface:#ffffff; --surface2:#f7f9fc;
+  --border:rgba(0,0,0,.08); --border2:rgba(0,0,0,.13);
+  --text:#0f172a; --muted:#94a3b8; --muted2:#64748b;
+  --teal:#0d9488; --teal-dim:#0f766e;
+  --teal-glow:rgba(13,148,136,.12); --teal-glow2:rgba(13,148,136,.06);
+  --green-bg:#dcfce7; --green-text:#15803d;
+  --amber-bg:#fef3c7; --amber-text:#92400e;
+  --red-bg:#fee2e2;   --red-text:#dc2626;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.08); --shadow-md:0 4px 20px rgba(0,0,0,.1);
+  --scrollbar:rgba(0,0,0,.15);
+}
+[data-theme="midnight"] {
+  --bg:#000000; --surface:#0d0d1f; --surface2:#12122a;
+  --border:rgba(120,80,255,.12); --border2:rgba(120,80,255,.2);
+  --text:#e8e0ff; --muted:#6b5b9b; --muted2:#9d8ec4;
+  --teal:#a78bfa; --teal-dim:#7c3aed;
+  --teal-glow:rgba(167,139,250,.16); --teal-glow2:rgba(167,139,250,.08);
+  --green-bg:rgba(139,92,246,.14); --green-text:#c4b5fd;
+  --amber-bg:rgba(236,72,153,.14); --amber-text:#f0abfc;
+  --red-bg:rgba(244,63,94,.14);    --red-text:#fb7185;
+  --shadow-sm:0 4px 16px rgba(0,0,0,.5); --shadow-md:0 8px 32px rgba(0,0,0,.6);
+  --scrollbar:rgba(167,139,250,.2);
+}
+[data-theme="ocean"] {
+  --bg:#001e3c; --surface:#003366; --surface2:#004080;
+  --border:rgba(56,189,248,.1); --border2:rgba(56,189,248,.18);
+  --text:#e0f2fe; --muted:#2563a0; --muted2:#60a5c4;
+  --teal:#38bdf8; --teal-dim:#0ea5e9;
+  --teal-glow:rgba(56,189,248,.18); --teal-glow2:rgba(56,189,248,.09);
+  --green-bg:rgba(16,185,129,.14); --green-text:#6ee7b7;
+  --amber-bg:rgba(245,158,11,.14); --amber-text:#fde68a;
+  --red-bg:rgba(244,63,94,.14);    --red-text:#fda4af;
+  --shadow-sm:0 4px 16px rgba(0,0,0,.4); --shadow-md:0 8px 32px rgba(0,0,0,.5);
+  --scrollbar:rgba(56,189,248,.2);
+}
+[data-theme="sage"] {
+  --bg:#f0f7f4; --surface:#ffffff; --surface2:#f4faf7;
+  --border:rgba(0,0,0,.07); --border2:rgba(0,0,0,.12);
+  --text:#1a2e25; --muted:#6b8c7a; --muted2:#4a7060;
+  --teal:#059669; --teal-dim:#047857;
+  --teal-glow:rgba(5,150,105,.12); --teal-glow2:rgba(5,150,105,.06);
+  --green-bg:#d1fae5; --green-text:#065f46;
+  --amber-bg:#fef3c7; --amber-text:#78350f;
+  --red-bg:#fee2e2;   --red-text:#991b1b;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.07); --shadow-md:0 4px 20px rgba(0,0,0,.09);
+  --scrollbar:rgba(0,0,0,.14);
+}
+
+/* ── Fonts ── */
+:root {
+  --font-ui:   'DM Sans','Inter',system-ui,sans-serif;
+  --font-mono: 'DM Mono','JetBrains Mono',monospace;
+}
+
+html, body { overflow: auto !important; margin:0; padding:0; }
+
+/* BODY */
+body {
+  min-height: 100vh;
+  background: var(--bg) !important;
+  font-family: var(--font-ui) !important;
+  color: var(--text) !important;
+  font-size: 13px;
+  overflow: auto !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TOPBAR — stays blue across all themes */
+.topbar {
+  height: 58px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; padding: 0 24px; gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 16px rgba(30,58,138,.35);
+  font-family: var(--font-ui);
+}
+.logo-mark {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(255,255,255,.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: #fff;
+}
+.logo-text .logo-name { font-size: 13px; font-weight: 800; color: #fff; }
+.logo-text .logo-sub  { font-size: 10px; color: rgba(255,255,255,.7); letter-spacing: .5px; }
+.topbar-title  { font-size: 14px; font-weight: 700; color: #fff; }
+.topbar-sep    { width: 1px; height: 22px; background: rgba(255,255,255,.2); }
+.topbar-right  { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.back-btn {
+  padding: 6px 14px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.15); color: #fff;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  text-decoration: none; transition: all .18s;
+}
+.back-btn:hover { background: rgba(255,255,255,.3); }
+.user-chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 14px 4px 4px; border-radius: 20px;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #1e3a8a;
+}
+.user-name { font-size: 12px; font-weight: 700; color: #fff; }
+
+/* MAIN */
+.main { max-width: 100%; padding: 24px 20px; }
+
+/* ACTION BAR */
+.action-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.action-bar h2 {
+  font-size: 19px; font-weight: 800; flex: 1; color: var(--text);
+  font-family: var(--font-ui); letter-spacing: -.3px;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 9px;
+  font-size: 12.5px; font-weight: 600; cursor: pointer; border: none;
+  transition: all .18s; font-family: var(--font-ui); letter-spacing: -.1px;
+}
+.btn-primary { background: linear-gradient(135deg,#1e3a8a,#2563eb); color: #fff; }
+.btn-primary:hover { background: linear-gradient(135deg,#1e40af,#1d4ed8); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,58,138,.35); }
+.btn-outline { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted2); }
+.btn-outline:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-glow2); }
+.btn-danger { background: var(--red-bg); border: 1px solid rgba(239,68,68,.3); color: var(--red-text); }
+.btn-danger:hover { background: #ef4444; color: #fff; }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+
+/* FILTER BAR */
+.filter-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-left: 5px solid var(--teal);
+  border-radius: 10px;
+  padding: 10px 16px; margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.filter-group {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.filter-label {
+  font-size: 9.5px; font-weight: 800; color: var(--teal);
+  text-transform: uppercase; letter-spacing: .8px;
+  font-family: var(--font-ui); line-height: 1;
+}
+.filter-date {
+  padding: 7px 10px; border-radius: 7px;
+  border: 1.5px solid var(--teal-dim);
+  background: var(--teal-glow);
+  color: var(--text);
+  font-size: 12px; font-family: var(--font-ui);
+  font-weight: 600; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  min-width: 138px;
+}
+.filter-date:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-glow);
+  background: var(--surface);
+}
+.filter-text {
+  padding: 7px 11px; border-radius: 7px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface2); color: var(--text);
+  font-size: 12px; font-family: var(--font-ui);
+  font-weight: 500; outline: none; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+.filter-text:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-glow);
+  background: var(--surface);
+}
+.filter-sep { width: 1px; height: 36px; background: var(--border2); margin: 0 2px; align-self: center; }
+.stat-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+  border-radius: 20px; font-size: 11px; font-weight: 700;
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+}
+.stat-chip .val { font-size: 15px; font-weight: 800; color: var(--teal); }
+
+/* TABLE WRAPPER */
+.table-wrap {
+  background: var(--surface); border: 1.5px solid var(--border2); border-radius: 12px;
+  box-shadow: var(--shadow-sm); overflow: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1600px; }
+thead th {
+  background: linear-gradient(180deg,#1e3a8a 0%,#1d4ed8 100%);
+  padding: 11px 10px; text-align: left;
+  font-size: 10px; font-weight: 700; color: #e0eaff;
+  text-transform: uppercase; letter-spacing: .7px;
+  border-bottom: none; white-space: nowrap;
+  position: sticky; top: 0; z-index: 2;
+  font-family: var(--font-ui);
+}
+thead th:first-child { border-radius: 10px 0 0 0; }
+thead th:last-child  { border-radius: 0 10px 0 0; }
+thead td {
+  background: var(--teal-glow2);
+  padding: 5px 4px;
+  border-bottom: 2px solid var(--border2);
+  position: sticky; top: 41px; z-index: 2;
+}
+.col-filter-input {
+  width: 100%; padding: 4px 7px; border: 1.5px solid var(--border2); border-radius: 5px;
+  background: var(--surface); color: var(--text); font-size: 10.5px;
+  font-family: var(--font-ui); font-weight: 500; outline: none;
+  transition: border-color .12s;
+}
+.col-filter-input:focus { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-glow); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+tbody tr:hover { background: var(--teal-glow2); }
+tbody td { padding: 9px 10px; vertical-align: middle; color: var(--text); }
+.td-sr    { font-size: 10px; color: var(--muted2); font-weight: 700; min-width: 36px; }
+.td-brand { font-weight: 700; color: var(--text); }
+.td-product { max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.td-batch { font-family: var(--font-mono); font-size: 11px; color: var(--teal); }
+.td-qty   { font-weight: 700; color: var(--teal); }
+.badge    { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; }
+.badge-pending  { background: var(--amber-bg); color: var(--amber-text); }
+.badge-pass     { background: var(--green-bg); color: var(--green-text); }
+.badge-fail     { background: var(--red-bg);   color: var(--red-text); }
+.badge-received { background: var(--teal-glow); color: var(--teal); }
+.mrp-cell { color: var(--teal); font-weight: 700; }
+.action-btns { display: flex; gap: 4px; }
+
+/* PAGINATION */
+.pg-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+  background: var(--surface2); border-radius: 0 0 12px 12px;
+}
+.pg-info { font-size: 11px; color: var(--muted2); font-weight: 600; }
+.pg-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+.pg-btn {
+  min-width: 30px; height: 30px; padding: 0 8px; border-radius: 7px;
+  border: 1px solid var(--border2); background: var(--surface); color: var(--text);
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: var(--font-ui);
+}
+.pg-btn:hover { border-color: var(--teal); color: var(--teal); }
+.pg-btn.active { background: linear-gradient(135deg,#1e3a8a,#2563eb); color: #fff; border-color: #1d4ed8; }
+.pg-btn:disabled { opacity: .35; cursor: not-allowed; }
+.pg-sep { display: inline-flex; align-items: center; padding: 0 4px; color: var(--muted2); font-size: 12px; }
+.pg-sz {
+  padding: 5px 8px; border-radius: 7px; border: 1px solid var(--border2);
+  background: var(--surface); color: var(--text); font-size: 12px; font-family: var(--font-ui); cursor: pointer;
+}
+.pg-sz:focus { outline: none; border-color: var(--teal); }
+
+/* Checkbox */
+.chk-col { width: 36px; text-align: center; }
+input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--teal); }
+tbody tr.selected-row { background: var(--teal-glow) !important; }
+
+/* WhatsApp button */
+.btn-wa { background: #25d366; color: #fff; border: none; }
+.btn-wa:hover { background: #1da851; transform: translateY(-1px); }
+.btn-wa:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(2,6,23,.78);
+  z-index: 500;
+  justify-content: center; align-items: flex-start;
+  padding: 32px 16px 32px;
+  overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface) !important;
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  width: 860px; max-width: 96vw;
+  max-height: calc(100vh - 64px);
+  display: flex; flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25);
+  animation: modalIn .22s cubic-bezier(.16,1,.3,1);
+  font-family: var(--font-ui);
+}
+@keyframes modalIn { from{transform:translateY(-20px) scale(.98);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px 14px; border-bottom: 1px solid var(--border2);
+  background: var(--surface); border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+}
+.modal-header h3 { font-size: 15px; font-weight: 700; color: var(--text); font-family: var(--font-ui); letter-spacing: -.2px; }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--surface2);
+  cursor: pointer; font-size: 15px; display: flex; align-items: center;
+  justify-content: center; color: var(--muted2); transition: all .15s;
+}
+.modal-close:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+.modal-body {
+  padding: 20px 24px 12px;
+  background: var(--surface);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* FORM GRID */
+.form-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.span2 { grid-column: span 2; }
+.form-group.span3 { grid-column: span 3; }
+label.flabel {
+  font-size: 10.5px; font-weight: 700; color: var(--muted2);
+  text-transform: uppercase; letter-spacing: .7px; font-family: var(--font-ui);
+}
+input.finput, select.finput, textarea.finput {
+  width: 100%;
+  padding: 9px 12px; border-radius: 8px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface2); color: var(--text);
+  font-size: 12.5px; font-family: var(--font-ui);
+  outline: none; transition: border-color .15s, box-shadow .15s, background .15s;
+  resize: vertical; font-weight: 500;
+}
+.autocomplete-wrap { position: relative; width: 100%; }
+input.finput:focus, select.finput:focus, textarea.finput:focus {
+  border-color: var(--teal); background: var(--surface);
+  box-shadow: 0 0 0 3px var(--teal-glow);
+}
+input.finput::placeholder, textarea.finput::placeholder { color: var(--muted); font-weight: 400; }
+.brand-ac-item {
+  padding: 8px 12px; cursor: pointer; font-size: 12.5px;
+  font-family: var(--font-ui); display: flex; align-items: center; gap: 8px;
+  transition: background .1s;
+}
+.brand-ac-item:hover, .brand-ac-item.active { background: var(--teal-glow, rgba(13,148,136,.12)); }
+.brand-ac-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.finput-static {
+  width: 100%; padding: 9px 12px; border-radius: 8px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface2); color: var(--text);
+  font-size: 12.5px; font-family: var(--font-ui);
+  font-weight: 600; display: flex; align-items: center;
+  min-height: 38px; box-sizing: border-box;
+  opacity: 0.85;
+}
+
+/* QC section */
+.qc-section { border-top: 1.5px solid var(--border2); margin: 18px 0 14px; padding-top: 14px; }
+.qc-section-title {
+  font-size: 10px; font-weight: 800; color: var(--teal);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px; font-family: var(--font-ui);
+}
+
+/* Modal footer */
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 14px 24px; border-top: 1px solid var(--border2);
+  background: var(--surface2); border-radius: 0 0 16px 16px;
+  flex-shrink: 0;
+}
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface2); color: var(--text); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 18px; font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+  z-index: 9999; transform: translateY(80px);
+  transition: transform .3s; box-shadow: var(--shadow-md); max-width: 340px;
+}
+.toast.show { transform: translateY(0); }
+.toast.success { background: var(--green-bg); color: var(--green-text); border-color: var(--green-text); }
+.toast.error   { background: var(--red-bg);   color: var(--red-text);   border-color: var(--red-text); }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* Autocomplete dropdown */
+.autocomplete-list {
+  position: absolute; top: 100%; left: 0; right: 0; background: var(--surface);
+  border: 1.5px solid var(--teal); border-top: none; border-radius: 0 0 8px 8px;
+  max-height: 200px; overflow-y: auto; z-index: 9999; box-shadow: var(--shadow-md);
+}
+.autocomplete-item {
+  padding: 8px 12px; font-size: 12px; cursor: pointer; color: var(--text);
+  border-bottom: 1px solid var(--border); transition: background .12s;
+}
+.autocomplete-item:hover, .autocomplete-item.active { background: var(--teal); color: #fff; }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item em { font-style: normal; font-weight: 800; }
+
+/* Theme panel trigger */
+.theme-trigger {
+  width: 34px; height: 34px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.15); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all .2s;
+}
+.theme-trigger:hover { background: rgba(255,255,255,.28); }
+
+/* Theme panel — always solid white, never inherits dark bg */
+#theme-panel {
+  display: none; position: absolute; right: 0; top: 46px;
+  background: #ffffff; border: 1.5px solid #e2e8f0;
+  border-radius: 12px; padding: 12px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.22), 0 4px 12px rgba(0,0,0,.12);
+  z-index: 9999; min-width: 175px;
+}
+#theme-panel.open { display: block; }
+.theme-panel-title {
+  font-size: 10px; font-weight: 800; color: #64748b;
+  text-transform: uppercase; letter-spacing: .7px;
+  margin-bottom: 8px; padding: 0 4px; font-family: var(--font-ui);
+}
+.theme-option-btn {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid transparent; background: transparent; cursor: pointer;
+  font-size: 12.5px; font-weight: 600; color: #1e293b;
+  font-family: var(--font-ui); transition: all .12s; text-align: left;
+}
+.theme-option-btn:hover { background: #f1f5f9; border-color: #e2e8f0; }
+.theme-option-btn.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+.pkg-mat-wrap { display: flex; gap: 6px; align-items: center; }
+.pkg-mat-wrap select { flex: 1; }
+.pkg-mat-add-btn {
+  flex-shrink: 0; width: 32px; height: 34px; border-radius: 7px;
+  border: 1.5px solid #1d4ed8; background: linear-gradient(135deg,#1e3a8a,#2563eb); color: #fff;
+  cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.pkg-mat-add-btn:hover { background: linear-gradient(135deg,#1e40af,#1d4ed8); }
+
+/* ── Empty state ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; color: var(--muted2); text-align: center;
+}
+.empty-state i { font-size: 42px; margin-bottom: 14px; opacity: .35; color: var(--teal); }
+.empty-state h4 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.empty-state p  { font-size: 12px; color: var(--muted2); margin-bottom: 16px; }
+
+/* ── Batch No pill ── */
+.batch-pill {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  padding: 2px 8px; border-radius: 5px;
+  background: var(--teal-glow); border: 1px solid var(--teal-dim);
+  color: var(--teal); letter-spacing: .3px;
+}
+
+/* ── Action buttons with labels ── */
+.act-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 7px; font-size: 11px;
+  font-weight: 600; cursor: pointer; transition: all .15s;
+  font-family: var(--font-ui); border: 1px solid transparent;
+  white-space: nowrap;
+}
+.act-btn.del {
+  background: var(--red-bg); border-color: var(--red-text); color: var(--red-text);
+}
+.act-btn.del:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+/* ── Clear filters button — active vs inactive ── */
+#clearBtn { transition: all .15s; }
+#clearBtn.filters-active {
+  background: var(--red-bg); border-color: var(--red-text); color: var(--red-text);
+}
+#clearBtn.filters-active:hover { background: #ef4444; color: #fff; }
+
+/* ── Keyboard shortcut badge ── */
+.kbd-hint {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; color: var(--muted2); font-family: var(--font-ui);
+  padding: 2px 0;
+}
+.kbd-hint kbd {
+  display: inline-block; padding: 1px 5px; border-radius: 4px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--muted2); font-size: 10px; font-family: var(--font-mono);
+  box-shadow: 0 1px 0 var(--border2);
+}
+
+/* ── Required field shake animation ── */
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(4px)}
+}
+.input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239,68,68,.18) !important;
+  animation: shake .35s ease;
+}
+
+/* ── WhatsApp button improved disabled state ── */
+.btn-wa:disabled {
+  background: var(--surface2) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border2) !important;
+  cursor: not-allowed; opacity: .7; transform: none !important;
+}
+
+/* ── Print ── */
+@media print {
+  .topbar, .action-bar, .filter-bar, .pg-bar,
+  .modal-overlay, .toast, #clearBtn, .btn-wa,
+  .act-btn.del, thead td { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .table-wrap { box-shadow: none !important; border: 1px solid #ccc !important; border-radius: 0 !important; }
+  thead th { background: #1e3a8a !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .main { padding: 0 !important; }
+  .print-header { display: block !important; }
+}
+.print-header {
+  display: none;
+  text-align: center; padding: 12px 0 8px; border-bottom: 2px solid #1e3a8a; margin-bottom: 12px;
+}
+.print-header h2 { font-size: 16px; font-weight: 800; }
+.print-header p  { font-size: 11px; color: #555; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+{% set page_title = "Packing Entry" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Packing", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<!-- Print header (hidden on screen, shown on print) -->
+<div class="print-header" id="printHeader">
+  <h2>HCP WELLNESS PVT LTD — Packing Sample Receipt Log</h2>
+  <p id="printMeta"></p>
+</div>
+
+<div class="main">
+
+  <!-- ACTION BAR -->
+  <div class="action-bar">
+    <h2><i class="fas fa-clipboard-list" style="font-size:16px;margin-right:6px;color:var(--teal)"></i>Packing Sample Receipt Log</h2>
+    <span class="stat-chip">Total: <span class="val" id="totalCount">0</span></span>
+    <span class="stat-chip" id="selectedChip" style="display:none">
+      Selected: <span class="val" id="selectedCount">0</span>
+    </span>
+    {% if role in ['admin','Packing'] %}
+    <button class="btn btn-wa" id="waBtn" onclick="sendWhatsApp()" disabled title="Select entries to send (checkbox)">
+      <i class="fab fa-whatsapp"></i> WhatsApp
+    </button>
+    {% endif %}
+    <select class="pg-sz" id="pageSizeSelect" onchange="pageSize=+this.value;currentPage=1;renderTable()">
+      <option value="20">20 / page</option>
+      <option value="50" selected>50 / page</option>
+      <option value="100">100 / page</option>
+      <option value="9999">All</option>
+    </select>
+    <button class="btn btn-outline" onclick="openPmStockModal()" title="PM material — receive transfers + view factory stock"
+      style="border-color:rgba(13,148,136,.4);color:var(--teal,#0d9488);position:relative">
+      <i class="fas fa-boxes"></i> PM Stock
+      <span id="pmStockPendingBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;border-radius:10px;min-width:18px;height:18px;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 5px">0</span>
+    </button>
+    <button class="btn btn-outline" onclick="exportCSV()" title="Export visible rows as CSV"><i class="fas fa-download"></i> Export CSV</button>
+    <button class="btn btn-outline" onclick="printTable()" title="Print table"><i class="fas fa-print"></i> Print</button>
+    <button class="btn btn-primary" onclick="openModal()" title="New Entry (Alt+N)">
+      <i class="fas fa-plus"></i> New Entry
+      <kbd style="font-size:9px;opacity:.75;background:rgba(255,255,255,.2);border-radius:3px;padding:1px 5px;font-family:var(--font-mono);margin-left:2px">Alt+N</kbd>
+    </button>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label class="filter-label">From</label>
+      <input type="date" class="filter-date" id="filterFrom" onchange="loadData();updateClearBtn()">
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <label class="filter-label">To</label>
+      <input type="date" class="filter-date" id="filterTo" onchange="loadData();updateClearBtn()">
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group" style="flex:1;min-width:200px">
+      <label class="filter-label">Search</label>
+      <input type="text" class="filter-text" id="searchBox" placeholder="Brand / Product / Batch…" oninput="filterChanged();updateClearBtn()">
+    </div>
+    <button class="btn btn-outline btn-sm" id="clearBtn" onclick="clearFilters()"><i class="fas fa-times"></i> Clear</button>
+    <div style="margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="kbd-hint"><kbd>Alt+N</kbd> New Entry</span>
+      <span class="kbd-hint"><kbd>Esc</kbd> Close Modal</span>
+      <span class="kbd-hint"><kbd>Dbl-click</kbd> Edit Row</span>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th class="chk-col"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" title="Select all"></th>
+          <th>Sr<br>No</th>
+          <th>Date</th>
+          <th>Brand</th>
+          <th>Product Name</th>
+          <th>Batch No</th>
+          <th>Mfg.<br>Date</th>
+          <th>Exp.<br>Date</th>
+          <th>SKU Size</th>
+          <th>Packaging<br>Material</th>
+          <th>Quantity</th>
+          <th>Samples<br>sent By</th>
+          <th>MRP</th>
+          <!-- QC-only cols at end -->
+          <th>Receiving<br>Status</th>
+          <th>Received<br>Date</th>
+          <th>Remark</th>
+          <th>Actions</th>
+        </tr>
+        <tr>
+          <td></td><td></td><td></td>
+          <td><input class="col-filter-input" id="cf-brand"   placeholder="Filter…" oninput="filterChanged()"></td>
+          <td><input class="col-filter-input" id="cf-product" placeholder="Filter…" oninput="filterChanged()"></td>
+          <td><input class="col-filter-input" id="cf-batch"   placeholder="Filter…" oninput="filterChanged()"></td>
+          <td><input class="col-filter-input" id="cf-mfg"     placeholder="Filter…" oninput="filterChanged()"></td>
+          <td><input class="col-filter-input" id="cf-exp"     placeholder="Filter…" oninput="filterChanged()"></td>
+          <td><input class="col-filter-input" id="cf-sku"     placeholder="Filter…" oninput="filterChanged()"></td>
+          <td><input class="col-filter-input" id="cf-pkgmat"  placeholder="Filter…" oninput="filterChanged()"></td>
+          <td></td>
+          <td><input class="col-filter-input" id="cf-sentby"  placeholder="Filter…" oninput="filterChanged()"></td>
+          <td></td>
+          <td>
+            <select class="col-filter-input" id="cf-rstatus" onchange="filterChanged()" style="padding:3px 4px;font-size:10px">
+              <option value="">All</option>
+              <option>Pending</option><option>Received</option>
+            </select>
+          </td>
+          <td></td><td></td><td></td>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr class="empty-row"><td colspan="17">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Pagination -->
+  <div class="pg-bar">
+    <span class="pg-info" id="pgInfo">—</span>
+    <div class="pg-btns" id="pgBtns"></div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">✚ New Packing Entry</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="flabel">Date <span style="font-size:9px;color:#94a3b8;font-weight:400;text-transform:none">— auto set</span></label>
+        <div id="f_date_display" class="finput-static">—</div>
+        <input type="hidden" id="f_date">
+      </div>
+      <div class="form-group">
+        <label class="flabel">Brand <span style="color:#ef4444">*</span></label>
+        <div class="brand-ac-wrap" style="position:relative">
+          <input type="text" class="finput" id="f_brand" placeholder="Type to search brand…"
+                 autocomplete="off" oninput="brandACFilter()" onfocus="brandACFilter()" onblur="setTimeout(brandACHide,200)">
+          <div id="brand-ac-list" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:999;
+               background:var(--surface);border:1.5px solid var(--teal);border-top:none;border-radius:0 0 8px 8px;
+               max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.15)"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="flabel">Batch No</label>
+        <input type="text" class="finput" id="f_batch_no" placeholder="e.g. 26O5">
+      </div>
+      <div class="form-group span3">
+        <label class="flabel">Product Name <span style="color:#ef4444">*</span></label>
+        <div class="autocomplete-wrap">
+          <input type="text" class="finput" id="f_product_name" placeholder="e.g. ORECARE TOOTHPASTE 100GM"
+            autocomplete="off" oninput="acProductInput(this)" onkeydown="acKeyDown(event)" onfocus="acProductInput(this)">
+          <div class="autocomplete-list" id="ac-product-list" style="display:none"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="flabel">Mfg. Date</label>
+        <input type="text" class="finput" id="f_mfg_date" placeholder="e.g. 03/26">
+      </div>
+      <div class="form-group">
+        <label class="flabel">Exp. Date</label>
+        <input type="text" class="finput" id="f_exp_date" placeholder="e.g. 02-28">
+      </div>
+      <div class="form-group">
+        <label class="flabel">SKU Size</label>
+        <input type="text" class="finput" id="f_sku_size" placeholder="e.g. 100GM">
+      </div>
+      <div class="form-group">
+        <label class="flabel">Packaging Material</label>
+        <div class="pkg-mat-wrap">
+          <select class="finput" id="f_packaging_material">
+            <option value="">-- Select --</option>
+            <option>TUBE</option>
+            <option>BOTTLE</option>
+            <option>POUCH</option>
+            <option>BOX</option>
+            <option>JAR</option>
+            <option>SACHET</option>
+            <option>OTHER</option>
+          </select>
+          <button type="button" class="pkg-mat-add-btn" onclick="addCustomPkgMat()" title="Add new material type">+</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="flabel">Quantity</label>
+        <input type="number" class="finput" id="f_quantity" min="0" placeholder="e.g. 7">
+      </div>
+      <div class="form-group">
+        <label class="flabel">Samples sent By</label>
+        <input type="text" class="finput" id="f_samples_sent_by" placeholder="e.g. HIREN">
+      </div>
+      <div class="form-group">
+        <label class="flabel">MRP (₹)</label>
+        <input type="number" class="finput" id="f_mrp" min="0" step="0.01" placeholder="e.g. 99.00">
+      </div>
+    </div>
+
+    <!-- QC Department Fields -->
+    <div class="qc-section">
+      <div class="qc-section-title">
+        <i class="fas fa-flask"></i> QC Department Fields
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="flabel">Received By</label>
+          <input type="text" class="finput" id="f_received_by" placeholder="Received by" data-autofill="{{ user_name }}">
+        </div>
+        <div class="form-group">
+          <label class="flabel">Receiving Status</label>
+          <select class="finput" id="f_status">
+            <option value="Pending">Pending</option>
+            <option value="Received">Received</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="flabel">Received Date <span style="font-size:9px;color:#94a3b8;font-weight:400;text-transform:none">— auto set</span></label>
+          <div id="f_received_date_display" class="finput-static">—</div>
+          <input type="hidden" id="f_received_date">
+        </div>
+        <div class="form-group">
+          <label class="flabel">Testing Status</label>
+          <select class="finput" id="f_testing_status">
+            <option value="Pending">Pending</option>
+            <option value="Pass">Pass</option>
+            <option value="Fail">Fail</option>
+            <option value="In Progress">In Progress</option>
+          </select>
+        </div>
+        <div class="form-group span2">
+          <label class="flabel">Remark</label>
+          <textarea class="finput" id="f_remark" rows="4" placeholder="Any remarks…"></textarea>
+        </div>
+      </div>
+    </div>
+    </div><!-- end modal-body -->
+
+    <div class="modal-footer">
+      <span class="kbd-hint" style="margin-right:auto"><kbd>Esc</kbd> Close</span>
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()"><i class="fas fa-save"></i> Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allRows = [];
+let editId  = null;
+let currentPage = 1;
+let pageSize    = 50;
+let selectedIds = new Set();
+const today = new Date().toISOString().slice(0,10);
+
+function updateWABtn() {
+  const chip = document.getElementById('selectedChip');
+  const btn  = document.getElementById('waBtn');
+  const cnt  = document.getElementById('selectedCount');
+  if (chip) { chip.style.display = selectedIds.size ? '' : 'none'; }
+  if (cnt)  { cnt.textContent = selectedIds.size; }
+  if (btn)  { btn.disabled = !selectedIds.size; }
+}
+
+function toggleAll(chk) {
+  const f = getColFilters();
+  const filtered = applyFilters(f);
+  const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  pageRows.forEach(r => {
+    if (chk.checked) selectedIds.add(r.id);
+    else selectedIds.delete(r.id);
+  });
+  updateWABtn();
+  renderTable();
+}
+
+function toggleRow(id, checked) {
+  if (checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateWABtn();
+  // Update "select all" state
+  const f = getColFilters();
+  const filtered = applyFilters(f);
+  const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const allChecked = pageRows.every(r => selectedIds.has(r.id));
+  const chkAll = document.getElementById('chkAll');
+  if (chkAll) chkAll.checked = allChecked;
+}
+
+function init() {
+  document.getElementById('filterFrom').value = today.slice(0,7) + '-01';
+  document.getElementById('filterTo').value   = today;
+  loadData();
+}
+
+async function loadData() {
+  const from = document.getElementById('filterFrom').value;
+  const to   = document.getElementById('filterTo').value;
+  let url = '/api/packing/list';
+  const params = [];
+  if (from) params.push('from=' + from);
+  if (to)   params.push('to='   + to);
+  if (params.length) url += '?' + params.join('&');
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    allRows = data.rows || [];
+    selectedIds.clear();
+    updateWABtn();
+    currentPage = 1;
+    renderTable();
+  } catch(e) {
+    showToast('Failed to load data', 'error');
+  }
+}
+
+function getColFilters() {
+  const g = id => (document.getElementById(id)?.value || '').toLowerCase();
+  return {
+    q:       g('searchBox'),
+    brand:   g('cf-brand'),
+    product: g('cf-product'),
+    batch:   g('cf-batch'),
+    mfg:     g('cf-mfg'),
+    exp:     g('cf-exp'),
+    sku:     g('cf-sku'),
+    pkgmat:  g('cf-pkgmat'),
+    sentby:  g('cf-sentby'),
+    rstatus: g('cf-rstatus'),
+  };
+}
+
+function applyFilters(f) {
+  return allRows.filter(r => {
+    if (f.q       && !((r.brand||'')+(r.product_name||'')+(r.batch_no||'')+(r.sku_size||'')).toLowerCase().includes(f.q)) return false;
+    if (f.brand   && !(r.brand||'').toLowerCase().includes(f.brand)) return false;
+    if (f.product && !(r.product_name||'').toLowerCase().includes(f.product)) return false;
+    if (f.batch   && !(r.batch_no||'').toLowerCase().includes(f.batch)) return false;
+    if (f.mfg     && !(r.mfg_date||'').toLowerCase().includes(f.mfg))  return false;
+    if (f.exp     && !(r.exp_date||'').toLowerCase().includes(f.exp))   return false;
+    if (f.sku     && !(r.sku_size||'').toLowerCase().includes(f.sku))   return false;
+    if (f.pkgmat  && !(r.packaging_material||'').toLowerCase().includes(f.pkgmat)) return false;
+    if (f.sentby  && !(r.samples_sent_by||'').toLowerCase().includes(f.sentby)) return false;
+    if (f.rstatus && !(r.status||'').toLowerCase().includes(f.rstatus)) return false;
+    return true;
+  });
+}
+
+function filterChanged() { currentPage = 1; renderTable(); }
+function goPage(p) { currentPage = p; renderTable(); }
+
+function buildPagination(total) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const s = Math.min((currentPage - 1) * pageSize + 1, total);
+  const e = Math.min(currentPage * pageSize, total);
+  document.getElementById('pgInfo').textContent =
+    total ? 'Showing ' + s + '–' + e + ' of ' + total + ' records' : 'No records';
+  const wrap = document.getElementById('pgBtns');
+  if (pages <= 1) { wrap.innerHTML = ''; return; }
+  const btn = (p, label, active, disabled) =>
+    '<button class="pg-btn' + (active ? ' active' : '') + '"' +
+    (disabled ? ' disabled' : '') + ' onclick="goPage(' + p + ')">' + label + '</button>';
+  const sep = '<span class="pg-sep">…</span>';
+  let h = btn(currentPage - 1, '‹', false, currentPage === 1);
+  const d = 2;
+  let f = Math.max(1, currentPage - d), t = Math.min(pages, currentPage + d);
+  if (f > 1) { h += btn(1, '1', false, false); if (f > 2) h += sep; }
+  for (let p = f; p <= t; p++) h += btn(p, p, p === currentPage, false);
+  if (t < pages) { if (t < pages - 1) h += sep; h += btn(pages, pages, false, false); }
+  h += btn(currentPage + 1, '›', false, currentPage === pages);
+  wrap.innerHTML = h;
+}
+
+function renderTable() {
+  const f     = getColFilters();
+  const filtered = applyFilters(f);
+  document.getElementById('totalCount').textContent = filtered.length;
+  const tbody = document.getElementById('tableBody');
+  if (!filtered.length) {
+    const isFiltered = Object.values(f).some(v => v);
+    tbody.innerHTML = '<tr><td colspan="17"><div class="empty-state">' +
+      '<i class="fas fa-' + (isFiltered ? 'search' : 'box-open') + '"></i>' +
+      '<h4>' + (isFiltered ? 'No results found' : 'No entries yet') + '</h4>' +
+      '<p>' + (isFiltered ? 'Try adjusting your filters or search term.' : 'Click <strong>+ New Entry</strong> to add the first packing entry.') + '</p>' +
+      (isFiltered ? '<button class="btn btn-outline btn-sm" onclick="clearFilters()"><i class="fas fa-times"></i> Clear Filters</button>' :
+        '<button class="btn btn-primary btn-sm" onclick="openModal()"><i class="fas fa-plus"></i> New Entry</button>') +
+      '</div></td></tr>';
+    buildPagination(0);
+    const ca = document.getElementById('chkAll'); if (ca) ca.checked = false;
+    return;
+  }
+  const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const isApproved = r => (r.status || '').toLowerCase() === 'approved';
+  const allChecked = pageRows.every(r => selectedIds.has(r.id));
+  const ca = document.getElementById('chkAll'); if (ca) ca.checked = allChecked;
+
+  tbody.innerHTML = pageRows.map((r, i) => {
+    const locked  = isApproved(r);
+    const canEdit = !locked;
+    const canDel  = !locked;
+    const sr = (currentPage - 1) * pageSize + i + 1;
+    const checked = selectedIds.has(r.id);
+    return '<tr class="' + (checked ? 'selected-row' : '') + '"' +
+      (canEdit ? ' ondblclick="editRow(' + r.id + ')"' : '') +
+      ' style="cursor:' + (canEdit ? 'pointer' : 'default') + '">' +
+      '<td class="chk-col" onclick="event.stopPropagation()">' +
+        '<input type="checkbox" ' + (checked ? 'checked' : '') +
+        ' onchange="toggleRow(' + r.id + ',this.checked)"></td>' +
+      '<td class="td-sr">' + sr + '</td>' +
+      '<td>' + fmt(r.entry_date) + '</td>' +
+      '<td class="td-brand">' + esc(r.brand) + '</td>' +
+      '<td title="' + esc(r.product_name) + '">' + esc(r.product_name) + '</td>' +
+      '<td><span class="batch-pill">' + esc(r.batch_no) + '</span></td>' +
+      '<td>' + esc(r.mfg_date) + '</td>' +
+      '<td>' + esc(r.exp_date) + '</td>' +
+      '<td>' + esc(r.sku_size) + '</td>' +
+      '<td>' + esc(r.packaging_material) + '</td>' +
+      '<td class="td-qty">' + (r.quantity || 0) + '</td>' +
+      '<td>' + esc(r.samples_sent_by) + '</td>' +
+      '<td class="mrp-cell">' + (r.mrp != null ? '&#8377;' + parseFloat(r.mrp).toFixed(2) : '') + '</td>' +
+      '<td>' + statusBadge(r.status) + '</td>' +
+      '<td>' + fmt(r.received_date) + '</td>' +
+      '<td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(r.remark) + '">' + esc(r.remark) + '</td>' +
+      '<td onclick="event.stopPropagation()"><div class="action-btns">' +
+        (locked
+          ? '<span style="font-size:11px;color:var(--muted);padding:0 4px" title="Locked after approval">🔒 Locked</span>'
+          : '') +
+        (canDel
+          ? '<button class="act-btn del" onclick="deleteRow(' + r.id + ')" title="Delete entry"><i class="fas fa-trash"></i></button>'
+          : '') +
+      '</div></td>' +
+      '</tr>';
+  }).join('');
+  buildPagination(filtered.length);
+}
+
+function statusBadge(s) {
+  if (!s || s === 'Pending') return '<span class="badge badge-pending">Pending</span>';
+  if (s === 'Received')      return '<span class="badge badge-received">Received</span>';
+  if (s === 'Approved')      return '<span class="badge badge-pass">Approved</span>';
+  if (s === 'Rejected')      return '<span class="badge badge-fail">Rejected</span>';
+  return '<span class="badge">' + esc(s) + '</span>';
+}
+function testingBadge(s) {
+  if (!s || s === 'Pending')   return '<span class="badge badge-pending">Pending</span>';
+  if (s === 'Pass')            return '<span class="badge badge-pass">Pass</span>';
+  if (s === 'Fail')            return '<span class="badge badge-fail">Fail</span>';
+  if (s === 'In Progress')     return '<span class="badge badge-received">In Progress</span>';
+  return '<span class="badge">' + esc(s) + '</span>';
+}
+
+function fmt(d) {
+  if (!d) return '';
+  const p = String(d).split('-');
+  if (p.length === 3) return p[2] + '-' + p[1] + '-' + p[0];
+  return d;
+}
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openModal(id=null) {
+  editId = id;
+  document.getElementById('modalTitle').textContent = id ? '✏️ Edit Packing Entry' : '➕ New Packing Entry';
+  const r = id ? allRows.find(x => x.id === id) : null;
+  const set = (fid, val) => { const el = document.getElementById(fid); if (el) el.value = val; };
+  const todayFmt = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  set('f_date', r ? r.entry_date || today : today);
+  document.getElementById('f_date_display').textContent = r && r.entry_date
+    ? new Date(r.entry_date+'T12:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+    : todayFmt;
+  const recvVal = r ? r.received_date || today : today;
+  set('f_received_date', recvVal);
+  document.getElementById('f_received_date_display').textContent =
+    new Date(recvVal+'T12:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  set('f_brand',            r ? r.brand || '' : '');
+  set('f_product_name',     r ? r.product_name || '' : '');
+  set('f_batch_no',         r ? r.batch_no || '' : '');
+  set('f_mfg_date',         r ? r.mfg_date || '' : '');
+  set('f_exp_date',         r ? r.exp_date || '' : '');
+  set('f_sku_size',         r ? r.sku_size || '' : '');
+  set('f_packaging_material', r ? r.packaging_material || '' : '');
+  set('f_quantity',         r ? r.quantity || 0 : 0);
+  set('f_samples_sent_by',  r ? r.samples_sent_by || '' : '');
+  set('f_mrp',              r && r.mrp != null ? r.mrp : '');
+  // Autofill Received By with logged-in user for new entries
+  const rbEl = document.getElementById('f_received_by');
+  if (rbEl) {
+    if (r) {
+      rbEl.value = r.received_by || '';
+    } else {
+      rbEl.value = rbEl.dataset.autofill || '';
+    }
+  }
+  set('f_status',           r ? r.status || 'Pending' : 'Pending');
+  set('f_received_date',    r ? r.received_date || '' : '');
+  set('f_testing_status',   r ? r.testing_status || 'Pending' : 'Pending');
+  set('f_remark',           r ? r.remark || '' : '');
+  // Clear any validation errors
+  ['f_date','f_brand','f_product_name'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.remove('input-error');
+  });
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('f_brand').focus(), 100);
+  loadCustomPkgMats();
+}
+
+function clearFilters() {
+  document.getElementById('filterFrom').value = today.slice(0,7) + '-01';
+  document.getElementById('filterTo').value   = today;
+  ['searchBox','cf-brand','cf-product','cf-batch','cf-mfg','cf-exp',
+   'cf-sku','cf-pkgmat','cf-sentby','cf-rstatus'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  currentPage = 1;
+  updateClearBtn();
+  loadData();
+}
+
+function updateClearBtn() {
+  const btn = document.getElementById('clearBtn');
+  if (!btn) return;
+  const f = getColFilters();
+  const hasFilter = f.q || f.brand || f.product || f.batch || f.mfg ||
+                    f.exp || f.sku || f.pkgmat || f.sentby || f.rstatus;
+  btn.classList.toggle('filters-active', !!hasFilter);
+}
+
+function printTable() {
+  const f = getColFilters();
+  const rows = applyFilters(f);
+  const from = document.getElementById('filterFrom').value;
+  const to   = document.getElementById('filterTo').value;
+  const meta = document.getElementById('printMeta');
+  if (meta) meta.textContent = 'Date Range: ' + fmt(from) + ' to ' + fmt(to) +
+    ' | Total Records: ' + rows.length + ' | Printed: ' + new Date().toLocaleString('en-IN');
+  window.print();
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editId = null;
+}
+
+function editRow(id) {
+  const r = allRows.find(x => x.id === id);
+  if (r && (r.status || '').toLowerCase() === 'approved') {
+    showToast('Locked — entry is already Approved', 'error');
+    return;
+  }
+  openModal(id);
+}
+
+async function saveEntry() {
+  // Validate required fields with shake animation
+  const required = [
+    {id:'f_brand',        label:'Brand'},
+    {id:'f_product_name', label:'Product Name'},
+  ];
+  let valid = true;
+  required.forEach(({id, label}) => {
+    const el = document.getElementById(id);
+    el.classList.remove('input-error');
+    if (!el.value.trim()) {
+      void el.offsetWidth; // reflow to restart animation
+      el.classList.add('input-error');
+      valid = false;
+    }
+  });
+  if (!valid) {
+    showToast('Please fill all required fields (*)', 'error');
+    // Remove error class after animation
+    setTimeout(() => {
+      required.forEach(({id}) => document.getElementById(id).classList.remove('input-error'));
+    }, 1000);
+    return;
+  }
+  const payload = {
+    id:                  editId,
+    entry_date:          document.getElementById('f_date').value,
+    brand:               document.getElementById('f_brand').value.trim(),
+    product_name:        document.getElementById('f_product_name').value.trim(),
+    batch_no:            document.getElementById('f_batch_no').value.trim(),
+    mfg_date:            document.getElementById('f_mfg_date').value.trim(),
+    exp_date:            document.getElementById('f_exp_date').value.trim(),
+    sku_size:            document.getElementById('f_sku_size').value.trim(),
+    packaging_material:  document.getElementById('f_packaging_material').value,
+    quantity:            document.getElementById('f_quantity').value || 0,
+    samples_sent_by:     document.getElementById('f_samples_sent_by').value.trim(),
+    mrp:                 document.getElementById('f_mrp').value || null,
+    received_by:         document.getElementById('f_received_by').value.trim(),
+    status:              document.getElementById('f_status').value,
+    received_date:       document.getElementById('f_received_date').value || new Date().toISOString().slice(0,10),
+    testing_status:      document.getElementById('f_testing_status').value,
+    remark:              document.getElementById('f_remark').value.trim(),
+  };
+  try {
+    const res  = await fetch('/api/packing/save', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      showToast(editId ? 'Entry updated ✓' : 'Entry saved ✓', 'success');
+      closeModal();
+      loadData();
+    } else {
+      showToast(data.message || 'Save failed', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
+}
+
+async function deleteRow(id) {
+  if (!confirm('Delete this entry?')) return;
+  const res  = await fetch('/api/packing/delete', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})
+  });
+  const data = await res.json();
+  if (data.status === 'ok') { showToast('Deleted ✓', 'success'); loadData(); }
+  else showToast(data.message || 'Delete failed', 'error');
+}
+
+function exportCSV() {
+  const f    = getColFilters();
+  const rows = applyFilters(f);
+  const headers = ['Sr No','Date','Brand','Product Name','Batch No','Mfg Date','Exp Date',
+    'SKU Size','Packaging Material','Quantity','Samples sent By','MRP',
+    'Receiving Status','Received Date','Remark'];
+  const csvRows = [headers.join(',')];
+  rows.forEach((r, i) => {
+    const row = [(currentPage - 1) * pageSize + i + 1, r.entry_date,
+      r.brand || '', r.product_name,
+      r.batch_no, r.mfg_date, r.exp_date, r.sku_size, r.packaging_material,
+      r.quantity, r.samples_sent_by, r.mrp != null ? r.mrp : '',
+      r.status, r.received_date || '', r.remark || ''];
+    csvRows.push(row.map(v => '"' + (String(v || '').replace(/"/g, '""')) + '"').join(','));
+  });
+  const blob = new Blob([csvRows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'packing_entries_' + today + '.csv';
+  a.click();
+}
+
+let toastTimer;
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.className = 'toast show ' + type;
+  t.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════
+   MULTI-THEME ENGINE (5 themes via hcp_theme.css)
+═══════════════════════════════════════════ */
+const HCP_THEMES = {
+  light:    { label:'☀️ Light',    dot:'#e0f2fe' },
+  dark:     { label:'🌙 Dark',     dot:'#1e293b' },
+  midnight: { label:'🌌 Midnight', dot:'#0d0d1f' },
+  ocean:    { label:'🌊 Ocean',    dot:'#001e3c' },
+  sage:     { label:'🌿 Sage',     dot:'#d1fae5' },
+};
+
+function applyTheme(t){
+  if(!HCP_THEMES[t]) t='light';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('hcp_theme', t);
+  document.querySelectorAll('.theme-option-btn').forEach(el=>{
+    el.classList.toggle('active', el.dataset.theme===t);
+  });
+  document.getElementById('theme-panel').classList.remove('open');
+}
+
+function toggleThemePanel(){
+  const p = document.getElementById('theme-panel');
+  p.classList.toggle('open');
+}
+
+// Build theme option buttons
+(function(){
+  const cur = localStorage.getItem('hcp_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', cur);
+  const container = document.getElementById('theme-options');
+  if(container){
+    Object.entries(HCP_THEMES).forEach(([key,cfg])=>{
+      const btn = document.createElement('button');
+      btn.className = 'theme-option-btn' + (key===cur ? ' active' : '');
+      btn.dataset.theme = key;
+      btn.onclick = ()=>applyTheme(key);
+      btn.innerHTML = '<span style="width:13px;height:13px;border-radius:50%;background:'
+        +cfg.dot+';border:2px solid rgba(0,0,0,.15);flex-shrink:0;display:inline-block"></span>'
+        + cfg.label;
+      container.appendChild(btn);
+    });
+  }
+
+  // Close panel when clicking outside
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#theme-panel') && !e.target.closest('.theme-trigger')){
+      const p = document.getElementById('theme-panel');
+      if(p) p.classList.remove('open');
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════
+   PRODUCT NAME AUTOCOMPLETE
+═══════════════════════════════════════════ */
+let acIndex = -1;
+
+function acProductInput(inp) {
+  const q = inp.value.trim().toLowerCase();
+  const list = document.getElementById('ac-product-list');
+  // Build unique sorted product names from loaded data
+  const names = [...new Set(allRows.map(r => r.product_name || '').filter(Boolean))].sort();
+  const matches = q
+    ? names.filter(n => n.toLowerCase().includes(q)).slice(0, 10)
+    : names.slice(0, 10);
+  if (!matches.length) { list.style.display = 'none'; return; }
+  acIndex = -1;
+  list.innerHTML = matches.map((n, i) => {
+    const hl = q ? n.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+      '<em>$1</em>') : n;
+    return '<div class="autocomplete-item" data-i="' + i + '" onmousedown="acSelect(\'' +
+      n.replace(/'/g, "\\'") + '\')">' + hl + '</div>';
+  }).join('');
+  list.style.display = 'block';
+}
+
+function acSelect(val) {
+  document.getElementById('f_product_name').value = val;
+  document.getElementById('ac-product-list').style.display = 'none';
+  acIndex = -1;
+}
+
+function acKeyDown(e) {
+  const list = document.getElementById('ac-product-list');
+  if (list.style.display === 'none') return;
+  const items = list.querySelectorAll('.autocomplete-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acIndex = Math.min(acIndex + 1, items.length - 1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acIndex = Math.max(acIndex - 1, 0);
+  } else if (e.key === 'Enter' && acIndex >= 0) {
+    e.preventDefault();
+    acSelect(items[acIndex].textContent);
+    return;
+  } else if (e.key === 'Escape') {
+    list.style.display = 'none'; return;
+  } else { return; }
+  items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+  if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
+}
+
+// Close autocomplete when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.autocomplete-wrap')) {
+    const list = document.getElementById('ac-product-list');
+    if (list) list.style.display = 'none';
+  }
+});
+
+/* ═══════════════════════════════════════════
+   CUSTOM PACKAGING MATERIAL — LIVE ADD
+═══════════════════════════════════════════ */
+// Persist custom materials in localStorage so they survive page reloads
+const PKG_MAT_KEY = 'hcp_pkg_materials';
+
+function getPkgMaterials() {
+  try { return JSON.parse(localStorage.getItem(PKG_MAT_KEY) || '[]'); } catch { return []; }
+}
+function savePkgMaterials(arr) {
+  localStorage.setItem(PKG_MAT_KEY, JSON.stringify(arr));
+}
+
+
+/* ── Brand Autocomplete ─────────────────────────────────────── */
+let brandList = [];
+
+async function loadBrands() {
+  try {
+    const res = await fetch('/api/packing/brands');
+    const d = await res.json();
+    if (d.status === 'ok') brandList = d.brands;
+  } catch(e) { console.warn('Brand load failed:', e); }
+}
+
+function brandACFilter() {
+  const inp = document.getElementById('f_brand');
+  const list = document.getElementById('brand-ac-list');
+  const q = (inp.value || '').toLowerCase();
+  const matches = q
+    ? brandList.filter(b => b.name.toLowerCase().includes(q))
+    : brandList;
+  if (!matches.length) { list.style.display = 'none'; return; }
+  list.innerHTML = matches.map(b =>
+    `<div class="brand-ac-item" onmousedown="brandACSelect('${b.name.replace(/'/g,"\'")}')">` +
+    `<span class="brand-ac-dot" style="background:${b.color||'#94a3b8'}"></span>` +
+    `<span>${b.name}</span></div>`
+  ).join('');
+  list.style.display = 'block';
+}
+
+function brandACSelect(name) {
+  document.getElementById('f_brand').value = name;
+  brandACHide();
+}
+
+function brandACHide() {
+  const list = document.getElementById('brand-ac-list');
+  if (list) list.style.display = 'none';
+}
+
+function loadCustomPkgMats() {
+  const sel = document.getElementById('f_packaging_material');
+  if (!sel) return;
+  const existing = [...sel.options].map(o => o.value.toUpperCase());
+  getPkgMaterials().forEach(m => {
+    if (!existing.includes(m.toUpperCase())) {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      sel.appendChild(opt);
+    }
+  });
+}
+
+function addCustomPkgMat() {
+  const raw = prompt('Enter new Packaging Material name:');
+  if (!raw) return;
+  const name = raw.trim().toUpperCase();
+  if (!name) return;
+  const sel = document.getElementById('f_packaging_material');
+  // Check not already in list
+  const existing = [...sel.options].map(o => o.value.toUpperCase());
+  if (existing.includes(name)) {
+    sel.value = [...sel.options].find(o => o.value.toUpperCase() === name)?.value || '';
+    showToast(name + ' already exists — selected ✓', 'success');
+    return;
+  }
+  // Add to select
+  const opt = document.createElement('option');
+  opt.value = name; opt.textContent = name;
+  sel.appendChild(opt);
+  sel.value = name;
+  // Persist
+  const customs = getPkgMaterials();
+  if (!customs.map(c => c.toUpperCase()).includes(name)) {
+    customs.push(name);
+    savePkgMaterials(customs);
+  }
+  showToast(name + ' added ✓', 'success');
+}
+
+/* ═══════════════════════════════════════════
+   WHATSAPP SHARE
+═══════════════════════════════════════════ */
+function sendWhatsApp() {
+  if (!selectedIds.size) { showToast('Select at least one entry', 'error'); return; }
+  const sel = allRows.filter(r => selectedIds.has(r.id));
+  const now = new Date();
+  const ds  = now.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+  const ts  = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true});
+
+  let msg = '*📋 Packing Sample Receipt Report*\n';
+  msg    += '📅 Date: ' + ds + '  |  🕐 Time: ' + ts + '\n';
+  msg    += '─'.repeat(32) + '\n';
+
+  sel.forEach((r, i) => {
+    const heading = r.brand
+      ? (r.brand + ' — ' + (r.product_name || '—'))
+      : (r.product_name || '—');
+    msg += '\n*' + (i + 1) + '. ' + heading + '*\n';
+    if (r.entry_date)          msg += '   Date           : ' + fmt(r.entry_date) + '\n';
+    if (r.batch_no)            msg += '   Batch No        : ' + r.batch_no + '\n';
+    if (r.mfg_date)            msg += '   Mfg. Date       : ' + r.mfg_date + '\n';
+    if (r.exp_date)            msg += '   Exp. Date       : ' + r.exp_date + '\n';
+    if (r.sku_size)            msg += '   SKU Size        : ' + r.sku_size + '\n';
+    if (r.packaging_material)  msg += '   Pkg Material    : ' + r.packaging_material + '\n';
+    if (r.quantity)            msg += '   Quantity        : ' + r.quantity + '\n';
+    if (r.samples_sent_by)     msg += '   Samples Sent By : ' + r.samples_sent_by + '\n';
+    if (r.mrp != null)         msg += '   MRP             : ₹' + parseFloat(r.mrp).toFixed(2) + '\n';
+    msg += '   Receiving Status: ' + (r.status || 'Pending') + '\n';
+    if (r.received_date)       msg += '   Received Date   : ' + fmt(r.received_date) + '\n';
+    if (r.remark)              msg += '   Remark          : ' + r.remark + '\n';
+  });
+
+  msg += '\n' + '─'.repeat(32);
+  msg += '\nTotal: ' + sel.length + ' sample(s)';
+
+  window.open('https://web.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank');
+  showToast('WhatsApp prepared for ' + sel.length + ' entry(s)', 'success');
+}
+
+// Keyboard shortcut: Alt+N → New Entry
+document.addEventListener('keydown', function(e) {
+  if (e.altKey && e.key.toLowerCase() === 'n') {
+    e.preventDefault();
+    openModal();
+  }
+  if (e.key === 'Escape') {
+    closeModal();
+  }
+});
+
+init();
+loadCustomPkgMats();
+loadBrands();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     PM STOCK MODAL  (factory inward + factory stock view)
+     Self-contained — uses the existing /api/pm_stock/* endpoints.
+═══════════════════════════════════════════════════════════════ -->
+<style>
+  #pmStockModal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);backdrop-filter:blur(6px);z-index:9000;align-items:center;justify-content:center;padding:20px}
+  #pmStockModal.open{display:flex}
+  #pmStockModal .pms-card{background:var(--surface,#fff);border-radius:14px;width:min(98vw,1400px);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  #pmStockModal .pms-hd{padding:14px 20px;background:linear-gradient(135deg,#0d9488 0%,#14b8a6 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-shrink:0}
+  #pmStockModal .pms-hd .pms-title{font-size:16px;font-weight:800;display:flex;align-items:center;gap:10px}
+  #pmStockModal .pms-hd .pms-sub{font-size:10px;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  #pmStockModal .pms-x{background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;width:32px;height:32px;font-size:16px;cursor:pointer;flex-shrink:0}
+
+  #pmStockModal .pms-tabs{display:flex;background:var(--surface2,#f7f9fc);border-bottom:1px solid var(--border,rgba(0,0,0,.08));flex-shrink:0;padding:0 16px;gap:0}
+  #pmStockModal .pms-tab{padding:11px 18px;font-size:12px;font-weight:700;color:var(--muted2,#64748b);cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;display:flex;align-items:center;gap:6px}
+  #pmStockModal .pms-tab:hover{color:var(--teal,#0d9488)}
+  #pmStockModal .pms-tab.active{color:var(--teal,#0d9488);border-bottom-color:var(--teal,#0d9488)}
+  #pmStockModal .pms-tab .pms-tab-count{background:rgba(220,38,38,.12);color:#dc2626;font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:9px;display:none}
+  #pmStockModal .pms-tab .pms-tab-count.show{display:inline-block}
+
+  #pmStockModal .pms-body{flex:1;overflow-y:auto;padding:16px 20px;background:var(--bg,#f0f4f8)}
+  #pmStockModal .pms-pane{display:none}
+  #pmStockModal .pms-pane.active{display:block}
+
+  /* Inward voucher card */
+  #pmStockModal .pms-vch{background:var(--surface,#fff);border:1.5px solid var(--border,rgba(0,0,0,.1));border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s}
+  #pmStockModal .pms-vch:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
+  #pmStockModal .pms-vch.discrep{border-color:#dc2626;background:rgba(220,38,38,.04);box-shadow:0 0 0 3px rgba(220,38,38,.08)}
+  #pmStockModal .pms-vch-icon{font-size:24px}
+  #pmStockModal .pms-vch-info{flex:1;min-width:0}
+  #pmStockModal .pms-vch-no{font-size:13px;font-weight:800;color:var(--text,#111);font-family:var(--font-mono,monospace)}
+  #pmStockModal .pms-vch-route{font-size:11px;color:var(--muted2,#6b7280);margin-top:2px}
+  #pmStockModal .pms-vch-meta{font-size:10px;color:var(--muted,#9ca3af);margin-top:2px}
+  #pmStockModal .pms-vch-counts{text-align:right;flex-shrink:0}
+  #pmStockModal .pms-vch-counts .v{font-size:18px;font-weight:800;color:#f59e0b}
+  #pmStockModal .pms-vch-counts.discrep .v{color:#dc2626}
+  #pmStockModal .pms-vch-counts .l{font-size:9px;font-weight:800;color:var(--muted2,#6b7280);text-transform:uppercase;letter-spacing:.4px}
+  #pmStockModal .pms-empty{padding:48px 20px;text-align:center;color:var(--muted,#9ca3af);background:var(--surface,#fff);border:1.5px dashed var(--border,rgba(0,0,0,.15));border-radius:10px}
+
+  /* Stock table */
+  #pmStockModal .pms-stock-tbl{width:100%;border-collapse:collapse;background:var(--surface,#fff);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  #pmStockModal .pms-stock-tbl thead tr{background:var(--teal,#0d9488)}
+  #pmStockModal .pms-stock-tbl th{color:#fff;padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;text-align:left;position:sticky;top:0}
+  #pmStockModal .pms-stock-tbl td{padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border,rgba(0,0,0,.06))}
+  #pmStockModal .pms-stock-tbl tbody tr:hover{background:var(--surface2,#f7f9fc)}
+  #pmStockModal .pms-stock-tbl .num{text-align:right;font-family:var(--font-mono,monospace);font-weight:700}
+  #pmStockModal .pms-stock-tbl .qty{color:var(--teal,#0d9488);font-weight:800}
+  #pmStockModal .pms-stock-tbl .qty.zero{color:var(--muted,#9ca3af);font-weight:600}
+
+  /* IN voucher detail modal — appears on top */
+  #pmsInModal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.78);backdrop-filter:blur(8px);z-index:9100;align-items:center;justify-content:center;padding:20px}
+  #pmsInModal.open{display:flex}
+  #pmsInModal .pms-in-card{background:var(--surface,#fff);border-radius:14px;width:min(98vw,1300px);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  #pmsInModal .pms-in-hd{padding:14px 20px;background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-shrink:0}
+  #pmsInModal .pms-in-body{flex:1;overflow-y:auto;padding:14px 20px}
+  #pmsInModal .pms-in-banner{padding:8px 12px;border-radius:5px;border-left:3px solid #f59e0b;background:rgba(245,158,11,.10);color:#92400e;font-size:12px;font-weight:700;margin-bottom:14px}
+  #pmsInModal .pms-scan-bar{background:var(--surface2,#f9fafb);border:1.5px solid #1e40af;border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  #pmsInModal .pms-scan-bar input{flex:1;background:#fff;border:1.5px solid #a8b8e0;border-radius:6px;padding:8px 12px;font-size:13px;font-family:var(--font-mono,monospace);font-weight:700;color:#111;outline:none}
+  #pmsInModal .pms-cmp-tbl{width:100%;border-collapse:collapse;border:1px solid var(--border,rgba(0,0,0,.1));border-radius:8px;overflow:hidden}
+  #pmsInModal .pms-cmp-tbl thead tr{background:#1e40af;color:#fff}
+  #pmsInModal .pms-cmp-tbl th{padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;text-align:left}
+  #pmsInModal .pms-cmp-tbl th.col-out{background:#92400e}
+  #pmsInModal .pms-cmp-tbl td{padding:7px 10px;font-size:12px;border-bottom:1px solid var(--border,rgba(0,0,0,.06))}
+  #pmsInModal .pms-in-ft{padding:12px 20px;border-top:1px solid var(--border,rgba(0,0,0,.09));background:var(--surface2,#f9fafb);flex-shrink:0;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+
+  /* Discrepancy banner inside modal */
+  #pmStockModal .pms-discrep{background:linear-gradient(90deg,#dc2626,#b91c1c);color:#fff;padding:8px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;animation:pmsPulse 2.4s ease-in-out infinite;display:none;flex-shrink:0}
+  #pmStockModal .pms-discrep.on{display:flex}
+  #pmStockModal .pms-discrep a{color:#fff;text-decoration:underline;font-family:var(--font-mono,monospace);font-weight:800}
+  @keyframes pmsPulse {0%,100%{box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}50%{box-shadow:inset 0 -3px 0 rgba(0,0,0,.5)}}
+</style>
+
+<div id="pmStockModal" role="dialog">
+  <div class="pms-card">
+    <div class="pms-hd">
+      <div>
+        <div class="pms-title">📦 PM Stock — Factory</div>
+        <div class="pms-sub">Receive incoming materials · View current factory stock</div>
+      </div>
+      <button class="pms-x" onclick="closePmStockModal()">×</button>
+    </div>
+
+    <!-- Sticky discrepancy banner inside modal -->
+    <div id="pmsDiscrepBanner" class="pms-discrep">
+      <span style="font-size:16px">⚠</span>
+      <strong id="pmsDiscrepText">0 transfers have a discrepancy</strong>
+      <span id="pmsDiscrepLinks" style="opacity:.9"></span>
+      <span style="opacity:.85;font-size:11px;margin-left:auto">Banner stays until resolved by an admin</span>
+    </div>
+
+    <div class="pms-tabs" role="tablist">
+      <div class="pms-tab active" data-pms-tab="inward" onclick="pmsSwitchTab('inward')">
+        📥 Inward Vouchers
+        <span class="pms-tab-count" id="pmsTabCountInward">0</span>
+      </div>
+      <div class="pms-tab" data-pms-tab="stock" onclick="pmsSwitchTab('stock')">
+        📊 Factory Stock
+      </div>
+    </div>
+
+    <div class="pms-body">
+      <!-- INWARD pane -->
+      <div class="pms-pane active" id="pmsPaneInward">
+        <div style="font-size:11.5px;color:var(--muted2,#64748b);margin-bottom:12px">
+          Vouchers in transit to the factory. Click any to scan boxes IN at destination and confirm receipt.
+        </div>
+        <div id="pmsInwardList">
+          <div class="pms-empty">Loading…</div>
+        </div>
+      </div>
+
+      <!-- STOCK pane -->
+      <div class="pms-pane" id="pmsPaneStock">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <input type="text" id="pmsStockSearch" placeholder="🔍 Search product / PM type / brand…" oninput="pmsRenderStock()"
+            style="flex:1;min-width:220px;background:var(--surface,#fff);border:1.5px solid var(--border2,rgba(0,0,0,.13));border-radius:7px;padding:8px 12px;font-size:12px;font-family:inherit;color:var(--text,#111);outline:none">
+          <select id="pmsBrandFilter" onchange="pmsRenderStock()"
+            style="background:var(--surface,#fff);border:1.5px solid var(--border2,rgba(0,0,0,.13));border-radius:7px;padding:8px 10px;font-size:12px;font-family:inherit;color:var(--text,#111);outline:none;min-width:140px">
+            <option value="">All brands</option>
+          </select>
+          <select id="pmsPmTypeFilter" onchange="pmsRenderStock()"
+            style="background:var(--surface,#fff);border:1.5px solid var(--border2,rgba(0,0,0,.13));border-radius:7px;padding:8px 10px;font-size:12px;font-family:inherit;color:var(--text,#111);outline:none;min-width:140px">
+            <option value="">All PM types</option>
+          </select>
+          <label style="display:inline-flex;align-items:center;gap:6px;background:var(--teal-glow,rgba(13,148,136,.1));border:1.5px solid var(--teal,#0d9488);border-radius:7px;padding:7px 12px;font-size:11.5px;font-weight:700;color:var(--teal,#0d9488);cursor:pointer;user-select:none;white-space:nowrap" title="Hide products with zero stock">
+            <input type="checkbox" id="pmsPositiveOnly" checked onchange="pmsRenderStock()" style="margin:0;cursor:pointer;accent-color:var(--teal,#0d9488)">
+            +ve stock only
+          </label>
+          <button onclick="pmsLoadStock()" class="btn btn-outline btn-sm" title="Refresh"><i class="fas fa-sync"></i></button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;font-size:11px;color:var(--muted2,#64748b);font-weight:700">
+          <span id="pmsStockMeta">—</span>
+          <button onclick="pmsClearFilters()" id="pmsClearFiltersBtn" style="display:none;background:transparent;border:none;color:#dc2626;cursor:pointer;font-weight:700;font-size:11px;padding:0;text-decoration:underline">↺ Clear filters</button>
+        </div>
+        <div style="overflow-x:auto;border-radius:10px;background:var(--surface,#fff)">
+          <table class="pms-stock-tbl">
+            <thead>
+              <tr>
+                <th style="width:36px;text-align:center">#</th>
+                <th>Product</th>
+                <th>PM Type</th>
+                <th>Brand</th>
+                <th class="num">Issued (in)</th>
+                <th class="num">Used (out)</th>
+                <th class="num">Available</th>
+                <th>Last Txn</th>
+              </tr>
+            </thead>
+            <tbody id="pmsStockTbody">
+              <tr><td colspan="8" style="padding:48px;text-align:center;color:var(--muted,#9ca3af)">Loading factory stock…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IN voucher modal (opened from inward grid) -->
+<div id="pmsInModal" role="dialog">
+  <div class="pms-in-card">
+    <div class="pms-in-hd">
+      <div>
+        <div style="font-size:11px;font-weight:700;opacity:.85;letter-spacing:.5px;text-transform:uppercase">📥 Material IN Voucher</div>
+        <div style="font-size:18px;font-weight:900;font-family:var(--font-mono,monospace);margin-top:2px"><span id="pmsInVno">—</span></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;opacity:.85">FROM <span id="pmsInFrom" style="font-weight:800">—</span></div>
+        <div style="font-size:10px;opacity:.85;margin-top:2px">TO <span id="pmsInTo" style="font-weight:800">—</span></div>
+      </div>
+      <button onclick="pmsCloseInModal()" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;width:32px;height:32px;font-size:16px;cursor:pointer;flex-shrink:0">×</button>
+    </div>
+
+    <div class="pms-in-body">
+      <div id="pmsInBanner" class="pms-in-banner">Loading…</div>
+
+      <div class="pms-scan-bar">
+        <span style="font-size:22px">📷</span>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Scan Box at Destination (or paste code + Enter)</div>
+          <input type="text" id="pmsInScanInput" onkeydown="pmsHandleScan(event)" placeholder="e.g. BEARTUBE12-G0003-B001" autocomplete="off">
+        </div>
+      </div>
+
+      <table class="pms-cmp-tbl">
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center">#</th>
+            <th>Product</th>
+            <th class="col-out" style="text-align:right;width:90px">OUT (sent)</th>
+            <th style="text-align:right;width:90px">IN (rec'd)</th>
+            <th style="text-align:center;width:50px">Match</th>
+            <th style="text-align:center;width:90px">Status</th>
+          </tr>
+        </thead>
+        <tbody id="pmsInItems">
+          <tr><td colspan="6" style="padding:30px;text-align:center;color:var(--muted,#9ca3af)">Scan a box to begin</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:10px;display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--muted2,#6b7280)">
+        <div>✅ <strong style="color:#16a34a">OK</strong> — counts match</div>
+        <div>⏳ <strong style="color:#f59e0b">MISSING</strong> — was sent but didn't arrive</div>
+        <div>➕ <strong style="color:#7c3aed">EXTRA</strong> — arrived but wasn't on OUT</div>
+        <div>⚠ <strong style="color:#dc2626">MISMATCH</strong> — counts differ</div>
+      </div>
+    </div>
+
+    <div class="pms-in-ft">
+      <button onclick="pmsCloseInModal()" class="btn btn-outline">Close</button>
+      <button id="pmsInSaveBtn" onclick="pmsSaveIn()" class="btn btn-primary" style="background:#1e40af;border-color:#1e40af">✓ Save IN &amp; Confirm Receipt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   PM STOCK — Factory Inward + Stock View (self-contained module)
+   Uses existing endpoints from the main PM Stock app:
+     /api/pm_stock/transfers/in_transit
+     /api/pm_stock/transfers/discrepancies
+     /api/pm_stock/transfers/voucher/<tid>
+     /api/pm_stock/transfers/voucher/<tid>/scan_box?side=in
+     /api/pm_stock/transfers/voucher/<tid>/save_in
+     /api/pm_stock/godowns
+     /api/pm_stock/summary?godown_id=<factory_id>
+═════════════════════════════════════════════════════════════════ */
+let _pmsActiveTab    = 'inward';
+let _pmsActiveVchId  = null;
+let _pmsActiveVch    = null;
+let _pmsFactoryGid   = null;
+let _pmsStockRows    = [];
+let _pmsRefreshTimer = null;
+let _pmsAllBrands    = [];
+let _pmsAllPmTypes   = [];
+
+function _pmsToast(msg, kind, ms){
+  // Reuse packing's toast if available, otherwise basic alert-like overlay
+  if(typeof showToast === 'function'){ showToast(msg, kind, ms); return; }
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;top:20px;right:20px;z-index:9999;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.3);background:${kind==='error'?'#dc2626':kind==='success'?'#16a34a':'#3b82f6'}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), ms || 3000);
+}
+
+function _pmsEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function openPmStockModal(){
+  document.getElementById('pmStockModal').classList.add('open');
+  // Discover the factory godown id once per session
+  if(_pmsFactoryGid === null) await _pmsResolveFactory();
+  pmsSwitchTab('inward');
+  _pmsRefreshAll();
+  // Auto-poll while modal is open
+  if(_pmsRefreshTimer) clearInterval(_pmsRefreshTimer);
+  _pmsRefreshTimer = setInterval(() => {
+    if(document.getElementById('pmStockModal').classList.contains('open')){
+      _pmsRefreshAll();
+    }
+  }, 30000);
+}
+
+function closePmStockModal(){
+  document.getElementById('pmStockModal').classList.remove('open');
+  if(_pmsRefreshTimer){ clearInterval(_pmsRefreshTimer); _pmsRefreshTimer = null; }
+}
+
+function pmsSwitchTab(name){
+  _pmsActiveTab = name;
+  document.querySelectorAll('#pmStockModal .pms-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.pmsTab === name);
+  });
+  document.getElementById('pmsPaneInward').classList.toggle('active', name === 'inward');
+  document.getElementById('pmsPaneStock').classList.toggle('active', name === 'stock');
+  if(name === 'stock' && !_pmsStockRows.length) pmsLoadStock();
+}
+
+// Find FACTORY godown id from /api/pm_stock/godowns. We pick the row literally
+// named FACTORY (case-insensitive) — same convention used elsewhere.
+async function _pmsResolveFactory(){
+  try {
+    const res = await fetch('/api/pm_stock/godowns');
+    if(!res.ok) return;
+    const list = await res.json();
+    const factory = (list || []).find(g => (g.name||'').trim().toUpperCase() === 'FACTORY')
+                 || (list || []).find(g => g.godown_type === 'floor' || g.is_floor);
+    if(factory) _pmsFactoryGid = factory.id;
+  } catch(_){}
+}
+
+async function _pmsRefreshAll(){
+  await Promise.all([pmsLoadInward(), _pmsRefreshDiscrepancyBanner()]);
+}
+
+/* ─── Inward voucher list ─── */
+async function pmsLoadInward(){
+  const list = document.getElementById('pmsInwardList');
+  if(!list) return;
+  try {
+    const res = await fetch('/api/pm_stock/transfers/in_transit');
+    const d   = await res.json();
+    if(d.status !== 'ok'){
+      list.innerHTML = `<div class="pms-empty" style="color:#dc2626">${_pmsEsc(d.message||'Load failed')}</div>`;
+      return;
+    }
+    // Filter to transfers heading to FACTORY only (when we know factory id)
+    let rows = d.transfers || [];
+    if(_pmsFactoryGid != null){
+      rows = rows.filter(r => Number(r.to_godown_id) === Number(_pmsFactoryGid));
+    }
+    // Update tab count + header badge
+    const cnt  = rows.length;
+    const tabC = document.getElementById('pmsTabCountInward');
+    if(tabC){
+      tabC.textContent = String(cnt);
+      tabC.classList.toggle('show', cnt > 0);
+    }
+    const hdrBadge = document.getElementById('pmStockPendingBadge');
+    if(hdrBadge){
+      hdrBadge.textContent = String(cnt);
+      hdrBadge.style.display = cnt ? 'flex' : 'none';
+    }
+    if(!cnt){
+      list.innerHTML = `<div class="pms-empty">📭 No incoming transfers right now.</div>`;
+      return;
+    }
+    list.innerHTML = rows.map(t => `
+      <div class="pms-vch ${t.has_discrepancy?'discrep':''}" onclick="pmsOpenInVoucher(${t.transfer_id})">
+        <div class="pms-vch-icon">${t.has_discrepancy?'⚠':'📦'}</div>
+        <div class="pms-vch-info">
+          <div class="pms-vch-no">${_pmsEsc(t.transfer_no)}</div>
+          <div class="pms-vch-route"><strong>${_pmsEsc(t.from_name)}</strong> → <strong>${_pmsEsc(t.to_name)}</strong></div>
+          <div class="pms-vch-meta">Sent ${_pmsEsc((t.out_at||'').slice(0,16).replace('T',' '))} · by ${_pmsEsc(t.out_by||'—')}</div>
+          ${t.has_discrepancy?`<div style="font-size:10.5px;color:#991b1b;font-weight:700;margin-top:4px">⚠ DISCREPANCY: ${_pmsEsc((t.discrepancy_note||'').slice(0,140))}</div>`:''}
+        </div>
+        <div class="pms-vch-counts ${t.has_discrepancy?'discrep':''}">
+          <div class="l">Boxes</div>
+          <div class="v">${t.total_boxes||0}</div>
+          <div style="font-size:10px;color:var(--muted,#9ca3af);margin-top:2px">qty ${(t.total_qty||0).toLocaleString('en-IN')}</div>
+        </div>
+        <div style="font-size:14px;color:var(--muted,#9ca3af)">›</div>
+      </div>
+    `).join('');
+  } catch(e){
+    list.innerHTML = `<div class="pms-empty" style="color:#dc2626">Error: ${_pmsEsc(e.message)}</div>`;
+  }
+}
+
+/* ─── Sticky discrepancy banner (inside modal) ─── */
+async function _pmsRefreshDiscrepancyBanner(){
+  try {
+    const res = await fetch('/api/pm_stock/transfers/discrepancies');
+    const d = await res.json();
+    if(d.status !== 'ok') return;
+    const banner = document.getElementById('pmsDiscrepBanner');
+    if(!banner) return;
+    const cnt = d.count || 0;
+    if(cnt === 0){ banner.classList.remove('on'); return; }
+    banner.classList.add('on');
+    document.getElementById('pmsDiscrepText').textContent = `${cnt} transfer${cnt===1?'':'s'} ${cnt===1?'has':'have'} a discrepancy`;
+    const items = (d.discrepancies || []).slice(0, 3).map(x =>
+      `<a href="javascript:pmsOpenInVoucher(${x.transfer_id})">${_pmsEsc(x.transfer_no)}</a>`
+    ).join(', ');
+    document.getElementById('pmsDiscrepLinks').innerHTML = `— ${items}${cnt>3?` (+${cnt-3} more)`:''}`;
+  } catch(_){}
+}
+
+/* ─── IN voucher detail modal ─── */
+async function pmsOpenInVoucher(tid){
+  _pmsActiveVchId = tid;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${tid}`);
+    const d   = await res.json();
+    if(d.status !== 'ok'){ _pmsToast(d.message || 'Load failed','error'); return; }
+    _pmsActiveVch = { ...d.header, out_items: d.out_items || [], in_items: d.in_items || [], mismatches: d.mismatches || [] };
+    _pmsRenderInVoucher();
+    document.getElementById('pmsInModal').classList.add('open');
+    setTimeout(() => document.getElementById('pmsInScanInput')?.focus(), 100);
+  } catch(e){
+    _pmsToast('Error: '+e.message,'error');
+  }
+}
+
+function pmsCloseInModal(){
+  document.getElementById('pmsInModal').classList.remove('open');
+  _pmsActiveVchId = null;
+  _pmsActiveVch   = null;
+  // Refresh in case the user just saved IN
+  pmsLoadInward();
+  if(_pmsActiveTab === 'stock') pmsLoadStock();
+}
+
+function _pmsRenderInVoucher(){
+  if(!_pmsActiveVch) return;
+  const v = _pmsActiveVch;
+  document.getElementById('pmsInVno').textContent  = v.transfer_no || '—';
+  document.getElementById('pmsInFrom').textContent = v.from_name   || '—';
+  document.getElementById('pmsInTo').textContent   = v.to_name     || '—';
+
+  // Build product map { pid: {out:line, in:line} }
+  const map = {};
+  (v.out_items||[]).forEach(r => { map[r.product_id] = { out: r, in: null }; });
+  (v.in_items ||[]).forEach(r => { (map[r.product_id] = map[r.product_id] || { out: null, in: null }).in = r; });
+
+  const tbody = document.getElementById('pmsInItems');
+  const productIds = Object.keys(map);
+  if(!productIds.length){
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--muted,#9ca3af)">Scan a box at destination to begin</td></tr>`;
+  } else {
+    tbody.innerHTML = productIds.map((pid, i) => {
+      const o = map[pid].out;
+      const inL = map[pid].in;
+      const ref = o || inL;
+      const outBox = o ? o.no_of_box : 0;
+      const inBox  = inL ? inL.no_of_box : 0;
+      const outQty = o ? o.total_qty : 0;
+      const inQty  = inL ? inL.total_qty : 0;
+      const matches = (outBox === inBox) && (Math.abs(outQty-inQty) < 0.001);
+      const isExtra   = !o && inL;
+      const isMissing = o && !inL;
+      const rowBg = matches ? '' : (isExtra ? 'background:rgba(124,58,237,.06)' : (isMissing ? 'background:rgba(245,158,11,.06)' : 'background:rgba(220,38,38,.06)'));
+      const inColor = matches?'#16a34a':(isExtra?'#7c3aed':(isMissing?'#f59e0b':'#dc2626'));
+      return `<tr style="${rowBg}">
+        <td style="text-align:center;color:var(--muted,#9ca3af);font-size:11px">${i+1}</td>
+        <td>
+          <strong>${_pmsEsc(ref.product_name)}</strong>
+          ${ref.product_code?`<br><span style="font-family:var(--font-mono,monospace);font-size:9.5px;color:#888">${_pmsEsc(ref.product_code)}</span>`:''}
+          <br><span style="font-size:9.5px;color:#999">[${_pmsEsc(ref.pm_type)}]${ref.brand_name?' · '+_pmsEsc(ref.brand_name):''}</span>
+        </td>
+        <td style="text-align:right;font-family:var(--font-mono,monospace)">
+          <div style="font-weight:700">${outBox}</div>
+          <div style="font-size:9px;color:#999">${(outQty||0).toLocaleString('en-IN')}</div>
+        </td>
+        <td style="text-align:right;font-family:var(--font-mono,monospace)">
+          <div style="font-weight:700;color:${inColor}">${inBox}</div>
+          <div style="font-size:9px;color:#999">${(inQty||0).toLocaleString('en-IN')}</div>
+        </td>
+        <td style="text-align:center;font-size:14px">${matches?'✅':(isExtra?'➕':(isMissing?'⏳':'⚠'))}</td>
+        <td style="text-align:center;font-size:10px;color:${matches?'#16a34a':'#dc2626'};font-weight:700">
+          ${matches?'OK':(isExtra?'EXTRA':(isMissing?'MISSING':'MISMATCH'))}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Banner + button state
+  const banner = document.getElementById('pmsInBanner');
+  const saveBtn = document.getElementById('pmsInSaveBtn');
+  const hasInItems = (v.in_items||[]).length > 0;
+  if(v.status === 'received'){
+    banner.innerHTML = `✓ <strong>RECEIVED</strong> · Transfer is complete`;
+    banner.style.cssText = 'padding:8px 12px;border-radius:5px;border-left:3px solid #16a34a;background:rgba(22,163,74,.10);color:#15803d;font-size:12px;font-weight:700;margin-bottom:14px';
+    saveBtn.style.display = 'none';
+  } else if(v.has_discrepancy){
+    banner.innerHTML = `⚠ <strong>DISCREPANCY</strong> · ${(v.mismatches||[]).length} product(s) mismatch · Resolve before completing`;
+    banner.style.cssText = 'padding:8px 12px;border-radius:5px;border-left:3px solid #dc2626;background:rgba(220,38,38,.10);color:#991b1b;font-size:12px;font-weight:700;margin-bottom:14px';
+    saveBtn.textContent = '✓ Save IN (will retain discrepancy flag)';
+    saveBtn.disabled = !hasInItems;
+    saveBtn.style.opacity = hasInItems ? '1' : '.5';
+    saveBtn.style.display = '';
+  } else {
+    banner.innerHTML = `<strong>RECEIVING</strong> · Scan boxes at destination · Match OUT counts to complete`;
+    banner.style.cssText = 'padding:8px 12px;border-radius:5px;border-left:3px solid #f59e0b;background:rgba(245,158,11,.10);color:#92400e;font-size:12px;font-weight:700;margin-bottom:14px';
+    saveBtn.textContent = '✓ Save IN & Confirm Receipt';
+    saveBtn.disabled = !hasInItems;
+    saveBtn.style.opacity = hasInItems ? '1' : '.5';
+    saveBtn.style.display = '';
+  }
+}
+
+async function pmsHandleScan(ev){
+  if(ev && ev.key !== 'Enter') return;
+  const inp = document.getElementById('pmsInScanInput');
+  const code = (inp.value || '').trim().toUpperCase();
+  if(!code) return;
+  inp.value = '';
+  if(!_pmsActiveVchId){ _pmsToast('No active voucher','error'); return; }
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${_pmsActiveVchId}/scan_box`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({box_code: code, side: 'in'})
+    });
+    const d = await res.json();
+    if(d.status !== 'ok'){ _pmsToast(d.message || 'Scan failed','error',4000); }
+    else {
+      _pmsToast(`✓ ${d.box.product_name} +1 IN`,'success',1800);
+      // Reload voucher to refresh comparison table
+      pmsOpenInVoucher(_pmsActiveVchId);
+    }
+  } catch(e){
+    _pmsToast('Error: '+e.message,'error');
+  }
+  setTimeout(() => inp.focus(), 50);
+}
+
+async function pmsSaveIn(){
+  if(!_pmsActiveVch) return;
+  if(!_pmsActiveVch.in_items || !_pmsActiveVch.in_items.length){
+    _pmsToast('Scan at least one box','error'); return;
+  }
+  const btn = document.getElementById('pmsInSaveBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Saving…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${_pmsActiveVchId}/save_in`,{method:'POST'});
+    const d = await res.json();
+    if(d.status === 'ok'){
+      if(d.has_discrepancy){
+        _pmsToast(`⚠ Saved with ${d.mismatches.length} discrepancy. Both screens flagged until reconciled.`,'error', 6000);
+      } else {
+        _pmsToast(`✓ ${d.transfer_no} complete`,'success', 4000);
+      }
+      pmsCloseInModal();
+      _pmsRefreshAll();
+    } else {
+      _pmsToast(d.message || 'Save failed','error');
+      btn.innerHTML = orig; btn.disabled = false;
+    }
+  } catch(e){
+    _pmsToast('Error: '+e.message,'error');
+    btn.innerHTML = orig; btn.disabled = false;
+  }
+}
+
+/* ─── Factory Stock pane ─── */
+async function pmsLoadStock(){
+  const tbody = document.getElementById('pmsStockTbody');
+  if(!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="8" style="padding:48px;text-align:center;color:var(--muted,#9ca3af)">Loading factory stock…</td></tr>`;
+  try {
+    if(_pmsFactoryGid === null) await _pmsResolveFactory();
+    // /api/pm_stock/summary returns combined per-product rows incl. floor metrics
+    const url = _pmsFactoryGid ? `/api/pm_stock/summary?godown_id=${_pmsFactoryGid}` : '/api/pm_stock/summary';
+    const res = await fetch(url);
+    const rows = await res.json();
+    _pmsStockRows = Array.isArray(rows) ? rows : [];
+    // Pull full brand + pm_type master lists (one-shot) so the dropdowns
+    // show every brand / PM type, not just those present in current factory rows.
+    if(!_pmsAllBrands.length || !_pmsAllPmTypes.length){
+      try {
+        const [bRes, tRes] = await Promise.all([
+          fetch('/api/pm_stock/brands'),
+          fetch('/api/pm_stock/pm_types'),
+        ]);
+        if(bRes.ok) _pmsAllBrands  = await bRes.json();
+        if(tRes.ok) _pmsAllPmTypes = await tRes.json();
+      } catch(_){}
+    }
+    _pmsPopulateFilterDropdowns();
+    pmsRenderStock();
+  } catch(e){
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:30px;text-align:center;color:#dc2626">Error: ${_pmsEsc(e.message)}</td></tr>`;
+  }
+}
+
+// Build the brand + PM type dropdowns from the master lists fetched via
+// /api/pm_stock/brands and /api/pm_stock/pm_types — not from the current
+// summary rows, so all brands/types are pickable even before activity exists.
+function _pmsPopulateFilterDropdowns(){
+  const brandSel  = document.getElementById('pmsBrandFilter');
+  const pmtypeSel = document.getElementById('pmsPmTypeFilter');
+  if(!brandSel || !pmtypeSel) return;
+
+  const prevBrand  = brandSel.value;
+  const prevPmtype = pmtypeSel.value;
+
+  const brandList = (_pmsAllBrands||[]).slice().sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  brandSel.innerHTML = `<option value="">All brands</option>` +
+    brandList.map(b => `<option value="${b.id}">${_pmsEsc(b.name)}</option>`).join('');
+  if(brandList.some(b => String(b.id) === prevBrand)) brandSel.value = prevBrand;
+
+  const types = (_pmsAllPmTypes||[]).slice().sort();
+  pmtypeSel.innerHTML = `<option value="">All PM types</option>` +
+    types.map(t => `<option value="${_pmsEsc(t)}">${_pmsEsc(t)}</option>`).join('');
+  if(types.includes(prevPmtype)) pmtypeSel.value = prevPmtype;
+}
+
+function pmsClearFilters(){
+  const ids = ['pmsStockSearch','pmsBrandFilter','pmsPmTypeFilter'];
+  ids.forEach(id => { const e = document.getElementById(id); if(e) e.value=''; });
+  const pos = document.getElementById('pmsPositiveOnly'); if(pos) pos.checked = false;
+  pmsRenderStock();
+}
+
+function pmsRenderStock(){
+  const tbody = document.getElementById('pmsStockTbody');
+  if(!tbody) return;
+  const search       = (document.getElementById('pmsStockSearch')?.value || '').toLowerCase().trim();
+  const brandFilter  = document.getElementById('pmsBrandFilter')?.value || '';
+  const pmtypeFilter = document.getElementById('pmsPmTypeFilter')?.value || '';
+  const positiveOnly = !!document.getElementById('pmsPositiveOnly')?.checked;
+
+  // Floor stock = ISSUE (in) - DISPATCH/REJECTION/PM_RETURN (out) → 'remaining' field
+  let rows = (_pmsStockRows || []).filter(r => {
+    if(search && !(`${r.product_name} ${r.pm_type} ${r.brand_name||''}`).toLowerCase().includes(search)) return false;
+    if(brandFilter && String(r.brand_id||'') !== brandFilter) return false;
+    if(pmtypeFilter && r.pm_type !== pmtypeFilter) return false;
+    if(positiveOnly && Number(r.remaining||0) <= 0) return false;
+    return true;
+  });
+  // Sort: products with stock first, then alphabetical
+  rows.sort((a,b) => {
+    const ar = Number(a.remaining||0), br = Number(b.remaining||0);
+    if((ar>0) !== (br>0)) return (br>0) - (ar>0);
+    return (a.product_name||'').localeCompare(b.product_name||'');
+  });
+
+  // Meta + clear-filters button visibility
+  const totRows   = rows.length;
+  const totQty    = rows.reduce((s,r) => s + Number(r.remaining||0), 0);
+  const withStock = rows.filter(r => Number(r.remaining||0) > 0).length;
+  const meta      = document.getElementById('pmsStockMeta');
+  if(meta) meta.textContent = `${withStock} of ${totRows} product(s) with stock · total qty ${totQty.toLocaleString('en-IN')}`;
+  const anyFilter = !!(search || brandFilter || pmtypeFilter || positiveOnly);
+  const clrBtn    = document.getElementById('pmsClearFiltersBtn');
+  if(clrBtn) clrBtn.style.display = anyFilter ? '' : 'none';
+
+  if(!rows.length){
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:48px;text-align:center;color:var(--muted,#9ca3af)">${anyFilter?'No products match the filters':'No products to show'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r,i) => {
+    const issued    = Number(r.issue||0);
+    const used      = Number(r.dispatch||0) + Number(r.rejection||0) + Number(r.pm_return||0);
+    const remaining = Number(r.remaining||0);
+    const lastTxn   = (r.floor_last_txn||'').slice(0,10) || '—';
+    return `<tr>
+      <td style="text-align:center;color:var(--muted,#9ca3af);font-size:11px">${i+1}</td>
+      <td><strong>${_pmsEsc(r.product_name)}</strong></td>
+      <td><span style="background:rgba(13,148,136,.08);color:var(--teal,#0d9488);padding:2px 8px;border-radius:4px;font-size:10.5px;font-weight:700">${_pmsEsc(r.pm_type)}</span></td>
+      <td>${r.brand_name?`<span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-size:10.5px;font-weight:700">${_pmsEsc(r.brand_name)}</span>`:'<span style="color:var(--muted,#9ca3af)">—</span>'}</td>
+      <td class="num">${issued.toLocaleString('en-IN')}</td>
+      <td class="num">${used.toLocaleString('en-IN')}</td>
+      <td class="num qty ${remaining<=0?'zero':''}">${remaining.toLocaleString('en-IN')}</td>
+      <td style="font-size:10.5px;color:var(--muted2,#6b7280)">${_pmsEsc(lastTxn)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// On packing.html init, fire one fetch in the background to populate the
+// pending count badge so the user can see at a glance there's work to do.
+(async function _pmsBootBadge(){
+  try {
+    if(_pmsFactoryGid === null) await _pmsResolveFactory();
+    const res = await fetch('/api/pm_stock/transfers/in_transit');
+    const d = await res.json();
+    if(d.status !== 'ok') return;
+    let cnt = (d.transfers || []).filter(r => _pmsFactoryGid==null || Number(r.to_godown_id)===Number(_pmsFactoryGid)).length;
+    const b = document.getElementById('pmStockPendingBadge');
+    if(b){
+      b.textContent = String(cnt);
+      b.style.display = cnt > 0 ? 'flex' : 'none';
+    }
+  } catch(_){}
+})();
+</script>
+</body>
+</html>

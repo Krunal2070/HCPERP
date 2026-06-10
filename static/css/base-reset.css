@@ -1,0 +1,55 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:             #f1f5f9;
+            --white:          #ffffff;
+            --border:         #e2e8f0;
+            --border-muted:   #f1f5f9;
+            --sb-bg:          #ffffff;
+            --sb-border:      #e2e8f0;
+            --sb-hover:       #f8fafc;
+            --sb-active-bg:   #eff6ff;
+            --sb-active-text: #2563eb;
+            --sb-text:        #64748b;
+            --sb-sec-lbl:     #94a3b8;
+            --blue:           #2563eb;
+            --blue-dk:        #1d4ed8;
+            --blue-lt:        #eff6ff;
+            --blue-border:    #bfdbfe;
+            --green:          #16a34a;
+            --green-lt:       #f0fdf4;
+            --green-border:   #86efac;
+            --red:            #dc2626;
+            --red-lt:         #fef2f2;
+            --red-border:     #fca5a5;
+            --amber:          #d97706;
+            --amber-lt:       #fffbeb;
+            --amber-border:   #fde68a;
+            --purple:         #7c3aed;
+            --purple-lt:      #f5f3ff;
+            --purple-border:  #ddd6fe;
+            --text:           #0f172a;
+            --text2:          #475569;
+            --text3:          #94a3b8;
+            --text4:          #cbd5e1;
+            --sw:             240px;
+            --topbar-h:       60px;
+            --bottom-nav-h:   64px;
+            --r-sm:           8px;
+            --r-md:           10px;
+            --r-lg:           14px;
+            --r-xl:           16px;
+            --sh-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+            --sh-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+            --sh-lg: 0 10px 40px rgba(0,0,0,.1), 0 4px 12px rgba(0,0,0,.06);
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>TRS</title>
+
+<style>
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+body{
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+table{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+td{
+    border: 1px solid black;
+    padding: 4px;
+    vertical-align: middle;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+/* 1 INCH TITLE ROW */
+.trs-title-row td{
+    height: 0.8in;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* HALF INCH ROWS */
+.half-inch td{
+    height: 0.35in;
+}
+
+/* HALF INCH ROWS */
+.my-maap td{
+    height: 0.35in;
+}
+
+
+
+/* BIG ITEM NAME */
+.item-name{
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    height: 0.5in;
+}
+
+.section-title{
+    font-weight: bold;
+    text-align: center;
+}
+
+.bold{
+    font-weight: bold;
+}
+
+.spacer{
+    height: 10px;
+}
+</style>
+
+</head>
+
+<body onload="window.print()">
+
+<!-- HEADER -->
+<table>
+
+<tr class="half-inch">
+<td style="width:30%"></td>
+<td style="width:30%"></td>
+<td style="width:25%"></td>
+<td style="width:15%;text-align:center;font-weight:bold;">QR-854-08</td>
+</tr>
+
+<tr class="trs-title-row">
+<td colspan="4">TESTING REQUISITION SLIP (TRS)</td>
+</tr>
+
+<tr class="half-inch">
+<td colspan="2"><b>TRS No. :</b> {{ r.trs_no }}</td>
+<td><b>DATE :</b> {{ r.receipt_date }}</td>
+<td><b>Department :</b> PURCHASE</td>
+</tr>
+
+</table>
+
+<div class="spacer"></div>
+
+<!-- ITEM NAME -->
+<table>
+<tr>
+<td class="item-name">
+Name of Sample : {{ r.item_name }}
+</td>
+</tr>
+</table>
+
+<div class="spacer"></div>
+
+<!-- DETAILS -->
+<table>
+
+<tr class="my-maap">
+
+<td style="width:50%" class="bold">Batch No :</td>
+<td style="width:50%">{{ r.batch_no }}</td>
+</tr>
+
+<div class="spacer"></div>
+
+<!-- DETAILS -->
+<table>
+
+
+<tr class="half-inch">
+<td class="bold">New Supplier :</td>
+<td>{{ r.supplier_name }}</td>
+<td class="bold">Manufacturer :</td>
+<td>{{ r.manufacturer_name }}</td>
+</tr>
+
+<tr class="half-inch">
+<td class="bold">Physical State :</td>
+<td>{{ r.physical_state }}</td>
+<td class="bold">Sample Qty :</td>
+<td>{{ r.received_qty }} Kg</td>
+</tr>
+
+<tr class="half-inch">
+<td class="bold">Appearance :</td>
+<td colspan="3">{{ appearance }}</td>
+</tr>
+
+
+
+</table>
+
+<div class="spacer"></div>
+
+<!-- PHYSICAL VERIFICATION -->
+<table>
+
+<tr class="half-inch">
+<td colspan="4" class="section-title">PHYSICAL VERIFICATION</td>
+</tr>
+
+<tr class="half-inch">
+<td style="width:25%" class="bold">Parameter</td>
+<td style="width:25%"></td>
+<td style="width:25%"></td>
+<td style="width:25%"></td>
+</tr>
+
+<tr class="half-inch">
+<td class="bold">Odour</td>
+<td colspan="3"></td>
+</tr>
+
+<tr class="half-inch">
+<td class="bold">COA Availability</td>
+<td colspan="3"></td>
+</tr>
+
+<tr class="half-inch">
+<td class="bold">Verified By</td>
+<td colspan="3"></td>
+</tr>
+
+<tr class="half-inch">
+<td class="bold">Name of Incharge</td>
+<td class="bold">Sign</td>
+<td class="bold">Date</td>
+<td></td>
+</tr>
+
+
+<div class="spacer"></div>
+
+<!-- DETAILS -->
+<table>
+
+
+
+<tr class="half-inch">
+<td class="bold">Description</td>
+<td class="bold">Approval Date & Time</td>
+<td class="bold">Analysis By</td>
+<td></td>
+</tr>
+
+<tr class="half-inch">
+<td class="bold">REMARK (✓)</td>
+<td class="bold">APPROVED</td>
+<td class="bold">REJECTED</td>
+<td></td>
+</tr>
+
+
+
+<div class="spacer"></div>
+
+<!-- DETAILS -->
+<table>
+
+
+
+<tr class="half-inch">
+<td class="bold">APPROVED BY:</td>
+<td class="bold">NAME</td>
+<td class="bold">SIGN</td>
+<td></td>
+</tr>
+
+<tr class="half-inch">
+<td style="width:15%"></td>
+<td style="width:45%"></td>
+<td style="width:25%"></td>
+<td style="width:15%"></td>
+</tr>
+
+
+
+</table>
+
+</body>
+</html>

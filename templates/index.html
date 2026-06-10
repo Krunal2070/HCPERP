@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>HCP LAN Portal</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ── Resets & base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANIMATION LIBRARY
+   ═══════════════════════════════════════════════════════════════════ */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(14px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* Hero gradient text — slow color drift */
+@keyframes gradientShift{
+  0%,100%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+}
+
+/* Topbar slide-in on page load */
+@keyframes slideDown{
+  from{opacity:0;transform:translateY(-12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Avatar gradient ring rotation */
+@keyframes avatarRing{
+  0%{transform:rotate(0deg)}
+  100%{transform:rotate(360deg)}
+}
+
+/* Section dot heartbeat */
+@keyframes dotPulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 currentColor}
+  50%{transform:scale(1.15);box-shadow:0 0 0 6px transparent}
+}
+
+/* Card shine sweep — diagonal light wipe across cover */
+@keyframes shimmerSweep{
+  0%{transform:translateX(-120%) skewX(-20deg)}
+  100%{transform:translateX(220%) skewX(-20deg)}
+}
+
+/* Icon float on card hover */
+@keyframes iconFloat{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-4px) rotate(-3deg)}
+}
+
+/* Background ambient blobs */
+@keyframes blobDrift{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(30px,-20px) scale(1.05)}
+  66%{transform:translate(-20px,25px) scale(.95)}
+}
+
+/* Settings panel bouncy entrance */
+@keyframes panelBounceIn{
+  0%{transform:scale(.85) translateY(-20px);opacity:0}
+  60%{transform:scale(1.02) translateY(2px);opacity:1}
+  100%{transform:scale(1) translateY(0);opacity:1}
+}
+
+/* Theme applied checkmark bounce */
+@keyframes msgPopIn{
+  0%{transform:scale(.7);opacity:0}
+  60%{transform:scale(1.08);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+
+html{overflow-y:auto}
+body{
+  min-height:100vh;
+  background:var(--bg,#FAF9F5);
+  font-family:var(--font-body,'Plus Jakarta Sans',sans-serif);
+  color:var(--text,#1f1f1f);
+  font-size:14px;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* Ambient floating color blobs (light theme only) */
+body::before,body::after{
+  content:'';position:fixed;border-radius:50%;
+  filter:blur(80px);opacity:.35;
+  pointer-events:none;z-index:0;
+}
+body::before{
+  width:480px;height:480px;top:-160px;right:-120px;
+  background:radial-gradient(circle,#E0F2F1 0%,transparent 70%);
+  animation:blobDrift 20s ease-in-out infinite;
+}
+body::after{
+  width:520px;height:520px;bottom:-200px;left:-180px;
+  background:radial-gradient(circle,#FCE4EC 0%,transparent 70%);
+  animation:blobDrift 26s ease-in-out infinite reverse;
+}
+[data-theme="dark"] body::before,[data-theme="dark"] body::after,
+[data-theme="midnight"] body::before,[data-theme="midnight"] body::after,
+[data-theme="ocean"] body::before,[data-theme="ocean"] body::after,
+[data-theme="sage"] body::before,[data-theme="sage"] body::after{display:none}
+
+.topbar,.main,#hcp-settings-overlay{position:relative;z-index:1}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--scrollbar,rgba(0,0,0,.18));border-radius:99px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOPBAR — NotebookLM minimal header
+   ═══════════════════════════════════════════════════════════════════ */
+.topbar{
+  height:64px;
+  background:#FAF9F5;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  display:flex;align-items:center;padding:0 28px;gap:14px;
+  position:sticky;top:0;z-index:100;
+  animation:slideDown .5s cubic-bezier(.22,1,.36,1) both;
+}
+[data-theme="dark"]     .topbar{background:var(--topbar-bg,rgba(10,14,26,.93));border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);}
+[data-theme="midnight"] .topbar{background:var(--topbar-bg,rgba(0,0,0,.96));border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);}
+[data-theme="ocean"]    .topbar{background:var(--topbar-bg,rgba(0,30,60,.96));border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);}
+[data-theme="sage"]     .topbar{background:var(--topbar-bg,rgba(255,255,255,.96));border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);}
+
+.logo-mark{
+  width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,#4285F4 0%,#1A73E8 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:#fff;
+}
+.logo-text{line-height:1.25}
+.logo-name{font-size:14px;font-weight:600;color:#1f1f1f;letter-spacing:-.2px}
+.logo-sub{font-size:10px;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;font-weight:500;margin-top:1px}
+[data-theme="dark"] .logo-name,[data-theme="midnight"] .logo-name,[data-theme="ocean"] .logo-name{color:#fff}
+[data-theme="dark"] .logo-sub,[data-theme="midnight"] .logo-sub,[data-theme="ocean"] .logo-sub{color:rgba(255,255,255,.65)}
+
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+
+.theme-btn,.hcp-settings-btn{
+  width:38px;height:38px;border-radius:50%;
+  border:none;background:transparent;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:15px;transition:background .2s,transform .3s;color:#5f6368;
+}
+.theme-btn:hover,.hcp-settings-btn:hover{background:rgba(0,0,0,.06)}
+.hcp-settings-btn:hover{transform:rotate(60deg)}
+.theme-btn:active,.hcp-settings-btn:active{transform:scale(.92)}
+.hcp-settings-btn:active{transform:rotate(60deg) scale(.92)}
+[data-theme="dark"] .theme-btn,[data-theme="dark"] .hcp-settings-btn,
+[data-theme="midnight"] .theme-btn,[data-theme="midnight"] .hcp-settings-btn,
+[data-theme="ocean"] .theme-btn,[data-theme="ocean"] .hcp-settings-btn{
+  background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22);}
+
+.user-chip{
+  display:flex;align-items:center;gap:9px;
+  padding:4px 14px 4px 4px;border-radius:24px;
+  background:#fff;border:1px solid rgba(0,0,0,.08);
+  margin-left:4px;
+}
+[data-theme="dark"] .user-chip,[data-theme="midnight"] .user-chip,[data-theme="ocean"] .user-chip{
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);}
+.user-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,#4285F4,#1A73E8);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;
+  position:relative;z-index:1;
+}
+.user-avatar::before{
+  content:'';position:absolute;inset:-2px;border-radius:50%;
+  background:conic-gradient(from 0deg,#4285F4,#7B61FF,#EA4335,#F9AB00,#4285F4);
+  z-index:-1;
+  animation:avatarRing 8s linear infinite;
+  opacity:0;transition:opacity .3s;
+}
+.user-chip:hover .user-avatar::before{opacity:1}
+.user-name{font-size:12.5px;font-weight:600;color:#1f1f1f;line-height:1.2}
+.user-role{font-size:10px;color:#5f6368;letter-spacing:.3px;font-weight:500;margin-top:1px}
+[data-theme="dark"] .user-name,[data-theme="midnight"] .user-name,[data-theme="ocean"] .user-name{color:#fff}
+[data-theme="dark"] .user-role,[data-theme="midnight"] .user-role,[data-theme="ocean"] .user-role{color:rgba(255,255,255,.65)}
+
+.logout-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  height:36px;padding:0 16px;border-radius:24px;
+  border:1px solid rgba(0,0,0,.1);background:#fff;
+  color:#1f1f1f;font-size:12.5px;font-weight:500;
+  cursor:pointer;text-decoration:none;
+  transition:background .2s,border-color .2s,color .2s,transform .2s;
+  font-family:inherit;margin-left:4px;
+}
+.logout-btn:hover{background:#fef2f0;border-color:#ea4335;color:#ea4335;transform:translateY(-1px)}
+.logout-btn:active{transform:translateY(0);transition-duration:.08s}
+[data-theme="dark"] .logout-btn,[data-theme="midnight"] .logout-btn,[data-theme="ocean"] .logout-btn{
+  border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.12);color:#fff}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAGE BODY
+   ═══════════════════════════════════════════════════════════════════ */
+.main{max-width:1320px;margin:0 auto;padding:48px 32px 64px;}
+
+/* ── HERO: Welcome ── */
+.hero{margin-bottom:40px;animation:fadeUp .4s ease both}
+.hero-title{
+  font-size:40px;font-weight:400;color:#1f1f1f;
+  letter-spacing:-1px;line-height:1.15;margin-bottom:8px;
+}
+.hero-title strong{
+  font-weight:600;
+  background:linear-gradient(135deg,#1A73E8 0%,#7B61FF 33%,#EA4335 66%,#1A73E8 100%);
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:gradientShift 8s ease-in-out infinite;
+}
+[data-theme="dark"] .hero-title,[data-theme="midnight"] .hero-title,[data-theme="ocean"] .hero-title{color:var(--text)}
+.hero-sub{font-size:14px;color:#5f6368;font-weight:400;line-height:1.5}
+[data-theme="dark"] .hero-sub,[data-theme="midnight"] .hero-sub,[data-theme="ocean"] .hero-sub{color:var(--muted2)}
+
+/* ── SECTION HEADER ── */
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:40px 0 18px;animation:fadeUp .4s ease both;
+}
+.section-head:first-of-type{margin-top:8px}
+.section-title{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;font-weight:600;color:#1f1f1f;letter-spacing:-.1px;
+}
+[data-theme="dark"] .section-title,[data-theme="midnight"] .section-title,[data-theme="ocean"] .section-title{color:var(--text)}
+.section-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--section-color,#1A73E8);
+  color:var(--section-color,#1A73E8);
+  animation:dotPulse 2.4s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NOTEBOOK CARD GRID — true NotebookLM card aesthetic
+   ═══════════════════════════════════════════════════════════════════ */
+.notebook-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(228px,1fr));
+  gap:16px;
+}
+
+.nb-card{
+  position:relative;display:flex;flex-direction:column;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.07);
+  border-radius:14px;
+  overflow:hidden;
+  cursor:pointer;text-decoration:none;color:inherit;
+  transition:transform .25s cubic-bezier(.22,1,.36,1),
+             box-shadow .25s cubic-bezier(.22,1,.36,1),
+             border-color .25s;
+  animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both;
+  min-height:200px;
+  will-change:transform;
+}
+.nb-card:hover{
+  transform:translateY(-5px);
+  border-color:rgba(0,0,0,.12);
+  box-shadow:0 10px 30px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.05);
+}
+.nb-card:active{transform:translateY(-2px);transition-duration:.1s}
+a.nb-card,a.nb-card:visited{color:inherit;text-decoration:none}
+
+/* Top half: full-bleed pastel tinted icon area */
+.nb-cover{
+  height:104px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card-tint,#E8F0FE);
+  overflow:hidden;
+}
+.nb-cover::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.6) 0%,transparent 60%);
+  pointer-events:none;
+}
+/* Shimmer sweep that runs across the cover on hover */
+.nb-cover::after{
+  content:'';position:absolute;top:0;left:0;
+  width:60%;height:100%;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.55) 50%,transparent 100%);
+  transform:translateX(-120%) skewX(-20deg);
+  pointer-events:none;
+}
+.nb-card:hover .nb-cover::after{
+  animation:shimmerSweep .9s cubic-bezier(.22,1,.36,1);
+}
+.nb-icon{
+  font-size:38px;line-height:1;position:relative;z-index:1;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.08));
+  transition:transform .3s cubic-bezier(.22,1,.36,1);
+}
+.nb-card:hover .nb-icon{
+  animation:iconFloat 1.6s ease-in-out infinite;
+}
+
+/* Bottom: text content on white */
+.nb-body{
+  padding:14px 16px 16px;
+  display:flex;flex-direction:column;flex:1;
+  background:#fff;
+}
+[data-theme="dark"] .nb-body,[data-theme="midnight"] .nb-body,[data-theme="ocean"] .nb-body,[data-theme="sage"] .nb-body{
+  background:var(--surface,#fff);
+}
+[data-theme="dark"] .nb-card,[data-theme="midnight"] .nb-card,[data-theme="ocean"] .nb-card,[data-theme="sage"] .nb-card{
+  background:var(--surface,#fff);border:1px solid var(--border);
+}
+
+.nb-meta{
+  font-size:10.5px;font-weight:500;color:#5f6368;
+  letter-spacing:.3px;margin-bottom:5px;text-transform:uppercase;
+}
+[data-theme="dark"] .nb-meta,[data-theme="midnight"] .nb-meta,[data-theme="ocean"] .nb-meta{color:var(--muted)}
+
+.nb-title{
+  font-size:15px;font-weight:600;color:#1f1f1f;
+  line-height:1.3;letter-spacing:-.1px;margin-bottom:6px;
+  position:relative;display:inline-block;
+  transition:color .25s;
+}
+.nb-title::after{
+  content:'';position:absolute;left:0;bottom:-2px;
+  width:0;height:2px;border-radius:2px;
+  background:var(--card-accent,#1A73E8);
+  transition:width .35s cubic-bezier(.22,1,.36,1);
+}
+.nb-card:hover .nb-title::after{width:100%}
+[data-theme="dark"] .nb-title,[data-theme="midnight"] .nb-title,[data-theme="ocean"] .nb-title{color:var(--text)}
+.nb-card:hover .nb-title{color:var(--card-accent,#1A73E8)}
+
+.nb-desc{
+  font-size:12px;color:#5f6368;line-height:1.5;
+  flex:1;font-weight:400;
+}
+[data-theme="dark"] .nb-desc,[data-theme="midnight"] .nb-desc,[data-theme="ocean"] .nb-desc{color:var(--muted2)}
+
+.nb-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:12px;gap:8px;min-height:22px;
+}
+
+/* ── Status badges — clean NotebookLM pills ── */
+.nb-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:12px;
+  font-size:10.5px;font-weight:500;letter-spacing:.1px;
+}
+.nb-badge.live{background:#E6F4EA;color:#137333;border:1px solid rgba(19,115,51,.15)}
+.nb-badge.live::before{
+  content:'';display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:currentColor;animation:pulse 1.8s infinite;
+}
+.nb-badge.admin{background:#E8F0FE;color:#1A73E8;border:1px solid rgba(26,115,232,.15)}
+.nb-badge.print{background:#FEF7E0;color:#B06000;border:1px solid rgba(176,96,0,.15)}
+[data-theme="dark"] .nb-badge.live,[data-theme="midnight"] .nb-badge.live,[data-theme="ocean"] .nb-badge.live{
+  background:var(--green-bg,#dcfce7);color:var(--green-text,#15803d);
+}
+[data-theme="dark"] .nb-badge.admin,[data-theme="midnight"] .nb-badge.admin,[data-theme="ocean"] .nb-badge.admin{
+  background:var(--teal-glow,rgba(13,148,136,.12));color:var(--teal,#0d9488);
+}
+
+/* Arrow indicator on hover */
+.nb-arrow{
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(0,0,0,.04);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:#5f6368;
+  transition:opacity .25s,background .25s,color .25s,transform .35s cubic-bezier(.22,1,.36,1);
+  opacity:0;transform:translateX(-8px) rotate(-90deg) scale(.6);
+  margin-left:auto;position:relative;
+}
+.nb-card:hover .nb-arrow{
+  opacity:1;
+  transform:translateX(0) rotate(0deg) scale(1);
+  background:var(--card-accent,#1A73E8);color:#fff;
+}
+.nb-card:hover .nb-arrow::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:2px solid var(--card-accent,#1A73E8);opacity:.3;
+  animation:pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Card color variants — soft NotebookLM tints + bold accents ── */
+.nb-card.teal   {--card-tint:#E0F2F1;--card-accent:#00897B}
+.nb-card.indigo {--card-tint:#EDE7F6;--card-accent:#5E35B1}
+.nb-card.amber  {--card-tint:#FFF8E1;--card-accent:#F57C00}
+.nb-card.green  {--card-tint:#E8F5E9;--card-accent:#2E7D32}
+.nb-card.red    {--card-tint:#FFEBEE;--card-accent:#C62828}
+.nb-card.purple {--card-tint:#F3E5F5;--card-accent:#7B1FA2}
+.nb-card.cyan   {--card-tint:#E0F7FA;--card-accent:#00838F}
+.nb-card.rose   {--card-tint:#FCE4EC;--card-accent:#C2185B}
+
+/* ── Mobile ── */
+@media(max-width:640px){
+  .main{padding:24px 16px 40px}
+  .topbar{padding:0 16px}
+  .hero-title{font-size:28px}
+  .notebook-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .nb-cover{height:88px}
+  .nb-icon{font-size:30px}
+  .nb-title{font-size:13.5px}
+  .nb-desc{font-size:11.5px}
+}
+@media(max-width:420px){
+  .notebook-grid{grid-template-columns:1fr}
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SETTINGS PANEL — kept identical structure, restyled to match
+   ═══════════════════════════════════════════════════════════════════ */
+@keyframes hcpScaleIn{from{transform:scale(.95) translateY(-8px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+
+#hcp-settings-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(31,31,31,.45);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  z-index:99998;
+  justify-content:center;align-items:flex-start;
+  padding-top:80px;
+}
+#hcp-settings-overlay.open{display:flex}
+
+#hcp-settings-panel{
+  background:#fff;border-radius:20px;
+  width:420px;max-width:94vw;
+  box-shadow:0 24px 60px rgba(0,0,0,.22),0 4px 16px rgba(0,0,0,.08);
+  border:1px solid rgba(0,0,0,.06);
+  animation:panelBounceIn .5s cubic-bezier(.34,1.56,.64,1) both;
+  overflow:hidden;
+}
+[data-theme="dark"] #hcp-settings-panel,
+[data-theme="midnight"] #hcp-settings-panel,
+[data-theme="ocean"] #hcp-settings-panel{
+  background:var(--surface,#1e293b);border-color:var(--border2,rgba(255,255,255,.1));
+}
+
+.hcp-settings-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 24px;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  background:#fff;
+}
+[data-theme="dark"] .hcp-settings-head,
+[data-theme="midnight"] .hcp-settings-head,
+[data-theme="ocean"] .hcp-settings-head{
+  border-color:var(--border);background:linear-gradient(135deg,#1e3a8a,#2563eb);
+}
+.hcp-settings-head h3{
+  font-size:16px;font-weight:600;margin:0;color:#1f1f1f;letter-spacing:-.2px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  display:flex;align-items:center;gap:10px;
+}
+[data-theme="dark"] .hcp-settings-head h3,
+[data-theme="midnight"] .hcp-settings-head h3,
+[data-theme="ocean"] .hcp-settings-head h3{color:#fff}
+.hcp-settings-close{
+  cursor:pointer;font-size:16px;color:#5f6368;
+  background:transparent;border:none;
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  line-height:1;padding:0;transition:background .15s;
+}
+.hcp-settings-close:hover{background:rgba(0,0,0,.06);color:#1f1f1f}
+[data-theme="dark"] .hcp-settings-close,
+[data-theme="midnight"] .hcp-settings-close,
+[data-theme="ocean"] .hcp-settings-close{color:rgba(255,255,255,.75);background:rgba(255,255,255,.15);}
+[data-theme="dark"] .hcp-settings-close:hover,
+[data-theme="midnight"] .hcp-settings-close:hover,
+[data-theme="ocean"] .hcp-settings-close:hover{background:rgba(255,255,255,.3);color:#fff}
+
+.hcp-settings-body{padding:22px 24px}
+.hcp-settings-lbl{
+  font-size:11px;font-weight:600;letter-spacing:.3px;
+  color:#5f6368;margin-bottom:16px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+[data-theme="dark"] .hcp-settings-lbl,[data-theme="midnight"] .hcp-settings-lbl,[data-theme="ocean"] .hcp-settings-lbl{color:var(--muted)}
+
+.hcp-theme-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:9px;margin-bottom:4px;
+}
+.hcp-swatch{
+  border-radius:12px;padding:10px 6px 9px;cursor:pointer;
+  border:2px solid rgba(0,0,0,.08);
+  background:#fafafa;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),
+             box-shadow .22s,border-color .22s;
+  text-align:center;position:relative;
+}
+[data-theme="dark"] .hcp-swatch,[data-theme="midnight"] .hcp-swatch,[data-theme="ocean"] .hcp-swatch{
+  background:var(--surface2,rgba(255,255,255,.6));border-color:var(--border);
+}
+.hcp-swatch:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 10px 22px rgba(0,0,0,.12);border-color:#1A73E8}
+.hcp-swatch:active{transform:translateY(-1px) scale(.98);transition-duration:.1s}
+.hcp-swatch.active{border-color:#1A73E8;box-shadow:0 0 0 3px rgba(26,115,232,.18);}
+.hcp-swatch-preview{
+  width:100%;height:30px;border-radius:8px;margin-bottom:7px;
+  box-shadow:0 1px 3px rgba(0,0,0,.10);
+}
+.hcp-swatch-name{
+  font-size:11px;font-weight:600;color:#1f1f1f;
+  font-family:'Plus Jakarta Sans',sans-serif;line-height:1.2;
+}
+[data-theme="dark"] .hcp-swatch-name,[data-theme="midnight"] .hcp-swatch-name,[data-theme="ocean"] .hcp-swatch-name{color:var(--text,#e2e8f0)}
+.hcp-swatch-tag{font-size:9.5px;color:#5f6368;margin-top:2px;line-height:1.2;font-weight:400}
+[data-theme="dark"] .hcp-swatch-tag,[data-theme="midnight"] .hcp-swatch-tag,[data-theme="ocean"] .hcp-swatch-tag{color:var(--muted)}
+.hcp-swatch .hcp-active-dot{
+  display:none;width:7px;height:7px;border-radius:50%;
+  background:#1A73E8;margin:6px auto 0;
+}
+.hcp-swatch.active .hcp-active-dot{display:block}
+
+#hcp-applied-msg{
+  display:none;text-align:center;font-size:11.5px;font-weight:500;
+  color:#1A73E8;margin-top:14px;
+  padding:8px 14px;border-radius:10px;
+  background:rgba(26,115,232,.08);
+  animation:msgPopIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+
+.hcp-settings-body > div:last-child button{
+  width:100%;padding:12px;border-radius:24px;border:none;
+  background:#1A73E8;color:#fff;
+  font-size:13.5px;font-weight:600;cursor:pointer;
+  font-family:inherit;margin-top:16px;letter-spacing:.1px;
+  transition:background .15s;
+}
+.hcp-settings-body > div:last-child button:hover{background:#1765CC}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACCESSIBILITY: respect reduced-motion preference
+   ═══════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.15s !important;
+    scroll-behavior:auto !important;
+  }
+  body::before,body::after{display:none}
+  .nb-card:hover .nb-icon{animation:none;transform:scale(1.08)}
+  .hero-title strong{animation:none;background:#1A73E8;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+}
+</style>
+<link rel="stylesheet" href="/static/hcptheme.css"></head>
+<body>
+<script>(function(){var t=localStorage.getItem("hcp_theme")||"light";if(["light","dark","midnight","ocean","sage"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);})()</script>
+
+<!-- TOP BAR -->
+{% set page_title = "Portal Home" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1 class="hero-title" id="greeting-hi">Good morning, <strong>{{ session.get('User_Name', 'User').split()[0] }}</strong></h1>
+    <p class="hero-sub" id="greeting-sub">HCP Wellness Portal · <span id="today-str"></span></p>
+  </div>
+
+  <!-- ── OPERATIONS ── -->
+  {% set role = session.get('User_Type','') %}
+
+  {# Show portal cards based on permitted pages — everyone who is logged in can see this page #}
+
+  <div class="section-head">
+    <div class="section-title">
+      <span class="section-dot" style="background:#1A73E8"></span>
+      Operations
+    </div>
+  </div>
+  <div class="notebook-grid">
+
+    {% if role in ['admin','RM_Store','rm_store','Rm_Store'] or 'production_initiater' in allowed_sections %}
+    <a class="nb-card teal" href="/production_initiater">
+      <div class="nb-cover"><span class="nb-icon">🏭</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Raw Material Store</div>
+        <div class="nb-title">Production Initiater</div>
+        <div class="nb-desc">Add batches, print sheets &amp; labels</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Production'] or 'production_dept' in allowed_sections %}
+    <a class="nb-card indigo" href="/production_dept">
+      <div class="nb-cover"><span class="nb-icon">⚙️</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Production</div>
+        <div class="nb-title">Production Department</div>
+        <div class="nb-desc">In-process logs, completed batches, TRS allocation</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase','Planning','planning'] or 'planning' in allowed_sections %}
+    <a class="nb-card cyan" href="/planning_dashboard">
+      <div class="nb-cover"><span class="nb-icon">📊</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Planning</div>
+        <div class="nb-title">Planning Dashboard</div>
+        <div class="nb-desc">Batch pipeline, dispensing, progress tracking</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','QC'] or (role or '')|lower == 'qc_common' or 'qc_dashboard' in allowed_sections %}
+    <a class="nb-card green" href="/qc_dashboard">
+      <div class="nb-cover"><span class="nb-icon">🧪</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Quality Control</div>
+        <div class="nb-title">QC Dashboard</div>
+        <div class="nb-desc">In-process checks, QC sampling records</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase','QC'] or 'qc_sampling' in allowed_sections %}
+    <a class="nb-card amber" href="/qc_sampling">
+      <div class="nb-cover"><span class="nb-icon">🔬</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Quality Control</div>
+        <div class="nb-title">QC Sampling</div>
+        <div class="nb-desc">Raw material TRS sampling records</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase'] or 'rd_sampling' in allowed_sections %}
+    <a class="nb-card purple" href="/rd_sampling">
+      <div class="nb-cover"><span class="nb-icon">🔭</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">R&amp;D</div>
+        <div class="nb-title">R&amp;D Sampling</div>
+        <div class="nb-desc">R&amp;D raw material sampling portal</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase'] or 'procurement' in allowed_sections %}
+    <a class="nb-card rose" href="/procurement">
+      <div class="nb-cover"><span class="nb-icon">📦</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Procurement</div>
+        <div class="nb-title">Procurement Dashboard</div>
+        <div class="nb-desc">Vendor orders, purchase tracking</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase'] or 'inventory_mgmt' in allowed_sections %}
+    <a class="nb-card indigo" href="/inventory_mgmt">
+      <div class="nb-cover"><span class="nb-icon">🗃️</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Inventory</div>
+        <div class="nb-title">Inventory Management</div>
+        <div class="nb-desc">RM · PM · FG items, brands &amp; suppliers</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase'] or 'canteen' in allowed_sections %}
+    <a class="nb-card teal" href="/canteen">
+      <div class="nb-cover"><span class="nb-icon">🍽️</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Canteen</div>
+        <div class="nb-title">Canteen Management</div>
+        <div class="nb-desc">Lunch tracking, payments, employee ledger</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Packing'] or 'packing' in allowed_sections %}
+    <a class="nb-card green" href="/packing">
+      <div class="nb-cover"><span class="nb-icon">📋</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Packing</div>
+        <div class="nb-title">Packing Entry</div>
+        <div class="nb-desc">Sample receipt log — date, brand, product, batch, MRP &amp; status</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase'] or 'invoice_checklist' in allowed_sections %}
+    <a class="nb-card amber" href="/static/invoice_checklist_print.html" target="_blank">
+      <div class="nb-cover"><span class="nb-icon">✅</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Purchase · QC</div>
+        <div class="nb-title">Invoice Document Checklist</div>
+        <div class="nb-desc">5-point verification — Cost/Kg, GST, Qty, PO No. &amp; Total</div>
+        <div class="nb-foot">
+          <span class="nb-badge print">Print Ready</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase','PM'] or 'pm_stock' in allowed_sections %}
+    <a class="nb-card cyan" href="/pm_stock">
+      <div class="nb-cover"><span class="nb-icon">📦</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Packaging Material</div>
+        <div class="nb-title">PM Stock</div>
+        <div class="nb-desc">Godown &amp; floor stock, inward, issue, dispatch, rejection</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Planning','planning'] or 'hcp_stock' in allowed_sections %}
+    <a class="nb-card teal" href="/hcp_stock/">
+      <div class="nb-cover"><span class="nb-icon">📦</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">HCP Stock</div>
+        <div class="nb-title">Stock Register</div>
+        <div class="nb-desc">Brands · inward · dispatch · wastage · closing stock</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+  </div><!-- /notebook-grid -->
+
+  {# ── Sections removed because all their KPIs are hidden ──────────────────
+       · Cash Management  (Transactions / Loan Entries / Scrap Hisab / Cash Mgmt System — all hidden)
+       · HR & Payroll     (Salary Calculation — hidden)
+     To restore: re-add the section-head + notebook-grid blocks here and
+     flip the relevant {% if false %} to its original condition. Original
+     conditions are listed in each hidden card's inline comment.
+  #}
+
+  <!-- ── MANAGEMENT & ADMIN ── -->
+  {% set _admin_section_keys = ['task_reminders','task_scheduler','lunch_coupons','manage_users','access_control','backup_manager'] %}
+  {% if role in ['admin','Purchase'] or (_admin_section_keys | select('in', allowed_sections) | list | length > 0) %}
+  <div class="section-head">
+    <div class="section-title">
+      <span class="section-dot" style="background:#7B1FA2"></span>
+      Management &amp; Admin
+    </div>
+  </div>
+  <div class="notebook-grid">
+
+    {% if role in ['admin','Purchase'] or 'task_reminders' in allowed_sections %}
+    <a class="nb-card amber" href="/task_reminders">
+      <div class="nb-cover"><span class="nb-icon">📌</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Tasks</div>
+        <div class="nb-title">Task Reminders</div>
+        <div class="nb-desc">Pending tasks, overdue alerts, push notifications</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role == 'admin' or 'task_scheduler' in allowed_sections %}
+    <a class="nb-card cyan" href="/task_scheduler">
+      <div class="nb-cover"><span class="nb-icon">📅</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Tasks</div>
+        <div class="nb-title">Task Scheduler</div>
+        <div class="nb-desc">Kanban board, dept-level task management</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role == 'admin' or 'lunch_coupons' in allowed_sections %}
+    <a class="nb-card indigo" href="/lunch_coupons">
+      <div class="nb-cover"><span class="nb-icon">🎫</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Canteen</div>
+        <div class="nb-title">Lunch Coupons</div>
+        <div class="nb-desc">Print and manage lunch coupon batches</div>
+        <div class="nb-foot">
+          <span></span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase'] or 'manage_users' in allowed_sections %}
+    <a class="nb-card purple" href="/manage_users">
+      <div class="nb-cover"><span class="nb-icon">👥</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Admin</div>
+        <div class="nb-title">Manage Users</div>
+        <div class="nb-desc">User accounts, roles, status management</div>
+        <div class="nb-foot">
+          <span class="nb-badge admin">Admin</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {# Access Control: admin-only modal opened from this KPI card.
+       Non-admins see the legacy link as a safety net so the old page is still
+       reachable if a non-admin somehow shows up here (route is admin-gated). #}
+    {% if is_admin %}
+    <a class="nb-card rose" href="javascript:void(0)" onclick="openIndexAccessControl(); return false;">
+      <div class="nb-cover"><span class="nb-icon">🔐</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Admin</div>
+        <div class="nb-title">Access Control</div>
+        <div class="nb-desc">Fine-grained page &amp; feature permissions</div>
+        <div class="nb-foot">
+          <span class="nb-badge admin">Admin</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% elif 'access_control' in allowed_sections %}
+    <a class="nb-card rose" href="/access_control">
+      <div class="nb-cover"><span class="nb-icon">🔐</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Admin</div>
+        <div class="nb-title">Access Control</div>
+        <div class="nb-desc">Fine-grained page &amp; feature permissions</div>
+        <div class="nb-foot">
+          <span class="nb-badge admin">Admin</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if role in ['admin','Purchase'] or 'backup_manager' in allowed_sections %}
+    <a class="nb-card teal" href="/backup">
+      <div class="nb-cover"><span class="nb-icon">💾</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Admin</div>
+        <div class="nb-title">Backup Manager</div>
+        <div class="nb-desc">DB backups, schedule, restore</div>
+        <div class="nb-foot">
+          <span class="nb-badge admin">Admin</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+    {# ── Device Access Control — admin only ─────────────────────── #}
+    {% if is_admin %}
+    <a class="nb-card cyan" href="javascript:void(0)" onclick="openDeviceAccess(); return false;">
+      <div class="nb-cover">
+        <span class="nb-icon">🛡️</span>
+        {% if device_pending_count and device_pending_count > 0 %}
+        <span style="position:absolute;top:10px;right:10px;background:#e11d48;color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;z-index:2;">{{ device_pending_count }} pending</span>
+        {% endif %}
+      </div>
+      <div class="nb-body">
+        <div class="nb-meta">Admin</div>
+        <div class="nb-title">Device Access Control</div>
+        <div class="nb-desc">
+          {% if device_check_enabled %}
+            {{ device_approved_count or 0 }} approved · {{ device_pending_count or 0 }} pending
+          {% else %}
+            <span style="color:#e11d48;font-weight:700;">⚠ Currently DISABLED</span>
+          {% endif %}
+        </div>
+        <div class="nb-foot">
+          <span class="nb-badge admin">Admin</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+</div><!-- /main -->
+
+<script>
+// ── Theme handled by hcptheme.css + hcpApplyTheme() ──
+
+// ── Greeting + Date (client-side) ────────────────────────────────────────────
+(function() {
+  const now = new Date();
+  const h = now.getHours();
+  const greetWord = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+  const el = document.getElementById('greeting-hi');
+  if (el) el.innerHTML = el.innerHTML.replace('Good morning', 'Good ' + greetWord);
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateStr = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  const ds = document.getElementById('today-str');
+  if (ds) ds.textContent = dateStr;
+})();
+
+// ── Stagger card animation on initial load ───────────────────────────────────
+document.querySelectorAll('.nb-card').forEach((card, i) => {
+  card.style.animationDelay = (i * 0.045) + "s";
+});
+
+// ── Scroll-triggered reveal for cards below the fold ────────────────────────
+// Cards that aren't initially visible get re-animated as they scroll in
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  const cards = document.querySelectorAll('.nb-card');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0) scale(1)';
+      }
+    });
+  }, {threshold:0.05, rootMargin:'0px 0px -40px 0px'});
+  // Only observe cards beyond the initial viewport
+  cards.forEach(c => {
+    const r = c.getBoundingClientRect();
+    if (r.top > window.innerHeight) {
+      c.style.opacity = '0';
+      c.style.transform = 'translateY(20px) scale(.97)';
+      c.style.transition = 'opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)';
+      c.style.animation = 'none';
+      observer.observe(c);
+    }
+  });
+})();
+
+// ── Click ripple effect on cards ────────────────────────────────────────────
+document.querySelectorAll('.nb-card').forEach(card => {
+  card.addEventListener('click', function(e){
+    // Don't block navigation — just paint a ripple before browser navigates
+    const rect = this.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const ripple = document.createElement('span');
+    ripple.style.cssText = 'position:absolute;left:'+x+'px;top:'+y+'px;width:8px;height:8px;border-radius:50%;background:rgba(26,115,232,.4);transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:5;transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .6s;';
+    this.appendChild(ripple);
+    requestAnimationFrame(() => {
+      ripple.style.transform = 'translate(-50%,-50%) scale(60)';
+      ripple.style.opacity = '0';
+    });
+    setTimeout(() => ripple.remove(), 600);
+  });
+});
+
+// ── Parallax tilt on cards (subtle) ──────────────────────────────────────────
+// Disabled on touch devices and when reduced-motion preference is set
+(function(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia('(hover: none)').matches) return;
+  document.querySelectorAll('.nb-card').forEach(card => {
+    card.addEventListener('mousemove', function(e){
+      const r = this.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      this.style.transform = 'translateY(-5px) perspective(800px) rotateY('+(x*4)+'deg) rotateX('+(-y*4)+'deg)';
+    });
+    card.addEventListener('mouseleave', function(){
+      this.style.transform = '';
+    });
+  });
+})();
+
+</script>
+<script>
+/* ── HCP Theme Engine (CSS-driven via hcptheme.css) ── */
+function hcpApplyTheme(t) {
+    var valid = ['light','dark','midnight','ocean','sage'];
+    if (valid.indexOf(t) === -1) t = 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('hcp_theme', t);
+    document.querySelectorAll('.hcp-swatch').forEach(function(s){
+        s.classList.toggle('active', s.dataset.t === t);
+    });
+    var ICONS = {light:'🌤',dark:'🌙',midnight:'✨',ocean:'🌊',sage:'🌿'};
+    var btn = document.querySelector('.theme-btn');
+    if (btn) btn.textContent = ICONS[t] || '🎨';
+    var msg = document.getElementById('hcp-applied-msg');
+    if (msg){msg.style.display='block';clearTimeout(window._hcpT);window._hcpT=setTimeout(function(){msg.style.display='none';},2000);}
+}
+window.hcpApplyTheme = hcpApplyTheme;
+window.hcpOpenSettings = function(){
+    document.getElementById('hcp-settings-overlay').classList.add('open');
+    var t = localStorage.getItem('hcp_theme') || 'light';
+    document.querySelectorAll('.hcp-swatch').forEach(function(s){ s.classList.toggle('active', s.dataset.t === t); });
+    var msg = document.getElementById('hcp-applied-msg'); if(msg) msg.style.display='none';
+};
+window.hcpCloseSettings = function(){document.getElementById('hcp-settings-overlay').classList.remove('open');};
+document.addEventListener('keydown', function(e){
+    if(e.key==='Escape') hcpCloseSettings();
+    if((e.ctrlKey||e.metaKey)&&e.key===','){e.preventDefault();hcpOpenSettings();}
+});
+hcpApplyTheme(localStorage.getItem('hcp_theme') || 'light');
+/* ── END HCP Theme Engine ── */
+</script>
+<!-- HCP Multi-Theme Settings -->
+<div id="hcp-settings-overlay" class="hcp-modal-bg" onclick="if(event.target===this)hcpCloseSettings()">
+  <div id="hcp-settings-panel">
+    <div class="hcp-settings-head">
+      <h3>⚙️ Appearance</h3>
+      <button class="hcp-settings-close" onclick="hcpCloseSettings()">✕</button>
+    </div>
+    <div class="hcp-settings-body">
+      <div class="hcp-settings-lbl">Theme — click a swatch to apply instantly</div>
+      <div class="hcp-theme-grid">
+        <div class="hcp-swatch" data-t="light" onclick="hcpApplyTheme('light')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#FAF9F5,#fff,#1A73E8)"></div><div class="hcp-swatch-name">Light</div><div class="hcp-swatch-tag">Notebook</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="dark" onclick="hcpApplyTheme('dark')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0a0e1a,#151c2e,#00c9b1)"></div><div class="hcp-swatch-name">Dark</div><div class="hcp-swatch-tag">Easy on eyes</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="midnight" onclick="hcpApplyTheme('midnight')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#000000,#0d0d1f,#a78bfa)"></div><div class="hcp-swatch-name">Midnight</div><div class="hcp-swatch-tag">Deep purple</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="ocean" onclick="hcpApplyTheme('ocean')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#001e3c,#003366,#38bdf8)"></div><div class="hcp-swatch-name">Ocean</div><div class="hcp-swatch-tag">Deep blue</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="sage" onclick="hcpApplyTheme('sage')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#f0f7f4,#e3ede8,#059669)"></div><div class="hcp-swatch-name">Sage</div><div class="hcp-swatch-tag">Warm green</div><div class="hcp-active-dot"></div></div>
+      </div>
+      <div id="hcp-applied-msg" style="display:none;text-align:center;font-size:11.5px;font-weight:500;color:#1A73E8;margin-top:12px;">✓ Theme applied</div>
+      <div style="margin-top:16px;text-align:right"><button onclick="hcpCloseSettings()" style="padding:11px 28px;border-radius:24px;border:none;background:#1A73E8;color:#fff;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;">Done</button></div>
+    </div>
+  </div>
+</div>
+{% if is_admin %}
+<!-- ═════════════════════════════════════════════════════════════════════════
+     DEVICE ACCESS CONTROL MODAL (admin only)
+     Opened from the "Device Access Control" KPI card on the dashboard.
+     ═════════════════════════════════════════════════════════════════════════ -->
+<style>
+.dac-bg{display:none;position:fixed;inset:0;z-index:5100;background:rgba(15,23,42,.55);align-items:flex-start;justify-content:center;padding:24px 18px;overflow-y:auto;}
+.dac-bg.open{display:flex;}
+.dac-box{background:#fff;border-radius:14px;width:920px;max-width:100%;max-height:calc(100vh - 48px);margin:auto 0;display:flex;flex-direction:column;min-height:0;box-shadow:0 24px 60px rgba(0,0,0,.18);font-family:'Plus Jakarta Sans','Inter',sans-serif;}
+.dac-h{display:flex;align-items:center;gap:11px;padding:16px 22px;border-bottom:1px solid #e5e7eb;flex-shrink:0;}
+.dac-h .ic{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#06b6d4,#0891b2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;}
+.dac-h h3{margin:0;font-size:14.5px;font-weight:800;letter-spacing:-.2px;}
+.dac-h p{margin:0;font-size:11.5px;color:#64748b;}
+.dac-h .x{margin-left:auto;cursor:pointer;background:none;border:none;color:#64748b;font-size:22px;line-height:1;padding:4px 8px;}
+.dac-h .x:hover{color:#0f172a;}
+.dac-tabs{display:flex;gap:2px;padding:0 20px;border-bottom:1px solid #e5e7eb;flex-shrink:0;background:#fafafa;overflow-x:auto;}
+.dac-tab{background:none;border:none;padding:13px 16px;font-size:12.5px;font-weight:700;color:#64748b;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap;}
+.dac-tab:hover{color:#0f172a;}
+.dac-tab.active{color:#0891b2;border-bottom-color:#0891b2;}
+.dac-tab .badge{display:inline-block;background:#e11d48;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:999px;margin-left:5px;vertical-align:middle;}
+.dac-body{padding:18px 22px;overflow-y:auto;flex:1 1 auto;min-height:0;-webkit-overflow-scrolling:touch;}
+.dac-tab-pane{display:none;}
+.dac-tab-pane.active{display:block;}
+.dac-empty{text-align:center;color:#94a3b8;padding:40px 0;font-size:13px;}
+.dac-bulk-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.dac-bulk-bar .count{font-size:12.5px;color:#64748b;font-weight:600;}
+.dac-btn{padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
+.dac-btn-primary{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border-color:transparent;}
+.dac-btn-primary:hover{filter:brightness(1.06);}
+.dac-btn-danger{background:#fff;color:#dc2626;border-color:#e5e7eb;}
+.dac-btn-danger:hover{background:#fef2f2;border-color:#dc2626;}
+.dac-btn-ghost{background:#fff;color:#475569;border-color:#e5e7eb;}
+.dac-btn-ghost:hover{background:#f3f4f6;}
+.dac-btn:disabled{opacity:.45;cursor:not-allowed;}
+.dac-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.dac-tbl th{text-align:left;padding:10px 8px;font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;border-bottom:1.5px solid #e5e7eb;}
+.dac-tbl td{padding:11px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.dac-tbl tr:hover td{background:#fafbfc;}
+.dac-tbl .chk{width:18px;height:18px;cursor:pointer;}
+.dac-tbl .kind-ic{display:inline-flex;width:26px;height:26px;border-radius:50%;background:#e0f2fe;color:#0369a1;align-items:center;justify-content:center;font-size:13px;margin-right:6px;}
+.dac-tbl .kind-mobile{background:#fef3c7;color:#a16207;}
+.dac-tbl .kind-tablet{background:#ede9fe;color:#6d28d9;}
+.dac-tbl .user{font-weight:700;color:#0f172a;}
+.dac-tbl .meta{font-size:11px;color:#64748b;}
+.dac-tbl .mac-input{width:130px;padding:5px 8px;font-size:11.5px;font-family:'SFMono-Regular',monospace;border:1px solid #e5e7eb;border-radius:6px;outline:none;}
+.dac-tbl .mac-input:focus{border-color:#06b6d4;}
+.dac-stable{font-family:'SFMono-Regular',monospace;font-size:11px;color:#64748b;}
+.dac-setting-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid #f1f5f9;}
+.dac-setting-row:last-child{border-bottom:none;}
+.dac-setting-row .info{flex:1;}
+.dac-setting-row .info h4{margin:0 0 4px;font-size:13.5px;font-weight:700;color:#0f172a;}
+.dac-setting-row .info p{margin:0;font-size:12px;color:#64748b;line-height:1.45;}
+.dac-toggle{position:relative;width:44px;height:24px;flex-shrink:0;margin-top:4px;}
+.dac-toggle input{opacity:0;width:0;height:0;position:absolute;}
+.dac-toggle .track{position:absolute;inset:0;border-radius:24px;background:#cbd5e1;transition:.2s;cursor:pointer;}
+.dac-toggle .track::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.dac-toggle input:checked + .track{background:#06b6d4;}
+.dac-toggle input:checked + .track::before{transform:translateX(20px);}
+.dac-bypass-list{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px;}
+.dac-bypass-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:#fef3c7;border:1.5px solid #fde68a;border-radius:999px;font-size:12px;font-weight:600;color:#92400e;}
+.dac-bypass-chip button{background:none;border:none;cursor:pointer;color:#92400e;padding:0;font-size:14px;line-height:1;}
+.dac-bypass-chip button:hover{color:#dc2626;}
+.dac-bypass-add{display:flex;gap:6px;margin-top:8px;}
+.dac-bypass-add input{flex:1;padding:7px 11px;font-size:12.5px;border:1.5px solid #e5e7eb;border-radius:8px;outline:none;font-family:inherit;}
+.dac-bypass-add input:focus{border-color:#06b6d4;}
+.dac-audit{margin-top:14px;max-height:240px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:9px;background:#fafafa;}
+.dac-audit-row{padding:8px 12px;font-size:11.5px;border-bottom:1px solid #f1f5f9;display:flex;gap:9px;flex-wrap:wrap;}
+.dac-audit-row:last-child{border-bottom:none;}
+.dac-audit-row .ts{color:#94a3b8;flex:0 0 130px;font-family:'SFMono-Regular',monospace;font-size:10.5px;}
+.dac-audit-row .act{font-weight:700;color:#0f172a;flex:0 0 110px;}
+.dac-audit-row .det{color:#475569;flex:1;}
+.dac-codes-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:6000;padding:20px;}
+.dac-codes-modal.open{display:flex;}
+.dac-codes-box{background:#fff;border-radius:14px;padding:24px 28px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.18);}
+.dac-codes-box h3{margin:0 0 6px;font-size:15px;font-weight:800;color:#0f172a;}
+.dac-codes-box .warn{font-size:12.5px;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:9px 12px;border-radius:9px;margin-bottom:14px;line-height:1.45;}
+.dac-codes-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
+.dac-codes-list li{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid #d1fae5;background:#f0fdf4;border-radius:9px;font-size:12.5px;}
+.dac-codes-list .u{flex:1;font-weight:700;color:#0f172a;}
+.dac-codes-list .c{font-family:'SFMono-Regular',monospace;font-weight:700;color:#0f766e;}
+.dac-codes-list .copy{background:#fff;border:1.5px solid #d1fae5;color:#0f766e;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+.dac-confirm{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:6100;padding:20px;}
+.dac-confirm.open{display:flex;}
+.dac-confirm-box{background:#fff;border-radius:14px;padding:22px 26px;max-width:480px;width:100%;}
+.dac-confirm-box h3{margin:0 0 6px;font-size:14.5px;font-weight:800;color:#0f172a;}
+.dac-confirm-box p{font-size:12.5px;color:#475569;margin:0 0 12px;line-height:1.5;}
+.dac-confirm-box .phrase{background:#f1f5f9;font-family:'SFMono-Regular',monospace;font-size:11.5px;padding:6px 9px;border-radius:6px;color:#0f172a;margin-bottom:8px;}
+.dac-confirm-box input{width:100%;padding:9px 12px;font-size:13px;border:1.5px solid #e5e7eb;border-radius:8px;outline:none;font-family:inherit;margin-bottom:14px;}
+.dac-confirm-box input:focus{border-color:#06b6d4;}
+.dac-confirm-box .row{display:flex;gap:8px;justify-content:flex-end;}
+.dac-toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:6500;}
+.dac-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.dac-toast.ok{background:#0f766e;}
+.dac-toast.err{background:#dc2626;}
+/* ── Mobile (≤700px) ─────────────────────────────────────────────────────── */
+@media (max-width:700px){
+  .dac-bg{padding:0;}
+  .dac-box{border-radius:0;width:100vw;max-width:100vw;height:100vh;max-height:100vh;}
+  .dac-h{padding:12px 14px;gap:9px;}
+  .dac-h .ic{width:34px;height:34px;border-radius:9px;font-size:15px;}
+  .dac-h h3{font-size:13.5px;}
+  .dac-h p{font-size:10.5px;}
+  .dac-h .x{font-size:24px;padding:6px 10px;}
+  .dac-tabs{padding:0 8px;gap:0;}
+  .dac-tab{padding:11px 10px;font-size:11.5px;}
+  .dac-tab .badge{font-size:9.5px;padding:1px 6px;margin-left:3px;}
+  .dac-body{padding:14px 12px;}
+  .dac-empty{padding:30px 0;font-size:12.5px;}
+
+  /* Bulk bar: stack vertically with full-width controls */
+  .dac-bulk-bar{flex-direction:column;align-items:stretch;gap:8px;margin-bottom:12px;}
+  .dac-bulk-bar > *{width:100%;justify-content:center;text-align:center;}
+  .dac-bulk-bar > input[type=checkbox]{width:18px;align-self:flex-start;display:none;} /* hide top "select all" — per-card check is enough */
+  .dac-bulk-bar .count{order:-1;padding:6px 10px;background:#f1f5f9;border-radius:8px;text-align:center;}
+  .dac-btn{padding:11px 14px;font-size:12.5px;justify-content:center;}
+
+  /* Device tables → stacked cards. Each <tr> becomes a card; <td> becomes a labelled row.
+     Far more usable than horizontal scroll on a 5-6 column table. */
+  .dac-tbl, .dac-tbl thead, .dac-tbl tbody, .dac-tbl tr, .dac-tbl td{display:block;width:100%;}
+  .dac-tbl thead{display:none;}
+  .dac-tbl tr{
+    border:1px solid #e5e7eb;border-radius:11px;padding:10px 12px;margin-bottom:9px;
+    background:#fff;position:relative;
+  }
+  .dac-tbl tr:hover td{background:transparent;}
+  .dac-tbl td{
+    border:none;padding:5px 0;display:flex;align-items:center;justify-content:flex-start;
+    gap:8px;font-size:12.5px;
+  }
+  .dac-tbl td::before{
+    content:attr(data-label);font-size:10px;font-weight:700;color:#94a3b8;
+    text-transform:uppercase;letter-spacing:.4px;min-width:62px;flex-shrink:0;
+  }
+  .dac-tbl td:first-child{padding:5px 0;}
+  .dac-tbl .chk{width:20px;height:20px;}
+  /* Float ONLY the checkbox <td> top-right of the card — not every first cell.
+     The audit log has no checkbox column, so we don't want its first cell floated. */
+  .dac-tbl td.dac-row-pick{position:absolute;top:10px;right:10px;padding:0;width:auto;}
+  .dac-tbl td.dac-row-pick::before{display:none;}
+  .dac-tbl .mac-input{width:100%;font-size:13px;padding:8px 10px;}
+  .dac-tbl .user{font-size:13px;}
+  .dac-tbl .meta{font-size:11px;}
+  .dac-tbl .kind-ic{width:24px;height:24px;font-size:12px;margin-right:4px;}
+
+  /* Settings rows: toggle wraps below the description (not pushed to the side awkwardly) */
+  .dac-setting-row{flex-direction:column;align-items:stretch;gap:9px;padding:14px 0;}
+  .dac-setting-row .info h4{font-size:13px;}
+  .dac-setting-row .info p{font-size:11.5px;}
+  .dac-toggle{align-self:flex-end;margin-top:-30px;}
+  /* Setting controls (the number-input + Save row inside info) */
+  .dac-setting-row .info > div[style*="display:flex"]{flex-wrap:wrap;}
+  .dac-setting-row .info input[type=number]{flex:1 0 100%;}
+  /* Bypass chips */
+  .dac-bypass-add input{font-size:13px;padding:9px 11px;}
+
+  /* Audit log filter row: each control full-width */
+  #dacPane-audit .dac-bulk-bar{gap:7px;}
+  #dacPane-audit .dac-bulk-bar select,
+  #dacPane-audit .dac-bulk-bar input{width:100%;padding:9px 11px;font-size:13px;box-sizing:border-box;}
+  #dacPane-audit .dac-bulk-bar > span{display:none;} /* hide the "to" label on stacked layout */
+
+  /* Recovery codes modal — fill the screen */
+  .dac-codes-box{padding:18px 16px;border-radius:12px;max-width:100%;}
+  .dac-codes-box h3{font-size:13.5px;}
+  .dac-codes-list li{flex-wrap:wrap;gap:6px;font-size:12px;}
+  .dac-codes-list .c{font-size:13px;}
+
+  /* Confirmation modal */
+  .dac-confirm-box{padding:18px 16px;border-radius:12px;}
+  .dac-confirm-box h3{font-size:13.5px;}
+  .dac-confirm-box input{font-size:14px;}
+
+  /* Toast */
+  .dac-toast{bottom:18px;font-size:12px;padding:9px 14px;max-width:88vw;}
+
+  /* Audit summary pills wrap nicely */
+  #dacAuditSummary{gap:6px;font-size:11px;}
+  #dacAuditSummary span{padding:4px 9px;}
+}
+
+/* ── Small phones (≤480px) ───────────────────────────────────────────────── */
+@media (max-width:480px){
+  .dac-h h3{font-size:13px;}
+  .dac-h p{display:none;}              /* subtitle wastes a line on tiny screens */
+  .dac-tab{padding:10px 8px;font-size:10.5px;letter-spacing:-.2px;}
+  .dac-body{padding:12px 10px;}
+  .dac-tbl td{font-size:12px;}
+  .dac-tbl td::before{min-width:54px;font-size:9.5px;}
+}
+
+/* ── Tiny phones (≤380px) ────────────────────────────────────────────────── */
+@media (max-width:380px){
+  .dac-tab{padding:10px 6px;font-size:10px;}
+  .dac-tab .badge{display:none;}       /* badge eats space on tiny tabs */
+}
+</style>
+
+<div class="dac-bg hcp-modal-bg" id="dacBg" onclick="if(event.target===this)closeDeviceAccess()">
+  <div class="dac-box">
+    <div class="dac-h">
+      <div class="ic">🛡️</div>
+      <div style="flex:1;"><h3>Device Access Control</h3><p>Approve devices that can sign in to the portal</p></div>
+      <button class="x" onclick="closeDeviceAccess()">×</button>
+    </div>
+    <div class="dac-tabs">
+      <button class="dac-tab active" data-tab="pending" onclick="dacSwitchTab('pending')">Pending <span class="badge" id="dacPendingBadge" style="display:none;">0</span></button>
+      <button class="dac-tab" data-tab="approved" onclick="dacSwitchTab('approved')">Approved</button>
+      <button class="dac-tab" data-tab="revoked"  onclick="dacSwitchTab('revoked')">Revoked</button>
+      <button class="dac-tab" data-tab="audit"    onclick="dacSwitchTab('audit'); dacLoadAudit();">Login log</button>
+      <button class="dac-tab" data-tab="settings" onclick="dacSwitchTab('settings')">Settings</button>
+    </div>
+    <div class="dac-body">
+      <div class="dac-tab-pane active" id="dacPane-pending">
+        <div class="dac-bulk-bar">
+          <input type="checkbox" id="dacPendingAll" onchange="dacToggleAll('pending')" style="width:18px;height:18px;cursor:pointer;">
+          <span class="count" id="dacPendingCount">No selection</span>
+          <button class="dac-btn dac-btn-primary" id="dacBtnApprove" onclick="dacBulkApprove()" disabled>✓ Approve selected</button>
+          <button class="dac-btn dac-btn-danger" id="dacBtnReject" onclick="dacBulkRevoke('pending')" disabled>✗ Reject</button>
+          <button class="dac-btn dac-btn-ghost" onclick="dacLoadDevices('pending')" style="margin-left:auto;">↻ Refresh</button>
+        </div>
+        <div id="dacPendingList"><div class="dac-empty">Loading…</div></div>
+      </div>
+      <div class="dac-tab-pane" id="dacPane-approved">
+        <div class="dac-bulk-bar">
+          <input type="checkbox" id="dacApprovedAll" onchange="dacToggleAll('approved')" style="width:18px;height:18px;cursor:pointer;">
+          <span class="count" id="dacApprovedCount">No selection</span>
+          <button class="dac-btn dac-btn-danger" id="dacBtnRevoke" onclick="dacBulkRevoke('approved')" disabled>✗ Revoke selected</button>
+          <button class="dac-btn dac-btn-ghost" onclick="dacLoadDevices('approved')" style="margin-left:auto;">↻ Refresh</button>
+        </div>
+        <div id="dacApprovedList"><div class="dac-empty">Loading…</div></div>
+      </div>
+      <div class="dac-tab-pane" id="dacPane-revoked">
+        <div class="dac-bulk-bar">
+          <input type="checkbox" id="dacRevokedAll" onchange="dacToggleAll('revoked')" style="width:18px;height:18px;cursor:pointer;">
+          <span class="count" id="dacRevokedCount">No selection</span>
+          <button class="dac-btn dac-btn-primary" id="dacBtnReenable" onclick="dacBulkApprove('revoked')" disabled>↻ Re-enable selected</button>
+          <button class="dac-btn dac-btn-ghost" onclick="dacLoadDevices('revoked')" style="margin-left:auto;">↻ Refresh</button>
+        </div>
+        <div id="dacRevokedList"><div class="dac-empty">Loading…</div></div>
+      </div>
+      <div class="dac-tab-pane" id="dacPane-audit">
+        <div class="dac-bulk-bar" style="gap:7px;">
+          <select id="dacAuditPeriod" onchange="dacAuditApplyPeriod()" style="padding:7px 10px;font-size:12.5px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;background:#fff;">
+            <option value="month">Current month</option>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="lastmonth">Last month</option>
+            <option value="custom">Custom range</option>
+          </select>
+          <input type="date" id="dacAuditFrom" style="padding:6px 9px;font-size:12.5px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;">
+          <span style="font-size:11px;color:#94a3b8;">to</span>
+          <input type="date" id="dacAuditTo" style="padding:6px 9px;font-size:12.5px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;">
+          <input type="text" id="dacAuditUser" placeholder="Filter by username" style="padding:7px 11px;font-size:12.5px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;width:160px;">
+          <select id="dacAuditEvent" style="padding:7px 10px;font-size:12.5px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;background:#fff;">
+            <option value="all">All events</option>
+            <option value="login_success">Successful logins</option>
+            <option value="login_fail">Failed logins</option>
+            <option value="logout">Logouts</option>
+          </select>
+          <button class="dac-btn dac-btn-primary" onclick="dacLoadAudit()">↻ Refresh</button>
+          <button class="dac-btn dac-btn-ghost" onclick="dacExportAuditCSV()">↓ CSV</button>
+        </div>
+        <div id="dacAuditSummary" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:11.5px;"></div>
+        <div id="dacAuditList"><div class="dac-empty">Pick a period and click Refresh.</div></div>
+      </div>
+      <div class="dac-tab-pane" id="dacPane-settings">
+        <div id="dacSettingsBody"><div class="dac-empty">Loading settings…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dac-codes-modal hcp-modal-bg" id="dacCodesModal" onclick="if(event.target===this)dacCloseCodes()">
+  <div class="dac-codes-box">
+    <h3>Recovery codes — shown once</h3>
+    <div class="warn">⚠ These codes are shown only once. Copy and share with each user so they can self-recover if they ever lose access from their device.</div>
+    <ul class="dac-codes-list" id="dacCodesList"></ul>
+    <div style="text-align:right;margin-top:14px;">
+      <button class="dac-btn dac-btn-primary" onclick="dacCloseCodes()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="dac-confirm hcp-modal-bg" id="dacConfirm" onclick="if(event.target===this)dacConfirmClose()">
+  <div class="dac-confirm-box">
+    <h3>Confirm sensitive change</h3>
+    <p>This change affects device security. To proceed, type the confirmation phrase exactly:</p>
+    <div class="phrase">I understand this bypasses device security</div>
+    <input type="text" id="dacConfirmInput" placeholder="Type the phrase here" autocomplete="off">
+    <div class="row">
+      <button class="dac-btn dac-btn-ghost" onclick="dacConfirmClose()">Cancel</button>
+      <button class="dac-btn dac-btn-primary" onclick="dacConfirmProceed()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="dac-toast" id="dacToast"></div>
+
+<script>
+const DAC_PHRASE = 'I understand this bypasses device security';
+let dacState = { tab:'pending', lists:{pending:[],approved:[],revoked:[]}, settings:null, pendingConfirm:null, injectConfirmation:null };
+
+function dacToast(m, kind){
+  const t = document.getElementById('dacToast');
+  t.textContent = m;
+  t.className = 'dac-toast show ' + (kind || '');
+  clearTimeout(t._t); t._t = setTimeout(()=>{ t.className = 'dac-toast ' + (kind || ''); }, 2800);
+}
+function openDeviceAccess(){
+  document.getElementById('dacBg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  dacLoadDevices('pending'); dacLoadDevices('approved'); dacLoadDevices('revoked'); dacLoadSettings();
+}
+function closeDeviceAccess(){
+  document.getElementById('dacBg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function dacSwitchTab(name){
+  dacState.tab = name;
+  document.querySelectorAll('.dac-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.dac-tab-pane').forEach(p => p.classList.toggle('active', p.id === 'dacPane-' + name));
+}
+async function dacLoadDevices(status){
+  const cap = status[0].toUpperCase() + status.slice(1);
+  const listDiv = document.getElementById('dac' + cap + 'List');
+  listDiv.innerHTML = '<div class="dac-empty">Loading…</div>';
+  try {
+    const res = await fetch('/api/admin/devices?status=' + encodeURIComponent(status), {cache:'no-store'});
+    const d = await res.json();
+    if (d.status !== 'ok') { listDiv.innerHTML = '<div class="dac-empty">'+(d.message || 'Error')+'</div>'; return; }
+    dacState.lists[status] = d.items || [];
+    dacRenderList(status);
+    if (status === 'pending') {
+      const n = (d.items || []).length;
+      const badge = document.getElementById('dacPendingBadge');
+      badge.style.display = n > 0 ? 'inline-block' : 'none';
+      badge.textContent = n;
+    }
+  } catch (e) { listDiv.innerHTML = '<div class="dac-empty">Network error</div>'; }
+}
+function dacRenderList(status){
+  const items = dacState.lists[status] || [];
+  const cap = status[0].toUpperCase() + status.slice(1);
+  const listDiv = document.getElementById('dac' + cap + 'List');
+  if (!items.length) { listDiv.innerHTML = '<div class="dac-empty">No devices.</div>'; return; }
+  const rows = items.map(it => {
+    const kindIc = it.kind === 'mobile' ? '📱' : it.kind === 'tablet' ? '💻' : '🖥️';
+    const kindCls = 'kind-' + (it.kind || 'desktop');
+    const meta = [it.browser, it.os].filter(Boolean).join(' · ') || '—';
+    const ip = it.ip_address || '—';
+    const seen = it.last_seen_at || it.approved_at || it.requested_at || '—';
+    const macField = status !== 'revoked'
+      ? '<input type="text" class="mac-input" value="'+(it.mac_label||'').replace(/"/g,'&quot;')+'" placeholder="MAC label (optional)" onblur="dacSaveLabel('+it.id+', this.value)">'
+      : '<span class="dac-stable">'+(it.mac_label||'—')+'</span>';
+    return '<tr>'+
+      '<td class="dac-row-pick"><input type="checkbox" class="chk dac-row-chk" data-status="'+status+'" data-id="'+it.id+'" onchange="dacUpdateSelection(\''+status+'\')"></td>'+
+      '<td data-label="Type"><span class="kind-ic '+kindCls+'">'+kindIc+'</span><span class="meta" style="text-transform:capitalize;">'+(it.kind||'desktop')+'</span></td>'+
+      '<td data-label="User"><div><div class="user">'+(it.username||'').replace(/</g,'&lt;')+'</div><div class="meta">'+meta+'</div></div></td>'+
+      '<td data-label="Device"><div><span class="dac-stable">'+(it.device_id_short || '').replace(/</g,'&lt;')+'</span><div class="meta">'+ip+'</div></div></td>'+
+      '<td data-label="MAC">'+macField+'</td>'+
+      '<td data-label="Last seen"><div class="meta">'+seen+'</div></td></tr>';
+  }).join('');
+  listDiv.innerHTML = '<table class="dac-tbl"><thead><tr><th style="width:36px;"></th><th style="width:40px;"></th><th>User</th><th>Device ID / IP</th><th>MAC label</th><th>Last activity</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  dacUpdateSelection(status);
+}
+function dacToggleAll(status){
+  const cap = status[0].toUpperCase() + status.slice(1);
+  const allChk = document.getElementById('dac' + cap + 'All');
+  document.querySelectorAll('.dac-row-chk[data-status="'+status+'"]').forEach(c => c.checked = allChk.checked);
+  dacUpdateSelection(status);
+}
+function dacSelectedIds(status){
+  return Array.from(document.querySelectorAll('.dac-row-chk[data-status="'+status+'"]:checked')).map(c => parseInt(c.dataset.id, 10));
+}
+function dacUpdateSelection(status){
+  const ids = dacSelectedIds(status);
+  const cap = status[0].toUpperCase() + status.slice(1);
+  const countEl = document.getElementById('dac' + cap + 'Count');
+  if (countEl) countEl.textContent = ids.length ? (ids.length + ' selected') : 'No selection';
+  if (status === 'pending') { document.getElementById('dacBtnApprove').disabled = !ids.length; document.getElementById('dacBtnReject').disabled = !ids.length; }
+  else if (status === 'approved') { document.getElementById('dacBtnRevoke').disabled = !ids.length; }
+  else if (status === 'revoked') { document.getElementById('dacBtnReenable').disabled = !ids.length; }
+}
+async function dacBulkApprove(fromTab){
+  const tab = fromTab || 'pending';
+  const ids = dacSelectedIds(tab);
+  if (!ids.length) return;
+  try {
+    const res = await fetch('/api/admin/devices/approve', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ids})});
+    const d = await res.json();
+    if (res.ok && d.status === 'ok') {
+      dacToast(d.message || 'Approved', 'ok');
+      if (d.approved && d.approved.length) dacShowCodes(d.approved);
+      dacLoadDevices('pending'); dacLoadDevices('approved'); dacLoadDevices('revoked');
+    } else { dacToast(d.message || 'Approve failed', 'err'); }
+  } catch (e) { dacToast('Network error', 'err'); }
+}
+async function dacBulkRevoke(tab){
+  const ids = dacSelectedIds(tab);
+  if (!ids.length) return;
+  if (!confirm('Revoke ' + ids.length + ' device(s)? Affected users will need to re-register.')) return;
+  try {
+    const res = await fetch('/api/admin/devices/revoke', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ids})});
+    const d = await res.json();
+    if (res.ok && d.status === 'ok') {
+      dacToast(d.message || 'Revoked', 'ok');
+      dacLoadDevices('pending'); dacLoadDevices('approved'); dacLoadDevices('revoked');
+    } else { dacToast(d.message || 'Revoke failed', 'err'); }
+  } catch (e) { dacToast('Network error', 'err'); }
+}
+async function dacSaveLabel(id, value){
+  try { await fetch('/api/admin/devices/' + id, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mac_label: value})}); } catch(e){}
+}
+function dacShowCodes(items){
+  const list = document.getElementById('dacCodesList');
+  list.innerHTML = items.map(it => '<li>'+
+    '<span class="u">'+(it.username||'').replace(/</g,'&lt;')+' <span style="color:#94a3b8;font-weight:500;font-size:11px;">('+(it.device_id_short||'')+')</span></span>'+
+    '<span class="c">'+it.recovery_code+'</span>'+
+    '<button class="copy" onclick="dacCopyCode(\''+it.recovery_code+'\', this)">Copy</button></li>').join('');
+  document.getElementById('dacCodesModal').classList.add('open');
+}
+function dacCloseCodes(){ document.getElementById('dacCodesModal').classList.remove('open'); }
+function dacCopyCode(code, btn){
+  navigator.clipboard.writeText(code).then(()=>{ const orig = btn.textContent; btn.textContent = '✓'; setTimeout(()=>btn.textContent = orig, 1200); });
+}
+async function dacLoadSettings(){
+  const body = document.getElementById('dacSettingsBody');
+  body.innerHTML = '<div class="dac-empty">Loading settings…</div>';
+  try {
+    const res = await fetch('/api/admin/device-settings', {cache:'no-store'});
+    const d = await res.json();
+    if (d.status !== 'ok') { body.innerHTML = '<div class="dac-empty">'+(d.message||'Error')+'</div>'; return; }
+    dacState.settings = d;
+    dacRenderSettings();
+  } catch (e) { body.innerHTML = '<div class="dac-empty">Network error</div>'; }
+}
+function dacRenderSettings(){
+  const s = dacState.settings || {};
+  const bypassChips = (s.bypass_usernames || []).map(u =>
+    '<span class="dac-bypass-chip">'+u.replace(/</g,'&lt;')+' <button onclick="dacBypassRemove(\''+u.replace(/'/g,"\\'")+'\')" title="Remove">×</button></span>'
+  ).join('');
+  const auditRows = (s.audit_log || []).map(a => '<div class="dac-audit-row">'+
+    '<span class="ts">'+(a.ts || '')+'</span>'+
+    '<span class="act">'+(a.action || '').replace(/</g,'&lt;')+'</span>'+
+    '<span class="det">'+[a.by, a.user, a.change, a.reason, a.device_id, a.count != null ? ('count='+a.count) : ''].filter(Boolean).map(x=>String(x).replace(/</g,'&lt;')).join(' · ')+'</span>'+
+    '</div>').join('') || '<div class="dac-empty" style="padding:18px 0;">No audit entries yet.</div>';
+
+  document.getElementById('dacSettingsBody').innerHTML =
+    '<div class="dac-setting-row">'+
+      '<div class="info"><h4>Master switch — Device check enabled</h4>'+
+      '<p>When OFF, the device check is bypassed for everyone. Use only if the system breaks or for emergency access.</p></div>'+
+      '<label class="dac-toggle"><input type="checkbox" id="dacMaster" '+(s.device_check_enabled ? 'checked' : '')+' onchange="dacToggleMaster(this)"><span class="track"></span></label>'+
+    '</div>'+
+    '<div class="dac-setting-row">'+
+      '<div class="info"><h4>Smart auto-approval</h4>'+
+      '<p>New devices auto-approve if the user&rsquo;s IP, browser, and OS match a previously-approved device from the last 30 days. Reduces admin friction on browser reinstalls.</p></div>'+
+      '<label class="dac-toggle"><input type="checkbox" id="dacAuto" '+(s.auto_approve_enabled ? 'checked' : '')+' onchange="dacToggleAuto(this)"><span class="track"></span></label>'+
+    '</div>'+
+    '<div class="dac-setting-row">'+
+      '<div class="info" style="flex:1;width:100%;"><h4>Auto-lock inactive accounts</h4>'+
+      '<p>Lock any user account that hasn&rsquo;t signed in for this many days. Admin accounts are always exempt. Set to <strong>0</strong> to disable.</p>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">'+
+        '<input type="number" id="dacInactDays" min="0" max="365" value="'+(s.inactivity_lock_days||0)+'" style="width:90px;padding:7px 11px;font-size:13px;border:1.5px solid #e5e7eb;border-radius:8px;outline:none;font-family:inherit;">'+
+        '<span style="font-size:12.5px;color:#64748b;">days</span>'+
+        '<button class="dac-btn dac-btn-primary" onclick="dacSaveInactDays()">Save</button>'+
+        '<span style="font-size:11.5px;color:#94a3b8;margin-left:6px;">'+(s.inactivity_lock_days>0?('Currently: '+s.inactivity_lock_days+' days'):'Currently: disabled')+'</span>'+
+      '</div></div>'+
+    '</div>'+
+    '<div class="dac-setting-row">'+
+      '<div class="info" style="flex:1;width:100%;"><h4>Login log retention</h4>'+
+      '<p>How long to keep login / logout / failed-login records. Older rows are auto-purged when the log is viewed. Set to <strong>0</strong> to keep forever.</p>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">'+
+        '<input type="number" id="dacRetainMonths" min="0" max="120" value="'+(s.login_audit_retain_months||0)+'" style="width:90px;padding:7px 11px;font-size:13px;border:1.5px solid #e5e7eb;border-radius:8px;outline:none;font-family:inherit;">'+
+        '<span style="font-size:12.5px;color:#64748b;">months</span>'+
+        '<button class="dac-btn dac-btn-primary" onclick="dacSaveRetainMonths()">Save</button>'+
+        '<span style="font-size:11.5px;color:#94a3b8;margin-left:6px;">'+(s.login_audit_retain_months>0?('Currently: '+s.login_audit_retain_months+' months'):'Currently: forever'  )+'</span>'+
+      '</div></div>'+
+    '</div>'+
+    '<div class="dac-setting-row">'+
+      '<div class="info" style="flex:1;width:100%;"><h4>Bypass usernames</h4>'+
+      '<p>These users always log in regardless of device approval. Safety valve to prevent admin lockout. Editing requires confirmation.</p>'+
+      '<div class="dac-bypass-list">'+(bypassChips || '<span style="color:#94a3b8;font-size:12px;">No bypass users — risky!</span>')+'</div>'+
+      '<div class="dac-bypass-add"><input type="text" id="dacBypassNew" placeholder="username to add (e.g. admin)" onkeydown="if(event.key===\'Enter\')dacBypassAdd();">'+
+      '<button class="dac-btn dac-btn-primary" onclick="dacBypassAdd()">Add</button></div></div>'+
+    '</div>'+
+    '<div class="dac-setting-row" style="display:block;">'+
+      '<h4 style="margin:0 0 6px;font-size:13.5px;font-weight:700;color:#0f172a;">Audit log <span style="color:#94a3b8;font-size:11px;font-weight:500;">(most recent)</span></h4>'+
+      '<div class="dac-audit">'+auditRows+'</div>'+
+    '</div>';
+}
+function dacToggleMaster(el){
+  if (!el.checked) { el.checked = true; dacConfirmAsk(() => dacSaveSettings({ device_check_enabled: false })); }
+  else { dacSaveSettings({ device_check_enabled: true }); }
+}
+function dacToggleAuto(el){ dacSaveSettings({ auto_approve_enabled: el.checked }); }
+function dacSaveInactDays(){
+  const v = parseInt(document.getElementById('dacInactDays').value, 10);
+  if (isNaN(v) || v < 0 || v > 365) { dacToast('Enter a number between 0 and 365', 'err'); return; }
+  dacSaveSettings({ inactivity_lock_days: v });
+}
+function dacSaveRetainMonths(){
+  const v = parseInt(document.getElementById('dacRetainMonths').value, 10);
+  if (isNaN(v) || v < 0 || v > 120) { dacToast('Enter a number between 0 and 120', 'err'); return; }
+  dacSaveSettings({ login_audit_retain_months: v });
+}
+
+// ── Login audit tab ─────────────────────────────────────────────────────────
+let dacAuditCache = null;  // raw items from last fetch — used by CSV export
+function dacFmtDate(d){ return d.toISOString().slice(0,10); }
+function dacAuditApplyPeriod(){
+  const sel = document.getElementById('dacAuditPeriod').value;
+  const f = document.getElementById('dacAuditFrom');
+  const t = document.getElementById('dacAuditTo');
+  const today = new Date();
+  const yyyy = today.getFullYear(), mm = today.getMonth();
+  let from, to = today;
+  if (sel === 'today')         { from = today; }
+  else if (sel === '7d')        { from = new Date(yyyy, mm, today.getDate()-6); }
+  else if (sel === '30d')       { from = new Date(yyyy, mm, today.getDate()-29); }
+  else if (sel === 'lastmonth') { from = new Date(yyyy, mm-1, 1); to = new Date(yyyy, mm, 0); }
+  else if (sel === 'custom')    { f.disabled = false; t.disabled = false; return; }
+  else                          { from = new Date(yyyy, mm, 1); /* current month */ }
+  f.value = dacFmtDate(from);
+  t.value = dacFmtDate(to);
+  f.disabled = (sel !== 'custom');
+  t.disabled = (sel !== 'custom');
+  dacLoadAudit();
+}
+async function dacLoadAudit(){
+  // First call (or tab switch): set default range to current month if empty.
+  const f = document.getElementById('dacAuditFrom');
+  const t = document.getElementById('dacAuditTo');
+  if (!f.value || !t.value) dacAuditApplyPeriod();
+  const params = new URLSearchParams({
+    from: f.value, to: t.value,
+    user: document.getElementById('dacAuditUser').value.trim(),
+    event: document.getElementById('dacAuditEvent').value,
+    limit: '1000',
+  });
+  const listDiv = document.getElementById('dacAuditList');
+  listDiv.innerHTML = '<div class="dac-empty">Loading…</div>';
+  try {
+    const res = await fetch('/api/admin/login-audit?' + params, {cache:'no-store'});
+    const d = await res.json();
+    if (d.status !== 'ok') { listDiv.innerHTML = '<div class="dac-empty">'+(d.message||'Error')+'</div>'; return; }
+    dacAuditCache = d.items || [];
+    dacRenderAuditSummary(d.summary || {}, d.count, d.from, d.to);
+    dacRenderAuditList(d.items || []);
+  } catch (e) {
+    listDiv.innerHTML = '<div class="dac-empty">Network error</div>';
+  }
+}
+function dacRenderAuditSummary(summary, count, from, to){
+  const tot   = summary.login_success || 0;
+  const fail  = summary.login_fail    || 0;
+  const out   = summary.logout        || 0;
+  document.getElementById('dacAuditSummary').innerHTML =
+    '<span style="background:#f0fdf4;color:#0f766e;padding:5px 11px;border-radius:999px;font-weight:700;border:1px solid #d1fae5;">✓ '+tot+' logins</span>'+
+    '<span style="background:#fef2f2;color:#dc2626;padding:5px 11px;border-radius:999px;font-weight:700;border:1px solid #fecaca;">✗ '+fail+' failed</span>'+
+    '<span style="background:#f1f5f9;color:#475569;padding:5px 11px;border-radius:999px;font-weight:700;border:1px solid #e2e8f0;">↩ '+out+' logouts</span>'+
+    '<span style="color:#94a3b8;align-self:center;margin-left:auto;">'+from+' → '+to+' · '+count+' row'+(count===1?'':'s')+'</span>';
+}
+function dacRenderAuditList(items){
+  const listDiv = document.getElementById('dacAuditList');
+  if (!items.length) { listDiv.innerHTML = '<div class="dac-empty">No events in this range.</div>'; return; }
+  const rows = items.map(it => {
+    const kindIc = it.kind === 'mobile' ? '📱' : it.kind === 'tablet' ? '💻' : '🖥️';
+    const meta = [it.browser, it.os].filter(Boolean).join(' · ') || '—';
+    let badge = '';
+    if (it.event_type === 'login_success')   badge = '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:999px;font-weight:700;font-size:10.5px;">✓ login</span>';
+    else if (it.event_type === 'login_fail') badge = '<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:999px;font-weight:700;font-size:10.5px;">✗ failed</span>';
+    else if (it.event_type === 'logout')     badge = '<span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:999px;font-weight:700;font-size:10.5px;">↩ logout</span>';
+    else                                     badge = '<span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:999px;font-weight:700;font-size:10.5px;">'+(it.event_type||'').replace(/</g,'&lt;')+'</span>';
+    const detail = it.event_type === 'login_fail'
+      ? '<span style="color:#b91c1c;font-size:11px;">'+(it.fail_reason||'').replace(/</g,'&lt;')+'</span>'
+      : (it.logout_ts ? '<span style="color:#94a3b8;font-size:11px;">→ logout '+it.logout_ts+'</span>' : '');
+    return '<tr>'+
+      '<td data-label="Time" style="white-space:nowrap;"><span class="dac-stable">'+(it.ts||'')+'</span></td>'+
+      '<td data-label="User"><div class="user">'+(it.username||'').replace(/</g,'&lt;')+'</div></td>'+
+      '<td data-label="Event">'+badge+'</td>'+
+      '<td data-label="Device"><span class="kind-ic">'+kindIc+'</span><span class="meta">'+meta+'</span></td>'+
+      '<td data-label="IP"><span class="dac-stable">'+(it.ip_address||'—')+'</span></td>'+
+      '<td data-label="Detail">'+detail+'</td></tr>';
+  }).join('');
+  listDiv.innerHTML = '<table class="dac-tbl"><thead><tr>'+
+    '<th>Time</th><th>User</th><th>Event</th><th>Device</th><th>IP</th><th>Detail</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function dacExportAuditCSV(){
+  const items = dacAuditCache || [];
+  if (!items.length) { dacToast('Nothing to export', 'err'); return; }
+  const cols = ['ts','username','event_type','ip_address','browser','os','kind','device_id_short','fail_reason','logout_ts'];
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  const lines = [cols.join(',')];
+  items.forEach(it => lines.push(cols.map(c => esc(it[c])).join(',')));
+  const blob = new Blob([lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const f = document.getElementById('dacAuditFrom').value || 'log';
+  const t = document.getElementById('dacAuditTo').value || '';
+  a.href = url; a.download = 'login_audit_' + f + '_to_' + t + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function dacBypassAdd(){
+  const inp = document.getElementById('dacBypassNew');
+  const u = (inp.value || '').trim();
+  if (!u) return;
+  const list = (dacState.settings.bypass_usernames || []).slice();
+  if (list.map(x => x.toLowerCase()).includes(u.toLowerCase())) { dacToast('Already in list', 'err'); return; }
+  const newList = list.concat([u]);
+  dacConfirmAsk(() => dacSaveSettings({ bypass_usernames: newList }));
+}
+function dacBypassRemove(u){
+  const list = (dacState.settings.bypass_usernames || []).filter(x => x !== u);
+  if (list.length === 0 && !confirm('Remove last bypass user? You may lock yourself out if something breaks. Continue?')) return;
+  dacConfirmAsk(() => dacSaveSettings({ bypass_usernames: list }));
+}
+async function dacSaveSettings(payload){
+  if (dacState.injectConfirmation) payload.confirmation = dacState.injectConfirmation;
+  try {
+    const res = await fetch('/api/admin/device-settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const d = await res.json();
+    if (res.ok && d.status === 'ok') { dacToast(d.message || 'Settings updated', 'ok'); dacLoadSettings(); }
+    else { dacToast(d.message || 'Update failed', 'err'); dacLoadSettings(); }
+  } catch (e) { dacToast('Network error', 'err'); dacLoadSettings(); }
+}
+function dacConfirmAsk(proceedFn){
+  dacState.pendingConfirm = proceedFn;
+  document.getElementById('dacConfirmInput').value = '';
+  document.getElementById('dacConfirm').classList.add('open');
+  setTimeout(()=>document.getElementById('dacConfirmInput').focus(), 50);
+}
+function dacConfirmClose(){
+  document.getElementById('dacConfirm').classList.remove('open');
+  dacState.pendingConfirm = null; dacLoadSettings();
+}
+function dacConfirmProceed(){
+  const v = document.getElementById('dacConfirmInput').value;
+  if (v !== DAC_PHRASE) { dacToast('Phrase does not match', 'err'); return; }
+  const fn = dacState.pendingConfirm;
+  dacState.pendingConfirm = null;
+  document.getElementById('dacConfirm').classList.remove('open');
+  dacState.injectConfirmation = v;
+  try { if (fn) fn(); } finally { setTimeout(()=>{ dacState.injectConfirmation = null; }, 300); }
+}
+</script>
+{% endif %}
+
+{% if is_admin %}
+<!-- ═════════════════════════════════════════════════════════════════════════
+     INDEX ACCESS CONTROL MODAL (admin only)
+     Opened from the "Access Control" KPI card on the dashboard.
+     Mirrors the RM Store / Production Initiater modal pattern.
+     ═════════════════════════════════════════════════════════════════════════ -->
+<style>
+.iac-bg{
+    display:none;position:fixed;inset:0;z-index:5000;
+    background:rgba(15,23,42,.55);align-items:center;justify-content:center;
+    padding:20px;animation:iacFade .15s ease;
+}
+.iac-bg.open{display:flex}
+@keyframes iacFade{from{opacity:0}to{opacity:1}}
+.iac-box{
+    background:#fff;border-radius:14px;
+    box-shadow:0 24px 64px rgba(0,0,0,.35);
+    max-width:920px;width:96%;max-height:90vh;
+    display:flex;flex-direction:column;overflow:hidden;
+    font-family:'Plus Jakarta Sans',-apple-system,sans-serif;
+}
+[data-theme="dark"] .iac-box,
+[data-theme="midnight"] .iac-box,
+[data-theme="ocean"] .iac-box{background:#1e293b;color:#e2e8f0}
+.iac-head{
+    padding:14px 18px;border-bottom:1px solid #e2e8f0;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+[data-theme="dark"] .iac-head,
+[data-theme="midnight"] .iac-head,
+[data-theme="ocean"] .iac-head{border-color:#334155}
+.iac-head h3{
+    margin:0;font-size:1rem;font-weight:700;color:#0f172a;
+    display:flex;align-items:center;gap:8px;
+}
+[data-theme="dark"] .iac-head h3,
+[data-theme="midnight"] .iac-head h3,
+[data-theme="ocean"] .iac-head h3{color:#f1f5f9}
+.iac-head .iac-sub{margin-left:10px;font-size:.7rem;font-weight:500;color:#64748b}
+.iac-close{
+    background:none;border:none;cursor:pointer;font-size:1.6rem;line-height:1;
+    color:#64748b;padding:0 6px;
+}
+.iac-close:hover{color:#0f172a}
+[data-theme="dark"] .iac-close:hover,
+[data-theme="midnight"] .iac-close:hover,
+[data-theme="ocean"] .iac-close:hover{color:#f1f5f9}
+
+.iac-body{padding:0;display:flex;flex:1;min-height:0;overflow:hidden}
+.iac-layout{display:grid;grid-template-columns:300px 1fr;gap:0;width:100%;min-height:480px}
+@media (max-width:780px){.iac-layout{grid-template-columns:1fr}}
+
+/* User list (left) */
+.iac-userlist{
+    border-right:1px solid #e2e8f0;display:flex;flex-direction:column;
+    min-height:0;background:#f8fafc;max-height:70vh;overflow:hidden;
+}
+[data-theme="dark"] .iac-userlist,
+[data-theme="midnight"] .iac-userlist,
+[data-theme="ocean"] .iac-userlist{background:#111c2f;border-color:#334155}
+.iac-userlist-head{
+    padding:10px 12px;border-bottom:1px solid #e2e8f0;
+    display:flex;flex-direction:column;gap:6px;flex-shrink:0;background:inherit;
+}
+[data-theme="dark"] .iac-userlist-head,
+[data-theme="midnight"] .iac-userlist-head,
+[data-theme="ocean"] .iac-userlist-head{border-color:#334155}
+.iac-search{
+    width:100%;padding:7px 11px;background:#fff;
+    border:1px solid #cbd5e1;border-radius:7px;color:#0f172a;
+    font-size:.8rem;outline:none;font-family:inherit;
+}
+.iac-search:focus{border-color:#1A73E8}
+[data-theme="dark"] .iac-search,
+[data-theme="midnight"] .iac-search,
+[data-theme="ocean"] .iac-search{background:#0f172a;border-color:#334155;color:#e2e8f0}
+.iac-count-label{font-size:.65rem;color:#64748b;font-weight:600}
+.iac-userlist-body{overflow-y:auto;flex:1;min-height:0}
+.iac-user-row{
+    padding:10px 12px;border-bottom:1px solid #e2e8f0;cursor:pointer;
+    display:flex;align-items:center;gap:9px;transition:background .12s;
+}
+[data-theme="dark"] .iac-user-row,
+[data-theme="midnight"] .iac-user-row,
+[data-theme="ocean"] .iac-user-row{border-color:#1e2940}
+.iac-user-row:hover{background:rgba(26,115,232,.06)}
+.iac-user-row.selected{
+    background:rgba(26,115,232,.12);
+    border-left:3px solid #1A73E8;padding-left:9px;
+}
+.iac-user-avatar{
+    width:30px;height:30px;border-radius:50%;
+    background:linear-gradient(135deg,#1A73E8,#7c3aed);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:.75rem;flex-shrink:0;
+}
+.iac-user-info{flex:1;min-width:0}
+.iac-user-name{
+    font-size:.82rem;font-weight:600;color:#0f172a;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+[data-theme="dark"] .iac-user-name,
+[data-theme="midnight"] .iac-user-name,
+[data-theme="ocean"] .iac-user-name{color:#f1f5f9}
+.iac-user-meta{
+    font-size:.66rem;color:#64748b;margin-top:1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.iac-badge-admin{
+    background:rgba(220,38,38,.12);color:#dc2626;font-size:.6rem;
+    font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:.04em;
+    text-transform:uppercase;border:1px solid rgba(220,38,38,.25);flex-shrink:0;
+}
+.iac-perm-count{
+    font-size:.62rem;color:#64748b;font-weight:700;
+    background:#fff;padding:2px 7px;border-radius:6px;
+    border:1px solid #e2e8f0;flex-shrink:0;
+}
+[data-theme="dark"] .iac-perm-count,
+[data-theme="midnight"] .iac-perm-count,
+[data-theme="ocean"] .iac-perm-count{background:#0f172a;color:#cbd5e1;border-color:#334155}
+
+/* Detail (right) */
+.iac-detail{
+    padding:14px 16px;display:flex;flex-direction:column;min-height:0;
+    max-height:70vh;overflow-y:auto;
+}
+.iac-detail-empty{text-align:center;padding:60px 20px;color:#94a3b8}
+.iac-detail-empty .iac-empty-icon{font-size:2rem;display:block;margin-bottom:10px;opacity:.5}
+.iac-detail-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding-bottom:10px;border-bottom:1px solid #e2e8f0;margin-bottom:12px;flex-wrap:wrap;
+}
+[data-theme="dark"] .iac-detail-head,
+[data-theme="midnight"] .iac-detail-head,
+[data-theme="ocean"] .iac-detail-head{border-color:#334155}
+.iac-detail-title{font-size:.98rem;font-weight:700;color:#0f172a;margin:0}
+[data-theme="dark"] .iac-detail-title,
+[data-theme="midnight"] .iac-detail-title,
+[data-theme="ocean"] .iac-detail-title{color:#f1f5f9}
+.iac-detail-sub{font-size:.7rem;color:#64748b;margin-top:2px}
+.iac-bulk-bar{display:flex;gap:6px;align-items:center}
+.iac-bulk-btn{
+    font-size:.66rem;font-weight:700;padding:5px 10px;border-radius:6px;
+    background:#f1f5f9;color:#475569;
+    border:1px solid #cbd5e1;cursor:pointer;font-family:inherit;
+}
+.iac-bulk-btn:hover{background:#1A73E8;color:#fff;border-color:#1A73E8}
+[data-theme="dark"] .iac-bulk-btn,
+[data-theme="midnight"] .iac-bulk-btn,
+[data-theme="ocean"] .iac-bulk-btn{background:#1e293b;color:#cbd5e1;border-color:#334155}
+.iac-perm-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 0;border-bottom:1px dashed #e2e8f0;gap:12px;
+}
+[data-theme="dark"] .iac-perm-row,
+[data-theme="midnight"] .iac-perm-row,
+[data-theme="ocean"] .iac-perm-row{border-color:#1e2940}
+.iac-perm-row:last-child{border-bottom:none}
+.iac-perm-name{font-size:.84rem;font-weight:600;color:#0f172a}
+[data-theme="dark"] .iac-perm-name,
+[data-theme="midnight"] .iac-perm-name,
+[data-theme="ocean"] .iac-perm-name{color:#e2e8f0}
+.iac-perm-key{
+    font-size:.62rem;color:#94a3b8;margin-top:1px;
+    font-family:'JetBrains Mono','SF Mono','Monaco','Consolas',monospace;
+}
+.iac-switch{position:relative;display:inline-block;width:38px;height:20px;flex-shrink:0}
+.iac-switch input{opacity:0;width:0;height:0}
+.iac-slider{
+    position:absolute;cursor:pointer;inset:0;
+    background:#cbd5e1;border-radius:20px;transition:background .2s;
+}
+.iac-slider::before{
+    content:'';position:absolute;height:14px;width:14px;
+    left:3px;top:3px;background:#fff;border-radius:50%;
+    transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.3);
+}
+.iac-switch input:checked + .iac-slider{background:#1A73E8}
+.iac-switch input:checked + .iac-slider::before{transform:translateX(18px)}
+.iac-switch input:disabled + .iac-slider{cursor:not-allowed;opacity:.55}
+[data-theme="dark"] .iac-slider,
+[data-theme="midnight"] .iac-slider,
+[data-theme="ocean"] .iac-slider{background:#475569}
+
+.iac-admin-banner{
+    padding:12px 14px;border-radius:8px;
+    background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);
+    color:#dc2626;font-size:.78rem;font-weight:600;
+    display:flex;align-items:center;gap:8px;
+}
+.iac-save-bar{
+    margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;
+}
+[data-theme="dark"] .iac-save-bar,
+[data-theme="midnight"] .iac-save-bar,
+[data-theme="ocean"] .iac-save-bar{border-color:#334155}
+.iac-save-status{font-size:.74rem;color:#64748b}
+.iac-save-status.dirty{color:#f59e0b;font-weight:700}
+.iac-save-btn{
+    padding:8px 18px;border-radius:7px;font-size:.8rem;font-weight:700;
+    background:#1A73E8;color:#fff;border:none;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;font-family:inherit;
+    transition:background .15s;
+}
+.iac-save-btn:hover:not(:disabled){background:#0d5dc8}
+.iac-save-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Toast (scoped to avoid collision) */
+.iac-toast-c{
+    position:fixed;bottom:24px;right:24px;z-index:5100;
+    display:flex;flex-direction:column;gap:8px;pointer-events:none;
+}
+.iac-toast{
+    padding:10px 16px;border-radius:8px;font-size:.82rem;font-weight:600;
+    box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:340px;
+    animation:iacFade .25s ease;pointer-events:auto;font-family:inherit;
+}
+.iac-toast.s{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.iac-toast.e{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.iac-toast.w{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+</style>
+
+<div class="iac-bg hcp-modal-bg" id="iac-modal">
+  <div class="iac-box">
+    <div class="iac-head">
+      <h3>🔐 Access Control <span class="iac-sub">Page-level permissions</span></h3>
+      <button class="iac-close" onclick="closeIndexAccessControl()" aria-label="Close">&times;</button>
+    </div>
+    <div class="iac-body">
+      <div class="iac-layout">
+
+        <!-- User list (left) -->
+        <div class="iac-userlist">
+          <div class="iac-userlist-head">
+            <input type="text" class="iac-search" id="iac-search"
+                   placeholder="Search users…" oninput="iacFilterUsers()">
+            <div class="iac-count-label"><span id="iac-user-count">0</span> user(s)</div>
+          </div>
+          <div class="iac-userlist-body" id="iac-userlist-body">
+            <div class="iac-detail-empty" style="padding:30px 14px">
+              <span class="iac-empty-icon">⏳</span>
+              Loading…
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail (right) -->
+        <div class="iac-detail" id="iac-detail">
+          <div class="iac-detail-empty">
+            <span class="iac-empty-icon">👈</span>
+            Select a user to manage their permissions.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="iac-toast-c" id="iac-toast-c"></div>
+
+<script>
+/* ───────────────────────────────────────────────────────────────────────────
+   Index Access Control Modal — admin only
+   Mirrors the Production Initiater pattern: one fetch loads users + perms.
+   Save uses the existing /api/access_control/save endpoint.
+   ─────────────────────────────────────────────────────────────────────────── */
+const IAC_PERM_KEYS = {{ index_perm_keys | tojson }};
+let _iacUsers      = [];
+let _iacSelectedId = null;
+let _iacDraft      = {};       // pending toggles for the focused user
+let _iacFilter     = '';
+
+function iacEsc(s){
+    return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function iacToast(msg, type){
+    const c = document.getElementById('iac-toast-c');
+    if(!c) return;
+    const t = document.createElement('div');
+    t.className = 'iac-toast ' + (type || 's');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+
+function openIndexAccessControl(){
+    const m = document.getElementById('iac-modal');
+    if(!m){ iacToast('Access Control is admin only.', 'e'); return; }
+    _iacSelectedId = null;
+    _iacDraft      = {};
+    _iacFilter     = '';
+    const s = document.getElementById('iac-search');
+    if(s) s.value = '';
+    document.getElementById('iac-detail').innerHTML =
+        '<div class="iac-detail-empty"><span class="iac-empty-icon">👈</span>' +
+        'Select a user to manage their permissions.</div>';
+    document.getElementById('iac-userlist-body').innerHTML =
+        '<div class="iac-detail-empty" style="padding:30px 14px">' +
+        '<span class="iac-empty-icon">⏳</span>Loading…</div>';
+    m.classList.add('open');
+    document.addEventListener('keydown', _iacEscHandler);
+    _iacLoadUsers();
+}
+
+function closeIndexAccessControl(){
+    if(_iacHasUnsaved() && !confirm('You have unsaved changes. Discard them?')) return;
+    const m = document.getElementById('iac-modal');
+    if(m) m.classList.remove('open');
+    _iacDraft = {};
+    _iacSelectedId = null;
+    document.removeEventListener('keydown', _iacEscHandler);
+}
+
+function _iacEscHandler(e){
+    if(e.key === 'Escape') closeIndexAccessControl();
+}
+
+async function _iacLoadUsers(){
+    try{
+        const res  = await fetch('/api/index_access_control/users',{cache:'no-store'});
+        const data = await res.json();
+        if(data.status !== 'ok') throw new Error(data.message || 'Failed');
+        _iacUsers = data.users || [];
+        _iacRenderUserList();
+    }catch(e){
+        document.getElementById('iac-userlist-body').innerHTML =
+            '<div class="iac-detail-empty" style="padding:30px 14px;color:#dc2626">' +
+            '<span class="iac-empty-icon">⚠️</span>Failed: ' +
+            iacEsc(e.message || '') + '</div>';
+        iacToast('Failed to load users: ' + e.message, 'e');
+    }
+}
+
+function iacFilterUsers(){
+    _iacFilter = (document.getElementById('iac-search').value || '').trim().toLowerCase();
+    _iacRenderUserList();
+}
+
+function _iacRenderUserList(){
+    const body = document.getElementById('iac-userlist-body');
+    const cEl  = document.getElementById('iac-user-count');
+
+    let rows = _iacUsers;
+    if(_iacFilter){
+        rows = rows.filter(u => {
+            const hay = [
+                u.full_name, u.username, u.email, u.employee_id,
+                u.department, u.designation, u.role, u.user_type
+            ].map(x => String(x || '').toLowerCase()).join(' ');
+            return hay.indexOf(_iacFilter) !== -1;
+        });
+    }
+    if(cEl) cEl.textContent = rows.length;
+
+    if(!rows.length){
+        body.innerHTML = '<div class="iac-detail-empty" style="padding:30px 14px">' +
+            '<span class="iac-empty-icon">🔎</span>No users match.</div>';
+        return;
+    }
+    body.innerHTML = rows.map(u => {
+        const enabled = u.page_perms
+            ? Object.values(u.page_perms).filter(Boolean).length
+            : 0;
+        const initial = (u.full_name || u.username || '?').trim().charAt(0).toUpperCase();
+        const isSel   = (u.id === _iacSelectedId);
+        const rightBadge = u.is_admin
+            ? '<span class="iac-badge-admin" title="Admins have full access">Admin</span>'
+            : '<span class="iac-perm-count" title="Enabled pages">'
+                + enabled + '/' + IAC_PERM_KEYS.length + '</span>';
+        return '<div class="iac-user-row ' + (isSel?'selected':'') + '"'
+            + ' data-id="' + u.id + '"'
+            + ' onclick="iacSelectUser(' + u.id + ')">'
+            + '<div class="iac-user-avatar">' + iacEsc(initial) + '</div>'
+            + '<div class="iac-user-info">'
+            + '<div class="iac-user-name">' + iacEsc(u.full_name || u.username || '—') + '</div>'
+            + '<div class="iac-user-meta">' + iacEsc(u.username || '')
+            + (u.department ? ' · ' + iacEsc(u.department) : '') + '</div>'
+            + '</div>'
+            + rightBadge
+            + '</div>';
+    }).join('');
+}
+
+function iacSelectUser(id){
+    if(_iacSelectedId !== null && _iacSelectedId !== id && _iacHasUnsaved()){
+        if(!confirm('You have unsaved changes for the current user. Discard them?')) return;
+    }
+    _iacSelectedId = id;
+    _iacDraft = {};
+    _iacRenderUserList();
+    _iacRenderDetail();
+}
+
+function _iacFindUser(id){ return _iacUsers.find(u => u.id === id); }
+
+function _iacHasUnsaved(){
+    if(!_iacSelectedId) return false;
+    const u = _iacFindUser(_iacSelectedId);
+    if(!u || u.is_admin) return false;
+    const cur = u.page_perms || {};
+    for(const [k] of IAC_PERM_KEYS){
+        const d = (k in _iacDraft) ? _iacDraft[k] : !!cur[k];
+        if(d !== !!cur[k]) return true;
+    }
+    return false;
+}
+
+function _iacRenderDetail(){
+    const wrap = document.getElementById('iac-detail');
+    if(!_iacSelectedId){
+        wrap.innerHTML = '<div class="iac-detail-empty">' +
+            '<span class="iac-empty-icon">👈</span>' +
+            'Select a user to manage their permissions.</div>';
+        return;
+    }
+    const u = _iacFindUser(_iacSelectedId);
+    if(!u){
+        wrap.innerHTML = '<div class="iac-detail-empty">' +
+            '<span class="iac-empty-icon">❓</span>User not found.</div>';
+        return;
+    }
+
+    if(u.is_admin){
+        wrap.innerHTML =
+            '<div class="iac-detail-head">' +
+                '<div>' +
+                    '<h4 class="iac-detail-title">' + iacEsc(u.full_name || u.username || '—') + '</h4>' +
+                    '<div class="iac-detail-sub">' + iacEsc(u.username || '') +
+                        (u.department ? ' · ' + iacEsc(u.department) : '') + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="iac-admin-banner">🛡️ &nbsp;This user is an Admin — they always have full access to every page. Per-page toggles do not apply.</div>';
+        return;
+    }
+
+    const cur = u.page_perms || {};
+    const rows = IAC_PERM_KEYS.map(([key, label]) => {
+        const draftVal = (key in _iacDraft) ? _iacDraft[key] : !!cur[key];
+        return '<div class="iac-perm-row">' +
+            '<div>' +
+                '<div class="iac-perm-name">' + iacEsc(label) + '</div>' +
+                '<div class="iac-perm-key">' + iacEsc(key) + '</div>' +
+            '</div>' +
+            '<label class="iac-switch">' +
+                '<input type="checkbox" data-key="' + iacEsc(key) + '"' +
+                       (draftVal ? ' checked' : '') +
+                       ' onchange="iacToggle(\'' + iacEsc(key) + '\', this.checked)">' +
+                '<span class="iac-slider"></span>' +
+            '</label>' +
+        '</div>';
+    }).join('');
+
+    wrap.innerHTML =
+        '<div class="iac-detail-head">' +
+            '<div>' +
+                '<h4 class="iac-detail-title">' + iacEsc(u.full_name || u.username || '—') + '</h4>' +
+                '<div class="iac-detail-sub">' + iacEsc(u.username || '') +
+                    (u.department ? ' · ' + iacEsc(u.department) : '') + '</div>' +
+            '</div>' +
+            '<div class="iac-bulk-bar">' +
+                '<button class="iac-bulk-btn" onclick="iacBulkSet(true)">Enable all</button>' +
+                '<button class="iac-bulk-btn" onclick="iacBulkSet(false)">Disable all</button>' +
+            '</div>' +
+        '</div>' +
+        rows +
+        '<div class="iac-save-bar">' +
+            '<span class="iac-save-status" id="iac-save-status">No changes</span>' +
+            '<button class="iac-save-btn" id="iac-save-btn" onclick="iacSave()" disabled>' +
+                '💾 Save Changes' +
+            '</button>' +
+        '</div>';
+    _iacRefreshSaveBar();
+}
+
+function iacToggle(key, val){
+    _iacDraft[key] = !!val;
+    _iacRefreshSaveBar();
+}
+
+function iacBulkSet(value){
+    IAC_PERM_KEYS.forEach(([k]) => { _iacDraft[k] = !!value; });
+    _iacRenderDetail();
+}
+
+function _iacRefreshSaveBar(){
+    const btn  = document.getElementById('iac-save-btn');
+    const stat = document.getElementById('iac-save-status');
+    if(!btn || !stat) return;
+    const dirty = _iacHasUnsaved();
+    btn.disabled = !dirty;
+    stat.textContent = dirty ? 'Unsaved changes' : 'No changes';
+    stat.classList.toggle('dirty', dirty);
+}
+
+async function iacSave(){
+    if(!_iacSelectedId) return;
+    const u = _iacFindUser(_iacSelectedId);
+    if(!u || u.is_admin) return;
+
+    const cur = u.page_perms || {};
+    const permissions = {};
+    IAC_PERM_KEYS.forEach(([k]) => {
+        permissions[k] = (k in _iacDraft) ? !!_iacDraft[k] : !!cur[k];
+    });
+
+    const btn  = document.getElementById('iac-save-btn');
+    const stat = document.getElementById('iac-save-status');
+    if(btn){ btn.disabled = true; btn.innerHTML = '⏳ Saving…'; }
+    if(stat) stat.textContent = 'Saving…';
+
+    try{
+        const res  = await fetch('/api/access_control/save',{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({user_id: _iacSelectedId, permissions})
+        });
+        const data = await res.json();
+        // /api/access_control/save returns {status:'success'} or {status:'error',message:...}
+        if(data.status !== 'success' && data.status !== 'ok'){
+            throw new Error(data.message || 'Save failed');
+        }
+        u.page_perms = permissions;
+        _iacDraft = {};
+        _iacRenderUserList();
+        _iacRenderDetail();
+        iacToast('Permissions saved ✓', 's');
+    }catch(e){
+        if(btn){ btn.disabled = false; btn.innerHTML = '💾 Save Changes'; }
+        if(stat){ stat.textContent = 'Save failed'; stat.classList.add('dirty'); }
+        iacToast('Save failed: ' + e.message, 'e');
+    }
+}
+</script>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/hcp-modals.js') }}"></script>
+</body>
+</html>

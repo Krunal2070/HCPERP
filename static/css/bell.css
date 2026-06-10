@@ -1,0 +1,19 @@
+/* Bell Panel */
+        #bellPanel { position: fixed; top: calc(var(--topbar-h) + 8px); right: 14px; width: 340px; max-width: calc(100vw - 24px); background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--sh-lg); z-index: 9000; overflow: hidden; }
+        .bp-hdr { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 13.5px; display: flex; align-items: center; justify-content: space-between; background: var(--bg); }
+        .bp-body { max-height: 360px; overflow-y: auto; }
+        .bp-empty { padding: 24px; text-align: center; font-size: 13px; color: var(--text3); }
+        .bp-item { display: block; padding: 10px 14px; border-bottom: 1px solid var(--border-muted); cursor: pointer; transition: background .12s; color: var(--text); text-decoration: none; }
+        .bp-item:hover { background: var(--bg); }
+        .bp-item.bp-overdue { background: #fff8f8; }
+        .bp-item.bp-soon { background: #fffbf0; }
+        .bp-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+        .bp-sub { font-size: 11.5px; color: var(--text2); margin-bottom: 3px; }
+        .bp-time { font-size: 11px; color: var(--text3); font-weight: 500; }
+        .bp-cel-item { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--border-muted); cursor: pointer; transition: background .12s; }
+        .bp-cel-item:hover { background: var(--bg); }
+        .bp-cel-icon { font-size: 18px; }
+        .bp-cel-name { font-size: 12.5px; font-weight: 700; }
+        .bp-cel-sub { font-size: 11px; color: var(--text3); }
+        .bp-cel-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 100px; }
+        .bp-cel-soon { background: var(--amber-lt); color: var(--amber); border: 1px solid var(--amber-border); }

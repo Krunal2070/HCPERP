@@ -1,0 +1,492 @@
+{# ============================================================================
+   COMMON HEADER PARTIAL  —  templates/partials/_header.html
+   ----------------------------------------------------------------------------
+   Drop-in top header for EVERY page. Fully self-contained (own CSS + JS),
+   ASCII-safe (inline SVGs, no emojis), themeable, no external dependencies.
+
+   USAGE (put these lines at the top of <body>, before page content):
+
+     {% set page_title = "Raw Material" %}
+     {% set breadcrumb = [
+         {"label": "Home",        "url": "/"},
+         {"label": "Procurement", "url": "/procurement"},
+         {"label": "Purchase",    "url": "#"},
+         {"label": "Raw Material", "url": "#"}
+     ] %}
+     {% include 'partials/_header.html' %}
+
+   Optional variables:
+     page_title    -> string  (falls back to last breadcrumb label or "Dashboard")
+     breadcrumb    -> list of {label, url}  (defaults to [Home])
+     page_subtitle -> string  (shown instead of breadcrumb, e.g. "Stock - GRN - Godown")
+     portal_url    -> string  (defaults to "/")
+     brand         -> {name, sub, mark, logo, url}  (left logo+brand block)
+     live          -> bool    (green "LIVE" pill next to title)
+     badges        -> list of {label, color}  (color: violet|green|blue|amber|red)
+     quick_links   -> list of {label, url}  (pill buttons, e.g. HCP Stock / PM Stock)
+     tasks_url     -> string  (yellow "Tasks" quick button)
+     notif_count   -> int     (number badge on the bell; 0 hides it)
+
+   The hamburger calls window.toggleSidebar() if the page defines it.
+   Theme / Settings / Profile / Admin-Reset items call the page's existing
+   global functions if present (cycleTheme, openSettings, openUpdateProfile,
+   openAdminReset); otherwise they degrade quietly.
+   ============================================================================ #}
+
+{% set _portal_url = portal_url | default('/') %}
+{% set _crumbs = breadcrumb | default([{"label": "Home", "url": "/"}]) %}
+{% set _title = page_title | default((_crumbs[-1].label if _crumbs else 'Dashboard')) %}
+{% set _uname = session.get('User_Name') or session.get('UID') or 'User' %}
+{% set _urole = session.get('User_Type') or session.get('role') or '' %}
+{% set _is_admin = (_urole | lower) == 'admin' %}
+{% set _brand = brand | default(None) %}
+{% set _subtitle = page_subtitle | default(None) %}
+{% set _live = live | default(False) %}
+{% set _badges = badges | default([]) %}
+{% set _quick = quick_links | default([]) %}
+{% set _tasks_url = tasks_url | default(None) %}
+{% set _notif = notif_count | default(0) %}
+{% set _fixed = header_fixed | default(False) %}
+
+<style>
+/* ===== Common Header (scoped under .hcp-topbar) ============================ */
+.hcp-topbar{
+  --hdr-bg:#ffffff; --hdr-text:#1e293b; --hdr-muted:#64748b; --hdr-border:#e8eaf0;
+  --hdr-brand:#6d28d9; --hdr-brand2:#8b5cf6; --hdr-chip:#eef2ff; --hdr-chip-b:#dfe3f7;
+  --hdr-hover:#f4f5fb; --hdr-danger:#e11d48;
+  position:sticky; top:0; z-index:120;
+  display:flex; align-items:center; gap:16px;
+  height:64px; padding:0 18px;
+  background:var(--hdr-bg); color:var(--hdr-text);
+  border-bottom:1px solid var(--hdr-border);
+  box-shadow:0 1px 0 rgba(15,23,42,.02), 0 2px 12px rgba(15,23,42,.03);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+.hcp-topbar *{ box-sizing:border-box; }
+/* For pages whose <body> is a flex/grid container (header was originally
+   position:fixed). Keeps the header out of the flex flow so page content
+   isn't pushed sideways. Enable with {% set header_fixed = True %}. */
+.hcp-topbar.hcp-fixed{ position:fixed; top:0; left:0; right:0; }
+/* Universal hide class the hamburger toggles on sidebars that have no
+   page-defined toggle function (e.g. QC's permanent .qc-sidebar column). */
+.hcp-hidden{ display:none !important; }
+
+/* hamburger */
+.hcp-burger{
+  flex:0 0 auto; width:40px; height:40px; display:inline-flex;
+  align-items:center; justify-content:center; cursor:pointer;
+  background:var(--hdr-bg); color:var(--hdr-text);
+  border:1px solid var(--hdr-border); border-radius:11px; transition:.15s;
+}
+.hcp-burger:hover{ background:var(--hdr-hover); transform:translateY(-1px); }
+
+/* title + breadcrumb */
+.hcp-titlewrap{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.hcp-title{ font-size:17px; font-weight:800; letter-spacing:-.2px; line-height:1.1;
+  color:var(--hdr-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hcp-crumbs{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--hdr-muted);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hcp-crumbs a{ color:var(--hdr-muted); text-decoration:none; transition:.12s; }
+.hcp-crumbs a:hover{ color:var(--hdr-brand); }
+.hcp-crumbs .sep{ opacity:.5; }
+.hcp-crumbs .cur{ color:var(--hdr-text); font-weight:600; }
+.hcp-sub{ font-size:12px; color:var(--hdr-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* brand / logo block */
+.hcp-brand{ display:flex; align-items:center; gap:10px; text-decoration:none; flex:0 0 auto; }
+.hcp-brand-mark{ width:34px; height:34px; border-radius:9px; flex:0 0 auto;
+  background:linear-gradient(135deg,var(--hdr-brand2),var(--hdr-brand)); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; }
+.hcp-brand-img{ width:34px; height:34px; border-radius:9px; object-fit:cover; flex:0 0 auto; }
+.hcp-brand-tx{ display:flex; flex-direction:column; line-height:1.05; }
+.hcp-brand-name{ font-size:13px; font-weight:800; color:var(--hdr-text); white-space:nowrap; }
+.hcp-brand-sub{ font-size:10px; font-weight:700; letter-spacing:.4px; color:var(--hdr-muted); text-transform:uppercase; }
+.hcp-vsep{ width:1px; height:30px; background:var(--hdr-border); flex:0 0 auto; }
+
+/* title row + status badges */
+.hcp-titlerow{ display:flex; align-items:center; gap:9px; min-width:0; }
+.hcp-badge{ display:inline-flex; align-items:center; gap:5px; height:22px; padding:0 9px;
+  border-radius:999px; font-size:10.5px; font-weight:800; letter-spacing:.3px; white-space:nowrap;
+  background:rgba(139,92,246,.12); color:var(--hdr-brand); border:1px solid rgba(139,92,246,.22); }
+.hcp-badge.green{ background:rgba(16,185,129,.12); color:#0d9488; border-color:rgba(16,185,129,.25); }
+.hcp-badge.blue { background:rgba(59,130,246,.12); color:#2563eb; border-color:rgba(59,130,246,.25); }
+.hcp-badge.amber{ background:rgba(245,158,11,.14); color:#b45309; border-color:rgba(245,158,11,.3); }
+.hcp-badge.red  { background:rgba(225,29,72,.12);  color:var(--hdr-danger); border-color:rgba(225,29,72,.25); }
+.hcp-livedot{ width:7px; height:7px; border-radius:50%; background:#10b981;
+  box-shadow:0 0 0 0 rgba(16,185,129,.5); animation:hcpPulse 1.6s infinite; }
+@keyframes hcpPulse{ 0%{box-shadow:0 0 0 0 rgba(16,185,129,.45);} 70%{box-shadow:0 0 0 6px rgba(16,185,129,0);} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0);} }
+
+/* quick-link pills + Tasks button */
+.hcp-ql{ display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 13px;
+  border-radius:999px; border:1px solid var(--hdr-border); background:var(--hdr-bg);
+  color:var(--hdr-text); font-size:12.5px; font-weight:700; text-decoration:none; transition:.15s; }
+.hcp-ql:hover{ background:var(--hdr-hover); transform:translateY(-1px); }
+.hcp-tasks{ display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 13px;
+  border-radius:999px; border:1px solid rgba(245,158,11,.35); background:rgba(245,158,11,.12);
+  color:#b45309; font-size:12.5px; font-weight:800; text-decoration:none; transition:.15s; }
+.hcp-tasks:hover{ background:rgba(245,158,11,.2); transform:translateY(-1px); }
+
+/* notification count badge */
+.hcp-iconbtn .count{ position:absolute; top:-3px; right:-3px; min-width:17px; height:17px; padding:0 4px;
+  background:var(--hdr-danger); color:#fff; border:2px solid var(--hdr-bg); border-radius:999px;
+  font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1; }
+
+.hcp-spacer{ flex:1 1 auto; }
+
+/* right side */
+.hcp-right{ display:flex; align-items:center; gap:10px; flex:0 0 auto; }
+
+/* date-time pill */
+.hcp-clock{
+  display:inline-flex; align-items:center; height:36px; padding:0 14px;
+  background:var(--hdr-chip); border:1px solid var(--hdr-chip-b); border-radius:999px;
+  font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  font-size:12.5px; font-weight:600; color:var(--hdr-brand); letter-spacing:.2px;
+  white-space:nowrap;
+}
+
+/* round icon buttons */
+.hcp-iconbtn{
+  position:relative; width:38px; height:38px; display:inline-flex;
+  align-items:center; justify-content:center; cursor:pointer;
+  background:var(--hdr-bg); color:var(--hdr-muted);
+  border:1px solid var(--hdr-border); border-radius:999px; transition:.15s;
+}
+.hcp-iconbtn:hover{ background:var(--hdr-hover); color:var(--hdr-text); transform:translateY(-1px); }
+.hcp-iconbtn .dot{ position:absolute; top:8px; right:9px; width:7px; height:7px;
+  background:var(--hdr-danger); border:1.5px solid var(--hdr-bg); border-radius:50%; }
+
+/* user pill */
+.hcp-userwrap{ position:relative; }
+.hcp-user{
+  display:flex; align-items:center; gap:9px; height:42px; padding:0 8px 0 5px;
+  cursor:pointer; border:1px solid transparent; border-radius:12px; transition:.15s;
+}
+.hcp-user:hover{ background:var(--hdr-hover); border-color:var(--hdr-border); }
+.hcp-av{ width:32px; height:32px; flex:0 0 auto; border-radius:50%;
+  background:linear-gradient(135deg,var(--hdr-brand2),var(--hdr-brand));
+  color:#fff; font-weight:800; font-size:13.5px;
+  display:flex; align-items:center; justify-content:center; }
+.hcp-uname{ font-size:13px; font-weight:700; color:var(--hdr-text); line-height:1.15; }
+.hcp-urole{ font-size:11px; color:var(--hdr-muted); line-height:1.1; }
+.hcp-chev{ color:var(--hdr-muted); transition:.18s; }
+.hcp-user.open .hcp-chev{ transform:rotate(180deg); }
+
+/* dropdown menu */
+.hcp-menu{
+  position:absolute; top:calc(100% + 8px); right:0; min-width:220px;
+  background:var(--hdr-bg); border:1px solid var(--hdr-border); border-radius:14px;
+  box-shadow:0 16px 40px rgba(15,23,42,.16); padding:6px; z-index:200;
+  display:none;
+}
+.hcp-menu.open{ display:block; animation:hcpFade .14s ease; }
+@keyframes hcpFade{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:none;} }
+.hcp-mi{
+  display:flex; align-items:center; gap:10px; width:100%; padding:9px 12px;
+  border:none; background:transparent; color:var(--hdr-text);
+  font-size:13px; font-weight:600; font-family:inherit; cursor:pointer;
+  border-radius:9px; text-align:left; text-decoration:none; transition:.12s;
+}
+.hcp-mi:hover{ background:var(--hdr-hover); }
+.hcp-mi svg{ flex:0 0 auto; opacity:.7; }
+.hcp-mi.danger{ color:var(--hdr-danger); }
+.hcp-mi.danger:hover{ background:rgba(225,29,72,.08); }
+.hcp-mi .kbd{ margin-left:auto; font:700 10px 'JetBrains Mono',monospace; color:var(--hdr-muted);
+  background:var(--hdr-hover); border:1px solid var(--hdr-border); border-radius:5px; padding:2px 6px; }
+.hcp-mlbl{ padding:6px 12px 3px; font-size:10px; font-weight:800; letter-spacing:.6px;
+  text-transform:uppercase; color:var(--hdr-muted); }
+.hcp-mdiv{ height:1px; background:var(--hdr-border); margin:5px 4px; }
+
+/* notifications popover */
+.hcp-pop{
+  position:absolute; top:calc(100% + 8px); right:0; width:280px;
+  background:var(--hdr-bg); border:1px solid var(--hdr-border); border-radius:14px;
+  box-shadow:0 16px 40px rgba(15,23,42,.16); padding:14px 16px; z-index:200;
+  display:none; font-size:13px; color:var(--hdr-muted);
+}
+.hcp-pop.open{ display:block; animation:hcpFade .14s ease; }
+.hcp-pop b{ display:block; color:var(--hdr-text); font-size:13px; margin-bottom:6px; }
+
+/* responsive */
+@media(max-width:720px){
+  .hcp-clock{ display:none; }
+  .hcp-uname,.hcp-urole,.hcp-chev{ display:none; }
+  .hcp-title{ font-size:15px; }
+  .hcp-brand-tx,.hcp-vsep,.hcp-ql,.hcp-tasks,.hcp-badge{ display:none; }
+}
+
+/* dark themes (page sets data-theme on <html> or <body>) */
+[data-theme="dark"] .hcp-topbar,
+[data-theme="midnight"] .hcp-topbar,
+[data-theme="ocean"] .hcp-topbar{
+  --hdr-bg:#121829; --hdr-text:#e7ecf5; --hdr-muted:#94a3b8; --hdr-border:#26304a;
+  --hdr-chip:rgba(139,92,246,.14); --hdr-chip-b:rgba(139,92,246,.30);
+  --hdr-hover:#1b2236; --hdr-brand:#a78bfa; --hdr-brand2:#8b5cf6;
+}
+</style>
+
+<header class="hcp-topbar{% if _fixed %} hcp-fixed{% endif %}" id="hcpTopbar">
+  <!-- hamburger -->
+  <button class="hcp-burger" type="button" onclick="hcpHdr.toggleSidebar()" title="Toggle menu (Alt+M)" aria-label="Toggle menu">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+
+  {% if _brand %}
+  <a class="hcp-brand" href="{{ _brand.url | default(_portal_url) }}" title="{{ _brand.name }}">
+    {% if _brand.logo %}
+      <img class="hcp-brand-img" src="{{ _brand.logo }}" alt="">
+    {% else %}
+      <span class="hcp-brand-mark">{{ (_brand.mark | default(_brand.name[0])) | upper }}</span>
+    {% endif %}
+    <span class="hcp-brand-tx">
+      <span class="hcp-brand-name">{{ _brand.name }}</span>
+      {% if _brand.sub %}<span class="hcp-brand-sub">{{ _brand.sub }}</span>{% endif %}
+    </span>
+  </a>
+  <span class="hcp-vsep"></span>
+  {% endif %}
+
+  <!-- title + breadcrumb -->
+  <div class="hcp-titlewrap">
+    <div class="hcp-titlerow">
+      <span class="hcp-title">{{ _title }}</span>
+      {% if _live %}<span class="hcp-badge green"><span class="hcp-livedot"></span>LIVE</span>{% endif %}
+      {% for b in _badges %}<span class="hcp-badge {{ b.color | default('violet') }}">{{ b.label }}</span>{% endfor %}
+    </div>
+    {% if _subtitle %}
+      <div class="hcp-sub">{{ _subtitle }}</div>
+    {% else %}
+      <nav class="hcp-crumbs" aria-label="Breadcrumb">
+        {% for c in _crumbs %}
+          {% if loop.last %}
+            <span class="cur">{{ c.label }}</span>
+          {% else %}
+            <a href="{{ c.url | default('#') }}">{{ c.label }}</a>
+            <span class="sep">/</span>
+          {% endif %}
+        {% endfor %}
+      </nav>
+    {% endif %}
+  </div>
+
+  <div class="hcp-spacer"></div>
+
+  <div class="hcp-right">
+    {% for q in _quick %}
+    <a class="hcp-ql" href="{{ q.url | default('#') }}">{{ q.label }}</a>
+    {% endfor %}
+
+    {% if _tasks_url %}
+    <a class="hcp-tasks" href="{{ _tasks_url }}" title="Tasks">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Tasks
+    </a>
+    {% endif %}
+
+    <!-- live date-time -->
+    <div class="hcp-clock" id="hcpClock">--, -- --- ---- --:--:-- --</div>
+
+    <!-- search -->
+    <button class="hcp-iconbtn" type="button" onclick="hcpHdr.search()" title="Search (Ctrl+K)" aria-label="Search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+
+    <!-- notifications -->
+    <div class="hcp-userwrap">
+      <button class="hcp-iconbtn" type="button" onclick="hcpHdr.toggleNotif(event)" title="Notifications" aria-label="Notifications">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="count" id="hcpNotifCount" {% if not _notif or _notif < 1 %}style="display:none"{% endif %}>{{ _notif }}</span>
+      </button>
+      <div class="hcp-pop" id="hcpNotifPop">
+        <b>Notifications</b>
+        <span id="hcpNotifBody">You're all caught up. No new notifications.</span>
+      </div>
+    </div>
+
+    <!-- user pill + dropdown -->
+    <div class="hcp-userwrap">
+      <div class="hcp-user" id="hcpUserPill" onclick="hcpHdr.toggleMenu(event)" title="Account">
+        <div class="hcp-av">{{ _uname[0] | upper }}</div>
+        <div>
+          <div class="hcp-uname">{{ _uname }}</div>
+          <div class="hcp-urole">{{ _urole }}</div>
+        </div>
+        <svg class="hcp-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+
+      <div class="hcp-menu" id="hcpUserMenu">
+        <!-- Back to Portal -->
+        <a class="hcp-mi" href="{{ _portal_url }}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/><path d="M9 20v-6h6v6"/></svg>
+          Back to Portal
+        </a>
+        <div class="hcp-mdiv"></div>
+        <!-- Profile -->
+        <button class="hcp-mi" type="button" onclick="hcpHdr.run('openUpdateProfile')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Update Profile
+        </button>
+        <!-- Settings -->
+        <button class="hcp-mi" type="button" onclick="hcpHdr.run('openSettings')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </button>
+        <!-- Cycle Theme (Ctrl+D) -->
+        <button class="hcp-mi" type="button" onclick="hcpHdr.run('cycleTheme','toggleTheme')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+          Cycle Theme <span class="kbd">Ctrl+D</span>
+        </button>
+        <!-- Keyboard Shortcuts -->
+        <button class="hcp-mi" type="button" onclick="hcpHdr.run('openShortcutsModal','openShortcuts','openShortcutsHelp')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h0M10 9h0M14 9h0M18 9h0M6 13h0M18 13h0M9 13h6"/></svg>
+          Keyboard Shortcuts
+        </button>
+        {% if _is_admin %}
+        <div class="hcp-mdiv"></div>
+        <div class="hcp-mlbl">Admin</div>
+        <!-- User Home Locations -->
+        <button class="hcp-mi" type="button" onclick="hcpHdr.run('openUserHomeModal','openUserHome')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.1"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          User Home Locations
+        </button>
+        <!-- Reset Database -->
+        <button class="hcp-mi danger" type="button" onclick="hcpHdr.run('openResetModal','openAdminReset')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          Reset Database
+        </button>
+        {% endif %}
+        <div class="hcp-mdiv"></div>
+        <!-- Logout -->
+        <a class="hcp-mi danger" href="/logout">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log out
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+/* Common header controller — namespaced, safe to include once per page. */
+window.hcpHdr = (function () {
+  function $(id){ return document.getElementById(id); }
+
+  // Back-compat shim: some migrated pages still reference clock/theme elements
+  // that used to live in their old header. Create hidden stubs (only when
+  // missing) so legacy init code like updateClock() doesn't throw and halt the
+  // rest of the page's startup (which would stop data from loading).
+  (function(){
+    var legacy = ['clock-time','clock-date','lc-time','lc-date','tbClock','tbDate',
+                  'clockDisplay','topbar-today','topbar-title','refresh-timer','actionDrawerBtn',
+                  'theme-icon','hcp-theme-icon','themeToggle','themeToggleBtn','theme-toggle-btn'];
+    var host = document.getElementById('hcpTopbar') || document.body;
+    if(host){
+      legacy.forEach(function(id){
+        if(!document.getElementById(id)){
+          var s = document.createElement('span');
+          s.id = id; s.style.display = 'none';
+          host.appendChild(s);
+        }
+      });
+    }
+  })();
+
+  // Live clock -> "Wed, 10 Jun, 2026 10:43:58 am"
+  function tickClock(){
+    var el = $('hcpClock'); if(!el) return;
+    var d = new Date();
+    var wd  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    var mo  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    var h = d.getHours(), ap = h >= 12 ? 'pm' : 'am';
+    h = h % 12; if(h === 0) h = 12;
+    var p = function(n){ return (n < 10 ? '0' : '') + n; };
+    el.textContent = wd + ', ' + p(d.getDate()) + ' ' + mo + ', ' + d.getFullYear()
+                   + ' ' + p(h) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + ' ' + ap;
+  }
+
+  // Call the first page global fn that exists (tries each name), else no-op.
+  function run(){
+    closeAll();
+    for (var i = 0; i < arguments.length; i++){
+      var fn = arguments[i];
+      if (typeof window[fn] === 'function'){
+        try { window[fn](); } catch(e){ console.warn(fn, e); }
+        return;
+      }
+    }
+  }
+
+  function toggleSidebar(){
+    // 1) Use whatever sidebar-toggle function the page already defines.
+    var fns = ['toggleSidebar','csbToggleSidebar','openSidebar','toggleAppSidebar','sidebarToggle','toggleActionDrawer','toggleDrawer'];
+    for (var i = 0; i < fns.length; i++){
+      var f = window[fns[i]];
+      if (typeof f === 'function' && f !== toggleSidebar){ try { f(); return; } catch(e){} }
+    }
+    // 2) Fallback: show/hide the page's sidebar with a guaranteed hide class.
+    var sb = document.getElementById('appSidebar') ||
+             document.querySelector('.qc-sidebar, .action-sidebar, .app-sidebar, .sidebar, .csb');
+    if (sb){ sb.classList.toggle('hcp-hidden'); }
+    document.body.classList.toggle('sidebar-open');
+    document.dispatchEvent(new CustomEvent('hcp:toggleSidebar'));
+  }
+
+  function closeAll(){
+    var m = $('hcpUserMenu'), p = $('hcpNotifPop'), u = $('hcpUserPill');
+    if(m) m.classList.remove('open');
+    if(p) p.classList.remove('open');
+    if(u) u.classList.remove('open');
+  }
+
+  function toggleMenu(e){
+    if(e) e.stopPropagation();
+    var m = $('hcpUserMenu'), u = $('hcpUserPill'), p = $('hcpNotifPop');
+    if(p) p.classList.remove('open');
+    var on = m.classList.toggle('open');
+    if(u) u.classList.toggle('open', on);
+  }
+
+  function toggleNotif(e){
+    if(e) e.stopPropagation();
+    var p = $('hcpNotifPop'), m = $('hcpUserMenu'), u = $('hcpUserPill');
+    if(m) m.classList.remove('open'); if(u) u.classList.remove('open');
+    p.classList.toggle('open');
+  }
+
+  function search(){
+    // Prefer a page-provided hook, then a common search input, else a custom event.
+    if (typeof window.openHeaderSearch === 'function'){ window.openHeaderSearch(); return; }
+    var inp = document.querySelector('#searchInput, #search, input[type="search"]');
+    if (inp){ inp.focus(); inp.select && inp.select(); return; }
+    document.dispatchEvent(new CustomEvent('hcp:search'));
+  }
+
+  // Update notification count + (optional) popover body from page JS:
+  //   hcpHdr.setNotif(2, "Batch B-104 ready to dispense")
+  function setNotif(n, bodyHtml){
+    var c = $('hcpNotifCount');
+    if (c){
+      if (n && n > 0){ c.textContent = n > 99 ? '99+' : n; c.style.display = 'flex'; }
+      else { c.style.display = 'none'; }
+    }
+    if (typeof bodyHtml === 'string'){ var b = $('hcpNotifBody'); if (b) b.innerHTML = bodyHtml; }
+  }
+
+  // close popovers on outside click / Esc
+  document.addEventListener('click', function(ev){
+    if(!ev.target.closest('.hcp-userwrap')) closeAll();
+  });
+  document.addEventListener('keydown', function(ev){
+    if(ev.key === 'Escape') closeAll();
+    if((ev.ctrlKey || ev.metaKey) && (ev.key === 'k' || ev.key === 'K')){ ev.preventDefault(); search(); }
+    if((ev.ctrlKey || ev.metaKey) && (ev.key === 'd' || ev.key === 'D')){ ev.preventDefault(); run('cycleTheme','toggleTheme'); }
+  });
+
+  // start clock
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  return { run:run, toggleSidebar:toggleSidebar, toggleMenu:toggleMenu,
+           toggleNotif:toggleNotif, search:search, setNotif:setNotif, closeAll:closeAll };
+})();
+</script>

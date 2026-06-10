@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>HCP — Floor PM Stock</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%AD%3C/text%3E%3C/svg%3E">
+<style>
+*,*::before,*::after { box-sizing: border-box; }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:99px; }
+
+:root {
+  --bg:#f0f4f8; --surface:#ffffff; --surface2:#f7f9fc;
+  --border:rgba(0,0,0,.08); --border2:rgba(0,0,0,.13);
+  --text:#0f172a; --muted:#94a3b8; --muted2:#64748b;
+  --teal:#0d9488; --teal-dim:#0f766e;
+  --teal-glow:rgba(13,148,136,.12); --teal-glow2:rgba(13,148,136,.06);
+  --green-bg:#dcfce7; --green-text:#15803d;
+  --amber-bg:#fef3c7; --amber-text:#92400e;
+  --red-bg:#fee2e2;   --red-text:#dc2626;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.08); --shadow-md:0 4px 20px rgba(0,0,0,.1);
+  --font-body:'DM Sans',system-ui,-apple-system,sans-serif;
+  --font-mono:'DM Mono',Menlo,Monaco,monospace;
+}
+
+body{
+  margin:0;font-family:var(--font-body);background:var(--bg);color:var(--text);
+  min-height:100vh;font-size:13px;line-height:1.45;
+}
+
+/* Header bar */
+.fps-header{
+  background:linear-gradient(135deg,#0d9488 0%,#14b8a6 100%);
+  color:#fff;padding:14px 24px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+}
+.fps-brand{display:flex;align-items:center;gap:12px;flex:1}
+.fps-brand-icon{font-size:28px}
+.fps-brand-text{display:flex;flex-direction:column;line-height:1.15}
+.fps-brand-text .ttl{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.fps-brand-text .sub{font-size:10px;opacity:.85;text-transform:uppercase;letter-spacing:.7px;margin-top:1px}
+.fps-user{
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);
+  border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+}
+.fps-back{
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);color:#fff;
+  border-radius:8px;padding:7px 14px;font-size:11.5px;font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;text-decoration:none;
+  transition:.15s
+}
+.fps-back:hover{background:rgba(255,255,255,.28)}
+
+/* Sticky discrepancy banner */
+.fps-discrep{
+  background:linear-gradient(90deg,#dc2626,#b91c1c);color:#fff;
+  padding:10px 18px;font-size:13px;font-weight:700;
+  display:none;align-items:center;gap:14px;flex-wrap:wrap;
+  animation:fpsPulse 2.4s ease-in-out infinite;
+  box-shadow:0 3px 14px rgba(220,38,38,.4);
+}
+.fps-discrep.on{display:flex}
+.fps-discrep a{color:#fff;text-decoration:underline;font-family:var(--font-mono);font-weight:800}
+@keyframes fpsPulse {
+  0%,100% { box-shadow: 0 3px 14px rgba(220,38,38,.4); }
+  50%     { box-shadow: 0 3px 22px rgba(220,38,38,.85); }
+}
+
+/* Tabs */
+.fps-tabs{
+  display:flex;background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 16px;gap:0;
+  position:sticky;top:0;z-index:50;
+}
+.fps-tab{
+  padding:13px 22px;font-size:13px;font-weight:700;color:var(--muted2);
+  cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;
+  display:flex;align-items:center;gap:8px;
+}
+.fps-tab:hover{color:var(--teal)}
+.fps-tab.active{color:var(--teal);border-bottom-color:var(--teal);background:var(--teal-glow2)}
+.fps-tab-count{
+  background:rgba(220,38,38,.12);color:#dc2626;
+  font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;display:none;
+}
+.fps-tab-count.show{display:inline-block}
+
+/* Body */
+.fps-body{padding:18px 24px;max-width:1500px;margin:0 auto}
+.fps-pane{display:none}
+.fps-pane.active{display:block}
+
+.fps-pane-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;flex-wrap:wrap;gap:12px;
+}
+.fps-pane-title{font-size:18px;font-weight:800;color:var(--text)}
+.fps-pane-sub{font-size:11.5px;color:var(--muted2);margin-top:2px}
+
+/* Inward voucher cards */
+.fps-vch{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:14px 16px;margin-bottom:10px;
+  display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s;
+}
+.fps-vch:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
+.fps-vch.discrep{
+  border-color:#dc2626;background:rgba(220,38,38,.04);
+  box-shadow:0 0 0 3px rgba(220,38,38,.08);
+}
+.fps-vch-icon{font-size:24px}
+.fps-vch-info{flex:1;min-width:0}
+.fps-vch-no{font-size:13px;font-weight:800;color:var(--text);font-family:var(--font-mono)}
+.fps-vch-route{font-size:11.5px;color:var(--muted2);margin-top:2px}
+.fps-vch-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.fps-vch-counts{text-align:right;flex-shrink:0}
+.fps-vch-counts .v{font-size:20px;font-weight:800;color:#f59e0b}
+.fps-vch-counts.discrep .v{color:#dc2626}
+.fps-vch-counts .l{font-size:9px;font-weight:800;color:var(--muted2);text-transform:uppercase;letter-spacing:.4px}
+
+.fps-empty{
+  padding:60px 20px;text-align:center;color:var(--muted);
+  background:var(--surface);border:1.5px dashed var(--border);
+  border-radius:10px;font-size:13px;
+}
+
+/* Stock table */
+.fps-stock-tbl{
+  width:100%;border-collapse:collapse;background:var(--surface);
+  border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.fps-stock-tbl thead tr{background:var(--teal)}
+.fps-stock-tbl th{
+  color:#fff;padding:10px 12px;font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;text-align:left;
+}
+.fps-stock-tbl td{
+  padding:9px 12px;font-size:12.5px;border-bottom:1px solid var(--border);
+}
+.fps-stock-tbl tbody tr:hover{background:var(--surface2)}
+.fps-stock-tbl .num{text-align:right;font-family:var(--font-mono);font-weight:700}
+.fps-stock-tbl .qty{color:var(--teal);font-weight:800;font-size:13.5px}
+.fps-stock-tbl .qty.zero{color:var(--muted);font-weight:600}
+
+.fps-pill{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:10.5px;font-weight:700;
+}
+.fps-pill.pmtype{background:var(--teal-glow);color:var(--teal)}
+.fps-pill.brand{background:#f1f5f9;color:#475569}
+
+.fps-search{
+  flex:1;min-width:240px;background:var(--surface);
+  border:1.5px solid var(--border2);border-radius:7px;
+  padding:8px 12px;font-size:12px;font-family:inherit;color:var(--text);outline:none;
+}
+.fps-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-glow)}
+
+.fps-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 12px;font-size:11.5px;font-weight:700;
+  border-radius:7px;cursor:pointer;font-family:inherit;
+  border:1.5px solid var(--border2);background:var(--surface);color:var(--text);
+  transition:.15s;
+}
+.fps-btn:hover{background:var(--surface2)}
+.fps-btn-primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.fps-btn-primary:hover{background:var(--teal-dim)}
+.fps-btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+/* IN voucher modal */
+#fpsInModal{
+  display:none;position:fixed;inset:0;background:rgba(15,23,42,.78);
+  backdrop-filter:blur(8px);z-index:9100;
+  align-items:center;justify-content:center;padding:20px;
+}
+#fpsInModal.open{display:flex}
+.fps-in-card{
+  background:var(--surface);border-radius:14px;
+  width:min(98vw,1300px);max-height:94vh;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.fps-in-hd{
+  padding:14px 20px;background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);
+  color:#fff;display:flex;align-items:center;justify-content:space-between;
+  gap:14px;flex-shrink:0;
+}
+.fps-in-body{flex:1;overflow-y:auto;padding:14px 20px;background:var(--bg)}
+.fps-in-banner{
+  padding:9px 13px;border-radius:6px;border-left:3px solid #f59e0b;
+  background:rgba(245,158,11,.10);color:#92400e;
+  font-size:12px;font-weight:700;margin-bottom:14px;
+}
+.fps-scan-bar{
+  background:var(--surface);border:1.5px solid #1e40af;border-radius:8px;
+  padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;
+}
+.fps-scan-bar input{
+  flex:1;background:#fff;border:1.5px solid #a8b8e0;border-radius:6px;
+  padding:9px 12px;font-size:13px;font-family:var(--font-mono);
+  font-weight:700;color:#111;outline:none;
+}
+.fps-scan-bar input:focus{border-color:#1e40af;box-shadow:0 0 0 3px rgba(30,64,175,.15)}
+.fps-cmp-tbl{
+  width:100%;border-collapse:collapse;
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);
+}
+.fps-cmp-tbl thead tr{background:#1e40af;color:#fff}
+.fps-cmp-tbl th{
+  padding:9px 11px;font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;text-align:left;
+}
+.fps-cmp-tbl th.col-out{background:#92400e}
+.fps-cmp-tbl td{
+  padding:8px 11px;font-size:12px;border-bottom:1px solid var(--border);
+}
+.fps-in-ft{
+  padding:12px 20px;border-top:1px solid var(--border);
+  background:var(--surface2);flex-shrink:0;
+  display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;
+}
+.fps-x{
+  background:rgba(255,255,255,.2);color:#fff;
+  border:1px solid rgba(255,255,255,.3);border-radius:6px;
+  width:32px;height:32px;font-size:16px;cursor:pointer;flex-shrink:0;
+}
+
+/* Toast */
+.fps-toast-wrap{
+  position:fixed;top:20px;right:20px;z-index:9999;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+}
+.fps-toast{
+  padding:11px 16px;border-radius:8px;font-size:13px;font-weight:700;
+  color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.3);
+  animation:fpsToastIn .25s ease-out both;
+  pointer-events:auto;max-width:380px;
+}
+@keyframes fpsToastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.fps-toast.success{background:#16a34a}
+.fps-toast.error{background:#dc2626}
+.fps-toast.info{background:#3b82f6}
+
+/* Setup hint when floor godown is missing */
+.fps-setup-hint{
+  background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;
+  padding:14px 18px;margin-bottom:14px;color:#92400e;
+}
+.fps-setup-hint h4{margin:0 0 6px;font-size:13px;font-weight:800}
+.fps-setup-hint p{margin:0;font-size:11.5px}
+
+/* ═══ MOBILE RESPONSIVE — phone & tablet portrait ═══ */
+@media(max-width:768px){
+  body{font-size:13px}
+  .fps-page{padding:0}
+  .fps-header{padding:10px 12px;flex-wrap:wrap;gap:8px}
+  .fps-header-title{font-size:15px}
+  .fps-header-sub{font-size:10.5px}
+  .fps-back-btn{padding:7px 12px;font-size:12px}
+  .fps-body{padding:10px}
+  .fps-tabs{gap:4px;padding:0 6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .fps-tab{padding:9px 12px;font-size:12px;white-space:nowrap;flex:0 0 auto}
+  .fps-tab-count{font-size:9.5px;padding:1px 6px}
+  .fps-pane-header{flex-direction:column;align-items:stretch;gap:8px}
+  .fps-pane-title{font-size:14px}
+  .fps-pane-sub{font-size:11px}
+  .fps-btn{min-height:36px;padding:8px 12px;font-size:12px}
+  /* Voucher cards on inward/outward list — stack vertically */
+  .fps-vch{flex-wrap:wrap;padding:10px 12px;gap:8px}
+  .fps-vch-info{flex:1 1 100%;min-width:0}
+  .fps-vch-counts{flex:0 0 auto}
+  .fps-vch-no{font-size:13px;word-break:break-all}
+  .fps-vch-route{font-size:11px}
+  /* Scan modal (IN/OUT) fills viewport */
+  #fpsInModal,#fpsOutModal,#fpsNewOutModal{padding:0 !important}
+  .fps-in-card{
+    width:100vw !important;height:100vh !important;
+    max-width:100vw !important;max-height:100vh !important;
+    border-radius:0 !important;
+  }
+  .fps-in-hd{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .fps-in-body{padding:10px 12px}
+  .fps-in-ft{padding:10px 12px;flex-wrap:wrap;gap:6px}
+  .fps-in-ft .fps-btn{flex:1 1 calc(50% - 4px);justify-content:center}
+  .fps-scan-bar{flex-wrap:wrap;padding:10px 12px}
+  .fps-scan-bar input{font-size:14px;min-height:38px;padding:9px 12px}
+  /* Comparison table horizontal scroll */
+  .fps-cmp-tbl{font-size:11px;min-width:520px}
+  .fps-cmp-tbl th,.fps-cmp-tbl td{padding:6px 8px}
+  /* Wrapper enables scroll for the comparison table on phones */
+  .fps-in-body > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Floor stock table */
+  .fps-stock-tbl{font-size:11px;min-width:580px}
+  .fps-stock-tbl th,.fps-stock-tbl td{padding:6px 8px}
+  /* Filters wrap onto multiple lines */
+  .fps-search{min-width:0;flex:1 1 100%}
+  /* Toasts — full-width strip at bottom */
+  #fpsToastWrap > div{
+    left:10px !important;right:10px !important;width:auto !important;
+    font-size:12.5px !important;
+  }
+}
+
+@media(max-width:480px){
+  /* True phone portrait */
+  body{font-size:12.5px}
+  .fps-header{padding:8px 10px}
+  .fps-header-title{font-size:14px}
+  .fps-body{padding:8px}
+  .fps-pane-title{font-size:13px}
+  .fps-tab{padding:8px 10px;font-size:11.5px}
+  .fps-vch-no{font-size:12.5px}
+  .fps-in-hd{padding:9px 12px}
+  .fps-in-hd > div:first-child{flex:1 1 100%}
+  .fps-cmp-tbl{font-size:10.5px;min-width:500px}
+  .fps-stock-tbl{font-size:10.5px;min-width:560px}
+  /* Buttons in IN/OUT modal footer take full width when wrapped */
+  .fps-in-ft .fps-btn{font-size:12px;padding:8px 10px}
+  .fps-in-ft .fps-btn-primary{flex:1 1 100%}
+}
+</style>
+</head>
+<body>
+
+<div class="fps-header">
+  <div class="fps-brand">
+    <div class="fps-brand-icon">🏭</div>
+    <div class="fps-brand-text">
+      <div class="ttl">Floor PM Stock</div>
+      <div class="sub">Receive transfers · View floor stock</div>
+    </div>
+  </div>
+  <div class="fps-user" id="fpsUser">
+    <span style="opacity:.85">👤</span>
+    <span>{{ user_name or 'User' }}</span>
+    {% if role %}<span style="opacity:.7;font-size:9.5px">· {{ role }}</span>{% endif %}
+  </div>
+  <a href="/" class="fps-back" title="Back to portal home">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
+</div>
+
+<!-- Sticky discrepancy banner -->
+<div id="fpsDiscrepBanner" class="fps-discrep">
+  <span style="font-size:18px">⚠</span>
+  <strong id="fpsDiscrepText">0 transfers have a discrepancy</strong>
+  <span id="fpsDiscrepLinks" style="opacity:.9"></span>
+  <span style="opacity:.85;font-size:11px;margin-left:auto">Banner stays until resolved by an admin</span>
+</div>
+
+<div class="fps-tabs" role="tablist">
+  <div class="fps-tab active" data-fps-tab="inward" onclick="fpsSwitchTab('inward')">
+    📥 Inward Vouchers
+    <span class="fps-tab-count" id="fpsTabCountInward">0</span>
+  </div>
+  <div class="fps-tab" data-fps-tab="outward" onclick="fpsSwitchTab('outward')">
+    📤 Outward Vouchers
+    <span class="fps-tab-count" id="fpsTabCountOutward">0</span>
+  </div>
+  <div class="fps-tab" data-fps-tab="stock" onclick="fpsSwitchTab('stock')">
+    📊 Floor Stock
+  </div>
+</div>
+
+<div class="fps-body">
+  <div id="fpsSetupHint"></div>
+
+  <!-- INWARD pane -->
+  <div class="fps-pane active" id="fpsPaneInward">
+    <div class="fps-pane-header">
+      <div>
+        <div class="fps-pane-title">Inward Vouchers</div>
+        <div class="fps-pane-sub">Vouchers in transit to the floor. Click any to scan boxes IN at destination and confirm receipt.</div>
+      </div>
+      <button class="fps-btn" onclick="fpsRefreshAll()" title="Refresh"><i class="fas fa-sync"></i> Refresh</button>
+    </div>
+    <div id="fpsInwardList">
+      <div class="fps-empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- OUTWARD pane -->
+  <div class="fps-pane" id="fpsPaneOutward">
+    <div class="fps-pane-header">
+      <div>
+        <div class="fps-pane-title">Outward Vouchers</div>
+        <div class="fps-pane-sub">Send PM material from the floor to a godown. Pick destination → scan boxes → save.</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="fps-btn" onclick="fpsRefreshAll()" title="Refresh"><i class="fas fa-sync"></i></button>
+        <button class="fps-btn fps-btn-primary" onclick="fpsOpenNewOutModal()" style="background:#92400e;border-color:#92400e">
+          📤 New Outward Voucher
+        </button>
+      </div>
+    </div>
+    <div id="fpsOutwardList">
+      <div class="fps-empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- STOCK pane -->
+  <div class="fps-pane" id="fpsPaneStock">
+    <div class="fps-pane-header">
+      <div>
+        <div class="fps-pane-title">Floor Stock</div>
+        <div class="fps-pane-sub">Current PM material at the production floor.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input type="text" id="fpsStockSearch" class="fps-search" placeholder="🔍 Search product / PM type / brand…" oninput="fpsRenderStock()">
+      <select id="fpsBrandFilter" onchange="fpsRenderStock()"
+        style="background:var(--surface);border:1.5px solid var(--border2);border-radius:7px;padding:8px 10px;font-size:12px;font-family:inherit;color:var(--text);outline:none;min-width:140px">
+        <option value="">All brands</option>
+      </select>
+      <select id="fpsPmTypeFilter" onchange="fpsRenderStock()"
+        style="background:var(--surface);border:1.5px solid var(--border2);border-radius:7px;padding:8px 10px;font-size:12px;font-family:inherit;color:var(--text);outline:none;min-width:140px">
+        <option value="">All PM types</option>
+      </select>
+      <label style="display:inline-flex;align-items:center;gap:6px;background:var(--teal-glow);border:1.5px solid var(--teal);border-radius:7px;padding:7px 12px;font-size:11.5px;font-weight:700;color:var(--teal);cursor:pointer;user-select:none;white-space:nowrap" title="Hide products with zero stock">
+        <input type="checkbox" id="fpsPositiveOnly" checked onchange="fpsRenderStock()" style="margin:0;cursor:pointer;accent-color:var(--teal)">
+        +ve stock only
+      </label>
+      <button onclick="fpsLoadStock()" class="fps-btn" title="Refresh"><i class="fas fa-sync"></i></button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;font-size:11px;color:var(--muted2);font-weight:700">
+      <span id="fpsStockMeta">—</span>
+      <button onclick="fpsClearFilters()" id="fpsClearFiltersBtn" style="display:none;background:transparent;border:none;color:#dc2626;cursor:pointer;font-weight:700;font-size:11px;padding:0;text-decoration:underline">↺ Clear filters</button>
+    </div>
+    <div style="overflow-x:auto;border-radius:10px;background:var(--surface)">
+      <table class="fps-stock-tbl">
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center">#</th>
+            <th>Product</th>
+            <th>PM Type</th>
+            <th>Brand</th>
+            <th class="num">Issued (in)</th>
+            <th class="num">Used (out)</th>
+            <th class="num">Available</th>
+            <th>Last Txn</th>
+          </tr>
+        </thead>
+        <tbody id="fpsStockTbody">
+          <tr><td colspan="8" style="padding:48px;text-align:center;color:var(--muted)">Loading floor stock…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Outward Voucher (destination picker) ─────────────────── -->
+<div id="fpsNewOutModal" role="dialog" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.78);backdrop-filter:blur(8px);z-index:9090;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border-radius:14px;width:min(96vw,520px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="padding:14px 20px;background:linear-gradient(135deg,#92400e 0%,#d97706 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <div>
+        <div style="font-size:11px;font-weight:700;opacity:.85;letter-spacing:.5px;text-transform:uppercase">📤 New Outward Voucher</div>
+        <div style="font-size:14px;font-weight:800;margin-top:2px">From <span id="fpsNewOutFrom">FLOOR</span></div>
+      </div>
+      <button class="fps-x" onclick="fpsCloseNewOutModal()">×</button>
+    </div>
+    <div style="padding:18px 20px">
+      <div style="font-size:11.5px;color:var(--muted2);margin-bottom:14px">
+        Pick where the material is going. After creating, you'll be able to scan boxes to add them to the voucher.
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:10px;font-weight:800;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">To (Destination) *</label>
+        <select id="fpsNewOutTo" style="width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:7px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none">
+          <option value="">— Select destination —</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:10px;font-weight:800;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Remarks <span style="font-weight:400;text-transform:none;color:var(--muted)">(optional)</span></label>
+        <textarea id="fpsNewOutRemarks" rows="2" placeholder="e.g. Production return, Excess material…" style="width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:7px;padding:8px 12px;font-size:12px;font-family:inherit;color:var(--text);outline:none;resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="fps-btn" onclick="fpsCloseNewOutModal()">Cancel</button>
+        <button class="fps-btn fps-btn-primary" onclick="fpsCreateOutVoucher()" id="fpsCreateOutBtn" style="background:#92400e;border-color:#92400e">Create &amp; Start Scanning →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── OUT voucher scan modal ───────────────────────────────────── -->
+<div id="fpsOutModal" role="dialog" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.78);backdrop-filter:blur(8px);z-index:9100;align-items:center;justify-content:center;padding:20px">
+  <div class="fps-in-card">
+    <div class="fps-in-hd" style="background:linear-gradient(135deg,#92400e 0%,#d97706 100%)">
+      <div>
+        <div style="font-size:11px;font-weight:700;opacity:.85;letter-spacing:.5px;text-transform:uppercase">📤 Material OUT Voucher</div>
+        <div style="font-size:18px;font-weight:900;font-family:var(--font-mono);margin-top:2px"><span id="fpsOutVno">—</span></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;opacity:.85">FROM <span id="fpsOutFrom" style="font-weight:800">—</span></div>
+        <div style="font-size:10px;opacity:.85;margin-top:2px">TO <span id="fpsOutTo" style="font-weight:800">—</span></div>
+      </div>
+      <button class="fps-x" onclick="fpsCloseOutModal()">×</button>
+    </div>
+
+    <div class="fps-in-body">
+      <div id="fpsOutBanner" class="fps-in-banner">Loading…</div>
+
+      <div class="fps-scan-bar" style="border-color:#92400e">
+        <span style="font-size:22px">📷</span>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Scan Box at Source (or paste code + Enter)</div>
+          <input type="text" id="fpsOutScanInput" onkeydown="fpsHandleOutScan(event)" placeholder="e.g. BEARTUBE12-G0003-B001" autocomplete="off" style="border-color:#d97706">
+        </div>
+      </div>
+
+      <table class="fps-cmp-tbl">
+        <thead>
+          <tr style="background:#92400e">
+            <th style="width:36px;text-align:center">#</th>
+            <th>Product</th>
+            <th style="text-align:right;width:90px">Boxes</th>
+            <th style="text-align:right;width:90px">Total Qty</th>
+            <th style="text-align:center;width:60px"></th>
+          </tr>
+        </thead>
+        <tbody id="fpsOutItems">
+          <tr><td colspan="5" style="padding:30px;text-align:center;color:var(--muted)">Scan a box to begin</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:10px;font-size:10.5px;color:var(--muted2)">
+        Each scan adds 1 box of that product to the voucher. Re-scanning the same product increments its box count.
+      </div>
+    </div>
+
+    <div class="fps-in-ft">
+      <button onclick="fpsCloseOutModal()" class="fps-btn">Close</button>
+      <button onclick="fpsCancelOut()" class="fps-btn" id="fpsOutCancelBtn" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.3);color:#dc2626">🗑 Discard Voucher</button>
+      <button id="fpsOutSaveBtn" onclick="fpsSaveOut()" class="fps-btn fps-btn-primary" style="background:#92400e;border-color:#92400e">✓ Save OUT &amp; Send to Destination</button>
+    </div>
+  </div>
+</div>
+
+<!-- IN voucher modal -->
+<div id="fpsInModal" role="dialog">
+  <div class="fps-in-card">
+    <div class="fps-in-hd">
+      <div>
+        <div style="font-size:11px;font-weight:700;opacity:.85;letter-spacing:.5px;text-transform:uppercase">📥 Material IN Voucher</div>
+        <div style="font-size:18px;font-weight:900;font-family:var(--font-mono);margin-top:2px"><span id="fpsInVno">—</span></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;opacity:.85">FROM <span id="fpsInFrom" style="font-weight:800">—</span></div>
+        <div style="font-size:10px;opacity:.85;margin-top:2px">TO <span id="fpsInTo" style="font-weight:800">—</span></div>
+      </div>
+      <button class="fps-x" onclick="fpsCloseInModal()">×</button>
+    </div>
+
+    <div class="fps-in-body">
+      <div id="fpsInBanner" class="fps-in-banner">Loading…</div>
+
+      <div class="fps-scan-bar">
+        <span style="font-size:22px">📷</span>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Scan Box at Floor (or paste code + Enter)</div>
+          <input type="text" id="fpsInScanInput" onkeydown="fpsHandleScan(event)" placeholder="e.g. BEARTUBE12-G0003-B001" autocomplete="off">
+        </div>
+      </div>
+
+      <table class="fps-cmp-tbl">
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center">#</th>
+            <th>Product</th>
+            <th class="col-out" style="text-align:right;width:90px">OUT (sent)</th>
+            <th style="text-align:right;width:90px">IN (rec'd)</th>
+            <th style="text-align:center;width:50px">Match</th>
+            <th style="text-align:center;width:90px">Status</th>
+          </tr>
+        </thead>
+        <tbody id="fpsInItems">
+          <tr><td colspan="6" style="padding:30px;text-align:center;color:var(--muted)">Scan a box to begin</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:12px;display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--muted2)">
+        <div>✅ <strong style="color:#16a34a">OK</strong> — counts match</div>
+        <div>⏳ <strong style="color:#f59e0b">MISSING</strong> — was sent but didn't arrive</div>
+        <div>➕ <strong style="color:#7c3aed">EXTRA</strong> — arrived but wasn't on OUT</div>
+        <div>⚠ <strong style="color:#dc2626">MISMATCH</strong> — counts differ</div>
+      </div>
+    </div>
+
+    <div class="fps-in-ft">
+      <button onclick="fpsCloseInModal()" class="fps-btn">Close</button>
+      <button id="fpsInSaveBtn" onclick="fpsSaveIn()" class="fps-btn fps-btn-primary" style="background:#1e40af;border-color:#1e40af">✓ Save IN &amp; Confirm Receipt</button>
+    </div>
+  </div>
+</div>
+
+<div class="fps-toast-wrap" id="fpsToastWrap"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   FLOOR PM STOCK — standalone page module
+   Uses existing PM Stock endpoints:
+     GET  /api/floor_pm_stock/floor_godown               (resolve floor_id)
+     GET  /api/pm_stock/transfers/in_transit             (inward list)
+     GET  /api/pm_stock/transfers/discrepancies          (sticky banner)
+     GET  /api/pm_stock/transfers/voucher/<tid>          (voucher detail)
+     POST /api/pm_stock/transfers/voucher/<tid>/scan_box (scan IN)
+     POST /api/pm_stock/transfers/voucher/<tid>/save_in  (confirm receipt)
+     GET  /api/pm_stock/summary?godown_id=<floor_id>     (floor stock)
+═════════════════════════════════════════════════════════════════ */
+
+let _fpsActiveTab    = 'inward';
+let _fpsActiveVchId  = null;
+let _fpsActiveVch    = null;
+let _fpsFloorGid     = null;
+let _fpsFloorName    = '';
+let _fpsStockRows    = [];
+let _fpsRefreshTimer = null;
+let _fpsAllBrands    = [];   // master list of brands (from /api/pm_stock/brands)
+let _fpsAllPmTypes   = [];   // master list of PM types (from /api/pm_stock/pm_types)
+let _fpsAllGodowns   = [];   // master godown list (for OUT voucher destination picker)
+let _fpsAllProducts  = [];   // master product list (for OUT voucher product search)
+
+function _fpsToast(msg, kind, ms){
+  const wrap = document.getElementById('fpsToastWrap');
+  if(!wrap) return;
+  const t = document.createElement('div');
+  t.className = 'fps-toast ' + (kind || 'info');
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), ms || 3000);
+}
+
+function _fpsEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ─── Boot ─── */
+async function fpsInit(){
+  await _fpsResolveFloor();
+  fpsRefreshAll();
+  // Auto-poll while page is open
+  _fpsRefreshTimer = setInterval(() => {
+    if(document.visibilityState === 'visible') fpsRefreshAll();
+  }, 30000);
+  // Refresh when tab regains focus
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') fpsRefreshAll();
+  });
+}
+
+async function _fpsResolveFloor(){
+  try {
+    const res = await fetch('/api/floor_pm_stock/floor_godown');
+    const d = await res.json();
+    if(d.status === 'ok'){
+      _fpsFloorGid  = d.floor_godown_id;
+      _fpsFloorName = d.floor_godown_name || '';
+      if(!_fpsFloorGid){
+        // Show setup hint at top of body
+        document.getElementById('fpsSetupHint').innerHTML = `
+          <div class="fps-setup-hint">
+            <h4>⚠ Floor godown not configured</h4>
+            <p>${_fpsEsc(d.message || 'No floor godown is set up. Ask an admin to set type=floor on a procurement_godowns row, or name one FLOOR.')}</p>
+            <p style="margin-top:6px">All locations will be shown until this is fixed.</p>
+          </div>
+        `;
+      }
+    }
+  } catch(_){}
+}
+
+/* ─── Tabs ─── */
+function fpsSwitchTab(name){
+  _fpsActiveTab = name;
+  document.querySelectorAll('.fps-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.fpsTab === name);
+  });
+  document.getElementById('fpsPaneInward').classList.toggle('active',  name === 'inward');
+  document.getElementById('fpsPaneOutward').classList.toggle('active', name === 'outward');
+  document.getElementById('fpsPaneStock').classList.toggle('active',   name === 'stock');
+  if(name === 'stock'   && !_fpsStockRows.length) fpsLoadStock();
+  if(name === 'outward')                          fpsLoadOutward();
+}
+
+async function fpsRefreshAll(){
+  await Promise.all([fpsLoadInward(), fpsLoadOutward(), _fpsRefreshDiscrepancyBanner()]);
+  if(_fpsActiveTab === 'stock') fpsLoadStock();
+}
+
+/* ─── Inward voucher list ─── */
+async function fpsLoadInward(){
+  const list = document.getElementById('fpsInwardList');
+  if(!list) return;
+  try {
+    const res = await fetch('/api/pm_stock/transfers/in_transit');
+    const d   = await res.json();
+    if(d.status !== 'ok'){
+      list.innerHTML = `<div class="fps-empty" style="color:#dc2626">${_fpsEsc(d.message||'Load failed')}</div>`;
+      return;
+    }
+    let rows = d.transfers || [];
+    if(_fpsFloorGid != null){
+      rows = rows.filter(r => Number(r.to_godown_id) === Number(_fpsFloorGid));
+    }
+    const cnt  = rows.length;
+    const tabC = document.getElementById('fpsTabCountInward');
+    if(tabC){
+      tabC.textContent = String(cnt);
+      tabC.classList.toggle('show', cnt > 0);
+    }
+    if(!cnt){
+      list.innerHTML = `<div class="fps-empty">📭 No incoming transfers right now.</div>`;
+      return;
+    }
+    list.innerHTML = rows.map(t => `
+      <div class="fps-vch ${t.has_discrepancy?'discrep':''}" onclick="fpsOpenInVoucher(${t.transfer_id})">
+        <div class="fps-vch-icon">${t.has_discrepancy?'⚠':'📦'}</div>
+        <div class="fps-vch-info">
+          <div class="fps-vch-no">${_fpsEsc(t.transfer_no)}</div>
+          <div class="fps-vch-route"><strong>${_fpsEsc(t.from_name)}</strong> → <strong>${_fpsEsc(t.to_name)}</strong></div>
+          <div class="fps-vch-meta">Sent ${_fpsEsc((t.out_at||'').slice(0,16).replace('T',' '))} · by ${_fpsEsc(t.out_by||'—')}</div>
+          ${t.has_discrepancy?`<div style="font-size:10.5px;color:#991b1b;font-weight:700;margin-top:4px">⚠ DISCREPANCY: ${_fpsEsc((t.discrepancy_note||'').slice(0,140))}</div>`:''}
+        </div>
+        <div class="fps-vch-counts ${t.has_discrepancy?'discrep':''}">
+          <div class="l">Boxes</div>
+          <div class="v">${t.total_boxes||0}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">qty ${(t.total_qty||0).toLocaleString('en-IN')}</div>
+        </div>
+        <div style="font-size:14px;color:var(--muted)">›</div>
+      </div>
+    `).join('');
+  } catch(e){
+    list.innerHTML = `<div class="fps-empty" style="color:#dc2626">Error: ${_fpsEsc(e.message)}</div>`;
+  }
+}
+
+/* ─── Sticky discrepancy banner ─── */
+async function _fpsRefreshDiscrepancyBanner(){
+  try {
+    const res = await fetch('/api/pm_stock/transfers/discrepancies');
+    const d = await res.json();
+    if(d.status !== 'ok') return;
+    const banner = document.getElementById('fpsDiscrepBanner');
+    if(!banner) return;
+    const cnt = d.count || 0;
+    if(cnt === 0){ banner.classList.remove('on'); return; }
+    banner.classList.add('on');
+    document.getElementById('fpsDiscrepText').textContent = `${cnt} transfer${cnt===1?'':'s'} ${cnt===1?'has':'have'} a discrepancy`;
+    const items = (d.discrepancies || []).slice(0, 3).map(x =>
+      `<a href="javascript:fpsOpenInVoucher(${x.transfer_id})">${_fpsEsc(x.transfer_no)}</a>`
+    ).join(', ');
+    document.getElementById('fpsDiscrepLinks').innerHTML = `— ${items}${cnt>3?` (+${cnt-3} more)`:''}`;
+  } catch(_){}
+}
+
+/* ─── IN voucher detail ─── */
+async function fpsOpenInVoucher(tid){
+  _fpsActiveVchId = tid;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${tid}`);
+    const d   = await res.json();
+    if(d.status !== 'ok'){ _fpsToast(d.message || 'Load failed','error'); return; }
+    _fpsActiveVch = { ...d.header, out_items: d.out_items || [], in_items: d.in_items || [], mismatches: d.mismatches || [] };
+    _fpsRenderInVoucher();
+    document.getElementById('fpsInModal').classList.add('open');
+    setTimeout(() => document.getElementById('fpsInScanInput')?.focus(), 100);
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+  }
+}
+
+function fpsCloseInModal(){
+  document.getElementById('fpsInModal').classList.remove('open');
+  _fpsActiveVchId = null;
+  _fpsActiveVch   = null;
+  fpsLoadInward();
+  if(_fpsActiveTab === 'stock') fpsLoadStock();
+}
+
+function _fpsRenderInVoucher(){
+  if(!_fpsActiveVch) return;
+  const v = _fpsActiveVch;
+  document.getElementById('fpsInVno').textContent  = v.transfer_no || '—';
+  document.getElementById('fpsInFrom').textContent = v.from_name   || '—';
+  document.getElementById('fpsInTo').textContent   = v.to_name     || '—';
+
+  const map = {};
+  (v.out_items||[]).forEach(r => { map[r.product_id] = { out: r, in: null }; });
+  (v.in_items ||[]).forEach(r => { (map[r.product_id] = map[r.product_id] || { out: null, in: null }).in = r; });
+
+  const tbody = document.getElementById('fpsInItems');
+  const productIds = Object.keys(map);
+  if(!productIds.length){
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--muted)">Scan a box to begin</td></tr>`;
+  } else {
+    tbody.innerHTML = productIds.map((pid, i) => {
+      const o = map[pid].out;
+      const inL = map[pid].in;
+      const ref = o || inL;
+      const outBox = o ? o.no_of_box : 0;
+      const inBox  = inL ? inL.no_of_box : 0;
+      const outQty = o ? o.total_qty : 0;
+      const inQty  = inL ? inL.total_qty : 0;
+      const matches = (outBox === inBox) && (Math.abs(outQty-inQty) < 0.001);
+      const isExtra   = !o && inL;
+      const isMissing = o && !inL;
+      const rowBg = matches ? '' : (isExtra ? 'background:rgba(124,58,237,.06)' : (isMissing ? 'background:rgba(245,158,11,.06)' : 'background:rgba(220,38,38,.06)'));
+      const inColor = matches?'#16a34a':(isExtra?'#7c3aed':(isMissing?'#f59e0b':'#dc2626'));
+      return `<tr style="${rowBg}">
+        <td style="text-align:center;color:var(--muted);font-size:11px">${i+1}</td>
+        <td>
+          <strong>${_fpsEsc(ref.product_name)}</strong>
+          ${ref.product_code?`<br><span style="font-family:var(--font-mono);font-size:9.5px;color:#888">${_fpsEsc(ref.product_code)}</span>`:''}
+          <br><span style="font-size:9.5px;color:#999">[${_fpsEsc(ref.pm_type)}]${ref.brand_name?' · '+_fpsEsc(ref.brand_name):''}</span>
+        </td>
+        <td style="text-align:right;font-family:var(--font-mono)">
+          <div style="font-weight:700">${outBox}</div>
+          <div style="font-size:9px;color:#999">${(outQty||0).toLocaleString('en-IN')}</div>
+        </td>
+        <td style="text-align:right;font-family:var(--font-mono)">
+          <div style="font-weight:700;color:${inColor}">${inBox}</div>
+          <div style="font-size:9px;color:#999">${(inQty||0).toLocaleString('en-IN')}</div>
+        </td>
+        <td style="text-align:center;font-size:14px">${matches?'✅':(isExtra?'➕':(isMissing?'⏳':'⚠'))}</td>
+        <td style="text-align:center;font-size:10px;color:${matches?'#16a34a':'#dc2626'};font-weight:700">
+          ${matches?'OK':(isExtra?'EXTRA':(isMissing?'MISSING':'MISMATCH'))}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  const banner = document.getElementById('fpsInBanner');
+  const saveBtn = document.getElementById('fpsInSaveBtn');
+  const hasInItems = (v.in_items||[]).length > 0;
+  if(v.status === 'received'){
+    banner.innerHTML = `✓ <strong>RECEIVED</strong> · Transfer is complete`;
+    banner.style.cssText = 'padding:9px 13px;border-radius:6px;border-left:3px solid #16a34a;background:rgba(22,163,74,.10);color:#15803d;font-size:12px;font-weight:700;margin-bottom:14px';
+    saveBtn.style.display = 'none';
+  } else if(v.has_discrepancy){
+    banner.innerHTML = `⚠ <strong>DISCREPANCY</strong> · ${(v.mismatches||[]).length} product(s) mismatch · Resolve before completing`;
+    banner.style.cssText = 'padding:9px 13px;border-radius:6px;border-left:3px solid #dc2626;background:rgba(220,38,38,.10);color:#991b1b;font-size:12px;font-weight:700;margin-bottom:14px';
+    saveBtn.textContent = '✓ Save IN (will retain discrepancy flag)';
+    saveBtn.disabled = !hasInItems;
+    saveBtn.style.opacity = hasInItems ? '1' : '.5';
+    saveBtn.style.display = '';
+  } else {
+    banner.innerHTML = `<strong>RECEIVING</strong> · Scan boxes at floor · Match OUT counts to complete`;
+    banner.style.cssText = 'padding:9px 13px;border-radius:6px;border-left:3px solid #f59e0b;background:rgba(245,158,11,.10);color:#92400e;font-size:12px;font-weight:700;margin-bottom:14px';
+    saveBtn.textContent = '✓ Save IN & Confirm Receipt';
+    saveBtn.disabled = !hasInItems;
+    saveBtn.style.opacity = hasInItems ? '1' : '.5';
+    saveBtn.style.display = '';
+  }
+}
+
+async function fpsHandleScan(ev){
+  if(ev && ev.key !== 'Enter') return;
+  const inp = document.getElementById('fpsInScanInput');
+  const code = (inp.value || '').trim().toUpperCase();
+  if(!code) return;
+  inp.value = '';
+  if(!_fpsActiveVchId){ _fpsToast('No active voucher','error'); return; }
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${_fpsActiveVchId}/scan_box`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({box_code: code, side: 'in'})
+    });
+    const d = await res.json();
+    if(d.status !== 'ok'){ _fpsToast(d.message || 'Scan failed','error',4000); }
+    else {
+      _fpsToast(`✓ ${d.box.product_name} +1 IN`,'success',1800);
+      fpsOpenInVoucher(_fpsActiveVchId);
+    }
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+  }
+  setTimeout(() => inp.focus(), 50);
+}
+
+async function fpsSaveIn(){
+  if(!_fpsActiveVch) return;
+  if(!_fpsActiveVch.in_items || !_fpsActiveVch.in_items.length){
+    _fpsToast('Scan at least one box','error'); return;
+  }
+  const btn = document.getElementById('fpsInSaveBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Saving…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${_fpsActiveVchId}/save_in`,{method:'POST'});
+    const d = await res.json();
+    if(d.status === 'ok'){
+      if(d.has_discrepancy){
+        _fpsToast(`⚠ Saved with ${d.mismatches.length} discrepancy. Both screens flagged until reconciled.`,'error', 6000);
+      } else {
+        _fpsToast(`✓ ${d.transfer_no} complete`,'success', 4000);
+      }
+      fpsCloseInModal();
+      fpsRefreshAll();
+    } else {
+      _fpsToast(d.message || 'Save failed','error');
+      btn.innerHTML = orig; btn.disabled = false;
+    }
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+    btn.innerHTML = orig; btn.disabled = false;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   OUTWARD VOUCHERS — floor → godown transfers
+   Uses the same voucher-based transfer endpoints as the main module:
+     POST /api/pm_stock/transfers/voucher/create
+     POST /api/pm_stock/transfers/voucher/<tid>/scan_box?side=out
+     POST /api/pm_stock/transfers/voucher/<tid>/save_out
+     POST /api/pm_stock/transfers/<tid>/admin_delete  (cancel)
+═════════════════════════════════════════════════════════════════ */
+
+let _fpsActiveOutVchId = null;
+let _fpsActiveOutVch   = null;
+
+async function fpsLoadOutward(){
+  // List all out_started transfers where source = floor (drafts in progress)
+  const list = document.getElementById('fpsOutwardList');
+  if(!list) return;
+  if(_fpsFloorGid === null) await _fpsResolveFloor();
+  if(!_fpsFloorGid){
+    list.innerHTML = `<div class="fps-empty">⚠ Floor godown not configured. Cannot create outward vouchers.</div>`;
+    return;
+  }
+  try {
+    // Use the same in_transit endpoint but filter for status='out_started' from floor
+    // (in_transit returns transfers in flight; we want our own drafts too — fetch all
+    //  recent transfers and filter client-side by status + source).
+    const res = await fetch(`/api/pm_stock/transfers/list?status=out_started`);
+    let drafts = [];
+    if(res.ok){
+      const d = await res.json();
+      drafts = (d.transfers || d.list || []).filter(t =>
+        Number(t.from_godown_id) === Number(_fpsFloorGid) &&
+        t.status === 'out_started'
+      );
+    }
+    const cnt = drafts.length;
+    const tabC = document.getElementById('fpsTabCountOutward');
+    if(tabC){
+      tabC.textContent = String(cnt);
+      tabC.classList.toggle('show', cnt > 0);
+    }
+    if(!cnt){
+      list.innerHTML = `<div class="fps-empty">📤 No outward voucher drafts. Click <strong>+ New Outward Voucher</strong> above to start one.</div>`;
+      return;
+    }
+    list.innerHTML = drafts.map(t => `
+      <div class="fps-vch" onclick="fpsResumeOutVoucher(${t.transfer_id})" style="border-color:#92400e;background:rgba(146,64,14,.04)">
+        <div class="fps-vch-icon">📤</div>
+        <div class="fps-vch-info">
+          <div class="fps-vch-no">${_fpsEsc(t.transfer_no)}</div>
+          <div class="fps-vch-route"><strong>${_fpsEsc(t.from_name)}</strong> → <strong>${_fpsEsc(t.to_name)}</strong></div>
+          <div class="fps-vch-meta">Started ${_fpsEsc((t.created_at||'').slice(0,16).replace('T',' '))} · by ${_fpsEsc(t.out_by||'—')}</div>
+        </div>
+        <div class="fps-vch-counts">
+          <div class="l">Boxes</div>
+          <div class="v" style="color:#92400e">${t.total_boxes||0}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">qty ${(t.total_qty||0).toLocaleString('en-IN')}</div>
+        </div>
+        <div style="font-size:14px;color:var(--muted)">›</div>
+      </div>
+    `).join('');
+  } catch(e){
+    list.innerHTML = `<div class="fps-empty" style="color:#dc2626">Error: ${_fpsEsc(e.message)}</div>`;
+  }
+}
+
+/* ─── New Outward modal (destination picker) ─── */
+async function fpsOpenNewOutModal(){
+  if(_fpsFloorGid === null) await _fpsResolveFloor();
+  if(!_fpsFloorGid){ _fpsToast('Floor godown not configured','error'); return; }
+  // Populate destination dropdown
+  if(!_fpsAllGodowns.length){
+    try {
+      const res = await fetch('/api/pm_stock/godowns');
+      if(res.ok) _fpsAllGodowns = await res.json();
+    } catch(_){}
+  }
+  const sel = document.getElementById('fpsNewOutTo');
+  if(sel){
+    const opts = (_fpsAllGodowns||[])
+      .filter(g => Number(g.id) !== Number(_fpsFloorGid)) // can't send to self
+      .sort((a,b) => (a.name||'').localeCompare(b.name||''))
+      .map(g => {
+        const isFloor = (g.godown_type === 'floor' || g.is_floor);
+        return `<option value="${g.id}">${isFloor?'🏭':'📦'} ${_fpsEsc(g.name)}</option>`;
+      }).join('');
+    sel.innerHTML = `<option value="">— Select destination —</option>` + opts;
+    sel.value = '';
+  }
+  document.getElementById('fpsNewOutFrom').textContent = _fpsFloorName || 'FLOOR';
+  document.getElementById('fpsNewOutRemarks').value = '';
+  document.getElementById('fpsNewOutModal').style.display = 'flex';
+}
+
+function fpsCloseNewOutModal(){
+  document.getElementById('fpsNewOutModal').style.display = 'none';
+}
+
+async function fpsCreateOutVoucher(){
+  const toId    = parseInt(document.getElementById('fpsNewOutTo').value) || 0;
+  const remarks = document.getElementById('fpsNewOutRemarks').value.trim();
+  if(!toId){ _fpsToast('Pick a destination','error'); return; }
+  if(toId === Number(_fpsFloorGid)){ _fpsToast('Source and destination cannot be the same','error'); return; }
+  const btn = document.getElementById('fpsCreateOutBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Creating…';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/pm_stock/transfers/voucher/create', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        from_godown_id: _fpsFloorGid,
+        to_godown_id:   toId,
+        remarks:        remarks
+      })
+    });
+    const d = await res.json();
+    if(d.status === 'ok'){
+      _fpsToast(`✓ Voucher ${d.transfer_no} created`, 'success', 2500);
+      fpsCloseNewOutModal();
+      // Open the OUT scan modal for this fresh voucher
+      fpsResumeOutVoucher(d.transfer_id);
+      fpsLoadOutward();
+    } else {
+      _fpsToast(d.message || 'Create failed', 'error', 5000);
+    }
+  } catch(e){
+    _fpsToast('Error: '+e.message, 'error');
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+
+/* ─── OUT voucher scan modal ─── */
+async function fpsResumeOutVoucher(tid){
+  _fpsActiveOutVchId = tid;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${tid}`);
+    const d = await res.json();
+    if(d.status !== 'ok'){ _fpsToast(d.message || 'Load failed','error'); return; }
+    _fpsActiveOutVch = { ...d.header, out_items: d.out_items || [] };
+    _fpsRenderOutVoucher();
+    document.getElementById('fpsOutModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('fpsOutScanInput')?.focus(), 100);
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+  }
+}
+
+function fpsCloseOutModal(){
+  document.getElementById('fpsOutModal').style.display = 'none';
+  _fpsActiveOutVchId = null;
+  _fpsActiveOutVch   = null;
+  fpsLoadOutward();
+}
+
+function _fpsRenderOutVoucher(){
+  if(!_fpsActiveOutVch) return;
+  const v = _fpsActiveOutVch;
+  document.getElementById('fpsOutVno').textContent  = v.transfer_no || '—';
+  document.getElementById('fpsOutFrom').textContent = v.from_name   || '—';
+  document.getElementById('fpsOutTo').textContent   = v.to_name     || '—';
+
+  const tbody = document.getElementById('fpsOutItems');
+  const items = v.out_items || [];
+  if(!items.length){
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--muted)">Scan a box to begin</td></tr>`;
+  } else {
+    tbody.innerHTML = items.map((it, i) => `
+      <tr>
+        <td style="text-align:center;color:var(--muted);font-size:11px">${i+1}</td>
+        <td>
+          <strong>${_fpsEsc(it.product_name)}</strong>
+          ${it.product_code?`<br><span style="font-family:var(--font-mono);font-size:9.5px;color:#888">${_fpsEsc(it.product_code)}</span>`:''}
+          <br><span style="font-size:9.5px;color:#999">[${_fpsEsc(it.pm_type)}]${it.brand_name?' · '+_fpsEsc(it.brand_name):''}</span>
+        </td>
+        <td style="text-align:right;font-family:var(--font-mono);font-weight:700">${it.no_of_box||0}</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-weight:700;color:#92400e">${(it.total_qty||0).toLocaleString('en-IN')}</td>
+        <td style="text-align:center">
+          <button onclick="fpsRemoveOutLine(${it.line_id || it.id})" title="Remove this line" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);color:#dc2626;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  const banner = document.getElementById('fpsOutBanner');
+  const saveBtn = document.getElementById('fpsOutSaveBtn');
+  const hasItems = items.length > 0;
+  banner.innerHTML = `<strong>SCANNING</strong> · ${items.length} product(s), ${(v.total_boxes||0)} box(es), total qty ${(v.total_qty||0).toLocaleString('en-IN')}`;
+  banner.style.cssText = 'padding:9px 13px;border-radius:6px;border-left:3px solid #92400e;background:rgba(146,64,14,.10);color:#92400e;font-size:12px;font-weight:700;margin-bottom:14px';
+  saveBtn.disabled = !hasItems;
+  saveBtn.style.opacity = hasItems ? '1' : '.5';
+}
+
+async function fpsHandleOutScan(ev){
+  if(ev && ev.key !== 'Enter') return;
+  const inp = document.getElementById('fpsOutScanInput');
+  const code = (inp.value || '').trim().toUpperCase();
+  if(!code) return;
+  inp.value = '';
+  if(!_fpsActiveOutVchId){ _fpsToast('No active voucher','error'); return; }
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${_fpsActiveOutVchId}/scan_box`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({box_code: code, side: 'out'})
+    });
+    const d = await res.json();
+    if(d.status !== 'ok'){
+      _fpsToast(d.message || 'Scan failed','error', 4000);
+    } else {
+      _fpsToast(`✓ ${d.box.product_name} +1 OUT`,'success', 1500);
+      // Reload voucher to refresh the items table
+      fpsResumeOutVoucher(_fpsActiveOutVchId);
+    }
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+  }
+  setTimeout(() => inp.focus(), 50);
+}
+
+async function fpsRemoveOutLine(lineId){
+  if(!lineId){ _fpsToast('Cannot identify line','error'); return; }
+  if(!confirm('Remove this line from the voucher?')) return;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${_fpsActiveOutVchId}/lines/${lineId}`, {method:'DELETE'});
+    const d = await res.json();
+    if(d.status === 'ok'){
+      _fpsToast('✓ Line removed','success', 1500);
+      fpsResumeOutVoucher(_fpsActiveOutVchId);
+    } else {
+      _fpsToast(d.message || 'Remove failed','error');
+    }
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+  }
+}
+
+async function fpsSaveOut(){
+  if(!_fpsActiveOutVch) return;
+  if(!_fpsActiveOutVch.out_items || !_fpsActiveOutVch.out_items.length){
+    _fpsToast('Scan at least one box','error'); return;
+  }
+  if(!confirm(`Save voucher ${_fpsActiveOutVch.transfer_no} and send ${_fpsActiveOutVch.total_boxes||0} box(es) to ${_fpsActiveOutVch.to_name}?\n\nFloor stock will be decremented immediately.`)) return;
+  const btn = document.getElementById('fpsOutSaveBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Saving…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/voucher/${_fpsActiveOutVchId}/save_out`,{method:'POST'});
+    const d = await res.json();
+    if(d.status === 'ok'){
+      _fpsToast(`✓ ${d.transfer_no || _fpsActiveOutVch.transfer_no} sent`, 'success', 4000);
+      fpsCloseOutModal();
+      fpsRefreshAll();
+    } else {
+      _fpsToast(d.message || 'Save failed','error');
+      btn.innerHTML = orig; btn.disabled = false;
+    }
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+    btn.innerHTML = orig; btn.disabled = false;
+  }
+}
+
+async function fpsCancelOut(){
+  if(!_fpsActiveOutVchId) return;
+  if(!confirm(`Discard voucher ${_fpsActiveOutVch?.transfer_no || _fpsActiveOutVchId}?\n\nNo stock has been moved yet — this just removes the draft.`)) return;
+  try {
+    const res = await fetch(`/api/pm_stock/transfers/${_fpsActiveOutVchId}/admin_delete`, {method:'POST'});
+    const d = await res.json();
+    if(d.status === 'ok'){
+      _fpsToast('✓ Voucher discarded', 'success', 2000);
+      fpsCloseOutModal();
+    } else {
+      _fpsToast(d.message || 'Discard failed','error');
+    }
+  } catch(e){
+    _fpsToast('Error: '+e.message,'error');
+  }
+}
+
+/* ─── Floor stock pane ─── */
+async function fpsLoadStock(){
+  const tbody = document.getElementById('fpsStockTbody');
+  if(!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="8" style="padding:48px;text-align:center;color:var(--muted)">Loading floor stock…</td></tr>`;
+  try {
+    const url = _fpsFloorGid ? `/api/pm_stock/summary?godown_id=${_fpsFloorGid}` : '/api/pm_stock/summary';
+    const res = await fetch(url);
+    const rows = await res.json();
+    _fpsStockRows = Array.isArray(rows) ? rows : [];
+    // Pull full brand + pm_type master lists once so all filter options are
+    // visible regardless of whether they have floor activity yet.
+    if(!_fpsAllBrands.length || !_fpsAllPmTypes.length){
+      try {
+        const [bRes, tRes] = await Promise.all([
+          fetch('/api/pm_stock/brands'),
+          fetch('/api/pm_stock/pm_types'),
+        ]);
+        if(bRes.ok) _fpsAllBrands  = await bRes.json();
+        if(tRes.ok) _fpsAllPmTypes = await tRes.json();
+      } catch(_){}
+    }
+    _fpsPopulateFilterDropdowns();
+    fpsRenderStock();
+  } catch(e){
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:30px;text-align:center;color:#dc2626">Error: ${_fpsEsc(e.message)}</td></tr>`;
+  }
+}
+
+function _fpsPopulateFilterDropdowns(){
+  const brandSel  = document.getElementById('fpsBrandFilter');
+  const pmtypeSel = document.getElementById('fpsPmTypeFilter');
+  if(!brandSel || !pmtypeSel) return;
+
+  const prevBrand  = brandSel.value;
+  const prevPmtype = pmtypeSel.value;
+
+  // Brands from master list (procurement_brands) — full list, not just brands
+  // with current floor stock.
+  const brandList = (_fpsAllBrands||[]).slice().sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  brandSel.innerHTML = `<option value="">All brands</option>` +
+    brandList.map(b => `<option value="${b.id}">${_fpsEsc(b.name)}</option>`).join('');
+  if(brandList.some(b => String(b.id) === prevBrand)) brandSel.value = prevBrand;
+
+  // PM types from master list (distinct pm_type from pm_products) — full list
+  const types = (_fpsAllPmTypes||[]).slice().sort();
+  pmtypeSel.innerHTML = `<option value="">All PM types</option>` +
+    types.map(t => `<option value="${_fpsEsc(t)}">${_fpsEsc(t)}</option>`).join('');
+  if(types.includes(prevPmtype)) pmtypeSel.value = prevPmtype;
+}
+
+function fpsClearFilters(){
+  ['fpsStockSearch','fpsBrandFilter','fpsPmTypeFilter'].forEach(id => {
+    const e = document.getElementById(id); if(e) e.value='';
+  });
+  const pos = document.getElementById('fpsPositiveOnly'); if(pos) pos.checked = false;
+  fpsRenderStock();
+}
+
+function fpsRenderStock(){
+  const tbody = document.getElementById('fpsStockTbody');
+  if(!tbody) return;
+  const search       = (document.getElementById('fpsStockSearch')?.value || '').toLowerCase().trim();
+  const brandFilter  = document.getElementById('fpsBrandFilter')?.value || '';
+  const pmtypeFilter = document.getElementById('fpsPmTypeFilter')?.value || '';
+  const positiveOnly = !!document.getElementById('fpsPositiveOnly')?.checked;
+
+  let rows = (_fpsStockRows || []).filter(r => {
+    if(search && !(`${r.product_name} ${r.pm_type} ${r.brand_name||''}`).toLowerCase().includes(search)) return false;
+    if(brandFilter && String(r.brand_id||'') !== brandFilter) return false;
+    if(pmtypeFilter && r.pm_type !== pmtypeFilter) return false;
+    if(positiveOnly && Number(r.remaining||0) <= 0) return false;
+    return true;
+  });
+  rows.sort((a,b) => {
+    const ar = Number(a.remaining||0), br = Number(b.remaining||0);
+    if((ar>0) !== (br>0)) return (br>0) - (ar>0);
+    return (a.product_name||'').localeCompare(b.product_name||'');
+  });
+
+  const totRows   = rows.length;
+  const totQty    = rows.reduce((s,r) => s + Number(r.remaining||0), 0);
+  const withStock = rows.filter(r => Number(r.remaining||0) > 0).length;
+  const meta      = document.getElementById('fpsStockMeta');
+  if(meta) meta.textContent = `${withStock} of ${totRows} product(s) with stock · total qty ${totQty.toLocaleString('en-IN')}`;
+  const anyFilter = !!(search || brandFilter || pmtypeFilter || positiveOnly);
+  const clrBtn    = document.getElementById('fpsClearFiltersBtn');
+  if(clrBtn) clrBtn.style.display = anyFilter ? '' : 'none';
+
+  if(!rows.length){
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:48px;text-align:center;color:var(--muted)">${anyFilter?'No products match the filters':'No products to show'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r,i) => {
+    const issued    = Number(r.issue||0);
+    const used      = Number(r.dispatch||0) + Number(r.rejection||0) + Number(r.pm_return||0);
+    const remaining = Number(r.remaining||0);
+    const lastTxn   = (r.floor_last_txn||'').slice(0,10) || '—';
+    return `<tr>
+      <td style="text-align:center;color:var(--muted);font-size:11px">${i+1}</td>
+      <td><strong>${_fpsEsc(r.product_name)}</strong></td>
+      <td><span class="fps-pill pmtype">${_fpsEsc(r.pm_type)}</span></td>
+      <td>${r.brand_name?`<span class="fps-pill brand">${_fpsEsc(r.brand_name)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td class="num">${issued.toLocaleString('en-IN')}</td>
+      <td class="num">${used.toLocaleString('en-IN')}</td>
+      <td class="num qty ${remaining<=0?'zero':''}">${remaining.toLocaleString('en-IN')}</td>
+      <td style="font-size:10.5px;color:var(--muted2)">${_fpsEsc(lastTxn)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─── Boot ─── */
+fpsInit();
+</script>
+
+
+</body>
+</html>

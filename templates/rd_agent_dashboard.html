@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>R&D Agent Dashboard | HCP Wellness</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --primary:        #2563eb;
+    --primary-hover:  #1d4ed8;
+    --primary-light:  #eff6ff;
+    --success:        #059669;
+    --success-light:  #ecfdf5;
+    --danger:         #dc2626;
+    --danger-light:   #fef2f2;
+    --warning:        #d97706;
+    --warning-light:  #fffbeb;
+    --purple:         #7c3aed;
+    --purple-light:   #f5f3ff;
+    --bg-body:        #f1f5f9;
+    --card-bg:        #ffffff;
+    --text-main:      #1e293b;
+    --text-muted:     #64748b;
+    --border-color:   #e2e8f0;
+    --radius-sm:      6px;
+    --radius-md:      10px;
+    --radius-lg:      14px;
+    --shadow-sm:      0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md:      0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg:      0 10px 30px rgba(0,0,0,0.12);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    background:var(--bg-body);
+    color:var(--text-main);
+    margin:0;padding:0;
+    -webkit-font-smoothing:antialiased;
+}
+
+/* Header */
+.page-header{
+    background:#fff;
+    border-bottom:1px solid var(--border-color);
+    padding:14px 28px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:50;
+    box-shadow:var(--shadow-sm);
+}
+.page-header h1{
+    margin:0;font-size:18px;font-weight:600;
+    display:flex;align-items:center;gap:10px;
+}
+.page-header h1 i{color:var(--primary)}
+.header-meta{color:var(--text-muted);font-size:13px}
+.badge-inline{
+    display:inline-block;padding:2px 8px;border-radius:999px;
+    font-size:11px;font-weight:600;letter-spacing:.3px;
+    background:var(--primary-light);color:var(--primary);
+    margin-left:8px;
+}
+
+/* Config warnings */
+.config-warning{
+    margin:12px 28px 0;
+    padding:10px 14px;border-radius:var(--radius-md);
+    background:var(--warning-light);color:var(--warning);
+    border:1px solid #fcd9a4;font-size:13px;
+}
+.config-warning i{margin-right:6px}
+
+/* KPI row */
+.kpi-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;padding:20px 28px 8px;
+}
+.kpi{
+    background:#fff;border:1px solid var(--border-color);
+    border-radius:var(--radius-md);padding:14px 16px;
+    display:flex;flex-direction:column;gap:4px;
+    box-shadow:var(--shadow-sm);
+}
+.kpi .label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px}
+.kpi .val{font-size:24px;font-weight:700;color:var(--text-main)}
+.kpi.red .val{color:var(--danger)}
+.kpi.green .val{color:var(--success)}
+.kpi.yellow .val{color:var(--warning)}
+.kpi.purple .val{color:var(--purple)}
+
+/* Filter bar */
+.filter-bar{
+    padding:10px 28px;display:flex;gap:8px;flex-wrap:wrap;
+    align-items:center;
+}
+.filter-chip{
+    background:#fff;border:1px solid var(--border-color);
+    padding:6px 12px;border-radius:999px;font-size:12px;
+    cursor:pointer;user-select:none;font-weight:500;
+    transition:all .15s ease;
+}
+.filter-chip:hover{border-color:var(--primary)}
+.filter-chip.active{
+    background:var(--primary);color:#fff;border-color:var(--primary);
+}
+.search-input{
+    flex:1;min-width:220px;max-width:340px;
+    padding:7px 12px;border:1px solid var(--border-color);
+    border-radius:var(--radius-md);font-size:13px;
+    background:#fff;outline:none;
+}
+.search-input:focus{border-color:var(--primary)}
+
+/* Sample cards */
+.samples-container{padding:8px 28px 40px}
+.sample-card{
+    background:#fff;border:1px solid var(--border-color);
+    border-radius:var(--radius-md);padding:16px 18px;
+    margin-bottom:12px;box-shadow:var(--shadow-sm);
+    transition:box-shadow .15s ease;
+    position:relative;
+}
+.sample-card:hover{box-shadow:var(--shadow-md)}
+
+/* Status bar */
+.sample-card::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+    border-radius:var(--radius-md) 0 0 var(--radius-md);
+}
+.sample-card.status-none::before   {background:var(--danger)}
+.sample-card.status-partial::before{background:var(--warning)}
+.sample-card.status-covered::before{background:var(--success)}
+
+.sample-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    gap:16px;flex-wrap:wrap;
+}
+.sample-title{
+    font-size:16px;font-weight:600;color:var(--text-main);
+    margin:0 0 4px;display:flex;align-items:center;gap:8px;
+}
+.frag-tag{
+    background:var(--purple-light);color:var(--purple);
+    padding:2px 8px;border-radius:999px;font-size:10px;
+    font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+}
+.sample-sub{
+    color:var(--text-muted);font-size:12.5px;
+    display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;
+}
+.sample-sub span i{margin-right:4px;opacity:.7}
+
+.coverage{
+    text-align:right;
+    font-weight:700;font-size:14px;white-space:nowrap;
+    padding:6px 12px;border-radius:var(--radius-md);
+}
+.coverage.none   {background:var(--danger-light);color:var(--danger)}
+.coverage.partial{background:var(--warning-light);color:var(--warning)}
+.coverage.covered{background:var(--success-light);color:var(--success)}
+.coverage small{display:block;font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.4px;opacity:.75;margin-top:2px}
+
+.sample-actions{
+    margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;
+}
+.btn{
+    padding:7px 14px;border:1px solid var(--border-color);
+    background:#fff;border-radius:var(--radius-sm);font-size:12.5px;
+    cursor:pointer;font-weight:500;display:inline-flex;
+    align-items:center;gap:6px;
+    transition:all .15s ease;color:var(--text-main);
+}
+.btn:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-hover);color:#fff}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text-muted)}
+.btn-ghost:hover{color:var(--primary);background:var(--primary-light)}
+.btn-sm{padding:4px 10px;font-size:11.5px}
+.btn-whatsapp{
+    background:#25D366;color:#fff;border-color:#25D366;
+}
+.btn-whatsapp:hover{background:#128C7E;border-color:#128C7E;color:#fff}
+.btn-whatsapp i{color:#fff}
+
+/* Modal */
+.modal-backdrop{
+    position:fixed;inset:0;background:rgba(15,23,42,.55);
+    display:none;align-items:flex-start;justify-content:center;
+    z-index:100;overflow-y:auto;padding:40px 16px;
+}
+.modal-backdrop.open{display:flex}
+.modal{
+    background:#fff;border-radius:var(--radius-lg);width:100%;
+    max-width:760px;box-shadow:var(--shadow-lg);
+    animation:slideUp .2s ease;
+}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.modal-head{
+    padding:18px 24px;border-bottom:1px solid var(--border-color);
+    display:flex;justify-content:space-between;align-items:center;
+}
+.modal-head h3{margin:0;font-size:16px;font-weight:600}
+.modal-body{padding:20px 24px;max-height:70vh;overflow-y:auto}
+.modal-foot{
+    padding:14px 24px;border-top:1px solid var(--border-color);
+    display:flex;justify-content:flex-end;gap:8px;
+}
+.close-btn{
+    background:none;border:none;font-size:20px;cursor:pointer;
+    color:var(--text-muted);line-height:1;
+}
+.close-btn:hover{color:var(--text-main)}
+
+/* Supplier sub-list in modal */
+.section-title{
+    font-size:12px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.5px;color:var(--text-muted);
+    margin:16px 0 8px;display:flex;align-items:center;gap:8px;
+}
+.section-title:first-child{margin-top:0}
+.section-title .count{
+    background:var(--bg-body);padding:2px 8px;border-radius:999px;
+    font-size:11px;color:var(--text-main);font-weight:600;
+}
+
+.supplier-row{
+    padding:10px 12px;border:1px solid var(--border-color);
+    border-radius:var(--radius-sm);margin-bottom:6px;
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;background:#fafafa;
+}
+.supplier-row:hover{background:#fff}
+.supp-name{font-weight:500;font-size:13px}
+.supp-email{color:var(--text-muted);font-size:12px;word-break:break-all}
+.supp-meta{color:var(--text-muted);font-size:11px;margin-top:2px}
+.supp-actions{display:flex;gap:6px;flex-shrink:0}
+
+.gmail-thread{
+    padding:10px 12px;background:#fff;border:1px dashed var(--border-color);
+    border-radius:var(--radius-sm);margin-bottom:6px;font-size:12.5px;
+}
+.gmail-thread .subj{font-weight:600;margin-bottom:2px}
+.gmail-thread .frm{color:var(--text-muted);font-size:11px}
+.gmail-thread .snip{color:var(--text-muted);font-size:11.5px;margin-top:4px;font-style:italic}
+
+.google-res{
+    padding:10px 12px;background:#fff;border:1px solid var(--border-color);
+    border-radius:var(--radius-sm);margin-bottom:6px;
+}
+.google-res .title{font-size:13px;font-weight:500}
+.google-res .url{font-size:11px;color:var(--success);word-break:break-all}
+.google-res .snip{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+.empty-state{
+    text-align:center;padding:28px;color:var(--text-muted);
+    font-size:13px;background:var(--bg-body);border-radius:var(--radius-sm);
+}
+
+/* Preview modal */
+.preview-field{
+    margin-bottom:12px;font-size:13px;
+}
+.preview-field label{
+    display:block;font-size:11px;font-weight:700;text-transform:uppercase;
+    color:var(--text-muted);letter-spacing:.4px;margin-bottom:4px;
+}
+.preview-field .value{
+    background:var(--bg-body);padding:8px 10px;border-radius:var(--radius-sm);
+    font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;
+    word-break:break-word;
+}
+.preview-field textarea{
+    width:100%;min-height:240px;padding:10px;
+    border:1px solid var(--border-color);border-radius:var(--radius-sm);
+    font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;
+    resize:vertical;background:#fff;outline:none;
+}
+.preview-field textarea:focus{border-color:var(--primary)}
+
+/* Toast */
+.toast{
+    position:fixed;top:20px;right:20px;z-index:200;
+    background:var(--success);color:#fff;padding:10px 16px;
+    border-radius:var(--radius-md);box-shadow:var(--shadow-lg);
+    font-size:13px;font-weight:500;display:none;
+    animation:fadein .15s ease;
+}
+.toast.error{background:var(--danger)}
+.toast.show{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+.loading{
+    text-align:center;padding:40px;color:var(--text-muted);
+    font-size:14px;
+}
+.loading i{margin-right:8px;animation:spin 1s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+@media (max-width:700px){
+    .page-header{padding:12px 14px}
+    .samples-container{padding:8px 14px 40px}
+    .filter-bar{padding:8px 14px}
+    .kpi-row{padding:16px 14px 4px}
+    .sample-head{flex-direction:column}
+    .coverage{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="page-header">
+    <h1>
+        <i class="fa-solid fa-flask"></i>
+        R&amp;D Sampling Assistant
+        <span class="badge-inline">Pending Queue</span>
+    </h1>
+    <div class="header-meta">
+        {{ user_name }}
+        <a href="/" class="btn btn-ghost btn-sm" style="margin-left:12px"><i class="fa-solid fa-arrow-left"></i> Portal</a>
+    </div>
+</div>
+
+{% if not gmail_configured %}
+<div class="config-warning">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    Gmail integration not configured. You can still view samples; Gmail search and direct-send will be unavailable.
+</div>
+{% endif %}
+
+{% if not google_search_configured %}
+<div class="config-warning">
+    <i class="fa-solid fa-circle-info"></i>
+    Google Custom Search not configured. "Find New Suppliers" (Google) button will be disabled for non-fragrance materials.
+</div>
+{% endif %}
+
+<!-- KPIs -->
+<div class="kpi-row" id="kpi-row">
+    <div class="kpi"><div class="label">Total Pending</div><div class="val" id="kpi-total">—</div></div>
+    <div class="kpi red"><div class="label">No Suppliers Yet</div><div class="val" id="kpi-none">—</div></div>
+    <div class="kpi yellow"><div class="label">Partial Coverage</div><div class="val" id="kpi-partial">—</div></div>
+    <div class="kpi green"><div class="label">Covered (≥3)</div><div class="val" id="kpi-covered">—</div></div>
+    <div class="kpi purple"><div class="label">Fragrance/Flavour</div><div class="val" id="kpi-frag">—</div></div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar">
+    <div class="filter-chip active" data-filter="all">All</div>
+    <div class="filter-chip" data-filter="none">No suppliers</div>
+    <div class="filter-chip" data-filter="partial">Partial</div>
+    <div class="filter-chip" data-filter="covered">Covered</div>
+    <div class="filter-chip" data-filter="frag">Fragrances</div>
+    <input type="text" class="search-input" id="search" placeholder="Search trade name, INCI, application…">
+    <button class="btn btn-sm" onclick="loadPending()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+</div>
+
+<!-- Samples -->
+<div class="samples-container" id="samples">
+    <div class="loading"><i class="fa-solid fa-circle-notch"></i> Loading pending samples…</div>
+</div>
+
+<!-- Supplier-finder modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal">
+        <div class="modal-head">
+            <h3 id="modal-title">Find Suppliers</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-foot">
+            <button class="btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Email preview modal -->
+<div class="modal-backdrop" id="preview-backdrop">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>Sample Request Email</h3>
+            <button class="close-btn" onclick="closePreview()">&times;</button>
+        </div>
+        <div class="modal-body" id="preview-body"></div>
+        <div class="modal-foot">
+            <button class="btn" onclick="closePreview()">Cancel</button>
+            <button class="btn" id="btn-open-gmail"><i class="fa-solid fa-envelope"></i> Open in Gmail</button>
+            {% if gmail_configured %}
+            <button class="btn btn-primary" id="btn-send-direct"><i class="fa-solid fa-paper-plane"></i> Send Directly</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp preview modal -->
+<div class="modal-backdrop" id="whatsapp-backdrop">
+    <div class="modal" style="max-width:560px">
+        <div class="modal-head">
+            <h3><i class="fa-brands fa-whatsapp" style="color:#25D366"></i>&nbsp; Send Sample Request on WhatsApp</h3>
+            <button class="close-btn" onclick="closeWhatsapp()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="background:#f0fdf4;border-left:3px solid #25D366;padding:10px 14px;border-radius:6px;font-size:12.5px;color:#15803d;margin-bottom:14px">
+                <i class="fa-solid fa-info-circle"></i>
+                Click the button below. The message will be copied to your clipboard and WhatsApp Web will open in a new tab. In WhatsApp, <b>pick the contact you want</b> and paste (Ctrl+V), then send.
+            </div>
+            <div class="preview-field">
+                <label>Message (editable)</label>
+                <textarea id="wa-msg" style="min-height:260px;width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;resize:vertical;outline:none"></textarea>
+            </div>
+            <div class="preview-field">
+                <label>Supplier name <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(optional — for your history log)</span></label>
+                <input type="text" id="wa-supplier" placeholder="e.g. Shivam from CJS"
+                    style="width:100%;padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;outline:none">
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn" onclick="closeWhatsapp()">Cancel</button>
+            <button class="btn btn-whatsapp" id="btn-wa-send">
+                <i class="fa-brands fa-whatsapp"></i> Copy &amp; Open WhatsApp Web
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const CC_LIST = {{ cc_list|tojson }};
+const GMAIL_OK = {{ gmail_configured|tojson }};
+const SEARCH_OK = {{ google_search_configured|tojson }};
+
+let ALL_SAMPLES = [];
+let ACTIVE_FILTER = 'all';
+let SEARCH_TEXT = '';
+let CURRENT_SAMPLE = null;   // used by preview modal
+
+// ── Toast ─────────────────────────────────────────────────────────────
+function toast(msg, isError=false){
+    const t=document.getElementById('toast');
+    t.textContent=msg;
+    t.className='toast'+(isError?' error':'')+' show';
+    setTimeout(()=>t.className='toast'+(isError?' error':''),2800);
+}
+
+// ── HTML escape ───────────────────────────────────────────────────────
+function esc(s){
+    return String(s??'').replace(/[&<>"']/g,
+        c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── Load pending samples ──────────────────────────────────────────────
+async function loadPending(){
+    document.getElementById('samples').innerHTML =
+        '<div class="loading"><i class="fa-solid fa-circle-notch"></i> Loading…</div>';
+    try{
+        const r = await fetch('/rd_agent/api/pending');
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        ALL_SAMPLES = await r.json();
+    }catch(e){
+        document.getElementById('samples').innerHTML =
+            '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>';
+        return;
+    }
+    updateKPIs();
+    renderSamples();
+}
+
+function updateKPIs(){
+    const none    = ALL_SAMPLES.filter(s=>s.coverage_status==='none').length;
+    const partial = ALL_SAMPLES.filter(s=>s.coverage_status==='partial').length;
+    const covered = ALL_SAMPLES.filter(s=>s.coverage_status==='covered').length;
+    const frag    = ALL_SAMPLES.filter(s=>s.is_fragrance).length;
+    document.getElementById('kpi-total').textContent   = ALL_SAMPLES.length;
+    document.getElementById('kpi-none').textContent    = none;
+    document.getElementById('kpi-partial').textContent = partial;
+    document.getElementById('kpi-covered').textContent = covered;
+    document.getElementById('kpi-frag').textContent    = frag;
+}
+
+function renderSamples(){
+    const host = document.getElementById('samples');
+    const needle = SEARCH_TEXT.toLowerCase();
+    const list = ALL_SAMPLES.filter(s=>{
+        if(ACTIVE_FILTER==='none'   && s.coverage_status!=='none')    return false;
+        if(ACTIVE_FILTER==='partial'&& s.coverage_status!=='partial') return false;
+        if(ACTIVE_FILTER==='covered'&& s.coverage_status!=='covered') return false;
+        if(ACTIVE_FILTER==='frag'   && !s.is_fragrance)               return false;
+        if(needle){
+            const blob=(s.trade_name+' '+s.inci+' '+s.application).toLowerCase();
+            if(!blob.includes(needle)) return false;
+        }
+        return true;
+    });
+
+    if(!list.length){
+        host.innerHTML = '<div class="empty-state">No samples match the current filter.</div>';
+        return;
+    }
+
+    host.innerHTML = list.map(s=>{
+        const covLabel = s.coverage_status==='covered'?'Covered':
+                         s.coverage_status==='partial'?'Partial':'None';
+        return `
+        <div class="sample-card status-${s.coverage_status}">
+            <div class="sample-head">
+                <div style="min-width:0;flex:1">
+                    <h3 class="sample-title">
+                        ${esc(s.trade_name)}
+                        ${s.is_fragrance?'<span class="frag-tag">Fragrance/Flavour</span>':''}
+                    </h3>
+                    <div class="sample-sub">
+                        <span><i class="fa-solid fa-vial"></i>${esc(s.inci||'—')}</span>
+                        <span><i class="fa-solid fa-flask-vial"></i>${esc(s.application||'—')}</span>
+                        <span><i class="fa-solid fa-weight-scale"></i>${esc(s.qty||'—')}</span>
+                        <span><i class="fa-solid fa-calendar"></i>Req by: ${esc(s.required_by||'—')}</span>
+                        ${s.suggested_supplier?`<span><i class="fa-solid fa-lightbulb"></i>Suggested: ${esc(s.suggested_supplier)}</span>`:''}
+                    </div>
+                </div>
+                <div class="coverage ${s.coverage_status}">
+                    ${s.contacted_count}&nbsp;/&nbsp;3
+                    <small>${covLabel} (14d)</small>
+                </div>
+            </div>
+            <div class="sample-actions">
+                <button class="btn btn-primary" onclick="openFindSuppliers(${s.id})">
+                    <i class="fa-solid fa-magnifying-glass"></i> Find Suppliers
+                </button>
+                <button class="btn" onclick="promptAdHocEmail(${s.id})">
+                    <i class="fa-solid fa-envelope"></i> Send to Specific Email…
+                </button>
+                <button class="btn btn-whatsapp" onclick="openWhatsappPreview(${s.id})">
+                    <i class="fa-brands fa-whatsapp"></i> Send on WhatsApp
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="showHistory(${s.id})">
+                    <i class="fa-solid fa-clock-rotate-left"></i> History
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── Filters ───────────────────────────────────────────────────────────
+document.querySelectorAll('.filter-chip').forEach(c=>{
+    c.addEventListener('click',()=>{
+        document.querySelectorAll('.filter-chip').forEach(x=>x.classList.remove('active'));
+        c.classList.add('active');
+        ACTIVE_FILTER = c.dataset.filter;
+        renderSamples();
+    });
+});
+document.getElementById('search').addEventListener('input',e=>{
+    SEARCH_TEXT=e.target.value; renderSamples();
+});
+
+// ── Find Suppliers modal ──────────────────────────────────────────────
+async function openFindSuppliers(sampleId){
+    const s = ALL_SAMPLES.find(x=>x.id===sampleId);
+    if(!s) return;
+    CURRENT_SAMPLE = s;
+
+    document.getElementById('modal-title').textContent =
+        'Find Suppliers — ' + s.trade_name;
+    document.getElementById('modal-body').innerHTML =
+        '<div class="loading"><i class="fa-solid fa-circle-notch"></i> Searching your history…</div>';
+    document.getElementById('modal-backdrop').classList.add('open');
+
+    try{
+        const r = await fetch('/rd_agent/api/find_suppliers',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({trade_name: s.trade_name}),
+        });
+        const data = await r.json();
+        renderFindModal(s, data);
+    }catch(e){
+        document.getElementById('modal-body').innerHTML =
+            '<div class="empty-state">Search failed: '+esc(e.message)+'</div>';
+    }
+}
+
+function renderFindModal(sample, data){
+    let html = '';
+
+    // Prior suppliers (from our log)
+    html += `<div class="section-title">Suppliers you've contacted before
+             <span class="count">${data.prior_suppliers.length}</span></div>`;
+    if(data.prior_suppliers.length){
+        html += data.prior_suppliers.map(p=>`
+            <div class="supplier-row">
+                <div>
+                    <div class="supp-name">${esc(p.supplier_name||'(no name)')}</div>
+                    <div class="supp-email">${esc(p.supplier_email)}</div>
+                    <div class="supp-meta">Last contact: ${esc(p.last_contact)} · ${p.n_contacts}× in our log</div>
+                </div>
+                <div class="supp-actions">
+                    <button class="btn btn-sm btn-primary"
+                        onclick="openPreview(${sample.id},'${esc(p.supplier_name||'').replace(/'/g,"\\'")}','${esc(p.supplier_email)}')">
+                        <i class="fa-solid fa-paper-plane"></i> Email
+                    </button>
+                    <button class="btn btn-sm btn-whatsapp"
+                        onclick="openWhatsappPreview(${sample.id})"
+                        title="Open WhatsApp with pre-filled message">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </button>
+                </div>
+            </div>`).join('');
+    }else{
+        html += '<div class="empty-state">No prior contacts for this material.</div>';
+    }
+
+    // Gmail threads — real supplier replies
+    html += `<div class="section-title">Supplier replies in Gmail (60 days)
+             <span class="count">${data.gmail_threads.length}</span></div>`;
+    if(data.gmail_threads.length){
+        html += data.gmail_threads.map(t=>`
+            <div class="gmail-thread">
+                <div class="subj">${esc(t.subject||'(no subject)')}</div>
+                <div class="frm">${esc(t.latest_from)} · ${esc(t.latest_date)}</div>
+                <div class="snip">${esc(t.snippet)}</div>
+                ${t.supplier_email?`<div style="margin-top:6px"><button class="btn btn-sm"
+                    onclick="openPreview(${sample.id},'','${esc(t.supplier_email)}')">
+                    <i class="fa-solid fa-reply"></i> Resend to ${esc(t.supplier_email)}
+                </button></div>`:''}
+            </div>`).join('');
+    }else{
+        html += '<div class="empty-state">No external supplier threads found.</div>';
+    }
+
+    // Own outbound / internal threads — shown separately, no Resend button
+    if(data.own_outbound && data.own_outbound.length){
+        html += `<div class="section-title" style="opacity:0.75">
+                   Your own outbound / internal threads (for reference)
+                   <span class="count">${data.own_outbound.length}</span>
+                 </div>`;
+        html += data.own_outbound.map(t=>`
+            <div class="gmail-thread" style="opacity:0.75;background:#f8fafc">
+                <div class="subj">${esc(t.subject||'(no subject)')}</div>
+                <div class="frm">${esc(t.latest_from)} · ${esc(t.latest_date)}</div>
+                <div class="snip">${esc(t.snippet)}</div>
+            </div>`).join('');
+    }
+
+    // Google search (only if not fragrance + key configured)
+    if(sample.is_fragrance){
+        html += `<div class="section-title">New suppliers via Google</div>
+                 <div class="empty-state">This is a fragrance / flavour —
+                   company policy uses existing suppliers only. No Google search.</div>`;
+    } else if(SEARCH_OK){
+        html += `<div class="section-title">New suppliers via Google</div>
+                 <div id="google-res-host">
+                   <button class="btn btn-primary" onclick="runGoogleSearch(${sample.id})">
+                     <i class="fa-brands fa-google"></i> Search Google for "${esc(sample.trade_name)}" suppliers
+                   </button>
+                 </div>`;
+    }else{
+        html += `<div class="section-title">New suppliers via Google</div>
+                 <div class="empty-state">Custom Search API not configured.</div>`;
+    }
+
+    document.getElementById('modal-body').innerHTML = html;
+}
+
+async function runGoogleSearch(sampleId){
+    const s = CURRENT_SAMPLE;
+    if(!s) return;
+    const host = document.getElementById('google-res-host');
+    host.innerHTML = '<div class="loading"><i class="fa-solid fa-circle-notch"></i> Searching Google…</div>';
+    try{
+        const r = await fetch('/rd_agent/api/google_search',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({trade_name:s.trade_name, application:s.application}),
+        });
+        const data = await r.json();
+        if(data.status==='blocked'){
+            host.innerHTML = '<div class="empty-state">'+esc(data.message)+'</div>';
+            return;
+        }
+        if(data.status!=='ok'){
+            host.innerHTML = '<div class="empty-state">'+esc(data.message||'Search failed.')+'</div>';
+            return;
+        }
+        if(!data.results.length){
+            host.innerHTML = '<div class="empty-state">No results.</div>';
+            return;
+        }
+        host.innerHTML = data.results.map(r=>`
+            <div class="google-res">
+                <div class="title">${esc(r.name)}</div>
+                <div class="url"><a href="${esc(r.website)}" target="_blank" rel="noopener">${esc(r.website)}</a></div>
+                <div class="snip">${esc(r.snippet)}</div>
+                ${r.email?`
+                <div style="margin-top:6px;display:flex;gap:6px;align-items:center">
+                    <span class="supp-email">${esc(r.email)}</span>
+                    <button class="btn btn-sm btn-primary"
+                        onclick="openPreview(${sampleId},'${esc(r.name).replace(/'/g,"\\'")}','${esc(r.email)}')">
+                        <i class="fa-solid fa-paper-plane"></i> Email
+                    </button>
+                </div>`:''}
+            </div>`).join('');
+    }catch(e){
+        host.innerHTML = '<div class="empty-state">Search error: '+esc(e.message)+'</div>';
+    }
+}
+
+function promptAdHocEmail(sampleId){
+    const email = prompt('Enter supplier email address:');
+    if(!email||!email.includes('@')) return;
+    const name = prompt('Supplier name (optional):') || '';
+    openPreview(sampleId, name, email.trim());
+}
+
+function closeModal(){document.getElementById('modal-backdrop').classList.remove('open')}
+
+// ── Email preview & send ──────────────────────────────────────────────
+async function openPreview(sampleId, supplierName, supplierEmail){
+    const s = ALL_SAMPLES.find(x=>x.id===sampleId);
+    if(!s) return;
+    const payload = {
+        sample_id: sampleId,
+        trade_name: s.trade_name,
+        inci: s.inci,
+        application: s.application,
+        qty: s.qty,
+        required_by: s.required_by,
+        supplier_name: supplierName,
+        supplier_email: supplierEmail,
+    };
+
+    const r = await fetch('/rd_agent/api/email_preview',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+    });
+    const prev = await r.json();
+
+    document.getElementById('preview-body').innerHTML = `
+        <div class="preview-field">
+            <label>From (your portal login)</label>
+            <div class="value">${esc(prev.signer)} &lt;${esc(prev.signer_email)}&gt;</div>
+        </div>
+        <div class="preview-field">
+            <label>To</label>
+            <input type="text" class="value" id="prev-to" value="${esc(prev.to)}"
+                   style="width:100%;padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-family:ui-monospace,monospace;font-size:12px;">
+        </div>
+        <div class="preview-field">
+            <label>CC (auto)</label>
+            <div class="value">${esc(prev.cc)}</div>
+        </div>
+        <div class="preview-field">
+            <label>Subject</label>
+            <div class="value">${esc(prev.subject)}</div>
+        </div>
+        <div class="preview-field">
+            <label>Body (editable — tone is "warm/existing supplier"; add company intro yourself for a cold new supplier)</label>
+            <textarea id="prev-body">${esc(prev.body)}</textarea>
+        </div>
+    `;
+    document.getElementById('preview-backdrop').classList.add('open');
+
+    document.getElementById('btn-open-gmail').onclick = ()=>openInGmail(payload, prev);
+    const sendBtn = document.getElementById('btn-send-direct');
+    if(sendBtn) sendBtn.onclick = ()=>sendDirect(payload);
+}
+
+function closePreview(){document.getElementById('preview-backdrop').classList.remove('open')}
+
+function openInGmail(payload, prev){
+    const to   = document.getElementById('prev-to').value.trim();
+    const body = document.getElementById('prev-body').value;
+    const url = 'https://mail.google.com/mail/?view=cm&fs=1'
+        + '&to='      + encodeURIComponent(to)
+        + '&cc='      + encodeURIComponent(prev.cc)
+        + '&su='      + encodeURIComponent(prev.subject)
+        + '&body='    + encodeURIComponent(body);
+    window.open(url,'_blank','noopener');
+
+    // Log the click so coverage counter updates
+    fetch('/rd_agent/api/mark_opened',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({...payload, supplier_email: to}),
+    }).then(()=>{
+        toast('Logged. Refresh to update coverage.');
+        closePreview();
+        setTimeout(loadPending, 600);
+    });
+}
+
+async function sendDirect(payload){
+    const to   = document.getElementById('prev-to').value.trim();
+    const body = document.getElementById('prev-body').value;
+    if(!confirm(`Send sample request directly to ${to}?\nCC: ${CC_LIST}`)) return;
+    const btn = document.getElementById('btn-send-direct');
+    btn.disabled = true; btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Sending…';
+    try{
+        const r = await fetch('/rd_agent/api/send_direct',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({...payload, supplier_email: to, custom_body: body}),
+        });
+        const data = await r.json();
+        if(data.status!=='sent'){
+            toast('Send failed: '+(data.message||'unknown'), true);
+        }else{
+            toast('Sent! Message ID: '+data.message_id);
+            closePreview();
+            closeModal();
+            setTimeout(loadPending, 600);
+        }
+    }catch(e){
+        toast('Error: '+e.message, true);
+    }finally{
+        btn.disabled=false;
+        btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send Directly';
+    }
+}
+
+// ── History ───────────────────────────────────────────────────────────
+async function showHistory(sampleId){
+    const s = ALL_SAMPLES.find(x=>x.id===sampleId);
+    document.getElementById('modal-title').textContent = 'History — '+s.trade_name;
+    document.getElementById('modal-body').innerHTML =
+        '<div class="loading"><i class="fa-solid fa-circle-notch"></i> Loading…</div>';
+    document.getElementById('modal-backdrop').classList.add('open');
+    try{
+        const r = await fetch('/rd_agent/api/history/'+sampleId);
+        const rows = await r.json();
+        if(!rows.length){
+            document.getElementById('modal-body').innerHTML =
+                '<div class="empty-state">No history for this sample yet.</div>';
+            return;
+        }
+        document.getElementById('modal-body').innerHTML = rows.map(h=>`
+            <div class="supplier-row">
+                <div>
+                    <div class="supp-name">${esc(h.supplier_name||'(no name)')} —
+                        <span style="font-weight:500;color:var(--text-muted)">${esc(h.action)}</span>
+                    </div>
+                    <div class="supp-email">${esc(h.supplier_email)}</div>
+                    <div class="supp-meta">${esc(h.created_at)} · by ${esc(h.user_id||'—')}
+                        ${h.gmail_msg_id?' · msg '+esc(h.gmail_msg_id):''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }catch(e){
+        document.getElementById('modal-body').innerHTML =
+            '<div class="empty-state">Load failed: '+esc(e.message)+'</div>';
+    }
+}
+
+// ── Modal click-outside to close ──────────────────────────────────────
+document.querySelectorAll('.modal-backdrop').forEach(b=>{
+    b.addEventListener('click',e=>{if(e.target===b) b.classList.remove('open')});
+});
+
+// ── WhatsApp ──────────────────────────────────────────────────────────
+async function openWhatsappPreview(sampleId){
+    const s = ALL_SAMPLES.find(x=>x.id===sampleId);
+    if(!s) return;
+    CURRENT_SAMPLE = s;
+
+    try{
+        const r = await fetch('/rd_agent/api/whatsapp_preview',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                trade_name:   s.trade_name,
+                inci:         s.inci,
+                application:  s.application,
+                qty:          s.qty,
+                required_by:  s.required_by,
+            }),
+        });
+        const data = await r.json();
+        document.getElementById('wa-msg').value = data.message;
+        document.getElementById('wa-supplier').value = '';
+        document.getElementById('whatsapp-backdrop').classList.add('open');
+
+        document.getElementById('btn-wa-send').onclick = ()=>sendWhatsApp(s);
+    }catch(e){
+        toast('Failed to load WhatsApp preview: '+e.message, true);
+    }
+}
+
+function closeWhatsapp(){document.getElementById('whatsapp-backdrop').classList.remove('open')}
+
+async function sendWhatsApp(sample){
+    const msg = document.getElementById('wa-msg').value;
+    const supplierName = document.getElementById('wa-supplier').value.trim();
+    if(!msg.trim()){toast('Message is empty', true); return;}
+
+    // Copy the message to clipboard
+    let copied = false;
+    try{
+        await navigator.clipboard.writeText(msg);
+        copied = true;
+    }catch(e){
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = msg; document.body.appendChild(ta);
+        ta.select();
+        try{ copied = document.execCommand('copy'); }catch(_){}
+        document.body.removeChild(ta);
+    }
+
+    if(!copied){
+        toast('Could not copy — select the text manually and copy', true);
+        return;
+    }
+
+    // Open WhatsApp Web
+    window.open('https://web.whatsapp.com/', '_blank', 'noopener');
+
+    // Log the send so coverage counter updates
+    try{
+        await fetch('/rd_agent/api/whatsapp_sent',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                sample_id:     sample.id,
+                trade_name:    sample.trade_name,
+                supplier_name: supplierName,
+            }),
+        });
+    }catch(_){}
+
+    toast('Message copied! Switch to WhatsApp tab and paste (Ctrl+V).');
+    closeWhatsapp();
+    setTimeout(loadPending, 600);
+}
+
+// ── Kick off ──────────────────────────────────────────────────────────
+loadPending();
+</script>
+</body>
+</html>

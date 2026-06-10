@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Material Requests</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>
+:root{
+  --brand:#0d9488;--brand2:#14b8a6;--warn:#f59e0b;--err:#ef4444;--success:#22c55e;--purple:#7c3aed;
+  --bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;--surface3:#e2e8f0;
+  --text:#334155;--text-bright:#0f172a;--muted:#64748b;--muted2:#94a3b8;
+  --border:#e2e8f0;--border2:#cbd5e1;
+}
+[data-theme="dark"]{
+  --bg:#0b1120;--surface:#111827;--surface2:#1f2937;--surface3:#374151;
+  --text:#cbd5e1;--text-bright:#f1f5f9;--muted:#94a3b8;--muted2:#64748b;
+  --border:#1f2937;--border2:#374151;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:.82rem;line-height:1.4}
+a{color:inherit;text-decoration:none}
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;
+  padding:9px 16px;background:var(--surface);border-bottom:1px solid var(--border);min-height:50px}
+.topbar-back{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;
+  background:var(--surface2);color:var(--text-bright);font-size:.78rem;font-weight:600}
+.topbar-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand2));
+  display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.title{font-size:.96rem;font-weight:700;color:var(--text-bright)}
+.subtitle{font-size:.68rem;color:var(--muted2)}
+.user-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;
+  background:var(--surface2);border-radius:8px;font-size:.72rem;color:var(--text-bright)}
+.main{padding:14px 16px;max-width:1500px;margin:0 auto}
+.card{background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.card+.card{margin-top:12px}
+.card-head{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card-head h3{font-size:.86rem;color:var(--text-bright);font-weight:700}
+.card-body{padding:12px 15px}
+.btn{padding:6px 12px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;
+  border:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-family:inherit}
+.btn-brand{background:var(--brand);color:#fff}.btn-brand:hover{background:var(--brand2)}
+.btn-secondary{background:var(--surface2);color:var(--text-bright);border:1px solid var(--border2)}
+.btn-secondary:hover{background:var(--surface3)}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{filter:brightness(1.05)}
+.btn-danger{background:var(--err);color:#fff}.btn-danger:hover{filter:brightness(1.05)}
+.btn-warn{background:var(--warn);color:#fff}.btn-warn:hover{filter:brightness(1.05)}
+.btn-sm{padding:4px 8px;font-size:.7rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);
+  border-radius:7px;padding:6px 10px;font-size:.78rem;font-family:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+textarea{resize:vertical;min-height:60px;width:100%}
+table{width:100%;border-collapse:collapse;font-size:.75rem}
+thead th{background:var(--surface2);color:var(--text-bright);font-weight:600;text-align:left;
+  padding:7px 9px;border-bottom:1px solid var(--border);white-space:nowrap;font-size:.7rem;text-transform:uppercase;letter-spacing:.02em}
+tbody td{padding:6px 9px;border-bottom:1px solid var(--border);color:var(--text)}
+tbody tr:hover{background:var(--surface2)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;
+  font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.pill-pending   {background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.3)}
+.pill-approved  {background:rgba(34,197,94,.12);color:#15803d;border:1px solid rgba(34,197,94,.3)}
+.pill-rejected  {background:rgba(239,68,68,.12);color:#b91c1c;border:1px solid rgba(239,68,68,.3)}
+.pill-supplied  {background:rgba(13,148,136,.12);color:#0f766e;border:1px solid rgba(13,148,136,.3)}
+.pill-partial   {background:rgba(124,58,237,.12);color:#6d28d9;border:1px solid rgba(124,58,237,.3)}
+.pill-closed    {background:rgba(100,116,139,.12);color:#475569;border:1px solid rgba(100,116,139,.3)}
+[data-theme="dark"] .pill-pending   {color:#fbbf24}
+[data-theme="dark"] .pill-approved  {color:#4ade80}
+[data-theme="dark"] .pill-rejected  {color:#f87171}
+[data-theme="dark"] .pill-supplied  {color:#2dd4bf}
+[data-theme="dark"] .pill-partial   {color:#a78bfa}
+[data-theme="dark"] .pill-closed    {color:#94a3b8}
+.tabs{display:flex;gap:2px;padding:6px 6px 0}
+.tab{padding:8px 16px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--muted);
+  border-bottom:2px solid transparent}
+.tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+.kpi .lbl{font-size:.65rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.kpi .val{font-size:1.5rem;font-weight:800;color:var(--text-bright);margin-top:2px}
+.kpi.pending{border-top:3px solid var(--warn)}
+.kpi.approved{border-top:3px solid var(--success)}
+.kpi.rejected{border-top:3px solid var(--err)}
+.kpi.supplied{border-top:3px solid var(--brand)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:14px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--surface);border-radius:12px;border:1px solid var(--border2);
+  width:min(1100px,99vw);max-height:94vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-head{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between;gap:10px}
+.modal-head h3{font-size:.92rem;font-weight:700;color:var(--text-bright)}
+.modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;
+  justify-content:flex-end;gap:8px;background:var(--surface2)}
+.modal-close{width:28px;height:28px;border-radius:50%;background:var(--surface2);
+  border:none;cursor:pointer;color:var(--text);font-size:.85rem}
+
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.meta-item{background:var(--surface2);padding:8px 11px;border-radius:8px;border:1px solid var(--border)}
+.meta-item .lbl{font-size:.64rem;color:var(--muted2);text-transform:uppercase;font-weight:600}
+.meta-item .val{font-size:.82rem;color:var(--text-bright);font-weight:600;margin-top:2px}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters label{font-size:.72rem;color:var(--muted);font-weight:600}
+
+/* Stickers (70 x 30 mm) */
+@media print{
+  body{background:#fff!important}
+  .no-print{display:none!important}
+  .sticker-sheet{display:block!important}
+}
+
+/* Toast */
+.toast{position:fixed;bottom:22px;right:22px;padding:10px 14px;border-radius:8px;
+  color:#fff;font-size:.8rem;z-index:5000;box-shadow:0 10px 25px rgba(0,0,0,.3);opacity:0;
+  transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.ok{background:#22c55e}.toast.err{background:#ef4444}.toast.info{background:#0ea5e9}
+</style>
+</head>
+<body>
+<script>(function(){var t=localStorage.getItem("hcp_theme")||"light";document.documentElement.setAttribute("data-theme",t);})()</script>
+
+{% set page_title = "Material Requests" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Material Requests", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="main">
+
+  <div class="kpi-row">
+    <div class="kpi pending"><div class="lbl">Pending</div><div class="val" id="kpi-pending">–</div></div>
+    <div class="kpi approved"><div class="lbl">Approved</div><div class="val" id="kpi-approved">–</div></div>
+    <div class="kpi supplied"><div class="lbl">Supplied</div><div class="val" id="kpi-supplied">–</div></div>
+    <div class="kpi rejected"><div class="lbl">Rejected</div><div class="val" id="kpi-rejected">–</div></div>
+  </div>
+
+  <div class="card">
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="all">All</div>
+      <div class="tab" data-tab="PD">Production</div>
+      <div class="tab" data-tab="RD">R &amp; D</div>
+    </div>
+    <div class="card-head" style="border-top:1px solid var(--border)">
+      <div class="filters" style="flex:1;min-width:0">
+        <select id="f-status">
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Partial">Partial</option>
+          <option value="Supplied">Supplied</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+        <input type="date" id="f-from" title="From date">
+        <input type="date" id="f-to"   title="To date">
+        <input type="text" id="f-q"    placeholder="Search voucher / batch / product / requester" style="min-width:240px">
+        <button class="btn btn-secondary btn-sm" onclick="loadList()"><i class="fa fa-filter"></i> Apply</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear</button>
+      </div>
+      <button class="btn btn-brand btn-sm" onclick="loadList()"><i class="fa fa-rotate"></i> Refresh</button>
+    </div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table id="list-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Voucher No</th>
+            <th>Dept</th>
+            <th>Batch / Product</th>
+            <th>Requested By</th>
+            <th>Requested On</th>
+            <th>Items</th>
+            <th>Status</th>
+            <th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="list-body"><tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted2)">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="dm-title">Material Request</h3>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-secondary btn-sm" onclick="printVoucher()" title="Print voucher"><i class="fa fa-print"></i> Print</button>
+        <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body" id="dm-body">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CAN_APPROVE = {{ 'true' if can_approve else 'false' }};
+const CAN_SUPPLY  = {{ 'true' if can_supply  else 'false' }};
+const IS_ADMIN    = {{ 'true' if is_admin    else 'false' }};
+const IS_PROD     = {{ 'true' if is_production else 'false' }};
+const IS_RD       = {{ 'true' if is_rd       else 'false' }};
+const IS_RM_STORE = {{ 'true' if is_rm_store else 'false' }};
+
+let currentTab = 'all';
+let cachedList = [];
+let currentDetail = null;   // { header, items }
+
+function $(id){return document.getElementById(id)}
+function toast(msg, type='info', ms=2200){
+  const t=$('toast'); t.textContent=msg; t.className='toast show '+type;
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'), ms);
+}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function fmtDT(s){if(!s)return '—';const d=new Date(s.replace(' ','T'));if(isNaN(d))return s;
+  return d.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})}
+function fmtD(s){if(!s)return '—';const d=new Date(s.replace(' ','T'));if(isNaN(d))return s;
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function pill(status){
+  const m={Pending:'pending',Approved:'approved',Rejected:'rejected',Supplied:'supplied',Partial:'partial',Closed:'closed'};
+  return `<span class="pill pill-${m[status]||'pending'}">${status}</span>`;
+}
+
+document.querySelectorAll('#tabs .tab').forEach(t=>{
+  t.onclick=()=>{document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');currentTab=t.dataset.tab;loadList();}
+});
+
+function clearFilters(){
+  $('f-status').value='';$('f-from').value='';$('f-to').value='';$('f-q').value='';loadList();
+}
+
+async function loadList(){
+  const p=new URLSearchParams();
+  if(currentTab!=='all') p.set('dept',currentTab);
+  if($('f-status').value) p.set('status',$('f-status').value);
+  if($('f-from').value) p.set('from',$('f-from').value);
+  if($('f-to').value)   p.set('to',  $('f-to').value);
+  if($('f-q').value.trim()) p.set('q',$('f-q').value.trim());
+  try{
+    const r=await fetch('/api/mrf/list?'+p.toString());
+    const j=await r.json();
+    if(j.status!=='ok') throw new Error(j.message||'load failed');
+    cachedList=j.rows||[];
+    renderList();
+    renderKpis();
+  }catch(e){toast('Load error: '+e.message,'err')}
+}
+
+function renderKpis(){
+  let p=0,a=0,s=0,rj=0;
+  cachedList.forEach(r=>{
+    if(r.status==='Pending')p++;
+    else if(r.status==='Approved'||r.status==='Partial')a++;
+    else if(r.status==='Supplied')s++;
+    else if(r.status==='Rejected')rj++;
+  });
+  $('kpi-pending').textContent=p;
+  $('kpi-approved').textContent=a;
+  $('kpi-supplied').textContent=s;
+  $('kpi-rejected').textContent=rj;
+}
+
+function renderList(){
+  const tb=$('list-body');
+  if(!cachedList.length){
+    tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted2)">No requests found</td></tr>';
+    return;
+  }
+  tb.innerHTML=cachedList.map((r,i)=>{
+    const bp=[r.batch_name,r.product_code].filter(Boolean).join(' · ')||'—';
+    const stats=`<span title="Pending/Approved/Supplied/Rejected" style="font-size:.66rem;color:var(--muted)">
+      ${r.items_total} (${r.items_pending}P / ${r.items_approved}A / ${r.items_supplied}S / ${r.items_rejected}R)</span>`;
+    const canDel=IS_ADMIN || (r.requested_by && (r.status==='Pending'||r.status==='Rejected'));
+    // Pure RM Store users cannot open pending requests (admin approval required first).
+    const pureRmStore = IS_RM_STORE && !IS_ADMIN && !IS_PROD && !IS_RD;
+    const canView = !(pureRmStore && r.status === 'Pending');
+    const viewBtn = canView
+      ? `<button class="btn btn-secondary btn-sm" onclick="openDetail(${r.id})"><i class="fa fa-eye"></i> View</button>`
+      : `<button class="btn btn-secondary btn-sm" disabled title="Request is pending admin approval" style="opacity:.45;cursor:not-allowed"><i class="fa fa-lock"></i> Pending approval</button>`;
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${esc(r.voucher_no)}</strong></td>
+      <td><span class="pill" style="background:${r.dept==='PD'?'rgba(13,148,136,.12)':'rgba(124,58,237,.12)'};color:${r.dept==='PD'?'#0f766e':'#6d28d9'};border:1px solid ${r.dept==='PD'?'rgba(13,148,136,.3)':'rgba(124,58,237,.3)'}">${r.dept==='PD'?'Production':'R & D'}</span></td>
+      <td>${esc(bp)}</td>
+      <td>${esc(r.requested_by||'—')}</td>
+      <td>${fmtDT(r.requested_on)}</td>
+      <td>${stats}</td>
+      <td>${pill(r.status)}</td>
+      <td style="text-align:right;white-space:nowrap">
+        ${viewBtn}
+        ${canDel?`<button class="btn btn-danger btn-sm" onclick="deleteMrf(${r.id},'${esc(r.voucher_no)}')"><i class="fa fa-trash"></i></button>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function openDetail(id){
+  try{
+    const r=await fetch('/api/mrf/detail?id='+id);
+    const j=await r.json();
+    if(j.status!=='ok') throw new Error(j.message||'load failed');
+    currentDetail=j;
+    renderDetail();
+    openModal('detailModal');
+  }catch(e){toast('Detail error: '+e.message,'err')}
+}
+
+function renderDetail(){
+  const h=currentDetail.header, items=currentDetail.items;
+  $('dm-title').textContent='MRF · '+h.voucher_no+'   '+h.status;
+
+  // Meta
+  const meta=`<div class="meta-grid">
+    <div class="meta-item"><div class="lbl">Voucher No</div><div class="val">${esc(h.voucher_no)}</div></div>
+    <div class="meta-item"><div class="lbl">Department</div><div class="val">${h.dept==='PD'?'Production':'R & D'}</div></div>
+    <div class="meta-item"><div class="lbl">Status</div><div class="val">${pill(h.status)}</div></div>
+    <div class="meta-item"><div class="lbl">Batch</div><div class="val">${esc(h.batch_name||'—')}</div></div>
+    <div class="meta-item"><div class="lbl">Product Code</div><div class="val">${esc(h.product_code||'—')}</div></div>
+    <div class="meta-item"><div class="lbl">Requested By</div><div class="val">${esc(h.requested_by||'—')}<br><span style="font-size:.66rem;color:var(--muted2);font-weight:normal">${fmtDT(h.requested_on)}</span></div></div>
+    <div class="meta-item"><div class="lbl">Reviewed By</div><div class="val">${esc(h.reviewed_by||'—')}<br><span style="font-size:.66rem;color:var(--muted2);font-weight:normal">${fmtDT(h.reviewed_on)}</span></div></div>
+    <div class="meta-item"><div class="lbl">Authorized By</div><div class="val">${esc(h.authorized_by||'—')}<br><span style="font-size:.66rem;color:var(--muted2);font-weight:normal">${fmtDT(h.authorized_on)}</span></div></div>
+  </div>
+  <div class="meta-item" style="margin-top:8px"><div class="lbl">Purpose</div><div class="val" style="font-weight:normal;white-space:pre-wrap">${esc(h.purpose||'—')}</div></div>`;
+
+  // Items table with per-row actions
+  const hasPending = items.some(it=>it.item_status==='Pending');
+  const bulk = CAN_APPROVE && hasPending
+    ? `<div style="display:flex;gap:6px;margin-bottom:6px">
+         <button class="btn btn-success btn-sm" onclick="bulkAction(${h.id},'approve_all')"><i class="fa fa-check-double"></i> Approve All</button>
+         <button class="btn btn-danger  btn-sm" onclick="bulkAction(${h.id},'reject_all')"><i class="fa fa-ban"></i> Reject All</button>
+       </div>` : '';
+
+  const rows = items.map((it,i)=>{
+    const isPending  = it.item_status==='Pending';
+    const isApproved = it.item_status==='Approved';
+    const isSupplied = it.item_status==='Supplied';
+    const isRejected = it.item_status==='Rejected';
+
+    // Admin approval cell
+    let approvalCell = '';
+    if(CAN_APPROVE && isPending){
+      approvalCell = `<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+        <input type="number" step="any" min="0" value="${it.qty_demand}" id="qa_${it.id}"
+          style="width:80px;padding:3px 6px" title="Approved qty (defaults to demand)">
+        <button class="btn btn-success btn-sm" onclick="itemAction(${it.id},'approve')"><i class="fa fa-check"></i></button>
+        <button class="btn btn-danger  btn-sm" onclick="itemAction(${it.id},'reject')"><i class="fa fa-xmark"></i></button>
+      </div>`;
+    } else if(isRejected){
+      approvalCell = `<span class="pill pill-rejected">Rejected</span>${it.reject_reason?`<div style="font-size:.65rem;color:var(--muted);margin-top:2px">${esc(it.reject_reason)}</div>`:''}`;
+    } else if(isApproved || isSupplied){
+      approvalCell = `<span class="pill pill-approved">Approved</span><div style="font-size:.65rem;color:var(--muted2);margin-top:2px">${esc(it.approved_by||'')} · ${fmtDT(it.approved_on)}</div>`;
+    } else {
+      approvalCell = `<span class="pill pill-pending">Pending</span>`;
+    }
+
+    // RM Store supply action
+    let supplyCell = '';
+    if(isApproved && CAN_SUPPLY){
+      supplyCell = `<div style="display:flex;gap:4px;align-items:center">
+        <input type="number" step="any" min="0" value="${it.qty_obtained!=null?it.qty_obtained:it.qty_demand}" id="qs_${it.id}"
+          style="width:80px;padding:3px 6px" title="Supplied qty">
+        <button class="btn btn-brand btn-sm" onclick="supplyItem(${it.id})"><i class="fa fa-truck"></i> Supply</button>
+      </div>`;
+    } else if(isSupplied){
+      supplyCell = `<span class="pill pill-supplied">Supplied</span><div style="font-size:.65rem;color:var(--muted2);margin-top:2px">${esc(it.supplied_by||'')} · ${fmtDT(it.supplied_on)}</div>`;
+    }
+
+    // Receive (requester-side) action
+    let receiveCell = '';
+    if(isSupplied && !it.received_on){
+      const canReceive = IS_ADMIN || (IS_PROD && h.dept==='PD') || (IS_RD && h.dept==='RD');
+      if(canReceive){
+        receiveCell = `<button class="btn btn-secondary btn-sm" onclick="receiveItem(${it.id})"><i class="fa fa-inbox"></i> Mark received</button>`;
+      }
+    } else if(it.received_on){
+      receiveCell = `<span class="pill pill-closed">Received</span><div style="font-size:.65rem;color:var(--muted2);margin-top:2px">${esc(it.received_by||'')} · ${fmtDT(it.received_on)}</div>`;
+    }
+
+    return `<tr data-item-id="${it.id}">
+      <td style="text-align:center">
+        ${(isApproved||isSupplied) && h.dept==='RD'
+          ? `<input type="checkbox" class="mrf-item-sel" data-item-id="${it.id}" onchange="onStickerSelChange()" style="width:16px;height:16px;cursor:pointer">`
+          : ''}
+      </td>
+      <td>${i+1}</td>
+      <td><strong>${esc(it.material_name)}</strong>${it.supplier_name?`<div style="font-size:.65rem;color:var(--muted)">Sup: ${esc(it.supplier_name)}</div>`:''}</td>
+      <td style="text-align:right">${Number(it.qty_demand).toFixed(3)} ${esc(it.uom||'')}</td>
+      <td style="text-align:right">${it.qty_obtained!=null?Number(it.qty_obtained).toFixed(3)+' '+esc(it.uom||''):'—'}</td>
+      <td>${esc(it.remarks||'')}</td>
+      <td>${approvalCell}</td>
+      <td>${supplyCell}</td>
+      <td>${receiveCell}</td>
+    </tr>`;
+  }).join('');
+
+  // Show selection column only for R&D (stickers are R&D only)
+  const isRD = h.dept === 'RD';
+  const selectableCount = isRD
+    ? items.filter(it => it.item_status==='Approved' || it.item_status==='Supplied').length
+    : 0;
+
+  const selHeader = isRD
+    ? `<th style="text-align:center;width:34px">
+         <input type="checkbox" id="mrf-sel-all" onchange="toggleAllStickerSel(this)" style="width:16px;height:16px;cursor:pointer" title="Select all printable">
+       </th>`
+    : `<th style="width:0"></th>`;
+
+  const selBar = isRD && selectableCount > 0
+    ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px">
+        <i class="fa fa-tags" style="color:var(--brand)"></i>
+        <span style="font-size:.74rem;color:var(--text-bright);font-weight:600">Stickers</span>
+        <span id="mrf-sel-count" style="font-size:.72rem;color:var(--muted)">0 of ${selectableCount} selected</span>
+        <div style="flex:1"></div>
+        <button class="btn btn-secondary btn-sm" onclick="printStickers({selectedOnly:true})" id="mrf-print-selected-btn" disabled>
+          <i class="fa fa-print"></i> Print Selected
+        </button>
+        <button class="btn btn-brand btn-sm" onclick="printStickers()">
+          <i class="fa fa-print"></i> Print All
+        </button>
+       </div>`
+    : '';
+
+  const itemsHtml = `<div>
+    ${bulk}
+    ${selBar}
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px">
+      <table>
+        <thead>
+          <tr>
+            ${selHeader}
+            <th>Sr</th>
+            <th>Material</th>
+            <th style="text-align:right">Qty Demand</th>
+            <th style="text-align:right">Qty Approved / Supplied</th>
+            <th>Remarks</th>
+            <th>Admin Approval</th>
+            <th>RM Store</th>
+            <th>Receipt</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  $('dm-body').innerHTML = meta + itemsHtml;
+}
+
+// ── Sticker-selection helpers ────────────────────────────────────────────
+function toggleAllStickerSel(hdrCb){
+  document.querySelectorAll('.mrf-item-sel').forEach(cb => {
+    cb.checked = hdrCb.checked;
+  });
+  onStickerSelChange();
+}
+
+function onStickerSelChange(){
+  const all = document.querySelectorAll('.mrf-item-sel');
+  const sel = document.querySelectorAll('.mrf-item-sel:checked');
+  const btn = document.getElementById('mrf-print-selected-btn');
+  const cnt = document.getElementById('mrf-sel-count');
+  const hdr = document.getElementById('mrf-sel-all');
+  if(btn) btn.disabled = (sel.length === 0);
+  if(cnt) cnt.textContent = `${sel.length} of ${all.length} selected`;
+  if(hdr){
+    hdr.checked = (all.length > 0 && sel.length === all.length);
+    hdr.indeterminate = (sel.length > 0 && sel.length < all.length);
+  }
+}
+
+async function itemAction(itemId, action){
+  const body = {item_id: itemId, action: action};
+  if(action==='approve'){
+    const v = parseFloat($('qa_'+itemId).value);
+    if(isNaN(v) || v<=0){ toast('Enter a valid approved quantity','err'); return; }
+    body.qty_approved = v;
+  }else{
+    const r = prompt('Rejection reason (optional):','');
+    if(r===null) return;
+    body.reason = r;
+  }
+  try{
+    const res = await fetch('/api/mrf/item_action',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j = await res.json();
+    if(j.status!=='ok') throw new Error(j.message);
+    toast(action==='approve'?'Item approved':'Item rejected','ok');
+    openDetail(currentDetail.header.id);
+    loadList();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+async function bulkAction(mrfId, action){
+  let reason = '';
+  if(action==='reject_all'){
+    reason = prompt('Reason for rejecting all items:','');
+    if(reason===null) return;
+  } else if(!confirm('Approve all pending items at requested quantities?')) return;
+  try{
+    const res = await fetch('/api/mrf/bulk_action',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mrf_id:mrfId,action:action,reason:reason})});
+    const j = await res.json();
+    if(j.status!=='ok') throw new Error(j.message);
+    toast('Bulk action applied','ok');
+    openDetail(mrfId); loadList();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+async function supplyItem(itemId){
+  const v = parseFloat($('qs_'+itemId).value);
+  if(isNaN(v) || v<=0){ toast('Enter a valid supplied quantity','err'); return; }
+  try{
+    const res = await fetch('/api/mrf/supply_item',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({item_id:itemId, qty_supplied:v})});
+    const j = await res.json();
+    if(j.status!=='ok') throw new Error(j.message);
+    toast('Marked supplied','ok');
+    openDetail(currentDetail.header.id); loadList();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+async function receiveItem(itemId){
+  try{
+    const res = await fetch('/api/mrf/receive_item',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({item_id:itemId})});
+    const j = await res.json();
+    if(j.status!=='ok') throw new Error(j.message);
+    toast('Marked received','ok');
+    openDetail(currentDetail.header.id); loadList();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+async function deleteMrf(id, vno){
+  if(!confirm('Delete voucher '+vno+' ?')) return;
+  try{
+    const res = await fetch('/api/mrf/delete',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id})});
+    const j = await res.json();
+    if(j.status!=='ok') throw new Error(j.message);
+    toast('Deleted','ok'); closeModal('detailModal'); loadList();
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+/* ══ Print voucher (image 2 layout) ══ */
+function printVoucher(){
+  if(!currentDetail) return;
+  const h=currentDetail.header, items=currentDetail.items;
+  const userName='{{ session["User_Name"] }}';
+  const nowStr=new Date().toLocaleString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+
+  const rows = items.map((it,i)=>`
+    <tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${esc(it.material_name)}</td>
+      <td style="text-align:right">${Number(it.qty_demand).toFixed(3)}</td>
+      <td style="text-align:right">${it.qty_obtained!=null?Number(it.qty_obtained).toFixed(3):''}</td>
+      <td>${esc(it.remarks||'')} ${it.item_status==='Rejected'?'<span style="color:#b91c1c;font-weight:600">[REJECTED'+(it.reject_reason?' - '+esc(it.reject_reason):'')+']</span>':''}</td>
+      <td>${it.supplied_on?fmtD(it.supplied_on):''}</td>
+      <td>${it.received_on?fmtD(it.received_on):''}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>MRF - ${esc(h.voucher_no)}</title>
+<style>
+  @page{size:A4 landscape;margin:10mm}
+  body{font-family:Arial,sans-serif;font-size:11px;color:#000;margin:0;padding:0}
+  table{width:100%;border-collapse:collapse}
+  table,th,td{border:1px solid #000}
+  th,td{padding:5px 7px;vertical-align:top}
+  .head-row td{padding:7px 10px}
+  .hdr-title{font-size:18px;font-weight:600;text-align:center}
+  .logo{font-weight:700;letter-spacing:.5px;color:#1e40af;font-size:14px}
+  .sign-table th{background:#fff;font-weight:700;text-align:center}
+</style></head><body>
+<table>
+  <tr class="head-row">
+    <td style="width:28%;text-align:center" rowspan="2">
+      <div class="logo">HCP WELLESS PVT. LTD.</div>
+      <div style="font-size:9px;color:#64748b;margin-top:3px">(A Pharmaceutical &amp; Manufacturing Unit)</div>
+    </td>
+    <td colspan="6" class="hdr-title">Material Request Form</td>
+  </tr>
+  <tr><td colspan="6" style="height:2px;padding:0"></td></tr>
+  <tr><td><b>Voucher No :</b></td><td colspan="6">${esc(h.voucher_no)}</td></tr>
+  <tr><td><b>Department :</b></td><td colspan="6">${h.dept==='PD'?'Production':'R & D'}</td></tr>
+  <tr><td><b>Date :</b></td><td colspan="6">${fmtDT(h.requested_on)}</td></tr>
+  <tr><td><b>Request By :</b></td><td colspan="6">${esc(h.requested_by||'')}</td></tr>
+  ${h.batch_name?`<tr><td><b>Batch :</b></td><td colspan="6">${esc(h.batch_name)} ${h.product_code?'&nbsp;&nbsp;<b>Product:</b> '+esc(h.product_code):''}</td></tr>`:''}
+</table>
+<table style="margin-top:-1px">
+  <thead>
+    <tr>
+      <th style="width:5%">Sr No</th>
+      <th style="width:30%">Product Name</th>
+      <th style="width:12%">Qty Demand</th>
+      <th style="width:12%">Qty Obtained</th>
+      <th style="width:20%">Remarks</th>
+      <th style="width:10%">Supplied Date</th>
+      <th style="width:11%">Received Date</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+</table>
+<table style="margin-top:-1px"><tr>
+  <td style="padding:7px 10px"><b>Required For / PURPOSE :</b><br>${esc(h.purpose||'')}</td>
+</tr></table>
+<table class="sign-table" style="margin-top:8px">
+  <tr>
+    <th style="width:33%">ISSUER NAME &amp; SIGN &amp; Datetime</th>
+    <th style="width:33%">USER NAME &amp; SIGN &amp; Datetime</th>
+    <th style="width:34%">AUTHORIZES NAME &amp; SIGN &amp; Datetime</th>
+  </tr>
+  <tr>
+    <td style="text-align:center;padding:18px 8px 8px"><b>${esc(h.authorized_by||'')}</b><br>${h.authorized_on?fmtDT(h.authorized_on):''}</td>
+    <td style="text-align:center;padding:18px 8px 8px"><b>${esc(h.requested_by||'')}</b><br>${fmtDT(h.requested_on)}</td>
+    <td style="text-align:center;padding:18px 8px 8px"><b>${esc(h.reviewed_by||h.authorized_by||'')}</b><br>${h.reviewed_on?fmtDT(h.reviewed_on):''}</td>
+  </tr>
+</table>
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},300);});<\/script>
+</body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html); w.document.close();
+}
+
+/* ══ Stickers — 70 × 30 mm, for R&D items (Chrome Save-as-PDF friendly) ══ */
+function printStickers(opts){
+  if(!currentDetail) return;
+  opts = opts || {};
+  const h=currentDetail.header, items=currentDetail.items;
+  if(h.dept!=='RD'){ toast('Stickers available for R&D requests only','info'); return; }
+
+  // Pool of printable items (approved-or-supplied only)
+  let pool = items.filter(it=>it.item_status==='Approved'||it.item_status==='Supplied');
+
+  // If caller asked for selected-only, restrict to checked items
+  if(opts.selectedOnly){
+    const selIds = new Set(
+      Array.from(document.querySelectorAll('.mrf-item-sel:checked'))
+        .map(cb => String(cb.dataset.itemId))
+    );
+    pool = pool.filter(it => selIds.has(String(it.id)));
+    if(!pool.length){ toast('Select at least one item to print','info'); return; }
+  } else {
+    if(!pool.length){ toast('No approved items to print','info'); return; }
+  }
+
+  // Batch context from the request header (shown on each label if present)
+  const batchLine = (h.batch_name && String(h.batch_name).trim())
+    ? `<div class="batch"><b>Batch :</b> ${esc(h.batch_name)}</div>`
+    : '';
+
+  const labels = pool.map(it=>{
+    const qty = Number(it.qty_obtained!=null?it.qty_obtained:it.qty_demand);
+    const qtyStr = qty.toFixed(3);
+    return `
+    <div class="sticker">
+      <div class="top">
+        <div class="name">${esc(it.material_name)}</div>
+        <div class="sup"><b>Sup. :</b>${esc(it.supplier_name||'—')}</div>
+        ${batchLine}
+      </div>
+      <div class="qty-wrap">
+        <div class="qty-divider"></div>
+        <div class="qty"><b>Sample Qty</b> : ${qtyStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Chrome print dialog cannot be programmatically told to pick a paper size,
+  // so we show a one-time guidance banner (hidden in print output via @media print).
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Stickers ${esc(h.voucher_no)}</title>
+<style>
+  /* ── PDF page size: exactly 70 × 30 mm, zero margin ── */
+  @page{
+    size: 70mm 30mm;
+    margin: 0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    margin:0;
+    padding:0;
+    font-family:'Calibri','Arial',sans-serif;
+    background:#fff;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .sticker{
+    width:70mm;
+    height:30mm;
+    padding:1.4mm 2mm;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    text-align:center;
+    page-break-after:always;
+    break-after:page;
+    overflow:hidden;
+    color:#000;
+    border:.35mm solid #000;      /* outer border per reference */
+  }
+  .sticker:last-child{page-break-after:auto;break-after:auto}
+  .top{display:flex;flex-direction:column;align-items:center;gap:.7mm;flex:1;justify-content:center}
+  .name{font-weight:700;font-size:15pt;line-height:1.1;letter-spacing:.1pt;
+        overflow:hidden;word-break:break-word}
+  .sup{font-size:10pt;line-height:1.15;overflow:hidden;word-break:break-word}
+  .sup b{font-weight:700}
+  .batch{font-size:9.5pt;line-height:1.15;overflow:hidden;word-break:break-word;color:#000}
+  .batch b{font-weight:700}
+  .qty-wrap{width:100%;padding-top:.4mm}
+  .qty-divider{width:90%;height:0;border-top:.35mm solid #000;margin:0 auto .6mm auto}
+  .qty{font-size:11.5pt;line-height:1.1;letter-spacing:.1pt}
+  .qty b{font-weight:700}
+
+  /* Guidance banner — visible on screen, hidden on print */
+  .print-guide{
+    position:fixed;top:0;left:0;right:0;background:#fef3c7;color:#78350f;
+    padding:14px 20px;font-family:Arial,sans-serif;font-size:13px;line-height:1.5;
+    border-bottom:2px solid #f59e0b;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.08)
+  }
+  .print-guide b{font-weight:700}
+  .print-guide code{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:12px}
+  .print-guide .close-btn{
+    position:absolute;top:8px;right:12px;background:none;border:none;
+    font-size:18px;cursor:pointer;color:#78350f;padding:2px 8px;line-height:1
+  }
+  .print-guide .close-btn:hover{background:rgba(0,0,0,.1);border-radius:4px}
+  .actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+  .actions button{
+    background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:6px;
+    font-size:12px;font-weight:600;cursor:pointer;font-family:inherit
+  }
+  .actions button:hover{background:#d97706}
+  .actions button.secondary{background:#fff;color:#78350f;border:1px solid #f59e0b}
+
+  @media screen {
+    body{padding:80px 12mm 12mm 12mm;background:#f3f4f6}
+    .sticker{background:#fff;margin:0 auto 3mm auto}
+  }
+
+  @media print {
+    body{padding:0;background:#fff}
+    .sticker{margin:0}
+    .print-guide{display:none !important}
+  }
+</style></head><body>
+
+<div class="print-guide" id="guide">
+  <button class="close-btn" onclick="document.getElementById('guide').style.display='none'" title="Hide">&times;</button>
+  <div><b>Print / Save as PDF settings (Chrome)</b> &nbsp; — &nbsp; ${pool.length} sticker${pool.length>1?'s':''} queued</div>
+  <div style="margin-top:4px">
+    In the print dialog — <b>Destination:</b> <code>Save as PDF</code> &nbsp;·&nbsp;
+    <b>Paper size:</b> <code>Custom — 70 × 30 mm</code> &nbsp;·&nbsp;
+    <b>Margins:</b> <code>None</code> &nbsp;·&nbsp;
+    <b>Scale:</b> <code>Default</code> or <code>100</code>
+  </div>
+  <div class="actions">
+    <button onclick="window.print()">Open print dialog</button>
+    <button class="secondary" onclick="window.close()">Close</button>
+  </div>
+</div>
+
+${labels}
+
+<script>
+  // Adaptive font sizing — shrink content to fit the 70 x 30 mm label.
+  //
+  // Strategy (per sticker):
+  //   Step 1: if the material name alone overflows its own box, shrink .name
+  //           down to a sensible minimum.
+  //   Step 2: if the whole sticker still has vertical overflow (because of
+  //           long supplier + batch lines), scale ALL text sizes down
+  //           proportionally by applying a multiplier to the base pt sizes.
+  window.addEventListener('load', function(){
+    document.querySelectorAll('.sticker').forEach(function(s){
+      // Step 1 — material-name-only shrink (keeps it prominent when possible)
+      var name = s.querySelector('.name');
+      if(name){
+        var nameSize = 15;
+        name.style.fontSize = nameSize + 'pt';
+        // If the name wraps to more than ~2 lines and overflows, shrink it.
+        while(name.scrollHeight > name.clientHeight + 1 && nameSize > 9){
+          nameSize -= 0.5;
+          name.style.fontSize = nameSize + 'pt';
+        }
+      }
+
+      // Step 2 — whole-label proportional shrink if anything still overflows
+      var scale = 1.0;
+      var guard = 0;
+      while(s.scrollHeight > s.clientHeight + 1 && scale > 0.55 && guard < 40){
+        scale -= 0.05;
+        guard++;
+        // Apply the scale by overriding all text sizes with computed * scale
+        applyScale(s, scale);
+      }
+    });
+
+    // Map each class to its (scaled) base pt size.
+    function applyScale(sticker, scale){
+      var map = [
+        ['.name',  15],
+        ['.sup',   10],
+        ['.batch', 9.5],
+        ['.qty',   11.5]
+      ];
+      map.forEach(function(pair){
+        var el = sticker.querySelector(pair[0]);
+        if(el) el.style.fontSize = (pair[1] * scale).toFixed(1) + 'pt';
+      });
+      // Also proportionally reduce line gap for very tight fits
+      var top = sticker.querySelector('.top');
+      if(top) top.style.gap = (0.7 * scale).toFixed(2) + 'mm';
+    }
+
+    setTimeout(function(){ window.print(); }, 400);
+  });
+<\/script>
+</body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// Initial load
+loadList();
+setInterval(loadList, 60000);  // auto-refresh every 60s
+
+// close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('open'); });
+});
+
+// close the top-most open modal on Escape key
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' || e.key === 'Esc'){
+    const open = document.querySelectorAll('.modal-overlay.open');
+    if(open.length){
+      open[open.length - 1].classList.remove('open');
+      e.stopPropagation();
+    }
+  }
+});
+</script>
+</body>
+</html>

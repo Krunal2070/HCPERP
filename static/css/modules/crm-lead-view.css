@@ -1,0 +1,92 @@
+/* Module CSS for crm/leads/lead_view.html */
+
+@keyframes modalIn {
+    from { opacity:0; transform:scale(.95) translateY(10px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+}
+
+#sampleOrderModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:flex-end; justify-content:center; }
+#sampleOrderModal .so-box { background:#fff; border-radius:22px 22px 0 0; width:100%; max-height:95vh; overflow-y:auto; box-shadow:0 -8px 40px rgba(0,0,0,0.2); animation:soSlideUp .25s ease; display:flex; flex-direction:column; }
+#sampleOrderModal .so-hdr { background:#1e3a5f; color:#fff; padding:14px 18px; border-radius:22px 22px 0 0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5; flex-shrink:0; }
+#sampleOrderModal .so-body { padding:16px; flex:1; }
+#sampleOrderModal .so-foot { padding:12px 16px; border-top:1px solid #e5e7eb; display:flex; gap:8px; background:#f9fafb; position:sticky; bottom:0; flex-shrink:0; }
+#sampleOrderModal .so-foot button { flex:1; padding:13px; border-radius:10px; font-size:0.88rem; font-weight:700; border:none; cursor:pointer; }
+.so-section-lbl { font-size:0.68rem; font-weight:700; letter-spacing:0.08em; color:#94a3b8; text-transform:uppercase; margin-bottom:8px; }
+.so-card-section { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:12px; }
+/* Mobile item cards */
+.so-item-card { background:#fff; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:8px; position:relative; }
+.so-item-card .so-item-name { width:100%; margin-bottom:8px; }
+.so-item-card .so-item-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center; }
+.so-item-card .so-item-row label { font-size:0.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; display:block; margin-bottom:3px; }
+.so-item-card .so-item-amt { font-size:0.82rem; font-weight:700; color:#1e3a5f; text-align:right; padding-top:6px; }
+.so-item-del { position:absolute; top:10px; right:10px; background:#fef2f2; color:#dc2626; border:none; border-radius:6px; width:26px; height:26px; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.so-total-row { display:flex; justify-content:space-between; padding:8px 12px; font-size:0.85rem; border-bottom:1px solid #e5e7eb; }
+.so-total-final { display:flex; justify-content:space-between; padding:10px 12px; font-size:0.92rem; font-weight:800; background:#f0f4ff; border-radius:0 0 10px 10px; color:#1e3a5f; }
+/* Desktop table items */
+.so-desktop-table { display:none; }
+.so-mobile-cards  { display:block; }
+/* Unified top layout */
+.so-unified-top { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+.so-bill-section, .so-order-section { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; }
+.so-bill-section .fi, .so-order-section .fi { margin-bottom:0; }
+@media(min-width:768px) {
+    .so-unified-top { flex-direction:row; gap:0; background:#fff; border:none; padding:0; margin-bottom:18px; padding-bottom:18px; border-bottom:1.5px dashed #d1d5db; }
+    .so-bill-section { flex:1; background:transparent; border:none; padding:0; padding-right:24px; border-radius:0; }
+    .so-order-section { width:280px; flex-shrink:0; background:transparent; border:none; padding:0; padding-left:24px; border-left:1px solid #e5e7eb; border-radius:0; }
+}
+/* Validation */
+.so-field-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.12) !important; }
+.so-err-msg { color:#dc2626; font-size:0.72rem; font-weight:600; margin-top:3px; display:none; }
+.so-err-msg.show { display:block; }
+.so-val-toast { position:fixed; top:80px; left:50%; transform:translateX(-50%); background:#1e3a5f; color:#fff; padding:10px 20px; border-radius:10px; font-size:0.85rem; font-weight:600; z-index:9999; display:none; box-shadow:0 4px 20px rgba(0,0,0,0.25); white-space:nowrap; }
+.so-val-toast.show { display:block; animation:soSlideUp .2s ease; }
+@keyframes soSlideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@media(min-width:768px) {
+    #sampleOrderModal { align-items:center; padding:1rem; }
+    #sampleOrderModal .so-box { border-radius:16px; max-width:900px; max-height:92vh; }
+    #sampleOrderModal .so-hdr { border-radius:16px 16px 0 0; }
+    #sampleOrderModal .so-body { padding:1.5rem; }
+    #sampleOrderModal .so-foot button { padding:9px 22px; border-radius:8px; flex:none; }
+    /* Desktop: side-by-side billing + order details */
+    .so-desktop-top { display:grid !important; grid-template-columns:1fr 1px 1fr; gap:1.5rem; margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1.5px dashed #d1d5db; }
+    .so-desktop-divider { background:#e5e7eb; display:block !important; }
+    .so-mobile-cards  { display:none !important; }
+    .so-desktop-table { display:block !important; }
+    .so-card-section  { background:transparent; border:none; padding:0; margin-bottom:0; }
+    .so-section-lbl   { color:#6b7280; }
+    #sampleOrderModal .so-foot { justify-content:space-between; padding:.9rem 1.5rem; }
+    #sampleOrderModal .so-foot .so-foot-hint { display:block !important; }
+}
+
+#quotationModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:flex-end; justify-content:center; }
+#quotationModal .qt-box { background:#fff; border-radius:22px 22px 0 0; width:100%; max-height:96vh; overflow-y:auto; box-shadow:0 -8px 40px rgba(0,0,0,0.2); animation:soSlideUp .25s ease; display:flex; flex-direction:column; }
+#quotationModal .qt-hdr { background:#1e3a5f; color:#fff; padding:14px 18px; border-radius:22px 22px 0 0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5; flex-shrink:0; }
+#quotationModal .qt-body { padding:14px 16px; flex:1; }
+#quotationModal .qt-foot { padding:12px 16px; border-top:1px solid #e5e7eb; background:#f9fafb; position:sticky; bottom:0; flex-shrink:0; }
+.qt-section { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:12px; }
+.qt-section-lbl { font-size:0.68rem; font-weight:700; letter-spacing:0.08em; color:#94a3b8; text-transform:uppercase; margin-bottom:8px; }
+.qt-item-card { background:#fff; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:8px; position:relative; }
+.qt-item-del { position:absolute; top:10px; right:10px; background:#fef2f2; color:#dc2626; border:none; border-radius:6px; width:26px; height:26px; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.qt-item-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.qt-item-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:8px; }
+.qt-item-field label { font-size:0.64rem; font-weight:700; color:#94a3b8; text-transform:uppercase; display:block; margin-bottom:3px; }
+.qt-item-field .fi { font-size:0.85rem; padding:8px 10px; }
+.qt-total-box { border:1.5px solid #e2e8f0; border-radius:10px; overflow:hidden; margin-bottom:12px; }
+.qt-total-row { display:flex; justify-content:space-between; padding:8px 14px; font-size:0.85rem; border-bottom:1px solid #e5e7eb; }
+.qt-total-final { display:flex; justify-content:space-between; padding:11px 14px; font-size:0.95rem; font-weight:800; background:#f0f4ff; color:#1e3a5f; }
+.qt-mobile-only { display:block; }
+.qt-desktop-only { display:none; }
+@media(min-width:768px) {
+    #quotationModal { align-items:center; padding:1rem; }
+    #quotationModal .qt-box { border-radius:16px; max-width:1200px; max-height:94vh; }
+    #quotationModal .qt-hdr { border-radius:16px 16px 0 0; }
+    #quotationModal .qt-body { padding:1.5rem; }
+    .qt-mobile-only { display:none !important; }
+    .qt-desktop-only { display:block !important; }
+    .qt-desktop-top { display:grid !important; grid-template-columns:1fr 1px 1fr; gap:1.5rem; margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1.5px dashed #d1d5db; }
+    .qt-desktop-divider { background:#e5e7eb; display:block !important; }
+    .qt-section { background:transparent; border:none; padding:0; margin-bottom:0; }
+    #quotationModal .qt-foot { padding:.9rem 1.5rem; justify-content:space-between; }
+    #quotationModal .qt-foot .qt-foot-hint { display:block !important; }
+}

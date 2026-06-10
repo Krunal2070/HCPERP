@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CCTV Playback · HCP Wellness</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='hcp_theme.css') }}">
+<style>
+  body{margin:0;background:var(--bg,#0b1220);color:var(--text,#e6edf6);font-family:Segoe UI,Roboto,sans-serif}
+  .topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--border,#1f2a44);background:var(--panel,#0f1830);position:sticky;top:0;z-index:50}
+  .topbar a{color:inherit;text-decoration:none;font-size:13px;opacity:.85}
+  .topbar .title{font-weight:600;font-size:15px;flex:1}
+  .container{display:grid;grid-template-columns:340px 1fr;gap:14px;padding:14px;height:calc(100vh - 60px);box-sizing:border-box}
+  .panel{background:var(--panel,#0f1830);border:1px solid var(--border,#1f2a44);border-radius:8px;padding:14px;overflow:auto}
+  h3{margin:0 0 10px;font-size:14px}
+  input,select,button{background:var(--input,#1a2440);color:inherit;border:1px solid var(--border,#1f2a44);border-radius:6px;padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box}
+  button{cursor:pointer}
+  button:hover{border-color:var(--h-accent,#0d9488)}
+  .btn-primary{background:var(--h-accent,#0d9488);border-color:var(--h-accent,#0d9488);color:#fff}
+  label{display:block;font-size:11px;color:var(--muted,#9aa6c0);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.3px}
+  .cam-list{margin-top:10px;max-height:50vh;overflow:auto}
+  .cam-row{padding:7px 9px;border:1px solid transparent;border-radius:5px;cursor:pointer;font-size:12px;display:flex;gap:8px;align-items:center}
+  .cam-row:hover{background:rgba(13,148,136,.08)}
+  .cam-row.active{background:rgba(13,148,136,.15);border-color:var(--h-accent,#0d9488)}
+  .cam-row .ch{font-family:monospace;color:#5eead4;min-width:38px}
+  .player-wrap{display:flex;flex-direction:column;height:100%}
+  .player-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+  .player-bar .info{flex:1}
+  .vid{flex:1;background:#000;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:300px}
+  .vid video{width:100%;height:100%;object-fit:contain;background:#000}
+  .empty-vid{opacity:.5;font-size:14px;text-align:center}
+  .note{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);padding:10px;border-radius:6px;font-size:12px;margin-top:10px;line-height:1.5}
+  .note b{color:#fbbf24}
+  .toast{position:fixed;bottom:20px;right:20px;background:#0f1830;border:1px solid var(--h-accent,#0d9488);padding:10px 16px;border-radius:8px;display:none;font-size:13px;z-index:200}
+  .toast.show{display:block}
+</style>
+</head>
+<body>
+
+{% set page_title = "CCTV Playback" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "CCTV", "url": "#"}, {"label": "Playback", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="container">
+
+  <!-- Left: camera picker + time range -->
+  <div class="panel">
+    <h3>1. Pick camera</h3>
+    <input id="searchCam" placeholder="🔍 search cameras…" oninput="renderCams()">
+    <div class="cam-list" id="camList"></div>
+
+    <h3 style="margin-top:14px">2. Pick time range</h3>
+    <label>Start</label>
+    <input id="startTime" type="datetime-local">
+    <label>End</label>
+    <input id="endTime" type="datetime-local">
+
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn-primary" onclick="play()">▶ Play</button>
+      <button onclick="setQuick(1)">−1h</button>
+      <button onclick="setQuick(24)">−24h</button>
+    </div>
+
+    <div class="note">
+      <b>Note:</b> Playback uses Hikvision's RTSP time-range URL.
+      Recording must exist on the recorder for the chosen window. Hikvision
+      stores time as UTC — the times above are converted automatically.
+    </div>
+  </div>
+
+  <!-- Right: video -->
+  <div class="panel">
+    <div class="player-wrap">
+      <div class="player-bar">
+        <div class="info" id="playerInfo">No camera selected.</div>
+        <button onclick="stopPlay()">■ Stop</button>
+      </div>
+      <div class="vid" id="vidWrap">
+        <div class="empty-vid">Select a camera and time range to play.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let cameras = [];
+let selectedCam = null;
+let currentPlayer = null;
+
+function toast(m, err=false){
+  const el = document.getElementById('toast');
+  el.textContent = m;
+  el.style.borderColor = err?'#ef4444':'var(--h-accent,#0d9488)';
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+async function loadCameras(){
+  const r = await fetch('/api/cctv/cameras').then(r=>r.json());
+  cameras = (r.cameras||[]).filter(c => c.is_active);
+  renderCams();
+
+  // pre-select if ?cam= query
+  const params = new URLSearchParams(location.search);
+  const cid = parseInt(params.get('cam')||'0');
+  if (cid){ const c = cameras.find(x=>x.id===cid); if (c) selectCam(c) }
+}
+
+function renderCams(){
+  const q = (document.getElementById('searchCam').value||'').toLowerCase();
+  const list = cameras.filter(c=>{
+    if (!q) return true;
+    return `${c.name} ${c.recorder_name} ${c.location||''} ch${c.channel}`.toLowerCase().includes(q);
+  });
+  const el = document.getElementById('camList');
+  if (!list.length){ el.innerHTML = '<div style="opacity:.5;font-size:12px;padding:8px">No cameras.</div>'; return }
+  el.innerHTML = list.map(c => `
+    <div class="cam-row ${selectedCam && selectedCam.id===c.id ? 'active':''}" onclick='selectCam(${JSON.stringify(c)})'>
+      <div class="ch">CH${String(c.channel).padStart(2,'0')}</div>
+      <div>
+        <div>${esc(c.name)}</div>
+        <div style="opacity:.6;font-size:11px">${esc(c.recorder_name)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectCam(c){
+  selectedCam = c;
+  document.getElementById('playerInfo').textContent = `${c.name} · ${c.recorder_name} · CH${c.channel}`;
+  renderCams();
+  // default range: last hour
+  setQuick(1);
+}
+
+function setQuick(hours){
+  const end = new Date();
+  const start = new Date(end.getTime() - hours*3600*1000);
+  document.getElementById('endTime').value   = toLocal(end);
+  document.getElementById('startTime').value = toLocal(start);
+}
+function toLocal(d){
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function toHikUTC(localStr){
+  // localStr from datetime-local is in local time (no Z). Convert to UTC string YYYYMMDDThhmmssZ
+  const d = new Date(localStr);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+}
+
+async function play(){
+  if (!selectedCam){ toast('Select a camera first', true); return }
+  const startLocal = document.getElementById('startTime').value;
+  const endLocal   = document.getElementById('endTime').value;
+  if (!startLocal || !endLocal){ toast('Pick a time range', true); return }
+
+  const start = toHikUTC(startLocal);
+  const end   = toHikUTC(endLocal);
+
+  // Build playback stream src — go2rtc must already have this stream
+  // exposed (or we add it dynamically via go2rtc API).
+  const src = `cam_${selectedCam.id}_pb_${start}_${end}`;
+
+  // Tell go2rtc to add this stream (one-shot; persists until go2rtc restart)
+  await ensurePlaybackStream(selectedCam.id, src, start, end);
+
+  stopPlay();
+  const wrap = document.getElementById('vidWrap');
+  wrap.innerHTML = '<video autoplay playsinline controls></video>';
+  const v = wrap.querySelector('video');
+  await attachPlayback(src, v);
+}
+
+async function ensurePlaybackStream(camId, src, start, end){
+  // Ask the server for the raw RTSP URL (admin only). Non-admins won't have
+  // access — they can still use live, just not playback.
+  // Fallback: use the existing main stream src — this only works if user is admin
+  // and the go2rtc API is reachable. For a friendlier UX, consider building
+  // playback URLs server-side via a dedicated endpoint.
+  try {
+    const base = '/cctv/proxy';
+    // Add stream via go2rtc API: PUT /api/streams?src=<src>&dst=<rtsp_url>
+    const r = await fetch(`/api/cctv/cameras/${camId}/rtsp`).then(r=>r.json());
+    if (!r.ok) throw new Error(r.error||'rtsp lookup failed');
+    // Construct playback URL from the main URL: replace /Streaming/Channels/<ch>01
+    // with /Streaming/tracks/<ch>01?starttime=...&endtime=...
+    let url = r.main;
+    const m = url.match(/^(rtsp:\/\/[^\/]+)\/Streaming\/Channels\/(\d{2})\d{2}/);
+    if (!m){ throw new Error('Playback only supported on modern RTSP template') }
+    url = `${m[1]}/Streaming/tracks/${m[2]}01?starttime=${start}&endtime=${end}`;
+
+    const add = await fetch(`${base}/api/streams?name=${encodeURIComponent(src)}&src=${encodeURIComponent(url)}`,
+      {method:'PUT'});
+    if (!add.ok) throw new Error('go2rtc add HTTP '+add.status);
+  } catch(e){
+    toast('Playback setup: '+e.message, true);
+    throw e;
+  }
+}
+
+async function attachPlayback(src, videoEl){
+  const base = '/cctv/proxy';
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  pc.addTransceiver('video', { direction: 'recvonly' });
+  pc.addTransceiver('audio', { direction: 'recvonly' });
+  pc.ontrack = (ev) => { videoEl.srcObject = ev.streams[0] };
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  const r = await fetch(`${base}/api/webrtc?src=${encodeURIComponent(src)}`,{
+    method:'POST', body: pc.localDescription.sdp, headers:{'Content-Type':'application/sdp'}});
+  if (r.ok){
+    const ans = await r.text();
+    await pc.setRemoteDescription({type:'answer', sdp: ans});
+    currentPlayer = pc;
+  } else toast('Playback signaling failed', true);
+}
+
+function stopPlay(){
+  if (currentPlayer){ try{ currentPlayer.close() }catch(e){} currentPlayer = null }
+  document.getElementById('vidWrap').innerHTML = '<div class="empty-vid">Stopped.</div>';
+}
+
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+loadCameras();
+</script>
+</body>
+</html>

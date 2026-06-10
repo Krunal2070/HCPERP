@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create User — HCP Portal</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcp-notebooklm.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcp-notebooklm-effects.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script>
+(function(){
+  var valid=['light','dark','midnight','ocean','sage'];
+  var t=localStorage.getItem('hcp_theme')||'light';
+  if(valid.indexOf(t)===-1) t='light';
+  document.documentElement.setAttribute('data-theme',t);
+})();
+</script>
+<style>
+  :root{
+    --cu-primary: var(--nb-primary, #1A73E8);
+    --cu-primary-hover: var(--nb-primary-hover, #1765CC);
+    --cu-surface: var(--nb-surface, #fff);
+    --cu-bg: var(--nb-bg, #FAF9F5);
+    --cu-text: var(--nb-text, #1F1F1F);
+    --cu-muted: var(--nb-text-muted, #5F6368);
+    --cu-subtle: var(--nb-text-subtle, #80868B);
+    --cu-border: var(--nb-border, rgba(0,0,0,.07));
+    --cu-border-strong: var(--nb-border-strong, rgba(0,0,0,.12));
+    --cu-radius: var(--nb-radius-md, 12px);
+    --cu-radius-lg: var(--nb-radius-lg, 16px);
+    --cu-shadow-md: var(--nb-shadow-md, 0 4px 14px rgba(0,0,0,.07));
+    --cu-shadow-lg: var(--nb-shadow-lg, 0 14px 32px rgba(0,0,0,.10));
+    --cu-font: var(--nb-font, 'Plus Jakarta Sans','Inter','Segoe UI',system-ui,sans-serif);
+    --cu-ease: var(--nb-ease, cubic-bezier(.22,1,.36,1));
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:var(--cu-font); color:var(--cu-text);
+    background:var(--cu-bg);
+    background-image:
+      radial-gradient(ellipse 70% 55% at 12% 0%, rgba(26,115,232,.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 70% at 95% 100%, rgba(0,137,123,.05) 0%, transparent 65%);
+    min-height:100vh;
+  }
+  .cu-wrap{max-width:1120px; margin:0 auto; padding:26px 24px 60px;}
+  .cu-head{display:flex; align-items:center; gap:13px; margin-bottom:22px;}
+  .cu-head .ic{
+    width:44px; height:44px; border-radius:13px; flex-shrink:0;
+    background:var(--nb-grad-blue, linear-gradient(135deg,#1A73E8,#64B5F6));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;
+    box-shadow:var(--cu-shadow-md);
+  }
+  .cu-head h1{margin:0; font-size:20px; font-weight:800; letter-spacing:-.3px;}
+  .cu-head p{margin:2px 0 0; font-size:12.5px; color:var(--cu-muted);}
+  .cu-back{margin-left:auto; font-size:12.5px; color:var(--cu-primary); text-decoration:none; font-weight:700;}
+  .cu-back:hover{text-decoration:underline;}
+
+  .cu-grid{display:grid; grid-template-columns:1.55fr 1fr; gap:18px; align-items:start;}
+
+  .cu-card{
+    background:var(--cu-surface); border:1px solid var(--cu-border);
+    border-radius:var(--cu-radius-lg); box-shadow:var(--cu-shadow-md);
+    overflow:hidden;
+  }
+  .cu-card.float{
+    position:sticky; top:20px;
+    background:linear-gradient(180deg, #fff 0%, #FCFCFE 100%);
+  }
+  .cu-card-h{padding:15px 20px; border-bottom:1px solid var(--cu-border); display:flex; align-items:center; gap:9px;}
+  .cu-card-h h3{margin:0; font-size:13px; font-weight:800;}
+  .cu-card-b{padding:20px;}
+
+  .cu-section-lbl{
+    font-size:10.5px; font-weight:800; color:var(--cu-subtle);
+    text-transform:uppercase; letter-spacing:.55px; margin:0 0 12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .cu-section-lbl::after{content:''; flex:1; height:1px; background:var(--cu-border);}
+  .cu-section-lbl:not(:first-child){margin-top:24px;}
+
+  .cu-row{display:grid; grid-template-columns:1fr 1fr; gap:13px 15px;}
+  .cu-row.r3{grid-template-columns:1fr 1fr 1fr;}
+  .cu-fld.span2{grid-column:span 2;}
+  .cu-fld label{
+    display:block; font-size:11px; font-weight:700; color:var(--cu-muted);
+    margin-bottom:5px; letter-spacing:.2px;
+  }
+  .cu-fld label .req{color:var(--nb-danger,#C5221F); margin-left:2px;}
+  .cu-fld input, .cu-fld select{
+    width:100%; padding:10px 12px; font-size:13px; font-family:inherit; color:var(--cu-text);
+    background:#fff; border:1.5px solid var(--cu-border-strong); border-radius:10px;
+    outline:none; transition:border-color var(--cu-ease), box-shadow var(--cu-ease);
+  }
+  .cu-fld input::placeholder{color:#aab1ba;}
+  .cu-fld input:focus, .cu-fld select:focus{
+    border-color:var(--cu-primary);
+    box-shadow:0 0 0 4px rgba(26,115,232,.12);
+  }
+
+  .cu-select-wrap{display:flex; gap:8px;}
+  .cu-select-wrap select{flex:1;}
+  .cu-addbtn{
+    flex-shrink:0; width:40px; border:1.5px solid var(--cu-border-strong); border-radius:10px;
+    background:var(--nb-primary-light,#E8F0FE); color:var(--cu-primary);
+    font-size:16px; cursor:pointer; transition:all var(--cu-ease);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .cu-addbtn:hover{background:var(--cu-primary); color:#fff; transform:translateY(-1px);}
+
+  .cu-pw-wrap{display:flex; gap:8px;}
+  .cu-pw-wrap input{flex:1;}
+  .cu-gen{
+    flex-shrink:0; padding:0 14px; border:1.5px solid var(--cu-border-strong); border-radius:10px;
+    background:#fff; color:var(--cu-primary); font-size:12px; font-weight:700; cursor:pointer;
+    font-family:inherit; white-space:nowrap; transition:all var(--cu-ease);
+  }
+  .cu-gen:hover{background:var(--nb-primary-light,#E8F0FE);}
+
+  .cu-toggles{display:flex; flex-direction:column; gap:7px; margin-top:6px;}
+  .cu-toggle{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:11px 13px; background:var(--nb-surface-2,#FAFAFA);
+    border:1px solid var(--cu-border); border-radius:11px;
+  }
+  .cu-toggle .tt{display:flex; align-items:center; gap:9px; font-size:12.5px; font-weight:600;}
+  .cu-toggle .tt i{color:var(--cu-subtle); width:16px; text-align:center;}
+  .sw{position:relative; width:40px; height:22px; flex-shrink:0;}
+  .sw input{opacity:0; width:0; height:0; position:absolute;}
+  .sw .track{
+    position:absolute; inset:0; border-radius:22px; background:#cfd4da;
+    transition:background var(--cu-ease); cursor:pointer;
+  }
+  .sw .track::before{
+    content:''; position:absolute; height:16px; width:16px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:transform var(--cu-ease);
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+  .sw input:checked + .track{background:var(--cu-primary);}
+  .sw input:checked + .track::before{transform:translateX(18px);}
+
+  .cu-foot{
+    display:flex; align-items:center; gap:11px; padding:16px 20px;
+    border-top:1px solid var(--cu-border); background:var(--nb-surface-2,#FAFAFA);
+  }
+  .cu-foot .note{flex:1; font-size:11px; color:var(--cu-subtle); display:flex; align-items:center; gap:5px;}
+  .btn{
+    padding:10px 18px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;
+    font-family:inherit; border:1.5px solid transparent; transition:all var(--cu-ease);
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .btn-ghost{background:#fff; border-color:var(--cu-border-strong); color:var(--cu-muted);}
+  .btn-ghost:hover{background:#f3f4f6;}
+  .btn-primary{
+    background:var(--nb-grad-blue, linear-gradient(135deg,#1A73E8,#64B5F6));
+    color:#fff; box-shadow:var(--cu-shadow-md);
+  }
+  .btn-primary:hover{filter:brightness(1.05); transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:.55; cursor:not-allowed; transform:none; filter:none;}
+
+  /* Preview pane */
+  .pv-top{display:flex; flex-direction:column; align-items:center; text-align:center; padding:6px 0 14px;}
+  .pv-ava{
+    width:66px; height:66px; border-radius:50%; margin-bottom:11px;
+    background:var(--nb-grad-blue, linear-gradient(135deg,#1A73E8,#64B5F6));
+    color:#fff; font-size:22px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:var(--cu-shadow-md);
+  }
+  .pv-name{font-size:15.5px; font-weight:800; margin:0;}
+  .pv-sub{font-size:12.5px; color:var(--cu-muted); margin:3px 0 0;}
+  .pv-badges{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:14px 0;}
+  .pv-badge{font-size:11px; font-weight:700; padding:4px 11px; border-radius:999px;}
+  .pv-badge.blue{background:var(--nb-primary-light,#E8F0FE); color:var(--cu-primary);}
+  .pv-badge.green{background:var(--nb-success-light,#E6F4EA); color:var(--nb-success,#137333);}
+  .pv-badge.gray{background:#eef0f2; color:var(--cu-muted);}
+  .pv-rows{border-top:1px solid var(--cu-border); padding-top:13px; font-size:12px;}
+  .pv-r{display:flex; justify-content:space-between; padding:5px 0; gap:10px;}
+  .pv-r .k{color:var(--cu-subtle);}
+  .pv-r .v{color:var(--cu-text); font-weight:600; text-align:right; word-break:break-word;}
+  .pv-r .v.auto{color:var(--cu-subtle); font-weight:500; font-style:italic;}
+
+  /* Toast */
+  .cu-toast{
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+    background:#1F1F1F; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600;
+    box-shadow:var(--cu-shadow-lg); opacity:0; pointer-events:none; transition:all .3s var(--cu-ease); z-index:90;
+    display:flex; align-items:center; gap:9px; max-width:90vw;
+  }
+  .cu-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .cu-toast.ok{background:var(--nb-success,#137333);}
+  .cu-toast.err{background:var(--nb-danger,#C5221F);}
+
+  /* Modal */
+  .cu-modal-bg{
+    position:fixed; inset:0; background:var(--nb-overlay,rgba(31,31,31,.45));
+    display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+    backdrop-filter:blur(2px);
+  }
+  .cu-modal-bg.show{display:flex;}
+  .cu-modal{
+    background:#fff; border-radius:var(--cu-radius-lg); box-shadow:var(--cu-shadow-xl,0 24px 60px rgba(0,0,0,.18));
+    width:460px; max-width:100%; max-height:85vh; display:flex; flex-direction:column;
+    animation:cuPop .28s var(--nb-ease-spring,cubic-bezier(.34,1.56,.64,1));
+  }
+  @keyframes cuPop{from{opacity:0; transform:scale(.94) translateY(10px);} to{opacity:1; transform:none;}}
+  .cu-modal-h{display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--cu-border);}
+  .cu-modal-h h3{margin:0; font-size:14px; font-weight:800; flex:1;}
+  .cu-modal-h .x{cursor:pointer; color:var(--cu-subtle); font-size:18px; background:none; border:none; padding:4px;}
+  .cu-modal-h .x:hover{color:var(--cu-text);}
+  .cu-modal-b{padding:18px 20px; overflow-y:auto;}
+  .cu-add-row{display:flex; gap:8px; margin-bottom:16px;}
+  .cu-add-row input{
+    flex:1; padding:9px 12px; font-size:13px; font-family:inherit; border:1.5px solid var(--cu-border-strong);
+    border-radius:9px; outline:none;
+  }
+  .cu-add-row input:focus{border-color:var(--cu-primary); box-shadow:0 0 0 3px rgba(26,115,232,.12);}
+  .cu-add-row input.lvl{flex:0 0 84px;}
+  .cu-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;}
+  .cu-li{
+    display:flex; align-items:center; gap:9px; padding:9px 11px; border:1px solid var(--cu-border);
+    border-radius:10px; background:var(--nb-surface-2,#FAFAFA); font-size:13px;
+  }
+  .cu-li.inactive{opacity:.5;}
+  .cu-li .nm{flex:1; font-weight:600;}
+  .cu-li .nm input{width:100%; border:1px solid var(--cu-primary); border-radius:7px; padding:5px 8px; font-size:13px; font-family:inherit;}
+  .cu-li .lock{font-size:10px; color:var(--cu-subtle); background:#eef0f2; padding:2px 7px; border-radius:6px; font-weight:700;}
+  .cu-ic{cursor:pointer; color:var(--cu-subtle); background:none; border:none; padding:5px; font-size:13px; border-radius:6px;}
+  .cu-ic:hover{color:var(--cu-text); background:rgba(0,0,0,.05);}
+  .cu-ic.del:hover{color:var(--nb-danger,#C5221F);}
+  .cu-empty{text-align:center; color:var(--cu-subtle); font-size:12.5px; padding:18px 0;}
+
+  @media (max-width:880px){
+    .cu-grid{grid-template-columns:1fr;}
+    .cu-card.float{position:static;}
+  }
+  @media (max-width:560px){
+    .cu-row, .cu-row.r3{grid-template-columns:1fr;}
+    .cu-fld.span2{grid-column:span 1;}
+  }
+</style>
+</head>
+<body>
+
+<div class="cu-wrap">
+
+  <div class="cu-head">
+    <div class="ic"><i class="fa-solid fa-user-plus"></i></div>
+    <div>
+      <h1>Create User</h1>
+      <p>Add a new account to the system</p>
+    </div>
+    <a class="cu-back" href="{{ url_for('manage_users') if False else '/manage_users' }}"><i class="fa-solid fa-arrow-left"></i>&nbsp;Back to users</a>
+  </div>
+
+  {% if error %}<div style="max-width:1120px;margin:0 auto 16px;padding:12px 16px;background:var(--nb-danger-light,#FCE8E6);color:var(--nb-danger,#C5221F);border:1px solid rgba(197,34,31,.2);border-radius:12px;font-size:13px;font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i>&nbsp; {{ error }}</div>{% endif %}
+  {% if success %}<div style="max-width:1120px;margin:0 auto 16px;padding:12px 16px;background:var(--nb-success-light,#E6F4EA);color:var(--nb-success,#137333);border:1px solid rgba(19,115,51,.2);border-radius:12px;font-size:13px;font-weight:600;"><i class="fa-solid fa-circle-check"></i>&nbsp; {{ success }}</div>{% endif %}
+
+  <form id="cuForm" method="POST" action="/create_user" enctype="multipart/form-data">
+  <div class="cu-grid">
+
+    <!-- ============ FORM ============ -->
+    <div class="cu-card">
+      <div class="cu-card-h"><i class="fa-solid fa-id-card" style="color:var(--cu-primary)"></i><h3>User details</h3></div>
+      <div class="cu-card-b">
+
+        <p class="cu-section-lbl">Identity</p>
+        <div class="cu-row">
+          <div class="cu-fld">
+            <label>Full name <span class="req">*</span></label>
+            <input id="f_full_name" name="full_name" type="text" placeholder="e.g. Anita Sharma" autocomplete="off">
+          </div>
+          <div class="cu-fld">
+            <label>Username <span class="req">*</span></label>
+            <input id="f_username" name="username" type="text" placeholder="e.g. anita.sharma" autocomplete="off" required>
+          </div>
+          <div class="cu-fld">
+            <label>Email</label>
+            <input id="f_email" name="email" type="email" placeholder="name@hcpwellness.com" autocomplete="off">
+          </div>
+          <div class="cu-fld">
+            <label>Mobile</label>
+            <input id="f_mobile" name="mobile" type="text" placeholder="+91 …" autocomplete="off">
+          </div>
+          <div class="cu-fld">
+            <label>Employee ID</label>
+            <input id="f_employee_id" name="employee_id" type="text" placeholder="e.g. HCP-1042" autocomplete="off">
+          </div>
+          <div class="cu-fld">
+            <label>Profile photo</label>
+            <input id="f_profile_photo" name="profile_photo" type="file" accept="image/*">
+          </div>
+        </div>
+
+        <p class="cu-section-lbl">Role &amp; access</p>
+        <div class="cu-row">
+          <div class="cu-fld">
+            <label>Department</label>
+            <div class="cu-select-wrap">
+              <select id="f_department" name="department">
+                <option value="">-- Select --</option>
+                {% for it in lookups.department %}<option value="{{ it.value }}">{{ it.value }}</option>{% endfor %}
+              </select>
+              <button type="button" class="cu-addbtn" title="Manage departments" onclick="openLookup('department')"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="cu-fld">
+            <label>Designation</label>
+            <div class="cu-select-wrap">
+              <select id="f_designation" name="designation">
+                <option value="">-- Select --</option>
+                {% for it in lookups.designation %}<option value="{{ it.value }}">{{ it.value }}</option>{% endfor %}
+              </select>
+              <button type="button" class="cu-addbtn" title="Manage designations" onclick="openLookup('designation')"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="cu-fld">
+            <label>User type <span class="req">*</span></label>
+            <div class="cu-select-wrap">
+              <select id="f_user_type" name="user_type">
+                <option value="">-- Select --</option>
+                {% for it in lookups.user_type %}<option value="{{ it.value }}">{{ it.value }}</option>{% endfor %}
+              </select>
+              <button type="button" class="cu-addbtn" title="Manage user types" onclick="openLookup('user_type')"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="cu-fld">
+            <label>Access level <span class="req">*</span></label>
+            <div class="cu-select-wrap">
+              <select id="f_access_level" name="access_level">
+                <option value="">-- Select --</option>
+                {% for it in lookups.access_level %}<option value="{{ it.level_int }}">{{ it.label }}</option>{% endfor %}
+              </select>
+              <button type="button" class="cu-addbtn" title="Manage access levels" onclick="openLookup('access_level')"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <p class="cu-section-lbl">Security</p>
+        <div class="cu-row">
+          <div class="cu-fld">
+            <label>Temporary password <span class="req">*</span></label>
+            <div class="cu-pw-wrap">
+              <input id="f_password" name="password" type="text" placeholder="Set or generate" autocomplete="new-password" required>
+              <button type="button" class="cu-gen" onclick="genPassword()"><i class="fa-solid fa-rotate"></i>&nbsp;Generate</button>
+            </div>
+          </div>
+          <div class="cu-fld">
+            <label>Confirm password <span class="req">*</span></label>
+            <input id="f_confirm" name="confirm_password" type="text" placeholder="Re-enter password" autocomplete="new-password" required>
+          </div>
+        </div>
+
+        <input type="hidden" id="f_role" name="role" value="">
+
+      </div>
+      <div class="cu-foot">
+        <span class="note"><i class="fa-solid fa-circle-info"></i>created_by is set automatically</span>
+        <button type="button" class="btn btn-ghost" onclick="window.location.href='/manage_users'">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fa-solid fa-check"></i>Create user</button>
+      </div>
+    </div>
+
+    <!-- ============ PREVIEW ============ -->
+    <div class="cu-card float">
+      <div class="cu-card-h"><i class="fa-solid fa-eye" style="color:var(--cu-primary)"></i><h3>Live preview</h3></div>
+      <div class="cu-card-b">
+        <div class="pv-top">
+          <div class="pv-ava" id="pvAva">?</div>
+          <p class="pv-name" id="pvName">New user</p>
+          <p class="pv-sub" id="pvSub">designation · department</p>
+        </div>
+        <div class="pv-badges" id="pvBadges"></div>
+        <div class="pv-rows">
+          <div class="pv-r"><span class="k">Username</span><span class="v" id="pvUser">—</span></div>
+          <div class="pv-r"><span class="k">Email</span><span class="v" id="pvEmail">—</span></div>
+          <div class="pv-r"><span class="k">Mobile</span><span class="v" id="pvMobile">—</span></div>
+          <div class="pv-r"><span class="k">Employee ID</span><span class="v" id="pvEmp">—</span></div>
+          <div class="pv-r"><span class="k">created_by</span><span class="v auto">automatic</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </form>
+</div>
+
+<div class="cu-modal-bg hcp-modal-bg" id="modalBg" onclick="if(event.target===this)closeLookup()">
+  <div class="cu-modal">
+    <div class="cu-modal-h">
+      <i class="fa-solid fa-sliders" style="color:var(--cu-primary)"></i>
+      <h3 id="modalTitle">Manage</h3>
+      <button class="x" onclick="closeLookup()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="cu-modal-b">
+      <div class="cu-add-row" id="addRow">
+        <input id="addInput" type="text" placeholder="Add new…" onkeydown="if(event.key==='Enter')addLookup()">
+        <input id="addLevel" class="lvl" type="number" placeholder="Level" style="display:none;">
+        <button class="btn btn-primary" onclick="addLookup()" style="padding:9px 14px;"><i class="fa-solid fa-plus"></i></button>
+      </div>
+      <ul class="cu-list" id="lookupList"><li class="cu-empty">Loading…</li></ul>
+    </div>
+  </div>
+</div>
+
+<div class="cu-toast" id="toast"></div>
+
+<script>
+const LOOKUP_META = {
+  department:   {title:'Manage Departments', hasLevel:false, selId:'f_department',   optVal:'value'},
+  designation:  {title:'Manage Designations', hasLevel:false, selId:'f_designation',  optVal:'value'},
+  user_type:    {title:'Manage User Types',  hasLevel:false, selId:'f_user_type',    optVal:'value'},
+  access_level: {title:'Manage Access Levels', hasLevel:true, selId:'f_access_level', optVal:'level_int'},
+};
+let currentKind = null;
+
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'cu-toast show ' + (kind||'');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>{ t.className = 'cu-toast ' + (kind||''); }, 2800);
+}
+
+/* ---------- Live preview ---------- */
+function initials(name){
+  const p = (name||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '?';
+  return (p[0][0] + (p.length>1 ? p[p.length-1][0] : '')).toUpperCase();
+}
+function renderPreview(){
+  const name = document.getElementById('f_full_name').value.trim();
+  const user = document.getElementById('f_username').value.trim();
+  const email = document.getElementById('f_email').value.trim();
+  const mobile = document.getElementById('f_mobile').value.trim();
+  const emp = document.getElementById('f_employee_id').value.trim();
+  const dept = document.getElementById('f_department').value;
+  const desig = document.getElementById('f_designation').value;
+  const utype = document.getElementById('f_user_type').value;
+  const alvlSel = document.getElementById('f_access_level');
+  const alvlLabel = alvlSel.options[alvlSel.selectedIndex] ? alvlSel.options[alvlSel.selectedIndex].text : '';
+
+  document.getElementById('pvAva').textContent = initials(name);
+  document.getElementById('pvName').textContent = name || 'New user';
+  const subBits = [desig, dept].filter(Boolean);
+  document.getElementById('pvSub').textContent = subBits.length ? subBits.join(' · ') : 'designation · department';
+  document.getElementById('pvUser').textContent = user || '—';
+  document.getElementById('pvEmail').textContent = email || '—';
+  document.getElementById('pvMobile').textContent = mobile || '—';
+  document.getElementById('pvEmp').textContent = emp || '—';
+
+  const badges = [];
+  if(utype) badges.push(`<span class="pv-badge blue">${utype}</span>`);
+  if(alvlLabel && alvlSel.value) badges.push(`<span class="pv-badge gray">${alvlLabel}</span>`);
+  document.getElementById('pvBadges').innerHTML = badges.join('');
+}
+['f_full_name','f_username','f_email','f_mobile','f_employee_id','f_department','f_designation','f_user_type','f_access_level']
+  .forEach(id => document.getElementById(id).addEventListener('input', renderPreview));
+
+/* ---------- Password ---------- */
+function genPassword(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let s=''; for(let i=0;i<12;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('f_password').value = s;
+  toast('Temporary password generated','ok');
+}
+
+/* ---------- Submit: native form POST to /create_user, with quick checks ---------- */
+document.getElementById('cuForm').addEventListener('submit', function(e){
+  const u = document.getElementById('f_username').value.trim();
+  const p = document.getElementById('f_password').value;
+  const c = document.getElementById('f_confirm').value;
+  if(!u){ e.preventDefault(); toast('Username is required','err'); return; }
+  if(!p){ e.preventDefault(); toast('Password is required','err'); return; }
+  if(p.length < 4){ e.preventDefault(); toast('Password must be at least 4 characters','err'); return; }
+  if(p !== c){ e.preventDefault(); toast('Passwords do not match','err'); return; }
+  document.getElementById('submitBtn').disabled = true;
+});
+
+/* ---------- Lookup CRUD modal ---------- */
+function openLookup(kind){
+  currentKind = kind;
+  const meta = LOOKUP_META[kind];
+  document.getElementById('modalTitle').textContent = meta.title;
+  document.getElementById('addInput').value='';
+  document.getElementById('addInput').placeholder = meta.hasLevel ? 'Label (e.g. 3 - Advanced)' : 'Add new…';
+  const lvl = document.getElementById('addLevel');
+  lvl.style.display = meta.hasLevel ? 'block' : 'none';
+  lvl.value='';
+  document.getElementById('modalBg').classList.add('show');
+  loadLookup();
+}
+function closeLookup(){
+  document.getElementById('modalBg').classList.remove('show');
+  currentKind = null;
+}
+async function loadLookup(){
+  const list = document.getElementById('lookupList');
+  list.innerHTML = '<li class="cu-empty">Loading…</li>';
+  try{
+    const res = await fetch(`/users/lookup/${currentKind}`);
+    const data = await res.json();
+    if(data.status!=='ok'){ list.innerHTML = `<li class="cu-empty">${data.message||'Error'}</li>`; return; }
+    if(!data.items.length){ list.innerHTML = '<li class="cu-empty">No entries yet — add one above.</li>'; return; }
+    const meta = LOOKUP_META[currentKind];
+    list.innerHTML = data.items.map(it=>{
+      const label = meta.hasLevel ? `${it.label}` : it.value;
+      const isAdmin = (currentKind==='user_type' && (it.value||'').toLowerCase()==='admin');
+      const inactive = it.is_active ? '' : 'inactive';
+      return `<li class="cu-li ${inactive}" data-id="${it.id}">
+        <span class="nm">${label}${isAdmin?' <span class="lock">protected</span>':''}</span>
+        ${isAdmin?'':`<button class="cu-ic" title="Rename" onclick="renameLookup(${it.id}, this)"><i class="fa-solid fa-pen"></i></button>`}
+        ${isAdmin?'':`<button class="cu-ic" title="${it.is_active?'Disable':'Enable'}" onclick="toggleLookup(${it.id}, ${it.is_active?0:1})"><i class="fa-solid fa-${it.is_active?'eye':'eye-slash'}"></i></button>`}
+        ${isAdmin?'':`<button class="cu-ic del" title="Delete" onclick="deleteLookup(${it.id})"><i class="fa-solid fa-trash"></i></button>`}
+      </li>`;
+    }).join('');
+  }catch(e){
+    list.innerHTML = '<li class="cu-empty">Network error.</li>';
+  }
+}
+async function addLookup(){
+  const meta = LOOKUP_META[currentKind];
+  const val = document.getElementById('addInput').value.trim();
+  if(!val){ toast('Enter a value','err'); return; }
+  let body;
+  if(meta.hasLevel){
+    const lvl = document.getElementById('addLevel').value;
+    if(lvl===''){ toast('Enter a numeric level','err'); return; }
+    body = {label: val, level_int: parseInt(lvl,10)};
+  }else{
+    body = {value: val};
+  }
+  try{
+    const res = await fetch(`/users/lookup/${currentKind}`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    if(res.ok && data.status==='ok'){
+      document.getElementById('addInput').value=''; document.getElementById('addLevel').value='';
+      toast('Added','ok'); loadLookup(); refreshSelect();
+    }else{ toast(data.message||'Could not add','err'); }
+  }catch(e){ toast('Network error','err'); }
+}
+function renameLookup(id, btn){
+  const li = btn.closest('.cu-li');
+  const span = li.querySelector('.nm');
+  const old = span.textContent.trim();
+  const meta = LOOKUP_META[currentKind];
+  span.innerHTML = `<input type="text" value="${old.replace(/"/g,'&quot;')}">`;
+  const inp = span.querySelector('input'); inp.focus(); inp.select();
+  const save = async ()=>{
+    const nv = inp.value.trim();
+    if(!nv || nv===old){ loadLookup(); return; }
+    const body = meta.hasLevel ? {label:nv} : {value:nv};
+    try{
+      const res = await fetch(`/users/lookup/${currentKind}/${id}`, {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+      });
+      const data = await res.json();
+      if(res.ok && data.status==='ok'){ toast('Renamed','ok'); }
+      else{ toast(data.message||'Could not rename','err'); }
+    }catch(e){ toast('Network error','err'); }
+    loadLookup(); refreshSelect();
+  };
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); });
+}
+async function toggleLookup(id, to){
+  try{
+    const res = await fetch(`/users/lookup/${currentKind}/${id}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({is_active:to})
+    });
+    const data = await res.json();
+    if(res.ok && data.status==='ok'){ toast(to?'Enabled':'Disabled','ok'); }
+    else{ toast(data.message||'Could not update','err'); }
+  }catch(e){ toast('Network error','err'); }
+  loadLookup(); refreshSelect();
+}
+async function deleteLookup(id){
+  if(!confirm('Delete this entry?')) return;
+  try{
+    const res = await fetch(`/users/lookup/${currentKind}/${id}`, {method:'DELETE'});
+    const data = await res.json();
+    if(res.ok && data.status==='ok'){ toast('Deleted','ok'); }
+    else{ toast(data.message||'Could not delete','err'); }
+  }catch(e){ toast('Network error','err'); }
+  loadLookup(); refreshSelect();
+}
+
+/* Refresh the underlying <select> after lookup edits, preserving selection */
+async function refreshSelect(){
+  const meta = LOOKUP_META[currentKind];
+  const sel = document.getElementById(meta.selId);
+  const prev = sel.value;
+  try{
+    const res = await fetch(`/users/lookup/${currentKind}`);
+    const data = await res.json();
+    if(data.status!=='ok') return;
+    const active = data.items.filter(it=>it.is_active);
+    let html = '<option value="">-- Select --</option>';
+    active.forEach(it=>{
+      if(meta.hasLevel) html += `<option value="${it.level_int}">${it.label}</option>`;
+      else html += `<option value="${it.value}">${it.value}</option>`;
+    });
+    sel.innerHTML = html;
+    sel.value = prev;
+    renderPreview();
+  }catch(e){}
+}
+
+renderPreview();
+</script>
+
+<script src="{{ url_for('static', filename='js/hcp-modals.js') }}"></script>
+</body>
+</html>

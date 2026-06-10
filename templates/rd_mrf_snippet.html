@@ -1,0 +1,245 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MATERIAL REQUEST (MRF) — R & D Department
+     Paste this block ONCE just before </body> in rd_sampling.html.
+     A floating button at bottom-left + a "Material Request" button elsewhere
+     (you can place the button anywhere) will open the modal.
+
+     To add an inline button somewhere in your R&D toolbar, use:
+        <button class="btn btn-brand btn-sm" onclick="openMrfRdModal()">
+          <i class="fa fa-clipboard-list"></i> Material Request
+        </button>
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Modal: Create R&D Material Request -->
+<div class="modal-overlay" id="mrfRdModal" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1100;display:none;align-items:center;justify-content:center;padding:14px">
+  <div style="background:var(--surface,#fff);border-radius:12px;border:1px solid var(--border2,#cbd5e1);width:min(1100px,98vw);max-height:94vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="padding:13px 18px;border-bottom:1px solid var(--border,#e2e8f0);display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <h3 style="font-size:.92rem;font-weight:700;color:var(--text-bright,#0f172a);margin:0"><i class="fa fa-clipboard-list"></i> New Material Request · R &amp; D</h3>
+      <button onclick="closeMrfRdModal()" style="width:28px;height:28px;border-radius:50%;background:var(--surface2,#f1f5f9);border:none;cursor:pointer;font-size:.85rem">&times;</button>
+    </div>
+
+    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+        <div>
+          <label style="font-size:.7rem;color:var(--muted2,#94a3b8);font-weight:600">Voucher No (auto)</label>
+          <input type="text" id="mrf-rd-vno" readonly
+            style="background:var(--surface3,#e2e8f0);border:1px solid var(--border2,#cbd5e1);color:var(--text-bright,#0f172a);border-radius:7px;padding:6px 10px;width:100%;font-weight:700">
+        </div>
+        <div>
+          <label style="font-size:.7rem;color:var(--muted2,#94a3b8);font-weight:600">Reference / Product (optional)</label>
+          <input type="text" id="mrf-rd-product" placeholder="e.g. Trial ABC-001"
+            style="background:var(--surface2,#f1f5f9);border:1px solid var(--border2,#cbd5e1);color:var(--text-bright,#0f172a);border-radius:7px;padding:6px 10px;width:100%">
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:.7rem;color:var(--muted2,#94a3b8);font-weight:600">Required For / Purpose *</label>
+        <textarea id="mrf-rd-purpose" rows="2" placeholder="e.g. for sample formulation trial"
+          style="background:var(--surface2,#f1f5f9);border:1px solid var(--border2,#cbd5e1);color:var(--text-bright,#0f172a);border-radius:7px;padding:6px 10px;width:100%;resize:vertical;font-family:inherit;font-size:.78rem"></textarea>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+        <div style="font-size:.84rem;font-weight:700;color:var(--text-bright,#0f172a)">Items</div>
+        <button class="btn btn-brand btn-sm" onclick="mrfRdAddRow()" style="background:#0d9488;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer"><i class="fa fa-plus"></i> Add Row</button>
+      </div>
+
+      <div style="border:1px solid var(--border,#e2e8f0);border-radius:8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:.75rem">
+          <thead>
+            <tr style="background:var(--surface2,#f1f5f9)">
+              <th style="padding:7px;width:4%;text-align:center">Sr</th>
+              <th style="padding:7px;text-align:left">Material *</th>
+              <th style="padding:7px;width:16%;text-align:left">Supplier</th>
+              <th style="padding:7px;width:10%">UOM</th>
+              <th style="padding:7px;width:12%;text-align:right">Qty Demand *</th>
+              <th style="padding:7px;text-align:left">Remarks</th>
+              <th style="padding:7px;width:5%"></th>
+            </tr>
+          </thead>
+          <tbody id="mrf-rd-items-tbody"></tbody>
+        </table>
+      </div>
+
+      <div style="font-size:.7rem;color:var(--muted,#64748b);margin-top:4px">
+        After save, admin will approve/reject per item. Track status in
+        <a href="/material_requests" target="_blank" style="color:#0d9488;font-weight:600">Material Requests</a>.
+        Stickers (70 × 30 mm) are printed from the detail view after approval.
+      </div>
+    </div>
+    <div style="padding:12px 18px;border-top:1px solid var(--border,#e2e8f0);display:flex;justify-content:flex-end;gap:8px;background:var(--surface2,#f1f5f9)">
+      <button onclick="closeMrfRdModal()" style="background:var(--surface2,#f1f5f9);color:var(--text-bright,#0f172a);border:1px solid var(--border2,#cbd5e1);padding:6px 14px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer">Cancel</button>
+      <button onclick="mrfRdSubmit()" style="background:#0d9488;color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer"><i class="fa fa-paper-plane"></i> Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating shortcut buttons -->
+<div style="position:fixed;bottom:18px;left:18px;z-index:100">
+  <button onclick="openMrfRdModal()"
+    style="background:#3b82f6;color:#fff;border:none;padding:9px 15px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(59,130,246,.4)">
+    <i class="fa fa-clipboard-list"></i> Material Request
+  </button>
+  <a href="/material_requests" target="_blank"
+    style="display:inline-block;margin-left:6px;background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:9px 13px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;text-decoration:none">
+    <i class="fa fa-list-check"></i> My Requests
+  </a>
+</div>
+
+<script>
+(function(){
+    let _mrfRdMaterials = [];
+    let _rowCounter = 0;
+
+    function _esc(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+    async function _loadMaterials(){
+        if(_mrfRdMaterials.length) return _mrfRdMaterials;
+        try{
+            const r = await fetch('/api/mrf/materials?limit=200');
+            const j = await r.json();
+            if(j.status==='ok') _mrfRdMaterials = j.rows||[];
+        }catch(e){console.error(e)}
+        return _mrfRdMaterials;
+    }
+
+    async function _loadVoucherNo(){
+        try{
+            const r = await fetch('/api/mrf/next_voucher_no?dept=RD');
+            const j = await r.json();
+            if(j.status==='ok') document.getElementById('mrf-rd-vno').value = j.preview;
+        }catch(e){console.error(e)}
+    }
+
+    function _rowHtml(id){
+        return `<tr id="mrfrdrow_${id}">
+            <td style="padding:5px;text-align:center">${id}</td>
+            <td style="padding:4px">
+                <input list="mrf-rd-mat-list" type="text" class="mrfrd-mat" oninput="mrfRdFillFromMaterial(this)" placeholder="Start typing material…"
+                  style="width:100%;background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;border-radius:6px;padding:5px 8px;font-size:.78rem">
+                <input type="hidden" class="mrfrd-mat-id">
+            </td>
+            <td style="padding:4px">
+                <input type="text" class="mrfrd-sup" placeholder="Supplier"
+                  style="width:100%;background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;border-radius:6px;padding:5px 8px;font-size:.78rem">
+            </td>
+            <td style="padding:4px">
+                <input type="text" class="mrfrd-uom" value="KG"
+                  style="width:100%;background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;border-radius:6px;padding:5px 8px;text-align:center;font-size:.78rem">
+            </td>
+            <td style="padding:4px">
+                <input type="number" step="any" min="0" class="mrfrd-qty"
+                  style="width:100%;background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;border-radius:6px;padding:5px 8px;text-align:right;font-size:.78rem">
+            </td>
+            <td style="padding:4px">
+                <input type="text" class="mrfrd-rem"
+                  style="width:100%;background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;border-radius:6px;padding:5px 8px;font-size:.78rem">
+            </td>
+            <td style="padding:5px;text-align:center">
+                <button onclick="mrfRdDelRow(${id})" title="Remove row"
+                  style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer"><i class="fa fa-xmark"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    function _ensureDataList(){
+        let dl = document.getElementById('mrf-rd-mat-list');
+        if(!dl){
+            dl = document.createElement('datalist');
+            dl.id = 'mrf-rd-mat-list';
+            document.body.appendChild(dl);
+        }
+        dl.innerHTML = _mrfRdMaterials.map(m=>`<option value="${_esc(m.material_name)}"></option>`).join('');
+    }
+
+    window.mrfRdAddRow = function(){
+        _rowCounter++;
+        const tb = document.getElementById('mrf-rd-items-tbody');
+        tb.insertAdjacentHTML('beforeend', _rowHtml(_rowCounter));
+        _ensureDataList();
+    };
+
+    window.mrfRdDelRow = function(id){
+        const el = document.getElementById('mrfrdrow_'+id);
+        if(el) el.remove();
+        if(!document.getElementById('mrf-rd-items-tbody').children.length) window.mrfRdAddRow();
+    };
+
+    window.mrfRdFillFromMaterial = function(inp){
+        const val = inp.value;
+        const mat = _mrfRdMaterials.find(m=>m.material_name===val);
+        const tr = inp.closest('tr');
+        if(mat){
+            tr.querySelector('.mrfrd-mat-id').value = mat.id;
+            if(!tr.querySelector('.mrfrd-sup').value) tr.querySelector('.mrfrd-sup').value = mat.supplier_name||'';
+            tr.querySelector('.mrfrd-uom').value = mat.uom||'KG';
+        } else {
+            tr.querySelector('.mrfrd-mat-id').value = '';
+        }
+    };
+
+    window.openMrfRdModal = async function(){
+        const ov = document.getElementById('mrfRdModal');
+        ov.style.display = 'flex';
+        document.getElementById('mrf-rd-product').value = '';
+        document.getElementById('mrf-rd-purpose').value = '';
+        document.getElementById('mrf-rd-items-tbody').innerHTML = '';
+        _rowCounter = 0;
+        await Promise.all([_loadVoucherNo(), _loadMaterials()]);
+        _ensureDataList();
+        window.mrfRdAddRow();
+    };
+
+    window.closeMrfRdModal = function(){
+        document.getElementById('mrfRdModal').style.display = 'none';
+    };
+
+    window.mrfRdSubmit = async function(){
+        const purpose = document.getElementById('mrf-rd-purpose').value.trim();
+        if(!purpose){ alert('Please enter the purpose'); return; }
+
+        const rows = document.querySelectorAll('#mrf-rd-items-tbody tr');
+        const items = [];
+        for(const tr of rows){
+            const name = tr.querySelector('.mrfrd-mat').value.trim();
+            const qty  = parseFloat(tr.querySelector('.mrfrd-qty').value);
+            if(!name) continue;
+            if(!(qty>0)){ alert('Each material must have a quantity > 0'); return; }
+            items.push({
+                material_id:   tr.querySelector('.mrfrd-mat-id').value || null,
+                material_name: name,
+                supplier_name: tr.querySelector('.mrfrd-sup').value.trim(),
+                uom:           tr.querySelector('.mrfrd-uom').value.trim()||'KG',
+                qty_demand:    qty,
+                remarks:       tr.querySelector('.mrfrd-rem').value.trim(),
+            });
+        }
+        if(!items.length){ alert('Please add at least one material row'); return; }
+
+        const payload = {
+            dept: 'RD',
+            product_code: document.getElementById('mrf-rd-product').value.trim(),
+            purpose: purpose,
+            items: items
+        };
+        try{
+            const r = await fetch('/api/mrf/create', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const j = await r.json();
+            if(j.status!=='ok') throw new Error(j.message||'save failed');
+            alert('Request submitted: ' + j.voucher_no);
+            closeMrfRdModal();
+        }catch(e){
+            alert('Error: '+e.message);
+        }
+    };
+
+    // Close on overlay click
+    document.addEventListener('click', function(e){
+        const ov = document.getElementById('mrfRdModal');
+        if(e.target === ov) closeMrfRdModal();
+    });
+})();
+</script>

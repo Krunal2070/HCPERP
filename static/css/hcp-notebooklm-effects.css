@@ -1,0 +1,473 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   HCP NotebookLM — Eye-Catching Effects (Lightweight Layer)
+   ─────────────────────────────────────────────────────────────────────────
+   Adds high-impact animations WITHOUT making pages heavy.
+
+   Performance rules followed throughout:
+   • Only `transform` and `opacity` are animated (GPU-accelerated, no reflow)
+   • No animation on large lists (tables, brand grids) by default
+   • Continuous animations limited to 1-2 elements per page
+   • All effects are CSS-only (no JS overhead)
+   • Honors `prefers-reduced-motion: reduce`
+
+   Usage:
+     <link rel="stylesheet" href="/static/css/hcp-notebooklm.css">
+     <link rel="stylesheet" href="/static/css/hcp-notebooklm-effects.css">
+
+   To OPT OUT of a specific effect on a particular page, add
+   `data-no-effects` on the relevant element or its parent.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. SCAN/SEARCH INPUT — pulsing halo to draw the eye to the active input
+   ─────────────────────────────────────────────────────────────────────────
+   Used by: pm_stock_audit (scan box), procurement (search), R&D (search)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes nbScanGlow{
+    0%, 100% { box-shadow: 0 0 0 0 rgba(70, 72, 212, .28); }
+    50%      { box-shadow: 0 0 0 8px rgba(129, 39, 207, 0); }
+}
+[data-theme="light"] .scan-card,
+[data-theme="light"] .nb-attract-glow{
+    animation: nbScanGlow 2.4s ease-out infinite;
+    will-change: box-shadow;
+}
+[data-theme="light"] .scan-card:focus-within,
+[data-theme="light"] .nb-attract-glow:focus-within{
+    /* When user actively interacts, stop the attract animation
+       so it doesn't compete with the focus ring */
+    animation: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. PRIMARY CTA BUTTON — gentle "breathe" when enabled, draws the eye
+   ─────────────────────────────────────────────────────────────────────────
+   Used sparingly — only on the most important button on a page (Start Session,
+   Send Email, Save Voucher, etc.). Pages can opt out by adding the
+   `nb-no-breathe` class to the button.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes nbBreathe{
+    0%, 100% { transform: scale(1);    box-shadow: 0 4px 12px rgba(70,72,212,.20); }
+    50%      { transform: scale(1.025); box-shadow: 0 8px 22px rgba(70,72,212,.32); }
+}
+[data-theme="light"] .nb-breathe:not(:disabled):not(.nb-no-breathe),
+[data-theme="light"] #btn-start-session:not(:disabled):not(.nb-no-breathe){
+    animation: nbBreathe 2.8s ease-in-out infinite;
+    will-change: transform;
+}
+/* Stop breathing on hover and active states — gives way to user feedback */
+[data-theme="light"] .nb-breathe:hover,
+[data-theme="light"] .nb-breathe:active,
+[data-theme="light"] #btn-start-session:hover,
+[data-theme="light"] #btn-start-session:active{
+    animation: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. TAB SWITCHING — content fades up when a tab is activated
+   ─────────────────────────────────────────────────────────────────────────
+   Triggered by class addition (e.g. via existing tab JS). Uses opacity +
+   transform, so no reflow.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes nbTabSwap{
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+[data-theme="light"] .tabpanel:not(.hidden),
+[data-theme="light"] [data-tab-content].active{
+    animation: nbTabSwap .32s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. STAT TILES — value "pops" subtly when the card is hovered
+   ─────────────────────────────────────────────────────────────────────────
+   Pure transform on a single element per card. Already-cheap.
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="light"] .stat .val,
+[data-theme="light"] .stat-value{
+    display: inline-block;
+    transition: transform .28s cubic-bezier(.34, 1.56, .64, 1);
+    transform-origin: left center;
+    will-change: transform;
+}
+[data-theme="light"] .stat:hover .val,
+[data-theme="light"] .stat-card:hover .stat-value{
+    transform: scale(1.08);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. SESSION/LIST ROWS — subtle entrance stagger, capped at 12 items
+   ─────────────────────────────────────────────────────────────────────────
+   For lists of session rows, supplier rows, etc. Stagger steps are tiny
+   (35ms) so even with 12 items the total animation lasts ~0.5s.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes nbRowIn{
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+[data-theme="light"] .session-row,
+[data-theme="light"] .nb-row-stagger > *{
+    animation: nbRowIn .35s cubic-bezier(.22, 1, .36, 1) both;
+    will-change: opacity, transform;
+}
+[data-theme="light"] .session-row:nth-child(1),
+[data-theme="light"] .nb-row-stagger > *:nth-child(1) { animation-delay: 0s }
+[data-theme="light"] .session-row:nth-child(2),
+[data-theme="light"] .nb-row-stagger > *:nth-child(2) { animation-delay: .035s }
+[data-theme="light"] .session-row:nth-child(3),
+[data-theme="light"] .nb-row-stagger > *:nth-child(3) { animation-delay: .070s }
+[data-theme="light"] .session-row:nth-child(4),
+[data-theme="light"] .nb-row-stagger > *:nth-child(4) { animation-delay: .105s }
+[data-theme="light"] .session-row:nth-child(5),
+[data-theme="light"] .nb-row-stagger > *:nth-child(5) { animation-delay: .140s }
+[data-theme="light"] .session-row:nth-child(6),
+[data-theme="light"] .nb-row-stagger > *:nth-child(6) { animation-delay: .175s }
+[data-theme="light"] .session-row:nth-child(7),
+[data-theme="light"] .nb-row-stagger > *:nth-child(7) { animation-delay: .210s }
+[data-theme="light"] .session-row:nth-child(8),
+[data-theme="light"] .nb-row-stagger > *:nth-child(8) { animation-delay: .245s }
+[data-theme="light"] .session-row:nth-child(9),
+[data-theme="light"] .nb-row-stagger > *:nth-child(9) { animation-delay: .280s }
+[data-theme="light"] .session-row:nth-child(10),
+[data-theme="light"] .nb-row-stagger > *:nth-child(10){ animation-delay: .315s }
+[data-theme="light"] .session-row:nth-child(11),
+[data-theme="light"] .nb-row-stagger > *:nth-child(11){ animation-delay: .350s }
+[data-theme="light"] .session-row:nth-child(12),
+[data-theme="light"] .nb-row-stagger > *:nth-child(12){ animation-delay: .385s }
+/* Beyond 12 items, all subsequent rows fade in without delay
+   so we never wait more than ~0.4s for the list to appear */
+[data-theme="light"] .session-row:nth-child(n+13),
+[data-theme="light"] .nb-row-stagger > *:nth-child(n+13){ animation-delay: .42s }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. CHIP / BADGE — bouncy "appear" when a new chip is added (e.g. picker)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes nbChipPop{
+    0%   { opacity: 0; transform: scale(.6); }
+    60%  { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+}
+[data-theme="light"] .pchip,
+[data-theme="light"] .nb-pop-in{
+    animation: nbChipPop .35s cubic-bezier(.34, 1.56, .64, 1) both;
+    will-change: transform, opacity;
+    transform-origin: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. TOAST — gradient sweep that draws the eye when one appears
+   ─────────────────────────────────────────────────────────────────────────
+   Already animated with `tslide` by base CSS; we add a single-shot shine
+   that wipes across so the user notices it even at the bottom of screen.
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="light"] .toast{
+    position: fixed;
+    overflow: hidden;
+}
+[data-theme="light"] .toast::after{
+    content: '';
+    position: absolute;
+    top: 0; left: -60%;
+    width: 60%; height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, .35) 50%,
+        transparent 100%);
+    transform: skewX(-20deg);
+    animation: nbToastShine 1s cubic-bezier(.22, 1, .36, 1) .3s 1;
+    pointer-events: none;
+}
+@keyframes nbToastShine{
+    from { left: -60%; }
+    to   { left: 120%; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. MODAL BACKDROP — gentle radial fade-in
+   ─────────────────────────────────────────────────────────────────────────
+   Replaces a hard `display:flex` open with a smooth backdrop fade and an
+   inner content scale. Only the modal contents animate — backdrop is cheap.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes nbBackdropIn{
+    from { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+    to   { opacity: 1; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+}
+[data-theme="light"] .modal-overlay.open{
+    animation: nbBackdropIn .25s ease-out both;
+    will-change: opacity, backdrop-filter;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. CARD HOVER — soft "lift + tint" without any continuous animation
+   ─────────────────────────────────────────────────────────────────────────
+   Applied selectively to interactive cards (NOT to densely-packed tables).
+   Triggered only by :hover, so zero idle cost.
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="light"] .card[data-interactive],
+[data-theme="light"] .nb-card-interactive{
+    transition: transform .25s cubic-bezier(.22, 1, .36, 1),
+                box-shadow .25s,
+                border-color .25s;
+    will-change: transform;
+}
+[data-theme="light"] .card[data-interactive]:hover,
+[data-theme="light"] .nb-card-interactive:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .08);
+    border-color: rgba(70, 72, 212, .25);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9b. LUMINOUS INTELLIGENCE — signature animations (appended 2026-05)
+   ─────────────────────────────────────────────────────────────────────────
+   The "interesting and attractive" layer: a living indigo→purple gradient on
+   primary CTAs, a slow aurora drift behind the page, a sweeping sheen across
+   hero buttons, and a gradient-border shimmer for focus/active surfaces.
+   All GPU-friendly (transform / opacity / background-position only) and all
+   disabled under prefers-reduced-motion below.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* (a) Living gradient on primary CTAs — the indigo↔purple slowly flows.
+   Pure background-position animation, so it's essentially free. */
+@keyframes nbGradientFlow{
+    0%   { background-position:   0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position:   0% 50%; }
+}
+[data-theme="light"] .btn-primary,
+[data-theme="light"] button.btn-primary,
+[data-theme="light"] .primary-btn,
+[data-theme="light"] .nb-btn-primary{
+    background-size: 220% 220% !important;
+    animation: nbGradientFlow 6s ease infinite;
+    will-change: background-position;
+}
+/* Pause the flow while pressed so the press feels crisp */
+[data-theme="light"] .btn-primary:active,
+[data-theme="light"] button.btn-primary:active,
+[data-theme="light"] .primary-btn:active{ animation-play-state: paused; }
+
+/* (b) Sweeping sheen across hero CTAs on hover (light glides over the glass) */
+[data-theme="light"] .btn-primary,
+[data-theme="light"] button.btn-primary,
+[data-theme="light"] .primary-btn{
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+[data-theme="light"] .btn-primary::after,
+[data-theme="light"] button.btn-primary::after,
+[data-theme="light"] .primary-btn::after{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(105deg, transparent 30%,
+                rgba(255,255,255,.55) 50%, transparent 70%);
+    transform: translateX(-120%);
+    z-index:-1;
+    pointer-events:none;
+}
+@keyframes nbSheen{ to { transform: translateX(120%); } }
+[data-theme="light"] .btn-primary:hover::after,
+[data-theme="light"] button.btn-primary:hover::after,
+[data-theme="light"] .primary-btn:hover::after{
+    animation: nbSheen .9s var(--nb-ease) 1;
+}
+
+/* (c) Aurora drift — a slow, dreamy movement of the ambient blobs.
+   Reuses the existing body::before/::after blobs (already recolored to
+   indigo/purple via tokens) and layers a gentle hue/scale breathing on top. */
+@keyframes nbAuroraDrift{
+    0%   { transform: translate3d(0,0,0)      scale(1);   }
+    33%  { transform: translate3d(40px,30px,0) scale(1.12); }
+    66%  { transform: translate3d(-30px,20px,0) scale(.94); }
+    100% { transform: translate3d(0,0,0)      scale(1);   }
+}
+[data-theme="light"] body::before{
+    animation: nbAuroraDrift 26s ease-in-out infinite;
+}
+[data-theme="light"] body::after{
+    animation: nbAuroraDrift 32s ease-in-out infinite reverse;
+}
+
+/* (d) Gradient-border shimmer — opt-in flourish for a hero card or the
+   active scan/search panel. Add class `nb-grad-ring` to any element. */
+@keyframes nbRingSpin{ to { transform: rotate(1turn); } }
+[data-theme="light"] .nb-grad-ring{
+    position: relative;
+    border-radius: var(--nb-radius-lg);
+    isolation: isolate;
+}
+[data-theme="light"] .nb-grad-ring::before{
+    content:'';
+    position:absolute; inset:-2px;
+    border-radius: inherit;
+    background: conic-gradient(from 0deg,
+        #4648D4, #6063EE, #8127CF, #9C48EA, #4648D4);
+    z-index:-1;
+    animation: nbRingSpin 5s linear infinite;
+    filter: blur(.5px);
+}
+[data-theme="light"] .nb-grad-ring::after{
+    content:'';
+    position:absolute; inset:0;
+    border-radius: inherit;
+    background: var(--nb-surface);
+    z-index:-1;
+}
+
+/* (e) Gentle gradient pulse for primary badges/notification dots */
+@keyframes nbBadgePulse{
+    0%,100% { box-shadow: 0 0 0 0 rgba(70,72,212,.45); }
+    50%     { box-shadow: 0 0 0 6px rgba(129,39,207,0); }
+}
+[data-theme="light"] .nav-badge:not(:empty),
+[data-theme="light"] .nb-pulse-badge{
+    animation: nbBadgePulse 2.2s ease-out infinite;
+}
+
+/* (f) KPI / stat value: subtle gradient text + rise-in on first paint */
+[data-theme="light"] .stat-value.nb-grad-text,
+[data-theme="light"] .nb-kpi{
+    background: var(--nb-grad-primary);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:transparent;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §A — GRN FORM ENTRY + 3D HOVER EFFECTS  (added 2026-05)
+   ─────────────────────────────────────────────────────────────────────────
+   Motion layer for the GRN form. Structure / static look lives in the base
+   theme (hcp-notebooklm.css §23–25); this adds the cascade-in, line-row
+   stagger, animated gradient sheen and 3D hover lift on top. Reusing the
+   file's perf rules: transform/opacity only, reduced-motion safe (below).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes nbGrnFadeUp{
+    from{ opacity:0; transform:translateY(8px); }
+    to  { opacity:1; transform:translateY(0); }
+}
+
+/* Cascade the form sections in */
+[data-theme="light"] .grn-form-head,
+[data-theme="light"] .grn-po-row,
+[data-theme="light"] .grn-lines-section,
+[data-theme="light"] .grn-charges,
+[data-theme="light"] .grn-supervisor-strip,
+[data-theme="light"] .grn-footer-block,
+[data-theme="light"] .grn-bottom-grid,
+[data-theme="light"] .grn-savebar{
+    animation:nbGrnFadeUp .34s cubic-bezier(.22,1,.36,1) both;
+}
+[data-theme="light"] .grn-form-head{ animation-delay:0s; }
+[data-theme="light"] .grn-po-row{ animation-delay:.05s; }
+[data-theme="light"] .grn-lines-section{ animation-delay:.10s; }
+[data-theme="light"] .grn-charges{ animation-delay:.14s; }
+[data-theme="light"] .grn-supervisor-strip{ animation-delay:.16s; }
+[data-theme="light"] .grn-footer-block,
+[data-theme="light"] .grn-bottom-grid{ animation-delay:.18s; }
+[data-theme="light"] .grn-savebar{ animation-delay:.20s; }
+
+/* Line items stagger in (reuse the file's nbRowIn keyframe) */
+[data-theme="light"] table.grn-lines tbody tr{
+    animation:nbRowIn .26s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Header accent bar — living gradient drift (reuse nbGradientFlow) */
+[data-theme="light"] .grn-form-head::before{
+    animation:nbGradientFlow 6s ease infinite;
+}
+
+/* Totals card — animated gradient sheen + 3D hover lift */
+[data-theme="light"] .grn-totals-card{
+    animation:nbGradientFlow 9s ease infinite;
+    will-change:transform;
+}
+[data-theme="light"] .grn-totals-card:hover{
+    transform:translateY(-2px) scale(1.005);
+}
+
+/* Main cards — gentle 3D lift on hover */
+[data-theme="light"] .grn-po-section:hover,
+[data-theme="light"] .grn-narration:hover{
+    transform:translateY(-2px);
+    box-shadow:
+        0 2px 4px rgba(16,24,40,.05),
+        0 10px 24px rgba(16,24,40,.08);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §B — SAVE GRN — living indigo→purple gradient flow  (added 2026-05)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="light"] #grn-form-pane #grnSaveBtn{
+    animation:nbGradientFlow 6s ease infinite;
+}
+[data-theme="light"] #grn-form-pane #grnSaveBtn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(70,72,212,.42);
+    animation-play-state:paused;   /* settle the gradient while interacting */
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. ACCESSIBILITY — full reduced-motion safety net
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce){
+    [data-theme="light"] .scan-card,
+    [data-theme="light"] .nb-attract-glow,
+    [data-theme="light"] .nb-breathe,
+    [data-theme="light"] #btn-start-session,
+    [data-theme="light"] .toast::after,
+    [data-theme="light"] .tabpanel:not(.hidden),
+    [data-theme="light"] .session-row,
+    [data-theme="light"] .nb-row-stagger > *,
+    [data-theme="light"] .pchip,
+    [data-theme="light"] .nb-pop-in,
+    [data-theme="light"] .grn-form-head,
+    [data-theme="light"] .grn-po-row,
+    [data-theme="light"] .grn-lines-section,
+    [data-theme="light"] .grn-charges,
+    [data-theme="light"] .grn-supervisor-strip,
+    [data-theme="light"] .grn-footer-block,
+    [data-theme="light"] .grn-bottom-grid,
+    [data-theme="light"] .grn-savebar,
+    [data-theme="light"] .grn-totals-card,
+    [data-theme="light"] .grn-form-head::before,
+    [data-theme="light"] table.grn-lines tbody tr,
+    [data-theme="light"] #grn-form-pane #grnSaveBtn,
+    [data-theme="light"] .btn-primary,
+    [data-theme="light"] button.btn-primary,
+    [data-theme="light"] .primary-btn,
+    [data-theme="light"] .nb-btn-primary,
+    [data-theme="light"] .btn-primary::after,
+    [data-theme="light"] button.btn-primary::after,
+    [data-theme="light"] .primary-btn::after,
+    [data-theme="light"] body::before,
+    [data-theme="light"] body::after,
+    [data-theme="light"] .nb-grad-ring::before,
+    [data-theme="light"] .nav-badge:not(:empty),
+    [data-theme="light"] .nb-pulse-badge,
+    [data-theme="light"] .modal-overlay.open{
+        animation: none !important;
+    }
+    [data-theme="light"] .stat .val,
+    [data-theme="light"] .stat-value{
+        transition: none !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   END OF FILE
+   ═══════════════════════════════════════════════════════════════════════════ */

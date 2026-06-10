@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CCTV Live Wall · HCP Wellness</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='hcp_theme.css') }}">
+<style>
+  body{margin:0;background:var(--bg,#0b1220);color:var(--text,#e6edf6);font-family:Segoe UI,Roboto,sans-serif}
+  .cctv-topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--border,#1f2a44);background:var(--panel,#0f1830);position:sticky;top:0;z-index:50}
+  .cctv-topbar .title{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+  .cctv-topbar .spacer{flex:1}
+  .cctv-topbar select,.cctv-topbar button{background:var(--input,#1a2440);color:inherit;border:1px solid var(--border,#1f2a44);border-radius:6px;padding:6px 10px;font-size:13px}
+  .cctv-topbar button:hover{border-color:var(--h-accent,#0d9488);cursor:pointer}
+  .cctv-topbar .pager{display:flex;align-items:center;gap:6px}
+  .cctv-topbar .pager button{padding:4px 10px}
+  .cctv-topbar .pager .info{font-size:12px;opacity:.8;min-width:90px;text-align:center}
+
+  .grid-wrap{padding:10px}
+  .grid{display:grid;gap:8px;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;height:calc(100vh - 70px)}
+  .grid.layout-1 {grid-template-columns:1fr;          grid-template-rows:1fr}
+  .grid.layout-4 {grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)}
+  .grid.layout-9 {grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+
+  .tile{position:relative;background:#000;border:1px solid var(--border,#1f2a44);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .tile.empty{background:repeating-linear-gradient(45deg,#0a0f1d,#0a0f1d 8px,#0d1426 8px,#0d1426 16px);color:#3a4a6b;font-size:12px}
+  .tile video{width:100%;height:100%;object-fit:cover;background:#000}
+  .tile .label{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:4px;font-size:11px;backdrop-filter:blur(4px)}
+  .tile .channel-pill{position:absolute;right:6px;top:6px;background:rgba(13,148,136,.85);padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+  .tile .actions{position:absolute;right:6px;bottom:6px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+  .tile:hover .actions{opacity:1}
+  .tile .actions button{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:3px 7px;font-size:11px;cursor:pointer}
+  .tile .actions button:hover{background:rgba(13,148,136,.8)}
+  .tile .status{position:absolute;left:6px;bottom:6px;font-size:10px;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:3px}
+  .tile .status.live::before{content:'●';color:#10b981;margin-right:4px}
+  .tile .status.error::before{content:'●';color:#ef4444;margin-right:4px}
+  .tile .status.connecting::before{content:'●';color:#f59e0b;margin-right:4px;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.3}}
+
+  /* Fullscreen overlay */
+  .fs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:none;flex-direction:column}
+  .fs-overlay.show{display:flex}
+  .fs-overlay .fs-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #1f2a44}
+  .fs-overlay .fs-bar .fs-title{font-weight:600}
+  .fs-overlay .fs-bar .spacer{flex:1}
+  .fs-overlay .fs-bar button{background:#1a2440;color:#fff;border:1px solid #1f2a44;border-radius:6px;padding:6px 12px;cursor:pointer}
+  .fs-overlay .fs-bar button:hover{border-color:#0d9488}
+  .fs-overlay .fs-body{flex:1;display:flex;align-items:center;justify-content:center;padding:10px}
+  .fs-overlay video{max-width:100%;max-height:100%;background:#000}
+
+  /* Empty state */
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;text-align:center;opacity:.7}
+  .empty-state .ico{font-size:48px;margin-bottom:12px}
+  .empty-state a{color:var(--h-accent,#0d9488);text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+
+{% set page_title = "CCTV Live Wall" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "CCTV", "url": "#"}, {"label": "Live Wall", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set live = True %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="grid-wrap">
+  <div class="grid layout-9" id="grid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="ico">📷</div>
+    <div>No cameras in this group yet.</div>
+    <div style="margin-top:8px"><a href="/cctv/groups">Set up a group →</a></div>
+  </div>
+</div>
+
+<!-- Fullscreen overlay -->
+<div class="fs-overlay" id="fsOverlay">
+  <div class="fs-bar">
+    <div class="fs-title" id="fsTitle">Camera</div>
+    <div class="spacer"></div>
+    <button onclick="closeFs()">✕ Close</button>
+  </div>
+  <div class="fs-body">
+    <video id="fsVideo" autoplay muted playsinline></video>
+  </div>
+</div>
+
+<script>
+// go2rtc base — auto-detect. By default we point at the same hostname the
+// browser is using, on port 1984 (where go2rtc runs). This works whenever
+// go2rtc and Flask are on the same machine — the most common HCP setup.
+//
+// If go2rtc runs on a DIFFERENT machine, set GO2RTC_HOST to its URL:
+//    const GO2RTC_HOST = 'http://192.168.2.45:1984';
+//
+// If for some reason direct access doesn't work (firewall, separate VLAN),
+// set GO2RTC_HOST = '' to fall back to the Flask reverse proxy.
+const GO2RTC_HOST = `http://${location.hostname}:1984`;
+
+let allCameras = [];
+let pageSize   = 9;
+let pageIndex  = 0;
+const players = new Map();   // cam_id -> {pc, video, src}
+
+async function loadGroups(){
+  const r = await fetch('/api/cctv/groups').then(r=>r.json());
+  const sel = document.getElementById('groupSelect');
+  sel.innerHTML = '<option value="">— Select group —</option>';
+  (r.groups||[]).forEach(g=>{
+    const o = document.createElement('option');
+    o.value = g.id;
+    o.textContent = (g.is_shared ? '🌐 ' : '👤 ') + g.name + ` (${g.cam_count})`;
+    sel.appendChild(o);
+  });
+  // Auto-pick last used
+  const last = localStorage.getItem('cctv_last_group');
+  if (last && [...sel.options].some(o=>o.value===last)){
+    sel.value = last;
+    loadGroup();
+  }
+}
+
+async function loadGroup(){
+  const gid = document.getElementById('groupSelect').value;
+  if (!gid){ allCameras=[]; pageIndex=0; render(); return }
+  localStorage.setItem('cctv_last_group', gid);
+  const r = await fetch(`/api/cctv/groups/${gid}/cameras`).then(r=>r.json());
+  allCameras = r.cameras || [];
+  pageIndex = 0;
+  render();
+}
+
+function setLayout(v){
+  pageSize = parseInt(v,10);
+  const grid = document.getElementById('grid');
+  grid.classList.remove('layout-1','layout-4','layout-9');
+  grid.classList.add('layout-'+v);
+  pageIndex = 0;
+  render();
+}
+
+function nextPage(){
+  const total = Math.ceil(allCameras.length / pageSize);
+  if (pageIndex < total-1){ pageIndex++; render() }
+}
+function prevPage(){
+  if (pageIndex > 0){ pageIndex--; render() }
+}
+
+function render(){
+  // tear down current players
+  teardownAll();
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  const empty = document.getElementById('emptyState');
+  empty.style.display = allCameras.length === 0 ? 'flex' : 'none';
+
+  const total = Math.ceil(allCameras.length / pageSize) || 1;
+  const start = pageIndex * pageSize;
+  const slice = allCameras.slice(start, start + pageSize);
+
+  // Always render exactly pageSize tiles — empty slots use placeholder.
+  for (let i=0; i<pageSize; i++){
+    const cam = slice[i];
+    const tile = document.createElement('div');
+    tile.className = 'tile' + (cam ? '' : ' empty');
+    if (!cam){
+      tile.textContent = '— empty —';
+    } else {
+      tile.innerHTML = `
+        <video autoplay muted playsinline></video>
+        <div class="label">${escapeHtml(cam.name || 'Cam '+cam.id)}</div>
+        <div class="channel-pill">${escapeHtml(cam.recorder_name)} · CH${cam.channel}</div>
+        <div class="status connecting" id="st_${cam.id}">connecting…</div>
+        <div class="actions">
+          <button title="Fullscreen" onclick="openFs(${cam.id},'${escapeJs(cam.name)}')">⛶</button>
+          <button title="Playback" onclick="location.href='/cctv/playback?cam=${cam.id}'">⏮</button>
+        </div>
+      `;
+      grid.appendChild(tile);
+      const video = tile.querySelector('video');
+      const quality = document.getElementById('streamQuality').value;
+      attachStream(cam.id, video, quality);
+    }
+    if (!cam) grid.appendChild(tile);
+  }
+
+  document.getElementById('pageInfo').textContent =
+    allCameras.length ? `Page ${pageIndex+1} / ${total}` : 'No cameras';
+}
+
+function reloadStreams(){ render() }
+
+// ── Stream attachment via go2rtc MSE (Media Source Extensions) ───────────
+//
+// Why MSE not WebRTC: many Hikvision NVRs send H.265 (HEVC) main streams.
+// Chrome WebRTC doesn't support H.265 — it only does H.264. MSE supports
+// both H.264 and H.265 in modern Chrome (107+) and Edge.
+// Tradeoff: ~500ms extra latency vs WebRTC. Acceptable for surveillance.
+//
+// Connection model: WebSocket → /api/ws?src=cam_N_sub → fragmented MP4
+// frames arrive as binary messages → fed to a SourceBuffer.
+
+function _wsBase(){
+  // ws://host:1984  or  wss://  if portal is over HTTPS
+  const wsScheme = location.protocol === 'https:' ? 'wss' : 'ws';
+  // GO2RTC_HOST is something like 'http://192.168.2.91:1984' — strip the scheme
+  const host = (GO2RTC_HOST || `http://${location.hostname}:1984`).replace(/^https?:\/\//, '');
+  return `${wsScheme}://${host}`;
+}
+
+async function attachStream(camId, videoEl, quality){
+  const src = `cam_${camId}_${quality}`;
+  const setStatus = (cls, txt) => {
+    const el = document.getElementById('st_'+camId);
+    if (el){ el.className = 'status '+cls; el.textContent = txt }
+  };
+
+  try {
+    const player = await playMSE(src, videoEl, setStatus);
+    players.set(camId, { ...player, src });
+  } catch(e){
+    console.error('stream', camId, e);
+    setStatus('error', 'no signal');
+  }
+}
+
+/**
+ * Play a go2rtc stream via MSE.
+ *  ws onopen      → send 'mse' request with codecs we accept
+ *  first message  → JSON with {type:"mse", value:"video/mp4; codecs=..."}
+ *  every later    → binary fMP4 chunk → appendBuffer()
+ */
+function playMSE(src, videoEl, setStatus){
+  return new Promise((resolve, reject) => {
+    if (!('MediaSource' in window)){
+      return reject(new Error('MediaSource not supported'));
+    }
+
+    const ws = new WebSocket(`${_wsBase()}/api/ws?src=${encodeURIComponent(src)}`);
+    ws.binaryType = 'arraybuffer';
+
+    const ms = new MediaSource();
+    videoEl.src = URL.createObjectURL(ms);
+    videoEl.muted = true;       // required for autoplay in Chrome
+    videoEl.autoplay = true;
+    videoEl.playsInline = true;
+
+    let sb = null;             // SourceBuffer
+    const queue = [];          // chunks waiting while sb is updating
+    let opened = false;
+
+    ms.addEventListener('sourceopen', () => {
+      // Tell go2rtc we want MSE and which codecs the browser can handle.
+      // Modern Chrome can do H.264 (avc1.640029), H.265 (hvc1.1.6.L150.B0),
+      // and PCMU audio (mp4a.40.2 covers AAC; PCMU/A inside fMP4 needs special handling).
+      ws.send(JSON.stringify({
+        type: 'mse',
+        // Let go2rtc auto-select supported codecs from our accepted list.
+        // This negotiation comes back as the first text message.
+        value: 'avc1,hvc1'
+      }));
+    });
+
+    ws.onmessage = (ev) => {
+      // Text frame = setup info {type:"mse", value:"video/mp4; codecs=..."}
+      if (typeof ev.data === 'string'){
+        try{
+          const msg = JSON.parse(ev.data);
+          if (msg.type === 'mse' && msg.value){
+            const mime = msg.value;
+            if (!MediaSource.isTypeSupported(mime)){
+              setStatus && setStatus('error', 'codec not supported');
+              ws.close();
+              return;
+            }
+            sb = ms.addSourceBuffer(mime);
+            sb.mode = 'segments';
+            sb.addEventListener('updateend', () => {
+              // Drain the queue
+              if (queue.length && !sb.updating){
+                try{ sb.appendBuffer(queue.shift()) }catch(e){ console.warn(e) }
+              }
+              // Trim buffered range to avoid memory blowing up over time
+              if (sb.buffered.length && videoEl.currentTime){
+                const start = sb.buffered.start(0);
+                if (videoEl.currentTime - start > 30){
+                  try{ sb.remove(start, videoEl.currentTime - 20) }catch(e){}
+                }
+              }
+            });
+            opened = true;
+            setStatus && setStatus('live', 'live');
+            resolve({ ws, ms, video: videoEl, stop: () => stop() });
+          }
+        }catch(e){ console.error('mse setup', e) }
+        return;
+      }
+
+      // Binary frame = fMP4 chunk
+      const data = new Uint8Array(ev.data);
+      if (!sb || sb.updating){
+        queue.push(data);
+        return;
+      }
+      try{ sb.appendBuffer(data) }
+      catch(e){
+        if (e.name === 'QuotaExceededError'){
+          // Free space and retry
+          try{ sb.remove(0, videoEl.currentTime - 5) }catch(_){}
+          queue.unshift(data);
+        } else console.warn('appendBuffer', e);
+      }
+    };
+
+    ws.onerror = (e) => {
+      setStatus && setStatus('error', 'ws error');
+      reject(new Error('websocket error'));
+    };
+    ws.onclose = () => {
+      if (!opened){
+        setStatus && setStatus('error', 'no signal');
+        reject(new Error('websocket closed before stream opened'));
+      } else {
+        setStatus && setStatus('error', 'disconnected');
+      }
+    };
+
+    function stop(){
+      try{ ws.close() }catch(_){}
+      try{ if (ms.readyState === 'open') ms.endOfStream() }catch(_){}
+      try{ videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load() }catch(_){}
+    }
+  });
+}
+
+// Override teardown for MSE players (no .pc — they have .ws + .ms)
+const _origRender = render;
+function teardownAll(){
+  for (const [, p] of players){
+    try{ if (p.stop) p.stop() }catch(_){}
+    try{ if (p.pc) p.pc.close() }catch(_){}
+  }
+  players.clear();
+}
+
+// ── Fullscreen ────────────────────────────────────────────────────────────
+let fsPlayer = null;
+async function openFs(camId, name){
+  document.getElementById('fsTitle').textContent = name || ('Camera '+camId);
+  const ov = document.getElementById('fsOverlay');
+  ov.classList.add('show');
+  const v = document.getElementById('fsVideo');
+  if (fsPlayer && fsPlayer.stop){ try{ fsPlayer.stop() }catch(e){} }
+  fsPlayer = null;
+  // Fullscreen uses main stream
+  try {
+    fsPlayer = await playMSE(`cam_${camId}_main`, v, null);
+  } catch(e){
+    console.error('fullscreen', e);
+    // Fall back to sub stream if main fails (e.g. unsupported codec)
+    try{ fsPlayer = await playMSE(`cam_${camId}_sub`, v, null) }catch(_){}
+  }
+}
+function closeFs(){
+  document.getElementById('fsOverlay').classList.remove('show');
+  if (fsPlayer && fsPlayer.stop){ try{ fsPlayer.stop() }catch(e){} }
+  fsPlayer = null;
+  const v = document.getElementById('fsVideo');
+  v.removeAttribute('src');
+  try{ v.load() }catch(_){}
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function escapeJs(s){ return (s||'').replace(/['\\]/g,'\\$&') }
+
+// keyboard: arrows for paging, Esc to close fullscreen
+document.addEventListener('keydown', (e)=>{
+  if (e.key === 'Escape') closeFs();
+  if (document.getElementById('fsOverlay').classList.contains('show')) return;
+  if (e.key === 'ArrowRight') nextPage();
+  if (e.key === 'ArrowLeft')  prevPage();
+});
+
+loadGroups();
+</script>
+
+</body>
+</html>

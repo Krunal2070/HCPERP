@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+{# ═══════════════════════════════════════════════════════════════════════════
+   QC CERTIFICATE OF ANALYSIS — single source of truth
+   ───────────────────────────────────────────────────────────────────────────
+   This template is rendered by the route /qc/trs/<trs_id>/coa_print and is
+   the ONE place where the QC Approval Certificate is laid out. Both the
+   QC Dashboard's TRS modal AND the TRS Register's "Print Approval Report"
+   button open this URL, so any visual tweak made here is reflected in
+   both surfaces. No more duplicated JS builder, no more drift between
+   the two pages.
+
+   Layout was redesigned May 2026 to match the customer reference: a
+   4-column body grid (label / value / label / value with one column
+   that spans 3) instead of the old 6-column grid. Total Qty + Sample
+   Qty now have their own row. The action buttons live below the sheet
+   bottom-right (not above) so the printed page lines up with the
+   reference exactly.
+   ═══════════════════════════════════════════════════════════════════════════ #}
+<head>
+<meta charset="UTF-8">
+<title>Certificate of Analysis — {{ trs.trs_num or '' }}</title>
+<style>
+  *{ box-sizing:border-box }
+  body{
+    font-family: Inter, Arial, sans-serif;
+    color:#0f172a;
+    margin:0; padding:18px 18px 24px;
+    background:#fff;
+    font-size:11.5px;
+  }
+  .sheet{ max-width:820px; margin:0 auto; border:2px solid #0f172a; }
+
+  /* ── Header strip: logo / centred title / verdict ───────────────────── */
+  .ttl{
+    display:grid;
+    grid-template-columns: 140px 1fr 150px;
+    border-bottom:2px solid #0f172a;
+    align-items:center;
+  }
+  .ttl .logo{
+    padding:14px;
+    border-right:2px solid #0f172a;
+    text-align:center;
+    font-weight:900;
+    font-size:20px;
+    color:#1e3a8a;
+    letter-spacing:-1px;
+  }
+  .ttl .logo small{
+    display:block;
+    font-size:8px;
+    letter-spacing:.6px;
+    color:#374151;
+    margin-top:2px;
+    font-weight:600;
+  }
+  .ttl .mid{ padding:14px; text-align:center; }
+  .ttl .mid h1{
+    margin:0;
+    font-size:16px;
+    font-weight:800;
+    letter-spacing:.5px;
+  }
+  .ttl .mid .sub{
+    margin-top:4px;
+    font-size:11px;
+    color:#374151;
+  }
+  .ttl .verdict{
+    padding:10px 6px;
+    border-left:2px solid #0f172a;
+    text-align:center;
+    background:{{ '#dcfce7' if is_approved else '#fee2e2' }};
+    color:{{ '#15803d' if is_approved else '#b91c1c' }};
+    overflow:hidden;
+  }
+  .ttl .verdict .lbl{
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:.6px;
+  }
+  .ttl .verdict .val{
+    font-size:17px;
+    font-weight:900;
+    margin-top:2px;
+    letter-spacing:-.3px;
+    white-space:nowrap;
+    line-height:1.1;
+  }
+
+  /* ── Body grid table ──────────────────────────────────────────────────
+     We deliberately use AUTO layout (the default) rather than table-layout:
+     fixed. With fixed layout, all rows share the column widths from the
+     first row, so a later row with fewer cells than the first leaves a
+     trailing empty column. Auto layout lets each row's cells span the
+     full table width based on that row's own declared widths — exactly
+     what we want, given that some rows have 6 cells, some 4, some 5
+     (the test-results parameter rows). The cosmetic cost is a tiny bit
+     of column-edge misalignment between rows, which is invisible at
+     normal viewing zoom and printed sizes. */
+  table.body{
+    width:100%;
+    border-collapse:collapse;
+    font-size:11.5px;
+  }
+  table.body td{
+    border:1px solid #0f172a;
+    padding:7px 9px;
+    vertical-align:middle;
+    word-wrap:break-word;
+  }
+  /* Label cells — light fill so the label/value rhythm reads cleanly. */
+  table.body .lbl{
+    background:#f9fafb;
+    font-weight:700;
+    /* No nowrap — long labels like "Inspected / Approved By" must wrap
+       inside the cell rather than overflow into the value column. */
+    white-space:normal;
+    line-height:1.25;
+  }
+  table.body .center{ text-align:center; }
+
+  /* Section banner row ("TEST RESULTS"). */
+  table.body .sec td{
+    background:#dbeafe;
+    font-weight:700;
+    text-align:center;
+    letter-spacing:1px;
+    padding:5px;
+  }
+  /* Parameter-table header row inside the body table. */
+  table.body .ph{
+    background:#f1f5f9;
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+  }
+
+  /* PASS / FAIL pills. */
+  .pass-pill{
+    background:#dcfce7;
+    color:#15803d;
+    padding:2px 8px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:10.5px;
+    display:inline-block;
+  }
+  .fail-pill{
+    background:#fee2e2;
+    color:#b91c1c;
+    padding:2px 8px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:10.5px;
+    display:inline-block;
+  }
+  .na-pill{ color:#9ca3af; }
+
+  /* Summary tiles — 3 evenly-spaced numbers. */
+  .summary{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:0;
+  }
+  .summary > div{
+    padding:10px;
+    border:1px solid #0f172a;
+    text-align:center;
+  }
+  .summary .num{ font-size:18px; font-weight:900; }
+  .summary .ok  .num{ color:#15803d; }
+  .summary .bad .num{ color:#b91c1c; }
+  .summary .na  .num{ color:#374151; }
+  .summary .cap{
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:.6px;
+    color:#374151;
+    margin-top:4px;
+    text-transform:uppercase;
+  }
+
+  /* Conclusion + signature rows. */
+  .conclusion{
+    padding:14px;
+    font-size:12px;
+    font-weight:700;
+    text-align:left;
+    color:{{ '#15803d' if is_approved else '#b91c1c' }};
+    background:{{ '#dcfce7' if is_approved else '#fee2e2' }};
+    line-height:1.4;
+  }
+
+  /* Action buttons live OUTSIDE the sheet, bottom-right — hidden on print. */
+  .actions{
+    max-width:820px;
+    margin:14px auto 0;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+  }
+  .actions button{
+    padding:9px 18px;
+    font-size:12.5px;
+    font-weight:700;
+    border-radius:6px;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:filter .12s, transform .12s;
+  }
+  .actions .btn-close{
+    background:#fff;
+    color:#374151;
+    border:1px solid #cbd5e1;
+  }
+  .actions .btn-close:hover{
+    background:#f9fafb;
+    color:#0f172a;
+    border-color:#94a3b8;
+  }
+  .actions .btn-print{
+    background:#15803d;
+    color:#fff;
+    border:1px solid #15803d;
+  }
+  .actions .btn-print:hover{
+    filter:brightness(1.05);
+    transform:translateY(-1px);
+  }
+
+  @media print{
+    body{ padding:0; }
+    .actions{ display:none; }
+    .sheet{ border-width:1.5pt; }
+    /* Belt-and-braces: keep coloured pills coloured when printing. */
+    *{
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  {# ── Header strip ────────────────────────────────────────────── #}
+  <div class="ttl">
+    <div class="logo">HCP<small>WELLNESS PVT. LTD.</small></div>
+    <div class="mid">
+      <h1>CERTIFICATE OF ANALYSIS</h1>
+      <div class="sub">Quality Control Inspection Report</div>
+    </div>
+    <div class="verdict">
+      <div class="lbl">VERDICT</div>
+      <div class="val">{{ 'APPROVED' if is_approved else 'REJECTED' }}</div>
+    </div>
+  </div>
+
+  {# ── Body fields ──────────────────────────────────────────────
+     Layout: 6 fractional columns. Most rows lay out two label/value
+     pairs (12.5% / 25% / 12.5% / 25% / 12.5% / 12.5%); some rows
+     have a single value spanning the right half. ───────────────── #}
+  <table class="body">
+    {# Row 1: CoA No / Issued / Department (3 pairs) #}
+    <tr>
+      <td class="lbl" style="width:14%">CoA No.</td>
+      <td style="width:22%"><b>{{ trs.trs_num or '' }}</b></td>
+      <td class="lbl" style="width:14%">Issued</td>
+      <td style="width:22%">{{ today_d }}</td>
+      <td class="lbl" style="width:14%">Department</td>
+      <td style="width:14%">QUALITY CONTROL</td>
+    </tr>
+
+    {# Row 2: Material spans the rest of the row. #}
+    <tr>
+      <td class="lbl">Material</td>
+      <td colspan="5"><b>{{ trs.material or '—' }}</b></td>
+    </tr>
+
+    {# Row 3: GRN No / GRN Date — date cell spans 3 to fill the row. #}
+    <tr>
+      <td class="lbl">GRN No</td>
+      <td>{{ trs.grn_num or '—' }}</td>
+      <td class="lbl">GRN Date</td>
+      <td colspan="3">{{ fmt_d(trs.grn_date) }}</td>
+    </tr>
+
+    {# Row 4: Batch No / Code  +  No. of Packages #}
+    <tr>
+      <td class="lbl">Batch No / Code</td>
+      <td>{{ trs.batch_num or '—' }}</td>
+      <td class="lbl">No. of Packages</td>
+      <td colspan="3" class="center">{{ trs.packages if trs.packages is not none else '—' }}</td>
+    </tr>
+
+    {# Row 5: Manufacturer / Mfg. Date #}
+    <tr>
+      <td class="lbl">Manufacturer</td>
+      <td>{{ trs.manufacturer or '—' }}</td>
+      <td class="lbl">Mfg. Date</td>
+      <td colspan="3">{{ fmt_d(trs.mfg_date) }}</td>
+    </tr>
+
+    {# Row 6: Supplier / Expiry Date #}
+    <tr>
+      <td class="lbl">Supplier</td>
+      <td>{{ trs.supplier_name or '—' }}</td>
+      <td class="lbl">Expiry Date</td>
+      <td colspan="3">{{ fmt_d(trs.expiry_date) }}</td>
+    </tr>
+
+    {# Row 7: Total Qty / Sample Qty — fresh row added per the customer
+       reference layout. #}
+    <tr>
+      <td class="lbl">Total Qty</td>
+      <td>{{ fmt_qty(trs.total_qty) }} {{ trs.uom or 'KG' }}</td>
+      <td class="lbl">Sample Qty</td>
+      <td colspan="3">{{ fmt_qty(trs.sample_qty) }} {{ trs.uom or 'KG' }}</td>
+    </tr>
+
+    {# ── Test Results banner ────────────────────────────────────── #}
+    <tr class="sec"><td colspan="6">TEST RESULTS</td></tr>
+
+    {# Param-table header. Widths sum to 100% so the row fills the full
+       table width — no trailing empty column. #}
+    <tr class="ph">
+      <td class="center" style="width:4%">#</td>
+      <td style="width:24%">PARAMETER</td>
+      <td style="width:18%">METHOD OF ANALYSIS</td>
+      <td style="width:21%">SPECIFICATION</td>
+      <td style="width:21%">OBSERVATION</td>
+      <td class="center" style="width:12%">RESULT</td>
+    </tr>
+
+    {# Parameter rows. checked_params is a Python list of dicts. #}
+    {% if params and params|length %}
+      {% for p in params %}
+      <tr>
+        <td class="center">{{ loop.index }}</td>
+        <td>
+          <b>{{ p.name or '' }}</b>
+          {% if p.unit %}<div style="font-size:10px;color:#6b7280">{{ p.unit }}</div>{% endif %}
+        </td>
+        <td>{{ p.method or '—' }}</td>
+        <td>
+          {% if p.spec_type == 'range' %}
+            {{ p.spec_from if p.spec_from is not none else '' }} –
+            {{ p.spec_to   if p.spec_to   is not none else '' }}
+            {% if p.unit %}{{ p.unit }}{% endif %}
+          {% else %}
+            {{ p.spec_target or '—' }}
+          {% endif %}
+        </td>
+        <td>
+          {% if p.observed is not none and p.observed != '' %}
+            <b>{{ p.observed }}{% if p.unit %} {{ p.unit }}{% endif %}</b>
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td class="center">
+          {% if p.passed is true %}<span class="pass-pill">PASS</span>
+          {% elif p.passed is false %}<span class="fail-pill">FAIL</span>
+          {% else %}<span class="na-pill">—</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    {% else %}
+      <tr>
+        <td colspan="6" style="text-align:center;font-style:italic;color:#6b7280;padding:14px">
+          No parameters were recorded for this TRS.
+        </td>
+      </tr>
+    {% endif %}
+
+    {# ── Supplier-COA confirmation (item 3) ──────────────────────────
+       Rendered as a full-width checkbox line. When the QC user ticked
+       "checked & passed as per supplier COA", all parameters were
+       force-passed; we reflect that here with a ticked box. #}
+    <tr>
+      <td colspan="6" style="padding:8px 10px">
+        <span style="display:inline-flex;align-items:center;gap:8px;font-weight:700">
+          <span style="display:inline-block;width:14px;height:14px;border:1.5px solid #0f172a;
+                       border-radius:3px;text-align:center;line-height:13px;font-size:11px;
+                       {{ 'background:#0f172a;color:#fff' if coa_supplier_passed else 'background:#fff;color:#fff' }}">
+            {{ '✓' if coa_supplier_passed else '' }}
+          </span>
+          Checked and passed as per supplier COA
+        </span>
+      </td>
+    </tr>
+
+    {# ── Deviation observed (item 4) ─────────────────────────────────
+       Yes / No tick pair; when YES, the deviation note is shown on the
+       row beneath. #}
+    <tr>
+      <td colspan="6" style="padding:8px 10px">
+        <span style="font-weight:700;margin-right:14px">Any deviation observed?</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;margin-right:18px">
+          <span style="display:inline-block;width:13px;height:13px;border:1.5px solid #0f172a;
+                       border-radius:3px;text-align:center;line-height:12px;font-size:10px;
+                       {{ 'background:#0f172a;color:#fff' if coa_deviation == 'YES' else 'background:#fff' }}">
+            {{ '✓' if coa_deviation == 'YES' else '' }}
+          </span> Yes
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px">
+          <span style="display:inline-block;width:13px;height:13px;border:1.5px solid #0f172a;
+                       border-radius:3px;text-align:center;line-height:12px;font-size:10px;
+                       {{ 'background:#0f172a;color:#fff' if coa_deviation == 'NO' else 'background:#fff' }}">
+            {{ '✓' if coa_deviation == 'NO' else '' }}
+          </span> No
+        </span>
+      </td>
+    </tr>
+    {% if coa_deviation == 'YES' and coa_deviation_note %}
+    <tr>
+      <td class="lbl">Deviation Note</td>
+      <td colspan="5" style="white-space:pre-wrap">{{ coa_deviation_note }}</td>
+    </tr>
+    {% endif %}
+
+    {# Approval Remarks (only if present). #}
+    {% if trs.approval_remarks %}
+    <tr>
+      <td class="lbl">Approval Remarks</td>
+      <td colspan="5">{{ trs.approval_remarks }}</td>
+    </tr>
+    {% endif %}
+
+    {# Rejection Reason (rendered only when rejected). #}
+    {% if not is_approved and trs.rejection_reason %}
+    <tr>
+      <td class="lbl">Rejection Reason</td>
+      <td colspan="5" style="color:#b91c1c;font-weight:700">{{ trs.rejection_reason }}</td>
+    </tr>
+    {% endif %}
+
+    {# Conclusion paragraph — green tinted on approval, red on rejection. #}
+    <tr>
+      <td class="lbl">Conclusion</td>
+      <td colspan="5" class="conclusion">
+        {% if is_approved %}
+          The material has been inspected and meets the specified quality
+          requirements. It is hereby <u>APPROVED</u> for use.
+        {% else %}
+          The material has been inspected and does NOT meet the specified
+          quality requirements. It is hereby <u>REJECTED</u>.
+        {% endif %}
+      </td>
+    </tr>
+
+    {# Signature row — Verified By (free-text name the QC user typed)
+       and Approved By (the logged-in QC engineer) shown as two separate
+       signatory blocks per the customer reference. #}
+    <tr>
+      <td class="lbl" style="width:14%">Verified By</td>
+      <td style="width:36%">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <b>{{ coa_verified_by or '—' }}</b>
+          </div>
+          <div style="border-top:1px solid #0f172a;width:180px;padding-top:3px;
+                      font-size:10px;color:#6b7280">
+            Signature
+          </div>
+        </div>
+      </td>
+      <td class="lbl" style="width:14%">Approved By</td>
+      <td colspan="3">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div>
+              <b>{{ approved_by_display }}</b>
+              {% if not approver_is_placeholder %}
+                <br><span style="font-size:10.5px;color:#6b7280">QC Engineer</span>
+              {% endif %}
+            </div>
+            <div style="border-top:1px solid #0f172a;width:180px;padding-top:3px;
+                        font-size:10px;color:#6b7280">
+              Signature
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div><b>{{ approval_date_d }}</b></div>
+            <div style="font-size:10px;color:#6b7280">Date</div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+{# Action buttons BELOW the sheet, bottom-right. Hidden in print mode. #}
+<div class="actions">
+  <button class="btn-close" type="button" onclick="window.close()">
+    <i>✕</i> Close
+  </button>
+  <button class="btn-print" type="button" onclick="window.print()">
+    <i>🖨</i> Print
+  </button>
+</div>
+
+</body>
+</html>

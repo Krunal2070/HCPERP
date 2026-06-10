@@ -1,0 +1,31 @@
+[Unit]
+Description=HCP ERP Portal (Flask + Waitress)
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/erp
+Environment="PATH=/var/www/erp/venv/bin:/usr/bin:/bin"
+
+# === Environment variables (from old start_portal.bat) ===
+# Update these paths/values as needed
+Environment="PORTAL_API_TOKEN=B9jgrFE5Qx3o0f1MVeDvGPubT8nWNAcsXimy6SwR"
+Environment="GMAIL_CREDENTIALS_FILE=/var/www/erp/hcp_rd_agent/credentials.json"
+Environment="GMAIL_TOKEN_FILE=/var/www/erp/hcp_rd_agent/token.json"
+Environment="GMAIL_SENDER=purchase@hcpwellness.in"
+Environment="GOOGLE_SEARCH_API_KEY=AIzaSyAidO4w7lg8gtuy0HiDGxmDa5pcZTCIAMk"
+Environment="GOOGLE_SEARCH_CX=30ca4c198d5b24fd8"
+Environment="RD_AGENT_DB=/var/www/erp/hcp_rd_agent/rd_agent_log.db"
+Environment="RD_AGENT_CC=purchase2@hcpwellness.in,sonal@hcpwellness.in"
+
+ExecStart=/var/www/erp/venv/bin/python /var/www/erp/app.py
+
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/hcperp.log
+StandardError=append:/var/log/hcperp-error.log
+
+[Install]
+WantedBy=multi-user.target

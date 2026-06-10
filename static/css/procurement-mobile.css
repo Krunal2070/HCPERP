@@ -1,0 +1,307 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ * procurement-mobile.css — Phase 1 Foundation
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Mobile-responsive overlay for the procurement module. Loads AFTER
+ * hcptheme.css and overrides desktop layout at narrower viewports.
+ *
+ * Breakpoints:
+ *   Phone   :   0 –  639px   (single column, stacked, full-screen modals)
+ *   Tablet : 640 – 1023px   (condensed layout, two-column where it fits)
+ *   Desktop: 1024px+         (unchanged — current behaviour)
+ *
+ * Strategy:
+ *   - Desktop layout is the default (no media query) — nothing changes there.
+ *   - All mobile rules are scoped behind @media (max-width: …px) blocks.
+ *   - Touch targets ≥ 44×44px (Apple HIG / Material).
+ *   - Form inputs ≥ 16px font-size on phone to prevent iOS auto-zoom.
+ *   - Each phase appends a new section here, never modifies the previous.
+ *
+ * Phase 1 covers:
+ *   - Viewport-safe foundation (no horizontal scroll, proper text rendering)
+ *   - Topbar collapse + repositioning
+ *   - Sidebar: hidden-by-default on phone, slides in as overlay
+ *   - Sidebar backdrop click-to-close
+ *   - Typography scale + base form input sizing
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * GLOBAL — applies at all sizes, just safer defaults
+ * ───────────────────────────────────────────────────────────────────────── */
+html, body {
+    -webkit-text-size-adjust: 100%;   /* iOS Safari: don't auto-bump font on rotate */
+    overflow-x: hidden;                /* never allow horizontal page scroll */
+}
+
+/* Tap-target accessibility — touch action good for buttons/links */
+.icon-btn,
+.btn,
+.sidebar-item,
+.user-pill,
+.modal-close,
+button[onclick] {
+    touch-action: manipulation;        /* removes 300ms tap delay on iOS */
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TABLET — 640px to 1023px
+ * Slightly tighter topbar, narrower sidebar but still always visible.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1023px) {
+
+    /* Topbar — slimmer paddings */
+    .topbar {
+        padding: 0 10px !important;
+        gap: 8px !important;
+    }
+    .brand-sub {
+        display: none;                  /* hide subtitle on tablet to save space */
+    }
+    .topbar-page .page-sublabel {
+        display: none;
+    }
+    .topbar-sep {
+        display: none;                  /* dividers eat space; gap is enough */
+    }
+    .topbar-time {
+        font-size: 11px !important;
+    }
+    .back-btn {
+        padding: 0 10px !important;
+        font-size: 11px !important;
+    }
+
+    /* Sidebar narrower at tablet, content gets more room */
+    .sidebar {
+        width: 200px !important;
+    }
+    .sidebar-inner {
+        padding: 10px 8px !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PHONE — 0 to 639px
+ * Topbar becomes ultra-compact. Sidebar hidden behind hamburger.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+
+    /* ── TOPBAR ────────────────────────────────────────────────────────── */
+    .topbar {
+        padding: 0 8px !important;
+        gap: 6px !important;
+        height: 52px !important;
+    }
+
+    /* Sidebar toggle: keep visible, becomes the primary nav affordance */
+    .sidebar-toggle {
+        display: flex !important;
+        width: 38px !important;
+        height: 38px !important;
+        flex-shrink: 0;
+    }
+
+    /* Brand — compress to just the H mark + name (no subtitle) */
+    .brand {
+        gap: 6px !important;
+    }
+    .brand-mark {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 14px !important;
+    }
+    .brand-name {
+        font-size: 12.5px !important;
+    }
+    .brand-sub {
+        display: none;
+    }
+
+    /* Page label — keep icon, hide labels (header eats too much screen) */
+    .topbar-page {
+        display: none !important;       /* skip entirely on phone, the sidebar covers nav */
+    }
+
+    /* Right cluster — keep only essentials: clock, user pill, theme.
+       Hide settings + admin-reset; user can reach via sidebar/profile menu. */
+    .topbar-right {
+        gap: 6px !important;
+        margin-left: auto;
+    }
+    .topbar-time {
+        display: none !important;        /* phone has a clock in the status bar */
+    }
+    .topbar-right .icon-btn[onclick*="openSettings"],
+    .topbar-right #adminResetBtn {
+        display: none !important;        /* reachable via sidebar/menu instead */
+    }
+    .topbar-right .icon-btn {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 14px !important;
+    }
+    .back-btn {
+        padding: 0 8px !important;
+        font-size: 10.5px !important;
+        height: 30px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    /* User pill — shrink + drop the role line; keep avatar + username */
+    .user-pill {
+        padding: 4px 8px !important;
+        gap: 6px !important;
+        min-height: 36px;
+    }
+    .user-av {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 11.5px !important;
+    }
+    .user-name {
+        font-size: 11.5px !important;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .user-role {
+        display: none;                  /* not enough room; role on dropdown if needed */
+    }
+
+    /* User menu (Update Profile dropdown) — slightly wider so the button doesn't wrap */
+    #userMenu {
+        min-width: 180px !important;
+        right: 0 !important;
+        left: auto !important;
+    }
+
+
+    /* ── SIDEBAR — slide-in overlay ───────────────────────────────────── */
+    /* The sidebar exists in the DOM but is hidden off-screen on phone.
+       It becomes visible when body has the .sidebar-open class (toggled by
+       sidebar-toggle button). A backdrop sits behind it to close on tap. */
+    .layout-wrap {
+        display: block !important;       /* stop flex/grid layout that pairs sidebar with content */
+    }
+    .sidebar {
+        position: fixed !important;
+        top: 52px !important;            /* below topbar */
+        left: 0;
+        height: calc(100vh - 52px) !important;
+        width: 260px !important;
+        max-width: 80vw;
+        z-index: 900;
+        transform: translateX(-100%);
+        transition: transform .25s ease-out;
+        box-shadow: 4px 0 16px rgba(0,0,0,.18);
+        overflow-y: auto;
+    }
+    body.sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+    .sidebar-inner {
+        padding: 12px 10px !important;
+    }
+    .sidebar-item {
+        min-height: 44px;                /* meets touch-target minimum */
+        font-size: 13px !important;
+        padding: 10px 12px !important;
+    }
+    .sidebar-section-label {
+        font-size: 10px !important;
+        margin-top: 14px !important;
+    }
+
+    /* Backdrop appears behind the sidebar when open */
+    body.sidebar-open::before {
+        content: '';
+        position: fixed;
+        inset: 52px 0 0 0;
+        background: rgba(0,0,0,.4);
+        z-index: 899;
+        animation: mob-backdrop-in .18s ease-out;
+    }
+    @keyframes mob-backdrop-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+
+    /* Lock body scroll while sidebar is open */
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
+
+    /* ── CONTENT AREA — give it the full width once sidebar is overlay ── */
+    .content-area,
+    main,
+    .main-content,
+    .page-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 12px !important;
+    }
+
+
+    /* ── TYPOGRAPHY — comfortable phone reading ─────────────────────── */
+    body {
+        font-size: 14px;
+    }
+    h1 { font-size: 20px !important; }
+    h2 { font-size: 17px !important; }
+    h3 { font-size: 15px !important; }
+
+
+    /* ── FORM INPUTS — 16px to defeat iOS auto-zoom on focus ─────────── */
+    /* iOS Safari zooms in when focusing an input < 16px. Force a baseline. */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    input[type="number"],
+    input[type="search"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="url"],
+    select,
+    textarea,
+    .form-input-styled,
+    .combo {
+        font-size: 16px !important;
+        min-height: 40px;
+    }
+
+    /* Buttons — touch-target size + comfortable tap */
+    button:not(.modal-close):not(.sidebar-toggle):not(.icon-btn),
+    .btn {
+        min-height: 40px;
+        font-size: 13px !important;
+    }
+
+
+    /* ── UTILITY: hide elements explicitly marked phone-hidden ────── */
+    .hide-on-phone {
+        display: none !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * NARROW PHONE — 0 to 379px (older small Androids)
+ * Just a few more tweaks for very narrow screens.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 379px) {
+    .brand-name {
+        font-size: 11px !important;
+    }
+    .user-name {
+        max-width: 60px;
+    }
+    .back-btn {
+        display: none !important;       /* not enough space; sidebar has "Portal" link */
+    }
+}

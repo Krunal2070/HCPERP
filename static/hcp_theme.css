@@ -1,0 +1,577 @@
+/*
+ * hcp_theme.css — HCP Portal Universal Theme Stylesheet v2
+ * Place in: static/hcp_theme.css  (replace previous version)
+ */
+
+/* ═══════════════════════════════════════════════
+   SMOOTH TRANSITIONS
+═══════════════════════════════════════════════ */
+html, body, .topbar, .top-navbar, .sidebar, .card,
+.stat-card, table, th, td, input, select, textarea,
+.modal-box, .modal-content, .nav-btn, .card-head,
+.th-filter, .filter-bar, .pagination-bar, .page-btn {
+  transition: background-color 0.25s ease, border-color 0.2s ease, color 0.15s ease !important;
+}
+
+/* ═══════════════════════════════════════════════
+   LIGHT THEME
+═══════════════════════════════════════════════ */
+[data-theme="light"], :root.light {
+  --hbg:     #f0f4f8;
+  --hsurf:   #ffffff;
+  --hsurf2:  #f8fafc;
+  --hsurf3:  #f1f5f9;
+  --hbdr:    rgba(0,0,0,0.09);
+  --hbdr2:   rgba(0,0,0,0.13);
+  --htxt:    #374151;
+  --htxtb:   #111827;
+  --hmuted:  #9ca3af;
+  --hmuted2: #6b7280;
+  --hcard:   #ffffff;
+  --hhead:   #f8fafc;
+  --heven:   #fafafa;
+  --hhover:  rgba(13,148,136,0.06);
+  --hinput:  #ffffff;
+  --hinro:   #f8fafc;
+  --hscroll: #cbd5e1;
+}
+
+/* ═══════════════════════════════════════════════
+   DARK THEME
+═══════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --hbg:     #0f172a;
+  --hsurf:   #1e293b;
+  --hsurf2:  #263548;
+  --hsurf3:  #2e3f57;
+  --hbdr:    rgba(255,255,255,0.08);
+  --hbdr2:   rgba(255,255,255,0.13);
+  --htxt:    #cbd5e1;
+  --htxtb:   #f1f5f9;
+  --hmuted:  #64748b;
+  --hmuted2: #94a3b8;
+  --hcard:   #1e293b;
+  --hhead:   #263548;
+  --heven:   rgba(255,255,255,0.025);
+  --hhover:  rgba(20,184,166,0.09);
+  --hinput:  #263548;
+  --hinro:   #1e293b;
+  --hscroll: #334155;
+}
+
+/* ═══════════════════════════════════════════════
+   OCEAN THEME
+═══════════════════════════════════════════════ */
+[data-theme="ocean"] {
+  --hbg:     #041728;
+  --hsurf:   #082644;
+  --hsurf2:  #0b3059;
+  --hsurf3:  #0f3b6e;
+  --hbdr:    rgba(56,189,248,0.18);
+  --hbdr2:   rgba(56,189,248,0.28);
+  --htxt:    #93c5fd;
+  --htxtb:   #dbeafe;
+  --hmuted:  #3b82f6;
+  --hmuted2: #60a5fa;
+  --hcard:   #082644;
+  --hhead:   #0b3059;
+  --heven:   rgba(56,189,248,0.04);
+  --hhover:  rgba(56,189,248,0.12);
+  --hinput:  #0b3059;
+  --hinro:   #082644;
+  --hscroll: rgba(56,189,248,0.4);
+}
+
+/* ═══════════════════════════════════════════════
+   ROSE THEME
+═══════════════════════════════════════════════ */
+[data-theme="rose"] {
+  --hbg:     #fdf2f4;
+  --hsurf:   #ffffff;
+  --hsurf2:  #fff5f7;
+  --hsurf3:  #ffe4e8;
+  --hbdr:    rgba(225,29,72,0.12);
+  --hbdr2:   rgba(225,29,72,0.22);
+  --htxt:    #5b1a2c;
+  --htxtb:   #2d0010;
+  --hmuted:  #c084a0;
+  --hmuted2: #be185d;
+  --hcard:   #ffffff;
+  --hhead:   #fff5f7;
+  --heven:   #fffbfc;
+  --hhover:  rgba(225,29,72,0.06);
+  --hinput:  #ffffff;
+  --hinro:   #fff5f7;
+  --hscroll: rgba(225,29,72,0.25);
+}
+
+/* ═══════════════════════════════════════════════
+   SLATE THEME
+═══════════════════════════════════════════════ */
+[data-theme="slate"] {
+  --hbg:     #0f172a;
+  --hsurf:   #1e293b;
+  --hsurf2:  #263548;
+  --hsurf3:  #334155;
+  --hbdr:    rgba(148,163,184,0.15);
+  --hbdr2:   rgba(148,163,184,0.25);
+  --htxt:    #94a3b8;
+  --htxtb:   #e2e8f0;
+  --hmuted:  #475569;
+  --hmuted2: #64748b;
+  --hcard:   #1e293b;
+  --hhead:   #263548;
+  --heven:   rgba(148,163,184,0.03);
+  --hhover:  rgba(148,163,184,0.10);
+  --hinput:  #263548;
+  --hinro:   #1e293b;
+  --hscroll: #475569;
+}
+
+/* ═══════════════════════════════════════════════
+   APPLY TO ELEMENTS — ALL THEMES
+═══════════════════════════════════════════════ */
+
+body {
+  background: var(--hbg, var(--bg-body, #f0f4f8)) !important;
+  color: var(--htxt, var(--text, #374151)) !important;
+}
+
+/* Topbar */
+.topbar, .top-navbar, header.topbar {
+  background: var(--hsurf, #fff) !important;
+  border-bottom-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+}
+
+/* Sidebar */
+.sidebar, nav.sidebar, .dept-sidebar, .user-panel {
+  background: var(--hsurf, #fff) !important;
+  border-right-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+
+/* All cards */
+.card, .stat-card, .module-card, .table-card, .backup-card,
+.log-card, .perm-panel, .info-card, .kpi-card, .summary-card,
+.form-panel, .detail-panel {
+  background: var(--hcard, #fff) !important;
+  border-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+  color: var(--htxt, #374151) !important;
+}
+
+/* Card header sections */
+.card-head, .card-header, .module-header, .table-header,
+.table-toolbar, .toolbar, .btn-group, .filter-row, .action-bar {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-bottom-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+  color: var(--htxtb, #111827) !important;
+}
+
+/* Table head */
+thead tr, thead, th {
+  background: var(--hhead, #f8fafc) !important;
+  color: var(--hmuted2, #6b7280) !important;
+  border-bottom-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+}
+
+/* Table cells */
+td {
+  background: var(--hcard, #fff) !important;
+  color: var(--htxt, #374151) !important;
+  border-bottom-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+tbody tr:nth-child(even) td {
+  background: var(--heven, #fafafa) !important;
+}
+tbody tr:hover td {
+  background: var(--hhover, rgba(13,148,136,.06)) !important;
+  color: var(--htxtb, #111827) !important;
+}
+tbody tr.selected td, tbody tr.selected-row td {
+  background: var(--hhover, rgba(13,148,136,.08)) !important;
+}
+
+/* Filter row in thead */
+.th-filter {
+  background: var(--hsurf2, #f8fafc) !important;
+}
+.th-filter input, .th-filter select {
+  background: var(--hsurf, #fff) !important;
+  color: var(--htxtb, #111827) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+}
+
+/* Pagination */
+.pagination-bar, .table-pagination, .page-bar {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+.page-btn, .pagination-btn {
+  background: var(--hcard, #fff) !important;
+  color: var(--htxt, #374151) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+}
+.page-btn:hover { background: var(--hhover, rgba(13,148,136,.06)) !important; color: var(--brand, #0d9488) !important; }
+.page-btn.active { background: var(--brand, #0d9488) !important; color: #fff !important; border-color: var(--brand, #0d9488) !important; }
+
+/* Inputs */
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+select, textarea {
+  background: var(--hinput, #fff) !important;
+  color: var(--htxtb, #111827) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+}
+input:focus, select:focus, textarea:focus {
+  background: var(--hcard, #fff) !important;
+  border-color: var(--brand, #0d9488) !important;
+  box-shadow: 0 0 0 3px rgba(13,148,136,.15) !important;
+  outline: none !important;
+}
+input::placeholder, textarea::placeholder { color: var(--hmuted, #9ca3af) !important; opacity: 1 !important; }
+input[readonly], input[disabled] { background: var(--hinro, #f8fafc) !important; color: var(--hmuted2, #6b7280) !important; }
+
+/* Dark calendar icon */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="ocean"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="slate"] input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) !important; }
+
+/* Modals */
+.modal-box, .modal-content, .modal-panel {
+  background: var(--hcard, #fff) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--htxt, #374151) !important;
+}
+.modal-head, .modal-header, .modal-footer {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+
+/* Navigation */
+.nav-btn { color: var(--hmuted2, #6b7280) !important; }
+.nav-btn:hover { background: var(--hhover, rgba(13,148,136,.06)) !important; color: var(--brand, #0d9488) !important; }
+.nav-btn.active-nav, .active-nav { background: var(--hhover, rgba(13,148,136,.1)) !important; color: var(--brand, #0d9488) !important; }
+.nav-divider, hr.divider { background: var(--hbdr, rgba(0,0,0,.09)) !important; border: none !important; height: 1px !important; }
+
+/* User chip */
+.user-chip, .topbar-user-chip, .topbar-user { background: var(--hsurf2, #f8fafc) !important; border-color: var(--hbdr2, rgba(0,0,0,.13)) !important; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--hsurf, #fff) !important; }
+::-webkit-scrollbar-thumb { background: var(--hscroll, #cbd5e1) !important; border-radius: 3px; }
+
+/* Dropdowns / context menus */
+.dropdown, .dropdown-menu, .context-menu, .radial-menu, .action-menu, .menu-list {
+  background: var(--hsurf, #fff) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--htxt, #374151) !important;
+}
+.menu-item, .dropdown-item { color: var(--htxt, #374151) !important; }
+.menu-item:hover { background: var(--hsurf2, #f8fafc) !important; }
+
+/* Save bar */
+.save-bar { background: var(--hsurf, #fff) !important; border-top-color: var(--hbdr, rgba(0,0,0,.09)) !important; }
+
+/* Page backgrounds */
+.main, .main-workspace, .main-content, .content-area, .workspace { background: var(--hbg, #f0f4f8) !important; }
+.filter-bar { background: var(--hsurf, #fff) !important; border-bottom-color: var(--hbdr, rgba(0,0,0,.09)) !important; }
+.th-filter { background: var(--hsurf2, #f8fafc) !important; }
+.dbl-hint { background: var(--hsurf2, #f8fafc) !important; color: var(--hmuted, #9ca3af) !important; border-top-color: var(--hbdr, rgba(0,0,0,.09)) !important; }
+
+/* ═══════════════════════════════════════════════
+   PRODUCTION_INITIATER :root.light COMPAT
+═══════════════════════════════════════════════ */
+:root.light body           { background: #f0f4f8 !important; color: #374151 !important; }
+:root.light .topbar        { background: #ffffff !important; }
+:root.light .card, :root.light .stat-card  { background: #ffffff !important; color: #374151 !important; border-color: rgba(0,0,0,.09) !important; }
+:root.light .card-head     { background: #f8fafc !important; }
+:root.light th             { background: #f8fafc !important; color: #6b7280 !important; }
+:root.light td             { background: #ffffff !important; color: #1e293b !important; border-bottom-color: rgba(0,0,0,.06) !important; }
+:root.light tbody tr:nth-child(even) td { background: #fafafa !important; }
+:root.light tbody tr:hover td           { background: rgba(13,148,136,.06) !important; color: #111827 !important; }
+:root.light .th-filter     { background: #f1f5f9 !important; }
+:root.light .modal-box     { background: #ffffff !important; color: #374151 !important; }
+:root.light .pagination-bar{ background: #f8fafc !important; }
+:root.light .page-btn      { background: #ffffff !important; color: #374151 !important; }
+:root.light .main, :root.light .main-workspace { background: #f0f4f8 !important; }
+:root.light input:not([type="checkbox"]):not([type="radio"]),
+:root.light select, :root.light textarea {
+  background: #ffffff !important; color: #111827 !important; border-color: rgba(0,0,0,.13) !important;
+}
+:root.light .topbar-user-chip { background: #f8fafc !important; border-color: rgba(0,0,0,.13) !important; }
+:root.light .dbl-hint      { background: #f8fafc !important; color: #9ca3af !important; }
+
+/* ═══════════════════════════════════════════════
+   TYPOGRAPHY & TEXT CONTRAST
+═══════════════════════════════════════════════ */
+
+/* Primary text — headings, labels, values */
+h1, h2, h3, h4, h5, h6,
+.page-title, .perm-title, .module-title, .card-title,
+.stat-label, .stat-val, .kpi-label, .section-title,
+.topbar-title, .modal-title, .table-title {
+  color: var(--htxtb, #111827) !important;
+}
+
+/* Secondary / dim text */
+.page-sub, .perm-sub, .stat-sub, .stat-hint,
+.card-sub, .label-dim, .text-dim, .text-muted,
+.user-info-sub, .perm-label, .module-ctrl-btn,
+.save-bar-msg, .perm-empty {
+  color: var(--hmuted2, #6b7280) !important;
+}
+
+/* Hint / very muted */
+.stat-hint, .text-hint, .col-label, .table-empty,
+.empty-state p, .badge-muted {
+  color: var(--hmuted, #9ca3af) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   PERMISSION ITEMS & TOGGLES
+═══════════════════════════════════════════════ */
+
+/* Permission grid item — inactive */
+.perm-item {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+  color: var(--htxt, #374151) !important;
+}
+.perm-item:hover {
+  border-color: rgba(13,148,136,0.4) !important;
+  background: var(--hhover, rgba(13,148,136,.06)) !important;
+}
+
+/* Permission grid item — active/enabled */
+.perm-item.active {
+  background: rgba(13,148,136,0.10) !important;
+  border-color: rgba(13,148,136,0.45) !important;
+}
+.perm-item.active .perm-label {
+  color: var(--htxtb, #111827) !important;
+  font-weight: 700 !important;
+}
+
+/* Toggle track — off state */
+.toggle-bg {
+  background: var(--hmuted, #9ca3af) !important;
+}
+/* Toggle track — on state */
+.toggle-bg.on {
+  background: #0d9488 !important;
+}
+/* Toggle knob */
+.toggle-knob {
+  background: var(--hsurf, #fff) !important;
+}
+.toggle-knob.on {
+  background: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════
+   MODULE CARDS (access control, permission panels)
+═══════════════════════════════════════════════ */
+
+.module-card {
+  background: var(--hcard, #fff) !important;
+  border-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+  color: var(--htxt, #374151) !important;
+}
+.module-header {
+  border-bottom-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+.module-title {
+  color: var(--htxtb, #111827) !important;
+}
+.module-ctrl-btn {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--hmuted2, #6b7280) !important;
+}
+.module-ctrl-btn:hover {
+  border-color: #0d9488 !important;
+  color: #0d9488 !important;
+  background: rgba(13,148,136,.06) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   USER LIST ITEMS (sidebar, user panels)
+═══════════════════════════════════════════════ */
+
+.user-item {
+  border-bottom-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+  color: var(--htxt, #374151) !important;
+}
+.user-item:hover {
+  background: var(--hhover, rgba(13,148,136,.06)) !important;
+}
+.user-item.active {
+  background: rgba(13,148,136,.10) !important;
+  border-left-color: #0d9488 !important;
+}
+.user-item .user-info-name {
+  color: var(--htxtb, #111827) !important;
+}
+.user-item .user-info-sub {
+  color: var(--hmuted2, #6b7280) !important;
+}
+.user-avatar {
+  background: var(--hsurf3, #f1f5f9) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   PERMISSION COUNT BADGE
+═══════════════════════════════════════════════ */
+.user-perm-count {
+  background: rgba(13,148,136,.12) !important;
+  color: #0d9488 !important;
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL HEADERS & LABELS
+═══════════════════════════════════════════════ */
+.user-panel-header {
+  border-bottom-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+.user-panel-label {
+  color: var(--hmuted, #9ca3af) !important;
+}
+
+/* Search inputs inside panels */
+.user-search {
+  background: var(--hinput, #fff) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--htxtb, #111827) !important;
+}
+.user-search::placeholder { color: var(--hmuted, #9ca3af) !important; }
+.user-search:focus { border-color: #0d9488 !important; }
+
+/* ═══════════════════════════════════════════════
+   STAT CARDS (KPI dashboard)
+═══════════════════════════════════════════════ */
+.stat-card {
+  background: var(--hcard, #fff) !important;
+  border-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+.stat-card:hover {
+  border-color: rgba(13,148,136,.3) !important;
+}
+.stat-label {
+  color: var(--hmuted2, #6b7280) !important;
+}
+.stat-sub {
+  color: var(--hmuted, #9ca3af) !important;
+}
+.stat-hint {
+  color: var(--hmuted, #9ca3af) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   CHIPS, PILLS & BADGES (generic)
+═══════════════════════════════════════════════ */
+.chip, .pill, .tag, .label-tag {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--htxt, #374151) !important;
+}
+
+/* Live badge */
+.live-badge {
+  background: rgba(16,185,129,.12) !important;
+  color: #059669 !important;
+  border-color: rgba(16,185,129,.25) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   TOPBAR ELEMENTS
+═══════════════════════════════════════════════ */
+.topbar-brand { color: #0d9488 !important; }
+.topbar-sep   { background: var(--hbdr2, rgba(0,0,0,.13)) !important; }
+.topbar-title { color: var(--htxtb, #111827) !important; }
+.user-chip    {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--htxt, #374151) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   BUTTONS — OUTLINE & SECONDARY
+═══════════════════════════════════════════════ */
+.btn-outline, .btn-secondary {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--hmuted2, #6b7280) !important;
+}
+.btn-outline:hover, .btn-secondary:hover {
+  border-color: #0d9488 !important;
+  color: #0d9488 !important;
+  background: rgba(13,148,136,.06) !important;
+}
+
+/* Back / navigation links */
+.back-link, .back-btn {
+  background: var(--hsurf2, #f8fafc) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+  color: var(--hmuted2, #6b7280) !important;
+}
+.back-link:hover, .back-btn:hover {
+  border-color: #0d9488 !important;
+  color: #0d9488 !important;
+}
+
+/* ═══════════════════════════════════════════════
+   SECTION / GROUP LABELS
+═══════════════════════════════════════════════ */
+.section-label, .group-label, .field-label,
+.card-section-label, .stats-section-label {
+  color: var(--hmuted, #9ca3af) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════════ */
+.toast {
+  background: var(--hsurf, #fff) !important;
+  color: var(--htxtb, #111827) !important;
+  border-color: var(--hbdr2, rgba(0,0,0,.13)) !important;
+}
+.toast.success { background: #14532d !important; color: #fff !important; }
+.toast.error   { background: #7f1d1d !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════
+   DIVIDERS & SEPARATORS
+═══════════════════════════════════════════════ */
+hr, .divider, .separator {
+  border-color: var(--hbdr, rgba(0,0,0,.09)) !important;
+  background: var(--hbdr, rgba(0,0,0,.09)) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   DARK THEME SPECIFIC OVERRIDES
+   (things that need explicit dark treatment)
+═══════════════════════════════════════════════ */
+[data-theme="dark"] .perm-item.active,
+[data-theme="ocean"] .perm-item.active,
+[data-theme="slate"] .perm-item.active {
+  background: rgba(13,148,136,0.15) !important;
+  border-color: rgba(13,148,136,0.4) !important;
+}
+[data-theme="dark"] .perm-item.active .perm-label,
+[data-theme="ocean"] .perm-item.active .perm-label,
+[data-theme="slate"] .perm-item.active .perm-label {
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .toggle-bg,
+[data-theme="ocean"] .toggle-bg,
+[data-theme="slate"] .toggle-bg {
+  background: #334155 !important;
+}
+[data-theme="dark"] .user-item.active,
+[data-theme="ocean"] .user-item.active,
+[data-theme="slate"] .user-item.active {
+  background: rgba(13,148,136,.15) !important;
+}
+[data-theme="dark"] .module-card,
+[data-theme="ocean"] .module-card,
+[data-theme="slate"] .module-card {
+  background: var(--hcard, #1e293b) !important;
+}

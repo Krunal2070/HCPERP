@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>General OP — HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<script>
+(function(){
+    const t=localStorage.getItem('hcp_procurement_theme')||localStorage.getItem('hcp_theme')||'light';
+    document.documentElement.setAttribute('data-theme',t);
+})();
+</script>
+<style>
+/* ── GOP-specific overrides ── */
+.gop-page-header {
+    padding: 20px 28px 0;
+    margin-bottom: 0;
+}
+.gop-page-eyebrow {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 3px;
+}
+.gop-page-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.15;
+}
+.gop-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+/* ── Segmented control tabs (Godowns Ship-To / Billing) ── */
+.seg-control {
+    display: inline-flex;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+}
+.seg-btn {
+    padding: 5px 14px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all .15s;
+    white-space: nowrap;
+}
+.seg-btn.active {
+    background: var(--card, #fff);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,.1);
+    font-weight: 700;
+}
+
+/* ── Godown cards ── */
+.gd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 14px;
+    padding: 20px 28px;
+}
+.gd-card {
+    border: 1.5px solid var(--border2);
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: var(--card, #fff);
+    transition: box-shadow .15s, border-color .15s;
+    cursor: pointer;
+    position: relative;
+}
+.gd-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); border-color: #c7d2fe; }
+.gd-card.gd-default { border-color: #2563eb; background: rgba(37,99,235,.03); }
+.gd-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+.gd-card-name { font-size: 13.5px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.gd-card-badges { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.gd-badge-default {
+    font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
+    background: #2563eb; color: #fff; letter-spacing: .04em; text-transform: uppercase;
+}
+.gd-card-actions { display: flex; gap: 4px; }
+.gd-act-btn {
+    width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--border2);
+    background: transparent; color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .12s;
+}
+.gd-act-btn:hover { border-color: #2563eb; color: #2563eb; }
+.gd-act-btn.del:hover { border-color: #f43f5e; color: #f43f5e; background: rgba(244,63,94,.06); }
+.gd-card-addr { font-size: 11.5px; color: var(--muted); line-height: 1.55; margin-bottom: 8px; }
+.gd-card-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.gd-meta-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.gd-divider { height: 1px; background: var(--border); margin: 0 28px 0; }
+
+/* ── Voucher type cards ── */
+.vt-section { margin: 0 28px 24px; }
+.vt-section-head {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .1em;
+    margin-bottom: 10px; padding-top: 20px;
+}
+.vt-section-line { flex: 1; height: 1px; background: var(--border); }
+.vt-section-count { font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 10px; }
+.vt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.vt-card {
+    border: 1.5px solid var(--border);
+    border-radius: 9px; padding: 12px 14px;
+    background: var(--card, #fff);
+    cursor: pointer; transition: box-shadow .12s, border-color .12s;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.vt-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,.07); border-color: #a5b4fc; }
+.vt-card.inactive { opacity: .55; }
+.vt-card-top { display: flex; align-items: center; justify-content: space-between; }
+.vt-card-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.vt-card-abbr {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    background: rgba(37,99,235,.1); color: #2563eb; font-family: var(--font-mono);
+    letter-spacing: .03em;
+}
+.vt-card-desc { font-size: 11px; color: var(--muted); line-height: 1.45; }
+.vt-card-acts { display: flex; gap: 3px; flex-shrink: 0; }
+
+/* ── Voucher Numbering: three-column layout ── */
+.vn-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: calc(100vh - 155px);
+    overflow: hidden;
+    gap: 0;
+}
+.vn-layout.form-open {
+    grid-template-columns: 260px 1fr 380px;
+}
+.vn-sidebar {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    background: var(--surface2, #f8fafc);
+    padding: 8px 0;
+}
+.vn-sidebar-section {
+    padding: 6px 16px 4px;
+    font-size: 9.5px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .1em;
+    margin-top: 6px;
+}
+.vn-sidebar-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 16px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text);
+    border-left: 3px solid transparent;
+    transition: background .1s, border-color .1s;
+    position: relative;
+}
+.vn-sidebar-item:hover { background: var(--surface); }
+.vn-sidebar-item.active {
+    border-left-color: #2563eb;
+    background: rgba(37,99,235,.06);
+    color: #1d4ed8;
+    font-weight: 700;
+}
+.vn-sidebar-item.custom-type { padding-left: 28px; font-size: 11.5px; }
+.vn-sidebar-badge {
+    margin-left: auto; font-size: 9.5px; font-weight: 700;
+    min-width: 18px; height: 18px; border-radius: 20px;
+    display: flex; align-items: center; justify-content: center; padding: 0 5px;
+    background: var(--border2); color: var(--muted);
+}
+.vn-sidebar-badge.has-active { background: #2563eb; color: #fff; }
+.vn-main { overflow-y: auto; background: var(--card, #fff); border-right: 1px solid var(--border); }
+.vn-main-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; background: var(--card, #fff); z-index: 10;
+}
+.vn-main-title { font-size: 16px; font-weight: 800; color: var(--text); flex: 1; }
+.vn-styles-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Style card — timeline-inspired */
+.vn-style-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    background: var(--card, #fff);
+    transition: box-shadow .15s;
+    cursor: pointer;
+}
+.vn-style-card:hover { box-shadow: 0 3px 14px rgba(0,0,0,.08); }
+.vn-style-card.active-style { border-color: #2563eb; }
+.vn-style-card.selected-style { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+.vn-style-card-head {
+    display: flex; align-items: center; gap: 0;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2, #f8fafc);
+}
+.vn-style-card.active-style .vn-style-card-head { background: rgba(37,99,235,.05); }
+.vn-voucher-preview {
+    font-family: var(--font-mono);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: .02em;
+    flex: 1;
+}
+.vn-style-card.active-style .vn-voucher-preview { color: #1d4ed8; }
+.vn-active-chip {
+    font-size: 9px; font-weight: 800; padding: 3px 9px; border-radius: 20px;
+    background: #16a34a; color: #fff; letter-spacing: .05em; text-transform: uppercase;
+    flex-shrink: 0;
+}
+.vn-style-card-body {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 10px 16px;
+    gap: 8px;
+}
+.vn-meta-cell { display: flex; flex-direction: column; gap: 2px; }
+.vn-meta-label { font-size: 9.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.vn-meta-value { font-size: 12.5px; font-weight: 600; color: var(--text); font-family: var(--font-mono); }
+.vn-period-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+}
+.vn-period-fill { height: 100%; background: #2563eb; border-radius: 0 0 10px 10px; }
+
+/* ── Shortcuts refined ── */
+.sc-group-head {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .1em;
+    margin-bottom: 8px;
+}
+.sc-group-line { flex: 1; height: 1px; background: var(--border); }
+.sc-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 14px; border-radius: 8px;
+    background: var(--surface, #f8fafc);
+    border: 1px solid var(--border);
+    margin-bottom: 3px;
+    transition: border-color .12s;
+}
+.sc-row:hover { border-color: var(--border2); }
+.sc-action-label { flex: 1; font-size: 12.5px; color: var(--text); font-weight: 500; }
+.sc-key-btn {
+    font-size: 11.5px; font-weight: 700; padding: 4px 14px;
+    border-radius: 7px; border: 1.5px solid var(--border2);
+    background: var(--card, #fff); cursor: pointer;
+    font-family: var(--font-mono); color: var(--text);
+    min-width: 90px; text-align: center; transition: border-color .12s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.sc-key-btn:hover { border-color: #2563eb; color: #2563eb; }
+.sc-edited-tag { font-size: 9.5px; color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+{% set page_title = "General Operations" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "General Operations", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<!-- ══ LAYOUT ══ -->
+<div class="layout-wrap">
+
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar" id="gopSidebar">
+    <div class="sidebar-inner">
+        <div class="sidebar-section-label">Operations Setup</div>
+
+        <a class="sidebar-item active" id="sb-godowns" onclick="gopSwitchTab('godowns');gopSetActive('godowns')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Godowns &amp; Addresses
+            <span class="sidebar-badge" id="sbBadge-godowns">–</span>
+        </a>
+
+        <a class="sidebar-item" id="sb-vtypes" onclick="gopSwitchTab('vtypes');gopSetActive('vtypes')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+            Voucher Types
+            <span class="sidebar-badge" id="sbBadge-vtypes">–</span>
+        </a>
+
+        <a class="sidebar-item" id="sb-vnumbering" onclick="gopSwitchTab('vnumbering');gopSetActive('vnumbering')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+            Voucher Numbering
+        </a>
+
+        <a class="sidebar-item" id="sb-shortcuts" onclick="gopSwitchTab('shortcuts');gopSetActive('shortcuts')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h4M14 8h4M6 12h2M10 12h2M14 12h4M6 16h12"/></svg>
+            Keyboard Shortcuts
+        </a>
+
+        <a class="sidebar-item" id="sb-mtv" onclick="gopSwitchTab('mtv');gopSetActive('mtv')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            Material Transfer
+            <span class="sidebar-badge" id="sbBadge-mtv">–</span>
+        </a>
+
+        <div class="sidebar-section-label" style="margin-top:12px">Links</div>
+        <a class="sidebar-item" href="/procurement">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+            Procurement
+        </a>
+        <a class="sidebar-item" href="/">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            Back to Portal
+        </a>
+    </div>
+</nav>
+
+<!-- ══ MAIN CONTENT ══ -->
+<main class="main-content" id="gopMainContent">
+
+    <!-- ═══════ TAB: GODOWNS ═══════ -->
+    <div class="tab-content active" id="tc-godowns">
+        <!-- Page header -->
+        <div class="gop-page-header">
+            <div class="gop-page-eyebrow">General OP</div>
+            <div class="gop-page-title">Godowns &amp; Addresses</div>
+        </div>
+        <!-- Toolbar -->
+        <div class="gop-toolbar">
+            <div class="search-shell" style="max-width:260px">
+                <div class="search-wrap">
+                    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input class="search-input" type="text" id="godownSearchInput" placeholder="Search godowns…" oninput="gopGodownSearch()" autocomplete="off">
+                </div>
+            </div>
+            <!-- Segmented tabs -->
+            <div class="seg-control" id="godownSegControl">
+                <button class="seg-btn active" id="gopGdTabGodowns" onclick="gopGodownSwitchTab('godowns')">📦 Godowns (Ship-To)</button>
+                <button class="seg-btn" id="gopGdTabBilling" onclick="gopGodownSwitchTab('billing')">🏢 Billing Address</button>
+            </div>
+            <div style="flex:1"></div>
+            <button class="act-btn" onclick="gopLoadGodowns()" title="Refresh">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+            <span class="row-count-badge" id="godownRowBadge">– locations</span>
+            <button class="act-btn primary" onclick="gopNewGodown()" id="btn-new-godown" title="Add new godown">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Godown
+                <kbd class="sc-badge" id="sc-new-godown"></kbd>
+            </button>
+        </div>
+
+        <!-- Two-pane: list left, form right -->
+        <div style="display:flex;height:calc(100vh - 170px);overflow:hidden">
+            <div id="godown-list-pane" style="flex:1;overflow-y:auto;min-width:0">
+                <div class="state-box"><div class="spinner"></div><h3>Loading…</h3></div>
+            </div>
+            <div id="godown-form-pane" style="width:420px;border-left:1px solid var(--border);overflow-y:auto;padding:24px;flex-shrink:0;display:none;background:var(--surface)">
+                <div id="godown-form-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: VOUCHER TYPES ═══════ -->
+    <div class="tab-content" id="tc-vtypes">
+        <div class="gop-page-header">
+            <div class="gop-page-eyebrow">General OP</div>
+            <div class="gop-page-title">Voucher Types</div>
+        </div>
+        <div class="gop-toolbar">
+            <div class="filter-group" id="vtypeParentFilter">
+                <button class="filter-pill active" data-p="all" onclick="gopVtypeFilter('all')">All Types</button>
+            </div>
+            <div style="flex:1"></div>
+            <button class="act-btn" onclick="gopLoadVtypes()" title="Refresh">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+            <span class="row-count-badge" id="vtypeRowBadge">– types</span>
+            <button class="act-btn primary" onclick="gopNewVtype()" title="Create new voucher type">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Voucher Type
+                <kbd class="sc-badge" id="sc-new-vtype"></kbd>
+            </button>
+        </div>
+        <div style="display:flex;height:calc(100vh - 170px);overflow:hidden;gap:0" id="vtypesLayout">
+            <div id="vtype-list-pane" style="flex:1;overflow-y:auto;min-width:0">
+                <div class="state-box"><div class="spinner"></div><h3>Loading…</h3></div>
+            </div>
+            <div id="vtype-form-pane" style="width:0;border-left:0 solid var(--border);overflow-y:auto;padding:0;flex-shrink:0;display:none;background:var(--surface);transition:width .2s">
+                <div id="vtype-form-body" style="padding:24px;min-width:400px"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: VOUCHER NUMBERING ═══════ -->
+    <div class="tab-content" id="tc-vnumbering">
+        <div class="gop-page-header">
+            <div class="gop-page-eyebrow">General OP</div>
+            <div class="gop-page-title">Voucher Numbering</div>
+        </div>
+        <div class="gop-toolbar" style="padding:10px 28px">
+            <div class="search-shell" style="max-width:240px">
+                <div class="search-wrap">
+                    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input class="search-input" type="text" id="vnSearchInput" placeholder="Search by prefix, type…" oninput="gopVnSearch()" autocomplete="off">
+                </div>
+            </div>
+            <div style="flex:1"></div>
+            <button class="act-btn" onclick="gopLoadVn()" title="Refresh">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+            <button class="act-btn primary" onclick="gopVnAddNew()" title="Add numbering style">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Style
+                <kbd class="sc-badge" id="sc-new-vn"></kbd>
+            </button>
+        </div>
+        <!-- Two-column: type tree left, styles right, form panel far right -->
+        <div class="vn-layout" id="vnLayout">
+            <div class="vn-sidebar" id="vnTypeSidebar">
+                <div class="state-box" style="margin:20px"><div class="spinner"></div></div>
+            </div>
+            <div class="vn-main" id="vnMainPane">
+                <div class="state-box"><div class="spinner"></div><h3>Loading…</h3></div>
+            </div>
+            <!-- Form panel — shown as 3rd column when open -->
+            <div id="vn-form-pane" style="display:none;border-left:1px solid var(--border);overflow-y:auto;padding:24px;background:var(--surface)">
+                <div id="vn-form-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: SHORTCUTS ═══════ -->
+    <div class="tab-content" id="tc-shortcuts">
+        <div class="gop-page-header">
+            <div class="gop-page-eyebrow">General OP</div>
+            <div class="gop-page-title">Keyboard Shortcuts</div>
+        </div>
+        <div class="gop-toolbar">
+            <span style="font-size:12px;color:var(--muted)">Assign keyboard shortcuts to actions across this portal. Shortcuts are saved per-browser.</span>
+            <div style="flex:1"></div>
+            <button class="act-btn" onclick="gopScReset()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Reset to Defaults
+            </button>
+        </div>
+        <div style="overflow-y:auto;height:calc(100vh - 170px);padding:20px 28px;max-width:680px">
+            <div id="shortcutsBody"></div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: MATERIAL TRANSFER ═══════ -->
+    <div class="tab-content" id="tc-mtv">
+        <div class="gop-page-header">
+            <div class="gop-page-eyebrow">General OP</div>
+            <div class="gop-page-title">Material Transfer</div>
+        </div>
+        <!-- Toolbar -->
+        <div class="gop-toolbar">
+            <div class="search-shell" style="max-width:240px">
+                <div class="search-wrap">
+                    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input class="search-input" type="text" id="mtvSearchInput" placeholder="Search voucher, material, location…" oninput="mtvApplyFilter()" autocomplete="off">
+                </div>
+            </div>
+            <!-- Type filter pills -->
+            <div class="filter-group" id="gopMtvTypeFilter"></div>
+            <!-- Status filter -->
+            <div class="filter-group" id="mtvFilterGroup">
+                <button class="filter-pill active" data-f="all"       onclick="mtvSetFilter('all')">All</button>
+                <button class="filter-pill"        data-f="open"      onclick="mtvSetFilter('open')">Open</button>
+                <button class="filter-pill"        data-f="completed" onclick="mtvSetFilter('completed')">Completed</button>
+                <button class="filter-pill"        data-f="cancelled" onclick="mtvSetFilter('cancelled')">Cancelled</button>
+            </div>
+            <div style="flex:1"></div>
+            <span class="row-count-badge" id="mtvRowBadge">– Vouchers</span>
+            <button class="act-btn" onclick="gopMtvRefresh()" title="Refresh">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+            <button class="act-btn primary" onclick="openMtvForm(null)" title="New Material Transfer">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New MTV
+                <kbd class="sc-badge" id="sc-new-mtv"></kbd>
+            </button>
+        </div>
+
+        <!-- List + Form panes (form replaces list fullscreen like in procurement) -->
+        <div style="height:calc(100vh - 170px);overflow:hidden;position:relative">
+            <!-- List pane -->
+            <div id="gopMtvListPane" style="height:100%;display:flex;flex-direction:column">
+                <div id="mtvListBody" style="flex:1;overflow-y:auto">
+                    <div class="state-box"><div class="spinner"></div><h3>Loading…</h3></div>
+                </div>
+            </div>
+            <!-- Form pane — fullscreen, hidden initially -->
+            <div id="mtv-form-pane" style="display:none;position:absolute;inset:0;overflow-y:auto;background:var(--card)">
+                <div id="mtv-form-body"></div>
+            </div>
+        </div>
+    </div>
+
+</main>
+</div><!-- /layout-wrap -->
+
+<!-- ══ TOAST STACK ══ -->
+<div id="toastStack" class="toast-stack"></div>
+
+<!-- ══ SCRIPTS ══ -->
+<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/general_op.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gop_godowns.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gop_vtypes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gop_vnumbering.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gop_shortcuts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voucher_numbering.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mtv.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gop_mtv.js') }}"></script>
+
+</body>
+</html>

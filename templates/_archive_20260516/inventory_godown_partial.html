@@ -1,0 +1,620 @@
+<!-- ═══════════════════════════════════════════════════════════════════════
+     INVENTORY · RM GODOWN-WISE STOCK MANAGEMENT — single-block partial
+     ───────────────────────────────────────────────────────────────────
+     INTEGRATION:
+     Paste this ENTIRE file's contents into inventory_mgmt.html exactly
+     ONCE, just before the closing </body> tag.
+
+     That's it. No 6-step splicing.
+
+     The script at the bottom auto-injects:
+       • Sidebar nav entries  (under a new "Stock" section)
+       • The three new panels (Godown View / Manage Godowns / Opening Stock)
+       • Two modals          (Box History / Godown Form)
+       • All required CSS
+
+     Patches into the existing inventory_mgmt.js panel-switcher cleanly.
+═════════════════════════════════════════════════════════════════════ -->
+
+<!-- ─── CSS (scoped with .igd- prefix to avoid clashing with existing styles) ─── -->
+<style id="igd-styles">
+/* Scan bar */
+.igd-scan-bar{
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg, rgba(124,58,237,.06), rgba(124,58,237,.02));
+  border:1.5px solid rgba(124,58,237,.25);
+  border-radius:10px; padding:10px 14px; margin-bottom:14px;
+}
+.igd-scan-icon{
+  width:36px; height:36px; flex-shrink:0;
+  background:#7c3aed; color:#fff;
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+}
+.igd-scan-bar input{
+  flex:1; padding:9px 12px; font-size:13px;
+  font-family:'Courier New', monospace; font-weight:700; letter-spacing:.5px;
+  text-transform:uppercase;
+  border:1.5px solid rgba(124,58,237,.3); border-radius:7px;
+  background:#fff; color:#111827; outline:none;
+}
+.igd-scan-bar input:focus{ border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,.15); }
+.igd-scan-feedback{ font-size:11px; font-weight:600; min-width:200px; min-height:14px; }
+.igd-scan-help{
+  font-size:11px; color:#7c3aed; padding:8px 12px;
+  background:rgba(124,58,237,.04); border-radius:6px;
+  margin-bottom:8px;
+}
+
+/* Three-pane grid */
+.igd-grid{
+  display:grid;
+  grid-template-columns: minmax(220px,1fr) minmax(260px,1.3fr) minmax(280px,1.5fr);
+  gap:12px; min-height:500px;
+}
+@media (max-width: 900px){ .igd-grid{ grid-template-columns:1fr; } }
+.igd-pane{
+  background:#fff; border:1px solid #e5e7eb; border-radius:10px;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.igd-pane-head{
+  padding:10px 14px; background:#f9fafb;
+  border-bottom:1px solid #e5e7eb;
+  font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.5px; color:#6b7280;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.igd-pane-body{
+  flex:1; overflow-y:auto; padding:8px;
+  max-height:calc(100vh - 340px); min-height:200px;
+}
+.igd-pane-search{ padding:8px 12px; border-bottom:1px solid #e5e7eb; }
+.igd-pane-search input{
+  width:100%; padding:6px 10px; font-size:12px;
+  border:1px solid #e5e7eb; border-radius:6px;
+}
+
+/* Godown cards (pane 1) */
+.igd-gd-card{
+  padding:10px 12px; border:1px solid #e5e7eb; border-radius:7px;
+  margin-bottom:6px; cursor:pointer; background:#fff;
+  transition:border-color .12s, background .12s, transform .08s;
+}
+.igd-gd-card:hover{ border-color:#7c3aed; transform:translateX(2px); }
+.igd-gd-card.active{
+  border-color:#7c3aed; background:rgba(124,58,237,.06);
+  box-shadow:inset 3px 0 0 #7c3aed;
+}
+.igd-gd-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; margin-bottom:4px;
+}
+.igd-gd-name{
+  font-size:13px; font-weight:700; color:#111827;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.igd-type-chip{
+  font-size:9px; font-weight:700;
+  padding:2px 6px; border-radius:3px;
+  text-transform:uppercase; letter-spacing:.4px; flex-shrink:0;
+}
+.igd-gd-meta{
+  font-size:11px; color:#6b7280;
+  display:flex; gap:10px;
+  font-variant-numeric:tabular-nums;
+}
+.igd-gd-meta i{ font-size:10px; opacity:.6; margin-right:3px; }
+
+/* Item cards (pane 2) */
+.igd-it-card{
+  padding:9px 11px; border:1px solid #e5e7eb; border-radius:6px;
+  margin-bottom:5px; cursor:pointer; background:#fff;
+  transition:border-color .12s;
+}
+.igd-it-card:hover{ border-color:#7c3aed; }
+.igd-it-card.active{
+  border-color:#7c3aed; background:rgba(124,58,237,.06);
+  box-shadow:inset 3px 0 0 #7c3aed;
+}
+.igd-it-name{
+  font-size:12.5px; font-weight:600; color:#111827;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.igd-it-group{
+  font-size:10.5px; color:#9ca3af; margin-top:1px;
+}
+.igd-it-meta{
+  display:flex; justify-content:space-between;
+  font-size:11px; color:#6b7280; margin-top:4px;
+}
+.igd-it-qty{ font-family:'JetBrains Mono', monospace; font-weight:700; color:#7c3aed; }
+
+/* Box cards (pane 3) */
+.igd-bx-card{
+  padding:8px 10px; border:1px solid #e5e7eb; border-radius:6px;
+  margin-bottom:5px; background:#fff; cursor:pointer;
+  transition:border-color .12s, background .12s;
+}
+.igd-bx-card:hover{ border-color:#7c3aed; }
+.igd-bx-card.flash{
+  border-color:#7c3aed; background:rgba(124,58,237,.12);
+  animation:igdFlash 1.2s ease-out;
+}
+@keyframes igdFlash{ 0%{box-shadow:0 0 0 0 rgba(124,58,237,.6);} 100%{box-shadow:0 0 0 12px rgba(124,58,237,0);} }
+.igd-bx-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.igd-bx-code{
+  font-family:'Courier New', monospace;
+  font-size:11.5px; font-weight:700; color:#111827; background:none; padding:0;
+}
+.igd-bx-status{
+  font-size:9px; font-weight:700; padding:2px 6px; border-radius:3px;
+  letter-spacing:.4px; flex-shrink:0;
+}
+.igd-bx-meta{
+  font-size:10.5px; color:#6b7280; margin-top:3px;
+  display:flex; gap:10px; justify-content:space-between;
+  font-variant-numeric:tabular-nums; flex-wrap:wrap;
+}
+.igd-bx-loc{ font-size:10px; color:#9ca3af; margin-top:3px; }
+
+/* Empty/loading states */
+.igd-empty{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 16px; text-align:center; color:#9ca3af; gap:10px;
+}
+.igd-empty p{ margin:0; font-size:12.5px; }
+.igd-loading{ padding:24px; text-align:center; color:#9ca3af; font-size:12px; }
+
+/* Buttons */
+.igd-btn{
+  padding:7px 14px; border-radius:6px; font-size:12px; font-weight:600;
+  cursor:pointer; border:1px solid #e5e7eb; background:#fff; color:#111827;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.igd-btn:hover{ background:#f9fafb; }
+.igd-btn-primary{ background:#7c3aed; color:#fff; border-color:#7c3aed; }
+.igd-btn-primary:hover{ background:#6d28d9; }
+.igd-btn-primary:disabled{ opacity:.5; cursor:not-allowed; }
+.igd-btn-sm{ padding:5px 10px; font-size:11px; }
+.igd-btn-ghost{
+  padding:4px 8px; font-size:11px; background:transparent;
+  border:1px solid #e5e7eb; border-radius:5px; cursor:pointer; margin-left:3px;
+}
+.igd-btn-ghost:hover{ background:#f3f4f6; }
+
+/* Manage Godowns table */
+.mg-type-pill{
+  font-size:9.5px; font-weight:700;
+  padding:2px 7px; border-radius:3px;
+  text-transform:uppercase; letter-spacing:.4px;
+}
+.mg-type-godown   { background:#0ea5e91a; color:#0369a1; }
+.mg-type-floor    { background:#f59e0b1a; color:#92400e; }
+.mg-type-billing  { background:#6b72801a; color:#374151; }
+.mg-type-shipping { background:#8b5cf61a; color:#5b21b6; }
+.mg-default-pill{
+  font-size:9px; font-weight:700; background:#16a34a; color:#fff;
+  padding:1px 5px; border-radius:3px; margin-left:4px; letter-spacing:.4px;
+}
+
+/* Opening stock form */
+.op-form-card{
+  background:#fff; border:1px solid #e5e7eb; border-radius:10px;
+  padding:20px; max-width:720px; margin:0 auto;
+}
+.op-form-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+@media (max-width:600px){ .op-form-row{ grid-template-columns:1fr; } }
+.op-form-row.full{ grid-template-columns:1fr; }
+.op-field label{
+  font-size:10px; font-weight:700; color:#6b7280;
+  text-transform:uppercase; letter-spacing:.5px;
+  display:block; margin-bottom:5px;
+}
+.op-field input, .op-field select, .op-field textarea{
+  width:100%; padding:8px 12px; font-size:13px;
+  border:1.5px solid #d1d5db; border-radius:7px; box-sizing:border-box;
+  background:#fff; color:#111827; outline:none;
+}
+.op-field input:focus, .op-field select:focus, .op-field textarea:focus{ border-color:#7c3aed; }
+.op-field-with-uom{ display:flex; align-items:center; gap:8px; }
+.op-field-with-uom input{ flex:1; }
+.op-field-with-uom .uom{
+  font-size:11px; font-weight:700; color:#7c3aed;
+  background:#7c3aed1a; padding:4px 10px; border-radius:5px;
+  min-width:50px; text-align:center;
+}
+.op-mat-results{
+  background:#fff; border:1px solid #e5e7eb; border-radius:6px;
+  margin-top:4px; max-height:200px; overflow-y:auto;
+  position:relative; z-index:5;
+}
+.op-mat-result{
+  padding:6px 12px; font-size:12px; cursor:pointer;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid #f3f4f6;
+}
+.op-mat-result:last-child{ border-bottom:none; }
+.op-mat-result:hover{ background:#7c3aed0a; }
+.op-mat-uom{ color:#9ca3af; font-size:10.5px; font-weight:600; }
+.op-mat-result-none{ padding:10px; font-size:12px; color:#9ca3af; text-align:center; }
+.op-summary{
+  margin:12px 0; padding:10px 14px;
+  background:#0ea5e90a; border:1px solid #0ea5e933;
+  border-radius:7px; font-size:12.5px; color:#0369a1;
+}
+.op-summary:empty{ display:none; }
+.op-success{
+  background:#dcfce7; border:1px solid #16a34a33;
+  border-radius:7px; padding:10px 14px; font-size:13px; color:#15803d;
+  margin-top:12px;
+}
+.op-codes{
+  margin-top:10px; padding:12px;
+  background:#fafafa; border-radius:7px; border:1px solid #e5e7eb;
+}
+.op-codes-head{
+  font-size:11px; font-weight:700; color:#7c3aed;
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;
+}
+.op-code{
+  display:inline-block; padding:4px 10px; margin:3px;
+  background:#fff; border:1px solid #7c3aed33;
+  font-family:'Courier New', monospace; font-size:11px;
+  color:#7c3aed; font-weight:700; border-radius:4px;
+}
+
+/* Box history modal */
+.bhm-hero{
+  background:linear-gradient(135deg, rgba(124,58,237,.05), rgba(124,58,237,.01));
+  border:1px solid rgba(124,58,237,.2); border-radius:10px;
+  padding:14px 16px; margin-bottom:14px;
+}
+.bhm-hero-row{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:12px; margin-bottom:10px;
+}
+.bhm-product-name{ font-size:15px; font-weight:700; color:#111827; }
+.bhm-product-sub{ font-size:11px; color:#6b7280; margin-top:2px; }
+.bhm-status-chip{
+  font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px;
+  letter-spacing:.4px; flex-shrink:0;
+}
+.bhm-hero-stats{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  padding-top:10px; border-top:1px solid rgba(124,58,237,.15);
+}
+@media (max-width:600px){ .bhm-hero-stats{ grid-template-columns:1fr; } }
+.bhm-stat-lbl{
+  font-size:9px; font-weight:700; color:#6b7280;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.bhm-stat-val{ font-size:13px; font-weight:600; color:#111827; margin-top:2px; }
+.bhm-section{ margin-bottom:14px; }
+.bhm-section-title{
+  font-size:11px; font-weight:700; color:#6b7280;
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;
+  display:flex; align-items:center; gap:6px;
+}
+.bhm-grn-card{
+  background:#f9fafb; border:1px solid #e5e7eb;
+  border-radius:8px; padding:10px 14px;
+}
+.bhm-grn-row{ display:flex; justify-content:space-between; padding:4px 0; font-size:12px; }
+.bhm-grn-row + .bhm-grn-row{ border-top:1px dashed #e5e7eb; }
+.bhm-grn-lbl{ color:#6b7280; }
+.bhm-grn-val{ color:#111827; font-weight:500; }
+.bhm-timeline{ position:relative; padding-left:28px; }
+.bhm-timeline::before{
+  content:''; position:absolute; left:14px; top:8px; bottom:8px;
+  width:2px; background:#e5e7eb;
+}
+.bhm-tl-item{ position:relative; padding-bottom:14px; }
+.bhm-tl-icon{
+  position:absolute; left:-28px; top:0;
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; border:2px solid #fff;
+  box-shadow:0 0 0 2px #e5e7eb; z-index:1;
+}
+.bhm-tl-body{
+  background:#fff; border:1px solid #e5e7eb; border-radius:8px;
+  padding:8px 12px; margin-left:6px;
+}
+.bhm-tl-head{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;
+}
+.bhm-tl-label{ font-size:12px; font-weight:700; }
+.bhm-tl-time{
+  font-size:10.5px; color:#9ca3af; margin-left:auto; font-variant-numeric:tabular-nums;
+}
+.bhm-tl-route{ font-size:11.5px; color:#111827; margin:3px 0; font-weight:500; }
+.bhm-tl-foot{
+  font-size:10.5px; color:#6b7280; display:flex; gap:10px; flex-wrap:wrap; margin-top:3px;
+}
+.bhm-tl-remarks{ font-style:italic; color:#7c3aed; }
+</style>
+
+
+<!-- ─── Box History Modal ─── -->
+<div class="modal-overlay" id="boxHistoryModal">
+  <div class="modal-card lg" style="max-width:920px">
+    <div class="modal-head">
+      <div class="modal-title">
+        <i class="fas fa-route" style="color:#7c3aed"></i>
+        <span id="bhm-title">Box history</span>
+      </div>
+      <button class="modal-close" onclick="invCloseModal('boxHistoryModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="bhm-body">
+      <div class="igd-loading"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="invCloseModal('boxHistoryModal')">
+        <i class="fas fa-times"></i> Close
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── Godown Form Modal ─── -->
+<div class="modal-overlay" id="godownFormModal">
+  <form class="modal-card lg" id="mg-form" onsubmit="return invMgSave(event)">
+    <div class="modal-head">
+      <div class="modal-title">
+        <i class="fas fa-warehouse" style="color:#7c3aed"></i>
+        <span id="mg-modal-title">New Godown</span>
+      </div>
+      <button type="button" class="modal-close" onclick="invCloseModal('godownFormModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label>Name <span class="req">*</span></label>
+          <input type="text" name="name" required maxlength="300" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select name="type">
+            <option value="godown">Godown (warehouse)</option>
+            <option value="floor">Factory Floor</option>
+            <option value="billing">Billing Location</option>
+            <option value="shipping">Shipping Hub</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Default?</label>
+          <label style="font-weight:600;font-size:13px;padding:8px 0;display:flex;align-items:center;gap:8px;letter-spacing:0;text-transform:none">
+            <input type="checkbox" name="is_default" style="width:auto"> Mark as default godown
+          </label>
+        </div>
+        <div class="field"><label>Contact Person</label><input type="text" name="contact" maxlength="300"></div>
+        <div class="field"><label>Phone</label><input type="text" name="phone" maxlength="100"></div>
+        <div class="field"><label>Email</label><input type="email" name="email" maxlength="300"></div>
+        <div class="field">
+          <label>GST Number</label>
+          <input type="text" name="gst_number" maxlength="50" style="font-family:'Courier New',monospace;text-transform:uppercase">
+        </div>
+        <div class="field full"><label>Address</label><textarea name="address" rows="2"></textarea></div>
+        <div class="field"><label>City</label><input type="text" name="city" maxlength="100"></div>
+        <div class="field"><label>State</label><input type="text" name="state" maxlength="100"></div>
+        <div class="field"><label>PIN</label><input type="text" name="pin" maxlength="10" inputmode="numeric"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" onclick="invCloseModal('godownFormModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </form>
+</div>
+
+
+<!-- ─── Templates for the dynamically-injected panels ─── -->
+<template id="igd-panel-godown-view-tpl">
+  <div class="panel" id="panel-godown-view">
+    <div class="igd-scan-bar">
+      <div class="igd-scan-icon"><i class="fas fa-qrcode"></i></div>
+      <input type="text" id="inv-godown-scan-input"
+        placeholder="Scan box label or type code: RM-MATCODE-G0234-B003"
+        autocomplete="off" spellcheck="false"
+        onkeydown="invGvScanKey(event)">
+      <div id="inv-godown-scan-feedback" class="igd-scan-feedback" style="color:#9ca3af">Ready to scan</div>
+    </div>
+
+    <div class="igd-scan-help">
+      <i class="fas fa-info-circle"></i>
+      <strong>Handheld scanner:</strong> just scan a box — the history opens automatically.
+      <strong>No boxes yet?</strong>
+      <a href="javascript:invSwitchPanel('opening-stock')" style="color:#7c3aed;font-weight:700">Add opening stock first</a>
+      to create scannable boxes for your existing RM inventory.
+    </div>
+
+    <div class="igd-grid">
+      <div class="igd-pane">
+        <div class="igd-pane-head">
+          <span>Godowns</span>
+          <button class="igd-btn-ghost" onclick="invGvLoad()" title="Refresh"><i class="fas fa-sync"></i></button>
+        </div>
+        <div class="igd-pane-body" id="gv-godowns-pane-body">
+          <div class="igd-loading"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+        </div>
+      </div>
+
+      <div class="igd-pane">
+        <div class="igd-pane-head"><span id="gv-items-pane-title">Items</span></div>
+        <div class="igd-pane-search">
+          <input type="search" id="gv-items-search" placeholder="Filter items…" oninput="invGvItemsSearchInput()">
+        </div>
+        <div class="igd-pane-body" id="gv-items-pane-body">
+          <div class="igd-empty"><p>Pick a godown to see items</p></div>
+        </div>
+      </div>
+
+      <div class="igd-pane">
+        <div class="igd-pane-head"><span id="gv-boxes-pane-title">Boxes</span></div>
+        <div class="igd-pane-body" id="gv-boxes-pane-body">
+          <div class="igd-empty"><p>Pick an item to see boxes</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="igd-panel-manage-godowns-tpl">
+  <div class="panel" id="panel-manage-godowns">
+    <div class="inv-toolbar">
+      <div style="font-size:13px;color:#6b7280">
+        Manage warehouse / godown locations.
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary igd-mg-new-btn" onclick="invMgNew()" style="display:none">
+        <i class="fas fa-plus"></i> New Godown
+      </button>
+    </div>
+    <div class="inv-table-wrap">
+      <div class="inv-table-scroll">
+        <table class="inv-table">
+          <thead><tr>
+            <th>Name</th><th>Type</th><th>Contact</th><th>Phone</th>
+            <th>GST Number</th><th>City / State</th>
+            <th style="text-align:right">Items</th><th style="text-align:right">Boxes</th>
+            <th style="width:90px"></th>
+          </tr></thead>
+          <tbody id="mg-tbody">
+            <tr><td colspan="9" class="igd-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="igd-panel-opening-stock-tpl">
+  <div class="panel" id="panel-opening-stock">
+    <div style="max-width:720px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:16px">
+        <h2 style="margin:0;font-size:20px;color:#111827">Opening Stock Entry</h2>
+        <p style="margin:6px 0 0;font-size:13px;color:#6b7280">
+          Create QR-tracked boxes for RM items already physically in your godowns.<br>
+          After this, those boxes show up in Godown View and respond to scans.
+        </p>
+      </div>
+
+      <form class="op-form-card" onsubmit="return invOpSubmit(event)">
+
+        <div class="op-form-row full">
+          <div class="op-field">
+            <label>Material <span style="color:#dc2626">*</span></label>
+            <input type="text" id="op-material-search"
+              placeholder="Type to search material…"
+              oninput="invOpSearchMaterial()" autocomplete="off">
+            <div id="op-material-result" class="op-mat-results"></div>
+          </div>
+        </div>
+
+        <div class="op-form-row">
+          <div class="op-field">
+            <label>Godown <span style="color:#dc2626">*</span></label>
+            <select id="op-godown" onchange="invOpUpdateSummary()">
+              <option value="">— select godown —</option>
+            </select>
+          </div>
+          <div class="op-field">
+            <label>Number of Boxes <span style="color:#dc2626">*</span></label>
+            <input type="number" id="op-no-of-box" min="1" max="500" value="1" oninput="invOpUpdateSummary()">
+          </div>
+        </div>
+
+        <div class="op-form-row">
+          <div class="op-field">
+            <label>Quantity per Box <span style="color:#dc2626">*</span></label>
+            <div class="op-field-with-uom">
+              <input type="number" id="op-per-box-qty" min="0" step="0.001" oninput="invOpUpdateSummary()">
+              <span class="uom" id="op-per-box-uom">UOM</span>
+            </div>
+          </div>
+          <div class="op-field">
+            <label>Remarks</label>
+            <input type="text" id="op-remarks" maxlength="255" placeholder="optional…">
+          </div>
+        </div>
+
+        <div id="op-summary" class="op-summary"></div>
+
+        <div style="text-align:right;margin-top:16px">
+          <button type="submit" class="igd-btn igd-btn-primary" id="op-submit" disabled>
+            <i class="fas fa-save"></i> Create Boxes
+          </button>
+        </div>
+      </form>
+
+      <div id="op-recent-boxes" style="margin-top:18px;max-width:720px;margin-left:auto;margin-right:auto"></div>
+    </div>
+  </div>
+</template>
+
+
+<!-- ─── Auto-inject: sidebar nav + panels + load scripts ─── -->
+<script>
+(function injectGodownModule(){
+  // 1) Inject sidebar nav section (just before "Vouchers" section)
+  const nav = document.querySelector('.inv-nav');
+  if(nav){
+    // Find the Vouchers section label to anchor our injection point
+    const labels = nav.querySelectorAll('.inv-nav-section-label');
+    let vouchersSection = null;
+    labels.forEach(lbl => {
+      if((lbl.textContent || '').trim().toLowerCase() === 'vouchers'){
+        vouchersSection = lbl.closest('.inv-nav-section');
+      }
+    });
+
+    const stockSection = document.createElement('div');
+    stockSection.className = 'inv-nav-section';
+    stockSection.innerHTML = `
+      <div class="inv-nav-section-label">Stock</div>
+      <div class="inv-nav-item" data-panel="godown-view" onclick="invSwitchPanel('godown-view')" title="Godown View">
+        <span class="ico"><i class="fas fa-building"></i></span><span>Godown View</span>
+      </div>
+      <div class="inv-nav-item" data-panel="manage-godowns" onclick="invSwitchPanel('manage-godowns')" title="Manage Godowns">
+        <span class="ico"><i class="fas fa-warehouse"></i></span><span>Manage Godowns</span>
+      </div>
+      <div class="inv-nav-item" data-panel="opening-stock" onclick="invSwitchPanel('opening-stock')" title="Opening Stock Entry">
+        <span class="ico"><i class="fas fa-flag"></i></span><span>Opening Stock</span>
+      </div>
+    `;
+
+    if(vouchersSection){
+      nav.insertBefore(stockSection, vouchersSection);
+    } else {
+      nav.appendChild(stockSection);
+    }
+  }
+
+  // 2) Inject the three new panels into .inv-wrap
+  const wrap = document.querySelector('.inv-wrap');
+  if(wrap){
+    ['igd-panel-godown-view-tpl', 'igd-panel-manage-godowns-tpl', 'igd-panel-opening-stock-tpl'].forEach(tplId => {
+      const tpl = document.getElementById(tplId);
+      if(tpl && tpl.content){
+        wrap.appendChild(tpl.content.cloneNode(true));
+      }
+    });
+  }
+
+  // 3) Wire up edit-permission visibility
+  if(window._INV_CAN_EDIT === true){
+    document.querySelectorAll('.igd-mg-new-btn').forEach(b => b.style.display = '');
+  }
+
+  console.log('✅ inventory_godown HTML partial injected');
+})();
+</script>
+
+<!-- ─── Edit permission flag (templated by Flask) ─── -->
+<script>
+  window._INV_CAN_EDIT = {{ 'true' if can_edit else 'false' }};
+</script>
+
+<!-- ─── Main module script ─── -->
+<script src="{{ url_for('static', filename='inventory/inventory_godown.js') }}?v=1"></script>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+{# ═════════════════════════════════════════════════════════════════════════
+   GRN Box Repair admin tool
+   ────────────────────────────────────────────────────────────────────
+   Standalone page admins can hit when scans fail with "No package with
+   code RM-A..." errors. Lists every GRN whose printed packages don't
+   match actual rm_boxes rows, and lets admin one-click create the
+   missing rows.
+
+   IMPORTANT: the repair preserves the EXACT codes already on your
+   printed labels. Existing stickers will scan correctly after the
+   repair — no re-printing needed for the affected line items.
+   ═════════════════════════════════════════════════════════════════════════ #}
+<head>
+<meta charset="UTF-8">
+<title>GRN Box Repair — Inventory</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0;
+    font-family:Inter, system-ui, sans-serif;
+    background:#f4f7fc;
+    color:#0f172a;
+  }
+  .topbar{
+    background:linear-gradient(135deg,#4648D4 0%,#5e60e0 55%,#7c3aed 100%);
+    color:#fff;
+    padding:14px 20px;
+    display:flex; align-items:center; gap:12px;
+    box-shadow:0 2px 16px rgba(70,72,212,.28);
+  }
+  .topbar h1{margin:0; font-size:16px; font-weight:700; letter-spacing:-.2px}
+  .topbar .back{
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.24);
+    color:#fff; padding:6px 12px; border-radius:8px;
+    text-decoration:none; font-size:12px; font-weight:600;
+  }
+  .topbar .back:hover{background:rgba(255,255,255,.24)}
+  .wrap{padding:18px 20px; max-width:1200px; margin:0 auto}
+  .summary{
+    background:#fff; border:1px solid #e5e7eb; border-radius:14px;
+    padding:18px 22px; box-shadow:0 1px 3px rgba(15,23,42,.05);
+    margin-bottom:18px;
+  }
+  .summary h2{margin:0 0 6px; font-size:15px; font-weight:700}
+  .summary p{margin:0; color:#475569; font-size:13px; line-height:1.5}
+  .actions{margin-top:14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  button{
+    padding:8px 16px; border-radius:9px; cursor:pointer;
+    font-family:inherit; font-size:12px; font-weight:700;
+    border:1px solid transparent;
+    transition:all .15s;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,#5e60e0 0%,#4648d4 55%,#3a3cb8 100%);
+    color:#fff;
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 4px 12px rgba(70,72,212,.28);
+  }
+  .btn-primary:hover:not(:disabled){transform:translateY(-1px); filter:brightness(1.06)}
+  .btn-primary:disabled{filter:grayscale(.4) brightness(.7); cursor:not-allowed}
+  .btn-danger{
+    background:linear-gradient(180deg,#fb7185 0%,#f43f5e 55%,#be123c 100%);
+    color:#fff;
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 4px 12px rgba(244,63,94,.30);
+  }
+  .btn-ghost{
+    background:#fff; border-color:#cbd5e1; color:#475569;
+  }
+  .btn-ghost:hover{background:#f1f5f9; color:#1e293b; border-color:#94a3b8}
+  select{padding:7px 10px; border:1px solid #cbd5e1; border-radius:8px;
+         background:#fff; font-family:inherit; font-size:12px}
+
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+        gap:12px; margin-bottom:14px}
+  .kpi{
+    background:#fff; border:1px solid #e5e7eb; border-radius:14px;
+    padding:14px 16px; box-shadow:0 1px 3px rgba(15,23,42,.05);
+  }
+  .kpi .lbl{font-size:10px; font-weight:700; color:#64748b;
+            text-transform:uppercase; letter-spacing:.5px}
+  .kpi .val{font-family:'JetBrains Mono',monospace; font-size:28px;
+            font-weight:700; color:#1f1f1f; margin-top:4px}
+  .kpi.warn .val{color:#b45309}
+  .kpi.ok .val{color:#059669}
+
+  .grn-list{display:flex; flex-direction:column; gap:12px}
+  .grn-card{
+    background:#fff; border:1px solid #e5e7eb; border-radius:14px;
+    box-shadow:0 1px 3px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+  .grn-card-head{
+    padding:12px 16px; background:#fafbfc; border-bottom:1px solid #e5e7eb;
+    display:flex; align-items:center; gap:14px;
+  }
+  .grn-card-head .num{
+    font-family:'JetBrains Mono',monospace; font-weight:700;
+    color:#0e7490; font-size:13px;
+  }
+  .grn-card-head .date{font-size:11.5px; color:#64748b}
+  .grn-card-head .missing{
+    margin-left:auto;
+    background:rgba(220,38,38,.10); color:#b91c1c;
+    padding:4px 10px; border-radius:9999px;
+    font-size:11.5px; font-weight:700;
+  }
+  .grn-card-head button{margin-left:8px}
+  .lines{padding:8px 16px 14px}
+  .lines table{width:100%; border-collapse:collapse; font-size:12px}
+  .lines th{padding:7px 8px; text-align:left;
+            font-size:10px; font-weight:700; color:#64748b;
+            text-transform:uppercase; letter-spacing:.4px;
+            border-bottom:1px solid #f1f5f9}
+  .lines td{padding:7px 8px; border-bottom:1px solid #f1f5f9; color:#1e293b}
+  .lines .right{text-align:right; font-variant-numeric:tabular-nums}
+  .lines .mono{font-family:'JetBrains Mono',monospace}
+
+  .empty{text-align:center; padding:60px 16px; color:#94a3b8}
+  .empty i{font-size:32px; opacity:.4}
+  .empty .msg{margin-top:10px; font-size:14px; font-weight:600}
+
+  .toast{
+    position:fixed; top:80px; right:20px;
+    background:#1e293b; color:#fff;
+    padding:11px 16px; border-radius:10px;
+    box-shadow:0 8px 24px rgba(15,23,42,.30);
+    font-size:13px; font-weight:600;
+    z-index:9999; max-width:400px;
+    transform:translateX(420px);
+    transition:transform .25s ease;
+  }
+  .toast.show{transform:translateX(0)}
+  .toast.success{background:#059669}
+  .toast.error{background:#dc2626}
+
+  .modal{
+    position:fixed; inset:0; background:rgba(15,23,42,.5);
+    display:none; align-items:center; justify-content:center;
+    z-index:9000; padding:20px;
+  }
+  .modal.open{display:flex}
+  .modal-box{
+    background:#fff; border-radius:14px;
+    width:min(720px, 100%); max-height:88vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 24px 60px rgba(15,23,42,.34);
+  }
+  .modal-head{
+    padding:14px 18px; border-bottom:1px solid #e5e7eb;
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff;
+    border-radius:14px 14px 0 0;
+  }
+  .modal-head h3{margin:0; font-size:14px; font-weight:700}
+  .modal-body{padding:18px; overflow:auto; flex:1}
+  .modal-foot{
+    padding:12px 18px; border-top:1px solid #e5e7eb;
+    background:#f8fafc; display:flex; gap:8px; justify-content:flex-end;
+    border-radius:0 0 14px 14px;
+  }
+  .codes-block{
+    margin-top:10px; padding:10px 12px;
+    background:#f1f5f9; border-left:3px solid #0e7490;
+    border-radius:0 8px 8px 0;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    white-space:pre-wrap; line-height:1.55;
+    max-height:200px; overflow:auto;
+  }
+  .warn-banner{
+    margin:10px 0;
+    padding:10px 12px;
+    background:#fef3c7;
+    border-left:3px solid #d97706;
+    border-radius:0 8px 8px 0;
+    font-size:12.5px;
+    color:#78350f;
+    line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+{% set page_title = "GRN Box Repair" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Inventory", "url": "#"}, {"label": "GRN Box Repair", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="wrap">
+
+  <div class="summary">
+    <h2>Why this page exists</h2>
+    <p>
+      When a GRN is saved, the system creates one <code>rm_boxes</code> row per
+      package. If something goes wrong (e.g. the material's name in the GRN
+      line doesn't exactly match the materials table), the GRN save still
+      reports "success" but the rows are never created — the printed labels
+      then fail when scanned at Stock Transfer with
+      <i>"No package with code RM-A…"</i>.
+    </p>
+    <p style="margin-top:8px">
+      This page lists every GRN line with that gap and lets you create the
+      missing rows using the <b>exact codes already printed on your labels</b>.
+      After repair, existing stickers will scan correctly — no re-printing
+      required.
+    </p>
+    <div class="actions">
+      <select id="days">
+        <option value="30">Last 30 days</option>
+        <option value="90" selected>Last 90 days</option>
+        <option value="365">Last 1 year</option>
+        <option value="3650">All time</option>
+      </select>
+      <button class="btn-primary" onclick="loadAudit()">
+        <i class="fa fa-magnifying-glass"></i> Scan for gaps
+      </button>
+      <button class="btn-danger" id="btn-repair-all" onclick="repairAll()" disabled>
+        <i class="fa fa-wrench"></i> Repair all
+      </button>
+      <span id="loading" style="display:none; color:#64748b; font-size:12px">
+        <i class="fa fa-spinner fa-spin"></i> Working…
+      </span>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis" style="display:none">
+    <div class="kpi warn">
+      <div class="lbl">Affected GRNs</div>
+      <div class="val" id="kpi-grns">—</div>
+    </div>
+    <div class="kpi warn">
+      <div class="lbl">Missing Boxes</div>
+      <div class="val" id="kpi-missing">—</div>
+    </div>
+    <div class="kpi ok" id="kpi-repaired-card" style="display:none">
+      <div class="lbl">Repaired This Session</div>
+      <div class="val" id="kpi-repaired">0</div>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="empty">
+      <i class="fa fa-search"></i>
+      <div class="msg">Click "Scan for gaps" to begin</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Repair result modal — shows the codes that are now valid -->
+<div class="modal" id="result-modal" onclick="if(event.target===this)closeResult()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <i class="fa fa-circle-check"></i>
+      <h3>Repair complete</h3>
+      <button onclick="closeResult()"
+              style="margin-left:auto; background:rgba(255,255,255,.18);
+                     border:1px solid rgba(255,255,255,.32); color:#fff;
+                     width:26px; height:26px; border-radius:6px;
+                     cursor:pointer">&times;</button>
+    </div>
+    <div class="modal-body" id="result-body"></div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="copyAllCodes()">
+        <i class="fa fa-copy"></i> Copy all codes
+      </button>
+      <button class="btn-primary" onclick="closeResult()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let _audit = null;       // last audit response
+let _repairedTotal = 0;  // running total for this session
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function fmtDate(s){
+  if(!s) return '—';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : s;
+}
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (kind ? ' ' + kind : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.className = 'toast', 4000);
+}
+function showLoading(on){
+  document.getElementById('loading').style.display = on ? '' : 'none';
+}
+
+async function loadAudit(){
+  showLoading(true);
+  document.getElementById('btn-repair-all').disabled = true;
+  const days = document.getElementById('days').value;
+  try{
+    const r = await fetch(`/api/inventory_mgmt/grn/box_audit?days=${days}&limit=200`);
+    const d = await r.json();
+    if(d.status !== 'ok') throw new Error(d.message || 'Audit failed');
+    _audit = d;
+    renderAudit(d);
+  }catch(e){
+    toast('Audit failed: ' + e.message, 'error');
+    document.getElementById('content').innerHTML = `
+      <div class="empty">
+        <i class="fa fa-circle-exclamation" style="color:#dc2626"></i>
+        <div class="msg">${esc(e.message)}</div>
+      </div>
+    `;
+  }finally{
+    showLoading(false);
+  }
+}
+
+function renderAudit(d){
+  // KPI row
+  document.getElementById('kpis').style.display = '';
+  document.getElementById('kpi-grns').textContent    = d.total_grns_with_gaps;
+  document.getElementById('kpi-missing').textContent = d.total_missing_boxes;
+  document.getElementById('btn-repair-all').disabled =
+    d.total_grns_with_gaps === 0;
+
+  if(d.total_grns_with_gaps === 0){
+    document.getElementById('content').innerHTML = `
+      <div class="empty">
+        <i class="fa fa-check-circle" style="color:#10b981"></i>
+        <div class="msg">No gaps found — all GRNs in the selected
+          window have their packages.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const cards = d.grns.map(g => {
+    // If any line in this GRN already has boxes, repairing the whole GRN
+    // would skip those lines (server-side guard) — but the button's still
+    // misleading. Disable the top-level "Repair this GRN" button entirely
+    // when EVERY line is already-has-boxes (nothing to repair).
+    const allDup  = g.lines.every(L => L.already_has_boxes);
+    const someDup = g.lines.some(L => L.already_has_boxes);
+    return `
+    <div class="grn-card" data-grn-id="${g.grn_id}">
+      <div class="grn-card-head">
+        <i class="fa fa-receipt" style="color:#7c3aed"></i>
+        <span class="num">${esc(g.grn_num || '—')}</span>
+        <span class="date">${fmtDate(g.grn_date)}</span>
+        <span class="missing">
+          <i class="fa fa-triangle-exclamation"></i>
+          ${g.total_missing} missing box${g.total_missing===1?'':'es'}
+        </span>
+        ${someDup ? `
+          <span style="background:rgba(217,119,6,.12);color:#92400e;
+                       padding:4px 10px;border-radius:9999px;
+                       font-size:11px;font-weight:700">
+            <i class="fa fa-shield-halved"></i>
+            ${allDup ? 'All lines already have boxes' : 'Some lines already have boxes'}
+          </span>` : ''}
+        <button class="btn-primary"
+                onclick="repairOne(${g.grn_id}, this)"
+                ${allDup ? 'disabled title="Every line already has rm_boxes — nothing to repair without first cancelling existing boxes"' : ''}>
+          <i class="fa fa-wrench"></i> Repair this GRN
+        </button>
+      </div>
+      <div class="lines">
+        <table>
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Batch</th>
+              <th class="right">Missing</th>
+              <th>Printed codes (ghost)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${g.lines.map(L => {
+              const codesEnc = (L.ghost_codes || []).join(',');
+              const dup = !!L.already_has_boxes;
+              return `
+              <tr ${dup ? 'style="background:rgba(217,119,6,.06)"' : ''}>
+                <td>${esc(L.material || '<span style="color:#dc2626"><i class="fa fa-triangle-exclamation"></i> Orphan — line deleted/re-inserted</span>')}</td>
+                <td class="mono">${esc(L.batch_num || '—')}</td>
+                <td class="right" style="color:#dc2626;font-weight:700">
+                  ${L.missing_boxes}
+                </td>
+                <td class="mono" style="font-size:11px;color:#64748b">
+                  ${esc(L.code_range || (L.ghost_codes && L.ghost_codes[0]) || '—')}
+                  ${dup ? `<div style="margin-top:4px;font-family:Inter,sans-serif;color:#92400e;font-weight:700">
+                    <i class="fa fa-shield-halved"></i> Line already has ${L.existing_boxes} active rm_boxes —
+                    these are extras from a 2nd label-print.
+                    Repairing would duplicate stock.
+                  </div>` : ''}
+                </td>
+                <td>
+                  ${dup ?
+                    `<span style="font-size:11px;color:#92400e;font-weight:600">
+                       <i class="fa fa-ban"></i> Skipped
+                     </span>` :
+                    (L.orphan && L.candidates && L.candidates.length ?
+                      `<button class="btn-ghost"
+                               style="font-size:11px;padding:5px 10px"
+                               data-grn-id="${g.grn_id}"
+                               data-codes="${esc(codesEnc)}"
+                               onclick='openMapModal(${g.grn_id}, ${JSON.stringify(L.candidates).replace(/'/g, "&#39;")}, "${esc(codesEnc)}")'>
+                         <i class="fa fa-hand-pointer"></i> Map manually
+                       </button>` : '')}
+                </td>
+              </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    `;
+  }).join('');
+  document.getElementById('content').innerHTML =
+    '<div class="grn-list">' + cards + '</div>';
+}
+
+/* ── Manual mapping modal ───────────────────────────────────────────────
+   When auto-resolution can't decide (orphan line + multiple current line
+   items on the same GRN), the admin uses this modal to pick which CURRENT
+   line item the ghost codes should bind to. */
+function openMapModal(grnId, candidates, codesEnc){
+  const codes = String(codesEnc).split(',').filter(Boolean);
+  // Build modal markup
+  const html = `
+    <div style="font-size:13px;line-height:1.5;color:#475569;margin-bottom:12px">
+      The codes printed for this GRN can't be auto-mapped because the
+      original line item was deleted or re-inserted. Pick which CURRENT
+      line item these codes belong to:
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#475569">
+      ${codes.length} code${codes.length===1?'':'s'}:
+      ${codes.length > 4
+        ? codes.slice(0,2).join(', ') + ' … ' + codes.slice(-2).join(', ')
+        : codes.join(', ')}
+    </div>
+    <div style="font-weight:700;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">
+      Pick a line item:
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${candidates.map(c => `
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:all .12s"
+               onmouseenter="this.style.background='#f8fafc';this.style.borderColor='#7c3aed'"
+               onmouseleave="this.style.background='';this.style.borderColor='#e5e7eb'">
+          <input type="radio" name="map-line" value="${c.item_id}">
+          <div style="flex:1;font-size:12.5px">
+            <b>${esc(c.material)}</b>
+            ${c.batch_num ? `<span style="color:#64748b;font-weight:500;margin-left:6px">· batch ${esc(c.batch_num)}</span>` : ''}
+            <div style="font-size:11px;color:#64748b;margin-top:2px">
+              line #${c.item_id} · ${c.packages || 0} packages · ${c.qty_per_pkg || '—'} ${esc(c.uom || 'KG')} per pkg
+            </div>
+          </div>
+        </label>
+      `).join('')}
+    </div>
+  `;
+  // Re-use the result modal markup but with different buttons.
+  const m = document.getElementById('result-modal');
+  document.getElementById('result-body').innerHTML = html;
+  // Repurpose the footer
+  const foot = m.querySelector('.modal-foot');
+  foot.innerHTML = `
+    <button class="btn-ghost" onclick="closeResult()">Cancel</button>
+    <button class="btn-primary" onclick="submitMap(${grnId}, '${esc(codesEnc)}')">
+      <i class="fa fa-check"></i> Bind codes to chosen line
+    </button>
+  `;
+  // Repurpose the header
+  m.querySelector('.modal-head h3').textContent = 'Map ghost codes manually';
+  m.querySelector('.modal-head').style.background =
+    'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)';
+  m.classList.add('open');
+}
+
+async function submitMap(grnId, codesEnc){
+  const picked = document.querySelector('input[name="map-line"]:checked');
+  if(!picked){
+    toast('Please pick a line item first', 'error');
+    return;
+  }
+  const itemId = parseInt(picked.value, 10);
+  const codes = String(codesEnc).split(',').filter(Boolean);
+  const btn = document.querySelector('#result-modal .btn-primary');
+  btn.disabled = true;
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Mapping…';
+  try{
+    const r = await fetch('/api/inventory_mgmt/grn/map_ghost_codes', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        grn_id:    grnId,
+        item_id:   itemId,
+        box_codes: codes,
+      })
+    });
+    const d = await r.json();
+    if(d.status !== 'ok') throw new Error(d.message || 'Map failed');
+    _repairedTotal += d.created_boxes;
+    toast(`✓ Bound ${d.created_boxes} code${d.created_boxes===1?'':'s'} to ${esc(d.material)}`, 'success');
+    closeResult();
+    // Restore the result modal footer/header to defaults for next use
+    restoreResultModalDefaults();
+    loadAudit();
+  }catch(e){
+    toast('Map failed: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
+}
+
+function restoreResultModalDefaults(){
+  const m = document.getElementById('result-modal');
+  m.querySelector('.modal-head h3').textContent = 'Repair complete';
+  m.querySelector('.modal-head').style.background =
+    'linear-gradient(135deg,#10b981 0%,#059669 100%)';
+  m.querySelector('.modal-foot').innerHTML = `
+    <button class="btn-ghost" onclick="copyAllCodes()">
+      <i class="fa fa-copy"></i> Copy all codes
+    </button>
+    <button class="btn-primary" onclick="closeResult()">Done</button>
+  `;
+}
+
+async function repairOne(grnId, btn){
+  if(!confirm(
+    'Repair the missing boxes for this GRN?\n\n' +
+    'The repair will create rm_boxes rows using the EXACT codes already ' +
+    'printed on your labels — so existing stickers will scan correctly ' +
+    'after repair. No re-printing required.\n\n' +
+    'Continue?'
+  )) return;
+
+  btn.disabled = true;
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Repairing…';
+  try{
+    const r = await fetch('/api/inventory_mgmt/grn/repair_boxes', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({grn_ids: [grnId]})
+    });
+    const d = await r.json();
+    if(d.status !== 'ok') throw new Error(d.message || 'Repair failed');
+    _repairedTotal += d.total_created;
+    showRepairResult(d);
+    toast(`✓ Created ${d.total_created} new box${d.total_created===1?'':'es'}`, 'success');
+    // Refresh audit
+    loadAudit();
+  }catch(e){
+    toast('Repair failed: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
+}
+
+async function repairAll(){
+  if(!_audit || _audit.total_grns_with_gaps === 0) return;
+  const total = _audit.total_missing_boxes;
+  if(!confirm(
+    `Create ${total} missing box${total===1?'':'es'} across ` +
+    `${_audit.total_grns_with_gaps} GRN${_audit.total_grns_with_gaps===1?'':'s'}?\n\n` +
+    'The repair will use the EXACT codes already on your printed labels — ' +
+    'no re-printing needed.\n\n' +
+    'Continue?'
+  )) return;
+
+  const days = document.getElementById('days').value;
+  const btn = document.getElementById('btn-repair-all');
+  btn.disabled = true;
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Repairing all…';
+  try{
+    const r = await fetch('/api/inventory_mgmt/grn/repair_boxes', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({all:true, days: parseInt(days,10) || 90})
+    });
+    const d = await r.json();
+    if(d.status !== 'ok') throw new Error(d.message || 'Repair failed');
+    _repairedTotal += d.total_created;
+    showRepairResult(d);
+    toast(`✓ Repaired ${d.total_created} box${d.total_created===1?'':'es'} across all GRNs`, 'success');
+    loadAudit();
+  }catch(e){
+    toast('Repair failed: ' + e.message, 'error');
+    btn.innerHTML = origHtml;
+  }
+}
+
+function showRepairResult(d){
+  document.getElementById('kpi-repaired-card').style.display = '';
+  document.getElementById('kpi-repaired').textContent = _repairedTotal;
+  const body = document.getElementById('result-body');
+  let html = '';
+  if(d.warnings && d.warnings.length){
+    html += '<div class="warn-banner"><b>Warnings:</b><ul style="margin:6px 0 0 18px;padding:0">';
+    html += d.warnings.map(w => `<li>${esc(w)}</li>`).join('');
+    html += '</ul></div>';
+  }
+  if(d.repaired && d.repaired.length){
+    html += `<div style="font-weight:700;font-size:13px;margin-bottom:6px">
+      ${d.total_created} box${d.total_created===1?'':'es'} repaired across
+      ${d.repaired.length} line${d.repaired.length===1?'':'s'}.
+    </div>`;
+    html += `<div style="font-size:12.5px;color:#475569;line-height:1.5;margin-bottom:14px">
+      <b>✓ No re-printing needed:</b> the existing printed labels with the
+      codes below will now scan correctly at Stock Transfer.
+    </div>`;
+    d.repaired.forEach(r => {
+      const codes = r.preserved_codes || [];
+      html += `
+        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-weight:700;font-size:12.5px">
+            ${esc(r.grn_num)} · ${esc(r.material)}
+            ${r.batch_num ? `<span style="color:#64748b;font-weight:500">· batch ${esc(r.batch_num)}</span>` : ''}
+          </div>
+          <div style="font-size:11.5px;color:#475569;margin-top:3px">
+            ${r.created_boxes} code${r.created_boxes===1?'':'s'} bound (existing printed labels now valid):
+          </div>
+          <div class="codes-block" data-codes="${esc(codes.join('\n'))}">${esc(codes.join('\n'))}</div>
+        </div>
+      `;
+    });
+  } else {
+    html += `<div class="empty"><i class="fa fa-circle-info"></i>
+      <div class="msg">No boxes were created.</div></div>`;
+  }
+  body.innerHTML = html;
+  document.getElementById('result-modal').classList.add('open');
+}
+
+function closeResult(){
+  document.getElementById('result-modal').classList.remove('open');
+  // Restore default header/footer next tick so the next open starts clean.
+  setTimeout(restoreResultModalDefaults, 300);
+}
+
+function copyAllCodes(){
+  const blocks = document.querySelectorAll('.codes-block');
+  const all = Array.from(blocks).map(b => b.getAttribute('data-codes')).join('\n');
+  navigator.clipboard.writeText(all).then(() => {
+    toast('Copied all codes to clipboard', 'success');
+  }).catch(() => {
+    toast('Copy failed — please select manually', 'error');
+  });
+}
+
+// Auto-load on page open
+document.addEventListener('DOMContentLoaded', loadAudit);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+[2026-05-07 12:43:54.485692] SUCCESS: User_Tbl initialized.
+✅ R&D Sampling Table Ready
+QC Sampling Table Ready
+Canteen Tables Ready
+✅ CMS Tables Ready
+✅ user_permissions table ready
+Traceback (most recent call last):
+  File "E:\TARAK WEB APPS\app.py", line 89, in <module>
+    from pm_stock_routes import pm_stock_bp                # PM Stock — Beardo
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'pm_stock_routes'

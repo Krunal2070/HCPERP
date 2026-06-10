@@ -1,0 +1,55 @@
+/* Module CSS for npd/sample_history.html */
+
+/* ── Custom Multi-Select Dropdown ── */
+.cms-wrap{position:relative;min-width:200px;}
+.cms-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafbfc;cursor:pointer;font-size:.82rem;color:var(--text);user-select:none;min-height:36px;transition:border .15s;}
+.cms-trigger:hover,.cms-wrap.open .cms-trigger{border-color:#7c3aed;background:#faf5ff;}
+.cms-trigger-txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
+.cms-trigger-txt.has-val{color:var(--text);font-weight:600;}
+.cms-arrow{font-size:.65rem;color:#94a3b8;transition:transform .2s;}
+.cms-wrap.open .cms-arrow{transform:rotate(180deg);}
+.cms-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:220px;background:#fff;border:1.5px solid #c4b5fd;border-radius:10px;box-shadow:0 8px 24px rgba(124,58,237,.15);z-index:99999;overflow:hidden;}
+.cms-wrap.open .cms-dropdown{display:block;}
+.cms-search-wrap{padding:8px 10px;border-bottom:1px solid #f1f5f9;}
+.cms-search{width:100%;padding:5px 8px 5px 28px;border:1px solid #e2e8f0;border-radius:6px;font-size:.8rem;outline:none;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2394a3b8' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 8px center;box-sizing:border-box;}
+.cms-search:focus{border-color:#7c3aed;}
+.cms-list{max-height:180px;overflow-y:auto;padding:4px 0;}
+.cms-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:.82rem;transition:background .1s;}
+.cms-item:hover{background:#f5f3ff;}
+.cms-item input[type=checkbox]{accent-color:#7c3aed;width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+.cms-item label{cursor:pointer;flex:1;color:var(--text);}
+.cms-footer{display:flex;gap:6px;padding:8px 10px;border-top:1px solid #f1f5f9;background:#fafbfc;}
+.cms-btn{flex:1;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;font-size:.75rem;font-weight:700;cursor:pointer;background:#fff;color:var(--text2);transition:all .12s;}
+.cms-btn:hover{background:#f1f5f9;}
+.cms-btn.done{background:#7c3aed;color:#fff;border-color:#7c3aed;}
+.cms-btn.done:hover{background:#6d28d9;}
+/* Flatpickr overrides */
+.flatpickr-calendar{font-family:inherit!important;border-radius:12px!important;box-shadow:0 8px 28px rgba(0,0,0,.14)!important;border:1.5px solid #c4b5fd!important;}
+.flatpickr-day.selected,.flatpickr-day.selected:hover{background:#7c3aed!important;border-color:#7c3aed!important;}
+.flatpickr-day:hover{background:#f3e8ff!important;}
+.flatpickr-months .flatpickr-month{background:#7c3aed!important;border-radius:10px 10px 0 0!important;}
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year{color:#fff!important;}
+.flatpickr-weekday{color:#7c3aed!important;font-weight:700!important;}
+.flatpickr-prev-month svg,.flatpickr-next-month svg{fill:#fff!important;}
+.flatpickr-input{cursor:pointer!important;}
+.date-input-wrap{position:relative;display:flex;align-items:center;}
+.date-input-wrap .fi-icon{position:absolute;right:9px;pointer-events:none;color:#94a3b8;font-size:.85rem;}
+
+body{margin:0;}table tr:nth-child(even) td{background:#f8fafc;}' +
+    'th{font-weight:700;text-align:left;}' +
+    '@media print{@page{margin:12mm;size:landscape;}}
+
+' +
+    '*{margin:0;padding:0;box-sizing:border-box;}' +
+    '@page{margin:0;size:80mm ' + pageH + 'mm;}' +
+    'html{width:80mm;height:' + pageH + 'mm;}' +
+    'body{width:80mm;height:' + pageH + 'mm;margin:0;padding:0;display:flex;align-items:flex-start;justify-content:flex-start;}' +
+    'table{width:80mm;border-collapse:collapse;table-layout:fixed;}' +
+    'td{width:40mm;height:20mm;border:1px solid #000;text-align:center;vertical-align:middle;padding:1mm;}' +
+    'td.empty{border:1px dashed #ccc;}' +
+    '.pname{font-size:6pt;font-weight:700;font-family:Arial;margin-bottom:1mm;line-height:1.1;}' +
+    '.scode{font-size:5pt;font-family:Arial;color:#222;margin-bottom:1mm;}' +
+    'hr{border:none;border-top:0.5px solid #000;width:80%;margin:0 auto 1mm;}' +
+    '.cname{font-size:5pt;font-weight:800;font-family:Arial;text-transform:uppercase;letter-spacing:.02em;}' +
+    '

@@ -1,0 +1,48 @@
+<!-- ═══════════════════════════════════════════════════════════
+     QR SCANNER MODAL  —  HANDHELD-ONLY EDITION
+     Replaces the camera+paste two-tab modal (lines 5413-5484 in
+     the old pm_stock.html). Single pane, just the manual / paste
+     input. The handheld scanner works WITHOUT this modal being
+     open — see the global interceptor in pm_stock_qr.js.
+
+     Paste this verbatim in pm_stock.html where the old modal was.
+══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="qrScanModal" style="z-index:1200">
+  <div class="modal" style="width:min(96vw,440px);max-height:90vh;padding:0;overflow:hidden;display:flex;flex-direction:column;border-radius:14px">
+
+    <div style="padding:14px 20px 10px;border-bottom:1px solid var(--hbdr,rgba(0,0,0,.09));flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:var(--htxtb,#111)">⌨️ Scan Box Label</div>
+        <div id="qrs-target-hint" style="font-size:10px;color:var(--teal,#0d9488);margin-top:2px;font-weight:600"></div>
+      </div>
+      <button class="modal-close" onclick="qrScanClose()">✕</button>
+    </div>
+
+    <!-- Manual / handheld pane (single pane, no tabs) -->
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:11px;color:var(--muted,#9ca3af);line-height:1.6;background:rgba(13,148,136,.05);border:1px solid rgba(13,148,136,.2);border-radius:7px;padding:8px 12px">
+        <strong style="color:var(--teal,#0d9488)">Handheld scanner:</strong> just scan — the code lands here automatically and applies on Enter. <em>Works anywhere on the page even without this dialog open.</em><br>
+        <strong style="color:var(--teal,#0d9488)">Manual:</strong> type or paste the box code below (e.g. <code style="font-family:'Courier New',monospace;background:rgba(13,148,136,.10);padding:1px 4px;border-radius:3px">BEARTUBE12-G0234-B003</code>) and press Enter.
+      </div>
+      <textarea id="qrs-paste-input" rows="3" placeholder="Scan a box label or type the box code…"
+        style="width:100%;background:var(--hinput,#fff);border:1.5px solid var(--border2,rgba(0,0,0,.13));
+          border-radius:7px;padding:10px 12px;font-size:13px;font-family:'Courier New',monospace;
+          font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+          color:var(--text,#111);outline:none;resize:vertical"
+        oninput="qrPasteCheck(this)"
+        onkeydown="qrPasteKey(event)"></textarea>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="qrs-paste-status" style="font-size:11px;color:var(--muted,#9ca3af);flex:1">Waiting for scan…</div>
+        <button class="btn btn-primary btn-sm" onclick="qrParsePaste()"><i class="fas fa-check"></i> Apply</button>
+      </div>
+    </div>
+
+    <!-- Result preview -->
+    <div id="qrs-result" style="display:none;margin:0 16px 16px;background:rgba(13,148,136,.07);
+      border:1.5px solid rgba(13,148,136,.25);border-radius:8px;padding:10px 14px;font-size:11px">
+      <div style="font-size:9px;font-weight:700;color:var(--teal,#0d9488);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">✅ Scanned Successfully</div>
+      <div id="qrs-result-content"></div>
+    </div>
+
+  </div>
+</div>

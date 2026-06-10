@@ -1,0 +1,37 @@
+{# ── Add this block to your sidebar in index.html, after CANTEEN MGMT ── #}
+
+{% if role in ['Purchase', 'admin'] %}
+<button class="nav-btn" onclick="window.location.href='/task_reminders'" style="position:relative;">
+    📋 TASK REMINDERS
+    <span id="sidebar-overdue-badge" style="
+        display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%);
+        background:#dc2626; color:white; font-size:0.6rem; font-weight:800;
+        padding:2px 7px; border-radius:20px; letter-spacing:0.4px;
+    ">0</span>
+</button>
+{% endif %}
+
+
+{# ── Add this script block anywhere before </body> in index.html ── #}
+<script>
+// Auto-fetch overdue badge count every 60 seconds for admin/Purchase
+(function() {
+    const role = "{{ session.get('User_Type') }}";
+    if (!['admin','Purchase'].includes(role)) return;
+
+    async function fetchOverdue() {
+        try {
+            const res  = await fetch('/api/task_reminders/overdue_count');
+            const data = await res.json();
+            const badge = document.getElementById('sidebar-overdue-badge');
+            if (badge) {
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+            }
+        } catch(e) {}
+    }
+
+    fetchOverdue();
+    setInterval(fetchOverdue, 60000);
+})();
+</script>

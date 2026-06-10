@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCP — Access Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#0f172a; --surface:#1e293b; --surface2:#263248; --surface3:#2d3a52;
+            --border:rgba(255,255,255,0.08); --brand:#0d9488; --brand-dim:rgba(13,148,136,0.15);
+            --text:#e2e8f0; --text-dim:#94a3b8; --text-muted:#64748b;
+            --red:#ef4444; --green:#22c55e; --amber:#f59e0b;
+            --shadow:0 4px 24px rgba(0,0,0,0.4);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+        .topbar-brand{font-size:12px;font-weight:800;color:var(--brand);letter-spacing:2px}
+        .topbar-sep{width:1px;height:22px;background:var(--border)}
+        .topbar-title{font-size:15px;font-weight:700}
+        .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+        .admin-pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(13,148,136,0.15);color:#0d9488;border:1px solid rgba(13,148,136,0.3)}
+        .user-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px 5px 8px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+        .user-chip-avatar{width:26px;height:26px;background:var(--brand-dim);color:var(--brand);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+        .back-link{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:0.15s}
+        .back-link:hover{border-color:var(--brand);color:var(--brand)}
+        .page-layout{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 58px)}
+        .user-panel{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+        /* Mobile toggle button */
+        .mobile-user-toggle{display:none;position:fixed;bottom:20px;right:20px;z-index:300;width:52px;height:52px;border-radius:50%;background:var(--brand);color:white;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.4);align-items:center;justify-content:center}
+        .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:250;backdrop-filter:blur(4px)}
+        @media(max-width:768px){
+          .page-layout{grid-template-columns:1fr;height:auto}
+          .user-panel{position:fixed;left:0;top:58px;bottom:0;width:min(300px,85vw);z-index:260;transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 24px rgba(0,0,0,0.4)}
+          .user-panel.open{transform:translateX(0)}
+          .mobile-overlay.open{display:block}
+          .mobile-user-toggle{display:flex}
+          .perm-panel{padding:16px 14px 100px}
+          .save-bar{left:0;padding:10px 14px}
+          .perm-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+          .perm-header{gap:10px}
+          .perm-header-left{width:100%}
+          .perm-title{font-size:15px}
+          .topbar{padding:0 14px;gap:10px}
+          .topbar-brand{font-size:11px}
+          .topbar-title{font-size:13px}
+          .admin-pill{display:none}
+          .module-controls{gap:4px}
+        }
+        @media(max-width:480px){
+          .perm-grid{grid-template-columns:1fr 1fr}
+          .topbar-title{display:none}
+        }
+        .user-panel-header{padding:16px 18px;border-bottom:1px solid var(--border)}
+        .user-panel-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+        .user-search{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;font-family:'Sora',sans-serif;color:var(--text);outline:none;transition:0.15s}
+        .user-search:focus{border-color:var(--brand)}
+        .user-item{padding:12px 18px;cursor:pointer;display:flex;align-items:center;gap:12px;border-left:3px solid transparent;transition:0.15s;border-bottom:1px solid var(--border)}
+        .user-item:hover{background:var(--surface2)}
+        .user-item.active{border-left-color:var(--brand);background:var(--brand-dim)}
+        .user-avatar{width:36px;height:36px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--brand);flex-shrink:0}
+        .user-info{flex:1;min-width:0}
+        .user-info-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .user-info-sub{font-size:10px;color:var(--text-muted);margin-top:1px}
+        .user-perm-count{font-size:9px;font-weight:700;background:var(--brand-dim);color:var(--brand);border-radius:10px;padding:2px 7px;flex-shrink:0}
+        .perm-panel{overflow-y:auto;padding:24px 28px 48px}
+        .perm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:14px;gap:12px}
+        .perm-header{display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+        .perm-header-left{flex:1}
+        .perm-title{font-size:18px;font-weight:800}
+        .perm-sub{font-size:12px;color:var(--text-dim);margin-top:4px}
+        .btn{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer;transition:0.15s;display:inline-flex;align-items:center;gap:8px;border:none}
+        .btn-primary{background:var(--brand);color:white}
+        .btn-primary:hover{background:#0f766e;transform:translateY(-1px)}
+        .btn-outline{background:var(--surface2);border:1.5px solid var(--border);color:var(--text-dim)}
+        .btn-outline:hover{border-color:var(--brand);color:var(--brand)}
+        .btn-danger{background:rgba(239,68,68,0.15);border:1.5px solid rgba(239,68,68,0.3);color:#ef4444}
+        .btn-danger:hover{background:#ef4444;color:white}
+        .btn-sm{padding:5px 12px;font-size:11px;border-radius:6px}
+        .module-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+        .module-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+        .module-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+        .module-title{font-size:14px;font-weight:800;flex:1}
+        .module-controls{display:flex;gap:8px}
+        .module-ctrl-btn{font-size:10px;font-weight:700;padding:3px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-family:'Sora',sans-serif;transition:0.15s}
+        .module-ctrl-btn:hover{border-color:var(--brand);color:var(--brand)}
+        .perm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+        .perm-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;transition:0.15s}
+        .perm-item:hover{border-color:rgba(13,148,136,0.4)}
+        .perm-item.active{border-color:rgba(13,148,136,0.4);background:var(--brand-dim)}
+        .perm-label{font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
+        .perm-label-icon{font-size:13px}
+        .toggle-track{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0}
+        .toggle-bg{position:absolute;inset:0;border-radius:20px;background:#475569;transition:0.2s}
+        .toggle-bg.on{background:var(--brand)}
+        .toggle-knob{position:absolute;width:14px;height:14px;top:3px;left:3px;background:#94a3b8;border-radius:50%;transition:0.2s}
+        .toggle-knob.on{left:19px;background:white}
+        .save-bar{position:fixed;bottom:0;left:300px;right:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:14px;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,0.3);transform:translateY(100%);transition:0.3s}
+        .save-bar.visible{transform:translateY(0)}
+        .save-bar-msg{flex:1;font-size:12px;color:var(--text-dim)}
+        .toast{position:fixed;bottom:80px;right:24px;background:var(--surface,#1e293b);color:white;border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:999;opacity:0;pointer-events:none;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;box-shadow:var(--shadow);max-width:340px}
+        .toast.show{opacity:1;pointer-events:auto;transform:translateY(0)} .toast.success{background:#14532d} .toast.error{background:#7f1d1d}
+        ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    
+/* ══ HCP MULTI-THEME ══════════════════════════════════════════════════════ */
+[data-theme="light"]{--hcp-bg:linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)}
+[data-theme="dark"]  {--hcp-bg:linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)}
+[data-theme="ocean"] {--hcp-bg:linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)}
+[data-theme="rose"]  {--hcp-bg:linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)}
+[data-theme="slate"] {--hcp-bg:linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)}
+
+/* Settings overlay */
+#hcp-settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  backdrop-filter:blur(8px);z-index:99998;justify-content:center;align-items:flex-start;padding-top:80px}
+#hcp-settings-overlay.open{display:flex}
+#hcp-settings-panel{background:var(--card-bg,#ffffff);border-radius:20px;width:420px;max-width:95vw;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);border:1px solid rgba(0,0,0,.08);
+  animation:hcpScaleIn .2s cubic-bezier(.4,0,.2,1);overflow:hidden}
+[data-theme="dark"] #hcp-settings-panel,
+[data-theme="ocean"] #hcp-settings-panel,
+[data-theme="slate"] #hcp-settings-panel{background:var(--surface,#1e293b);border-color:rgba(255,255,255,.1)}
+@keyframes hcpScaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.hcp-settings-head{display:flex;justify-content:space-between;align-items:center;
+  padding:18px 22px;border-bottom:1px solid rgba(0,0,0,.08)}
+[data-theme="dark"] .hcp-settings-head,
+[data-theme="ocean"] .hcp-settings-head,
+[data-theme="slate"] .hcp-settings-head{border-color:rgba(255,255,255,.08)}
+.hcp-settings-head h3{font-size:14px;font-weight:800;margin:0;
+  font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-bright,#0f172a)}
+[data-theme="dark"] .hcp-settings-head h3,
+[data-theme="ocean"] .hcp-settings-head h3,
+[data-theme="slate"] .hcp-settings-head h3{color:#f1f5f9}
+.hcp-settings-close{cursor:pointer;font-size:20px;color:var(--muted,#94a3b8);
+  background:none;border:none;line-height:1;padding:0}
+.hcp-settings-body{padding:20px 22px}
+.hcp-settings-lbl{font-size:9px;font-weight:800;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted,#94a3b8);margin-bottom:12px;
+  font-family:'Plus Jakarta Sans',sans-serif}
+.hcp-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px}
+.hcp-swatch{border-radius:12px;padding:10px 8px;cursor:pointer;
+  border:2px solid transparent;transition:all .18s;text-align:center}
+.hcp-swatch:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.hcp-swatch.active{border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.2)}
+.hcp-swatch-preview{width:100%;height:30px;border-radius:7px;margin-bottom:6px}
+.hcp-swatch-name{font-size:11px;font-weight:700;color:var(--text-main,#1e293b);
+  font-family:'Plus Jakarta Sans',sans-serif}
+[data-theme="dark"] .hcp-swatch-name,
+[data-theme="ocean"] .hcp-swatch-name,
+[data-theme="slate"] .hcp-swatch-name{color:var(--text-bright,#e2e8f0)}
+.hcp-swatch-tag{font-size:9px;color:var(--muted,#94a3b8);margin-top:2px}
+.hcp-swatch .hcp-active-dot{display:none;width:8px;height:8px;border-radius:50%;
+  background:#0d9488;margin:4px auto 0}
+.hcp-swatch.active .hcp-active-dot{display:block}
+@keyframes hcpFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Settings button */
+.hcp-settings-btn{width:34px;height:34px;border-radius:9px;
+  border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.6);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  font-size:15px;transition:all .2s;backdrop-filter:blur(8px);vertical-align:middle}
+.hcp-settings-btn:hover{transform:rotate(45deg);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+[data-theme="dark"] .hcp-settings-btn,
+[data-theme="ocean"] .hcp-settings-btn,
+[data-theme="slate"] .hcp-settings-btn{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.07)}
+/* ══ END HCP MULTI-THEME ═══════════════════════════════════════════════════ */
+
+</style>
+<link rel="stylesheet" href="/static/hcp_theme.css">
+</head>
+<body>
+{% set page_title = "Access Control" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Admin", "url": "#"}, {"label": "Access Control", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<!-- Mobile overlay & user panel toggle -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="closeMobilePanel()"></div>
+<button class="mobile-user-toggle" id="mobileToggle" onclick="toggleMobilePanel()" title="Users">👥</button>
+
+<div class="page-layout">
+    <!-- User List Panel -->
+    <div class="user-panel">
+        <div class="user-panel-header">
+            <div class="user-panel-label">Portal Users</div>
+            <input type="text" class="user-search" id="userSearch" placeholder="🔍 Search users…" oninput="renderUserList(this.value)">
+        </div>
+        <div id="userList"></div>
+    </div>
+
+    <!-- Permissions Panel -->
+    <div class="perm-panel" id="permPanel">
+        <div class="perm-empty" id="permEmpty">
+            <i class="fas fa-shield-alt" style="font-size:48px;color:var(--brand);opacity:0.4"></i>
+            <div>Select a user to manage their permissions</div>
+        </div>
+        <div id="permContent" style="display:none"></div>
+    </div>
+</div>
+
+<!-- Save Bar -->
+<div class="save-bar" id="saveBar">
+    <span class="save-bar-msg">⚠ You have unsaved permission changes</span>
+    <button class="btn btn-outline btn-sm" onclick="discardChanges()">Discard</button>
+    <button class="btn btn-primary btn-sm" onclick="saveAccess()"><i class="fas fa-save"></i> Save Changes</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── Module Definitions ────────────────────────────────────── */
+const MODULES = [
+    { id:'production_init', label:'Production Initiater', icon:'🏭', color:'#0d9488', bg:'rgba(13,148,136,0.15)',
+      items:[ {id:'pi_view',title:'View',icon:'👁'}, {id:'pi_add',title:'Add Batch',icon:'➕'}, {id:'pi_edit',title:'Edit',icon:'✏'}, {id:'pi_print_sheets',title:'Print Sheets',icon:'🖨'}, {id:'pi_print_labels',title:'Print Labels',icon:'🏷'}, {id:'pi_delete',title:'Delete',icon:'🗑'} ] },
+    { id:'production_dept', label:'Production Department', icon:'⚙️', color:'#14b8a6', bg:'rgba(20,184,166,0.15)',
+      items:[ {id:'pd_view',title:'View',icon:'👁'}, {id:'pd_log',title:'Log Activity',icon:'📝'}, {id:'pd_complete',title:'Mark Complete',icon:'✅'}, {id:'pd_edit',title:'Edit',icon:'✏'}, {id:'pd_export',title:'Export',icon:'📤'} ] },
+    { id:'planning', label:'Planning Dashboard', icon:'📊', color:'#6366f1', bg:'rgba(99,102,241,0.15)',
+      items:[ {id:'pln_view',title:'View',icon:'👁'}, {id:'pln_pipeline',title:'Pipeline',icon:'📈'}, {id:'pln_leaderboard',title:'Leaderboard',icon:'🏆'}, {id:'pln_formulations',title:'Formulations',icon:'💰'}, {id:'pln_export',title:'Export',icon:'📤'} ] },
+    { id:'qc_dashboard', label:'QC Dashboard', icon:'🔬', color:'#06b6d4', bg:'rgba(6,182,212,0.15)',
+      items:[ {id:'qcd_view',title:'View',icon:'👁'}, {id:'qcd_approve',title:'Approve QC',icon:'✅'}, {id:'qcd_reject',title:'Reject QC',icon:'❌'}, {id:'qcd_reports',title:'Reports',icon:'📊'}, {id:'qcd_export',title:'Export',icon:'📤'} ] },
+    { id:'qc_sampling', label:'QC Sampling', icon:'🧫', color:'#0891b2', bg:'rgba(8,145,178,0.15)',
+      items:[ {id:'qcs_view',title:'View',icon:'👁'}, {id:'qcs_add',title:'Add',icon:'➕'}, {id:'qcs_edit',title:'Edit',icon:'✏'}, {id:'qcs_print',title:'Print',icon:'🖨'}, {id:'qcs_reports',title:'Reports',icon:'📊'} ] },
+    { id:'rd_sampling', label:'R&D Sampling', icon:'🧪', color:'#8b5cf6', bg:'rgba(139,92,246,0.15)',
+      items:[ {id:'rd_view',title:'View',icon:'👁'}, {id:'rd_add',title:'Add',icon:'➕'}, {id:'rd_edit',title:'Edit',icon:'✏'}, {id:'rd_print',title:'Print',icon:'🖨'}, {id:'rd_approve',title:'Approve',icon:'✅'}, {id:'rd_fml_request',title:'Formulation Request',icon:'🧬'}, {id:'rd_fml_print',title:'Formulation Print',icon:'📋'}, {id:'rd_fml_approve',title:'Formulation Approve',icon:'🔏'} ] },
+    { id:'procurement', label:'Procurement Dashboard', icon:'🛒', color:'#f59e0b', bg:'rgba(245,158,11,0.15)',
+      items:[ {id:'proc_view',title:'View',icon:'👁'}, {id:'proc_add',title:'Add PO',icon:'➕'}, {id:'proc_edit',title:'Edit',icon:'✏'}, {id:'proc_approve',title:'Approve',icon:'✅'}, {id:'proc_grn',title:'GRN Entry',icon:'📦'}, {id:'proc_export',title:'Export',icon:'📤'} ] },
+    { id:'packing', label:'Packing Entry', icon:'📋', color:'#10b981', bg:'rgba(16,185,129,0.15)',
+      items:[ {id:'pck_view',title:'View',icon:'👁'}, {id:'pck_add',title:'Add Entry',icon:'➕'}, {id:'pck_edit',title:'Edit',icon:'✏'}, {id:'pck_delete',title:'Delete',icon:'🗑'}, {id:'pck_export',title:'Export',icon:'📤'} ] },
+    { id:'canteen', label:'Canteen Management', icon:'🍽', color:'#ec4899', bg:'rgba(236,72,153,0.15)',
+      items:[ {id:'ctn_view',title:'View',icon:'👁'}, {id:'ctn_emp',title:'Employees',icon:'👥'}, {id:'ctn_lunch',title:'Lunch Logs',icon:'🍛'}, {id:'ctn_pay',title:'Payments',icon:'💰'}, {id:'ctn_exp',title:'Expenses',icon:'📑'}, {id:'ctn_coupon',title:'Print Coupons',icon:'🎟'} ] },
+    { id:'invoice', label:'Invoice Doc Checklist', icon:'📄', color:'#3b82f6', bg:'rgba(59,130,246,0.15)',
+      items:[ {id:'inv_view',title:'View',icon:'👁'}, {id:'inv_add',title:'Add',icon:'➕'}, {id:'inv_edit',title:'Edit',icon:'✏'}, {id:'inv_approve',title:'Approve',icon:'✅'}, {id:'inv_export',title:'Export',icon:'📤'} ] },
+    { id:'scheduler', label:'Task Scheduler', icon:'📅', color:'#22c55e', bg:'rgba(34,197,94,0.15)',
+      items:[ {id:'sch_view',title:'View',icon:'👁'}, {id:'sch_own_add',title:'Own Dept Add',icon:'➕'}, {id:'sch_all_add',title:'All Depts Add',icon:'🌐'}, {id:'sch_edit',title:'Edit',icon:'✏'}, {id:'sch_delete',title:'Delete',icon:'🗑'} ] },
+    { id:'users', label:'User Management', icon:'👤', color:'#f97316', bg:'rgba(249,115,22,0.15)',
+      items:[ {id:'usr_view',title:'View',icon:'👁'}, {id:'usr_create',title:'Create',icon:'➕'}, {id:'usr_edit',title:'Edit',icon:'✏'}, {id:'usr_deactivate',title:'Deactivate',icon:'🚫'}, {id:'usr_reset',title:'Reset Pwd',icon:'🔑'}, {id:'usr_access',title:'Access Panel',icon:'🔐'} ] },
+];
+
+const ROLE_DEFAULTS = {
+    admin:      Object.fromEntries(MODULES.flatMap(m => m.items.map(i => [i.id, true]))),
+    Purchase:   {proc_view:1,proc_add:1,proc_edit:1,proc_grn:1,proc_export:1,inv_view:1,inv_add:1,inv_approve:1,ctn_view:1,ctn_lunch:1,ctn_coupon:1},
+    RD:         {rd_view:1,rd_add:1,rd_edit:1,rd_print:1,rd_approve:1,rd_fml_request:1,rd_fml_print:1},
+    QC:         {qcs_view:1,qcs_add:1,qcs_edit:1,qcs_print:1,qcs_reports:1,qcd_view:1,qcd_approve:1,qcd_reject:1,qcd_reports:1,qcd_export:1},
+    Production: {pd_view:1,pd_log:1,pd_complete:1,sch_view:1},
+    Planning:   {pln_view:1,pln_pipeline:1,pln_leaderboard:1,pln_formulations:1,pln_export:1},
+    Packing:    {pck_view:1,pck_add:1,pck_edit:1,pck_export:1},
+    Stores:     {proc_view:1,pi_view:1,pi_print_sheets:1,pi_print_labels:1,sch_view:1},
+    HR:         {usr_view:1,sch_view:1,ctn_view:1},
+    User:       {sch_view:1},
+};
+
+/* ── Users from Flask ──────────────────────────────────────── */
+let allUsers     = {{ users | tojson }};
+let permStore    = {};
+let permLoaded   = {};
+let selectedId   = null;
+let unsaved      = false;
+
+allUsers.forEach(u => {
+    const def = ROLE_DEFAULTS[u.user_type] || {};
+    permStore[u.id] = Object.fromEntries(MODULES.flatMap(m => m.items.map(i => [i.id, !!def[i.id]])));
+});
+
+/* ── User List ─────────────────────────────────────────────── */
+function renderUserList(q = '') {
+    const filtered = allUsers.filter(u =>
+        (u.full_name || '').toLowerCase().includes(q.toLowerCase()) ||
+        (u.username  || '').toLowerCase().includes(q.toLowerCase()) ||
+        (u.department|| '').toLowerCase().includes(q.toLowerCase())
+    );
+    const typeColors = {admin:'#0d9488', Purchase:'#f59e0b', RD:'#8b5cf6', QC:'#06b6d4',
+                        Production:'#22c55e', RM_Store:'#0d9488', Stores:'#3b82f6', HR:'#ec4899', User:'#94a3b8'};
+    document.getElementById('userList').innerHTML = filtered.map(u => {
+        const initials = (u.full_name || u.username || '??').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+        const clr = typeColors[u.user_type] || '#64748b';
+        const cnt = (permStore[u.id] && Object.values(permStore[u.id]).filter(Boolean).length) || 0;
+        return `<div class="user-item ${selectedId === u.id ? 'active' : ''}" onclick="selectUser(${u.id})">
+            <div class="user-avatar" style="color:${clr};background:${clr}20">${initials}</div>
+            <div class="user-info">
+                <div class="user-info-name">${u.full_name || u.username}</div>
+                <div class="user-info-sub">${u.user_type} · ${u.department || '—'}</div>
+            </div>
+            <span class="user-perm-count">${cnt} perms</span>
+        </div>`;
+    }).join('');
+}
+
+/* ── Select User ───────────────────────────────────────────── */
+async function selectUser(userId) {
+    if (unsaved && selectedId !== userId) {
+        if (!confirm('You have unsaved changes. Discard and switch user?')) return;
+        unsaved = false; hideSaveBar();
+    }
+    selectedId = userId;
+    renderUserList(document.getElementById('userSearch').value);
+    // Close mobile panel after selection
+    if (window.innerWidth <= 768) closeMobilePanel();
+
+    // Ensure permStore entry exists — handles users added after page load
+    if (!permStore[userId]) {
+        const u = allUsers.find(x => x.id === userId);
+        const def = u ? (ROLE_DEFAULTS[u.user_type] || {}) : {};
+        permStore[userId] = Object.fromEntries(MODULES.flatMap(m => m.items.map(i => [i.id, !!def[i.id]])));
+    }
+
+    // Load real perms from DB (once per user)
+    if (!permLoaded[userId]) {
+        try {
+            const res  = await fetch(`/api/access_control/get/${userId}`);
+            const data = await res.json();
+            if (data.status === 'success' && Object.keys(data.permissions).length > 0) {
+                MODULES.flatMap(m => m.items).forEach(i => {
+                    permStore[userId][i.id] = !!data.permissions[i.id];
+                });
+            }
+            permLoaded[userId] = true;
+        } catch(e) { console.warn('Could not load perms', e); }
+    }
+    renderPermPanel(userId);
+}
+
+/* ── Permission Panel ──────────────────────────────────────── */
+function renderPermPanel(userId) {
+    const u = allUsers.find(x => x.id === userId); if (!u) return;
+    document.getElementById('permEmpty').style.display   = 'none';
+    document.getElementById('permContent').style.display = 'block';
+
+    const typeColors = {admin:'#0d9488', Purchase:'#f59e0b', RD:'#8b5cf6', QC:'#06b6d4',
+                        Production:'#22c55e', RM_Store:'#0d9488', Stores:'#3b82f6', HR:'#ec4899', User:'#94a3b8'};
+    const clr = typeColors[u.user_type] || '#64748b';
+
+    document.getElementById('permContent').innerHTML = `
+    <div class="perm-header">
+        <div class="perm-header-left">
+            <div class="perm-title">${u.full_name || u.username}</div>
+            <div class="perm-sub">
+                <span style="color:${clr};font-weight:700">${u.user_type}</span>
+                · ${u.department || 'No Department'} · Access Level ${u.access_level || 1}
+            </div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="applyRoleDefaults(${userId})">↺ Role Defaults</button>
+        <button class="btn btn-danger btn-sm" onclick="revokeAll(${userId})">🚫 Revoke All</button>
+    </div>
+    ${MODULES.map(m => `
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon" style="background:${m.bg};color:${m.color}">${m.icon}</div>
+            <div class="module-title">${m.label}</div>
+            <div class="module-controls">
+                <button class="module-ctrl-btn" onclick="enableModule('${m.id}',${userId})">Enable All</button>
+                <button class="module-ctrl-btn" onclick="disableModule('${m.id}',${userId})">Disable All</button>
+            </div>
+        </div>
+        <div class="perm-grid">
+            ${m.items.map(i => {
+                const on = !!(permStore[userId] && permStore[userId][i.id]);
+                return `<div class="perm-item ${on?'active':''}" id="pitem-${userId}-${i.id}" onclick="togglePerm(${userId},'${i.id}')">
+                    <span class="perm-label"><span class="perm-label-icon">${i.icon}</span>${i.title}</span>
+                    <div class="toggle-track">
+                        <div class="toggle-bg ${on?'on':''}" id="tbg-${userId}-${i.id}"></div>
+                        <div class="toggle-knob ${on?'on':''}" id="tkn-${userId}-${i.id}"></div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>`).join('')}`;
+}
+
+function togglePerm(userId, permId) {
+    const curr = !!(permStore[userId] && permStore[userId][permId]);
+    permStore[userId][permId] = !curr;
+    const on = !curr;
+    document.getElementById(`pitem-${userId}-${permId}`).className = `perm-item ${on?'active':''}`;
+    document.getElementById(`tbg-${userId}-${permId}`).className   = `toggle-bg ${on?'on':''}`;
+    document.getElementById(`tkn-${userId}-${permId}`).className   = `toggle-knob ${on?'on':''}`;
+    markUnsaved();
+    renderUserList(document.getElementById('userSearch').value);
+}
+
+function enableModule(moduleId, userId) {
+    const m = MODULES.find(x => x.id === moduleId); if (!m) return;
+    m.items.forEach(i => { permStore[userId][i.id] = true; });
+    renderPermPanel(userId); markUnsaved();
+    renderUserList(document.getElementById('userSearch').value);
+}
+function disableModule(moduleId, userId) {
+    const m = MODULES.find(x => x.id === moduleId); if (!m) return;
+    m.items.forEach(i => { permStore[userId][i.id] = false; });
+    renderPermPanel(userId); markUnsaved();
+    renderUserList(document.getElementById('userSearch').value);
+}
+function applyRoleDefaults(userId) {
+    const u   = allUsers.find(x => x.id === userId); if (!u) return;
+    const def = ROLE_DEFAULTS[u.user_type] || {};
+    MODULES.flatMap(m => m.items).forEach(i => { permStore[userId][i.id] = !!def[i.id]; });
+    renderPermPanel(userId); markUnsaved();
+    renderUserList(document.getElementById('userSearch').value);
+    showToast('Role defaults applied', 'success');
+}
+function revokeAll(userId) {
+    if (!confirm('Revoke ALL permissions for this user? They will lose all access.')) return;
+    MODULES.flatMap(m => m.items).forEach(i => { permStore[userId][i.id] = false; });
+    renderPermPanel(userId); markUnsaved();
+    renderUserList(document.getElementById('userSearch').value);
+    showToast('All permissions revoked', 'error');
+}
+
+/* ── Save ──────────────────────────────────────────────────── */
+async function saveAccess() {
+    try {
+        const res  = await fetch('/api/access_control/save', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({user_id: selectedId, permissions: permStore[selectedId]})
+        });
+        const data = await res.json();
+        if (data.status !== 'success') { showToast(data.message || 'Save failed', 'error'); return; }
+        unsaved = false; hideSaveBar();
+        renderUserList(document.getElementById('userSearch').value);
+        showToast('Permissions saved ✓', 'success');
+    } catch(e) { showToast('Network error', 'error'); }
+}
+function discardChanges() {
+    if (!confirm('Discard all unsaved changes?')) return;
+    permLoaded[selectedId] = false; // force reload from DB on next select
+    unsaved = false; hideSaveBar();
+    selectUser(selectedId);
+}
+function markUnsaved() { unsaved = true; document.getElementById('saveBar').classList.add('visible'); }
+function hideSaveBar()  { document.getElementById('saveBar').classList.remove('visible'); }
+
+let _toastTimer = null;
+function showToast(msg, type = 'success') {
+    const icons = {success:'✅', error:'❌'};
+    const t = document.getElementById('toast');
+    t.innerHTML = `${icons[type]||''} ${msg}`;
+    t.className = 'toast';
+    void t.offsetWidth; // force reflow so animation re-triggers
+    t.className = `toast ${type} show`;
+    if(_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => { t.classList.remove('show'); _toastTimer = null; }, 3200);
+}
+
+/* ── Mobile Panel ──────────────────────────────────────────── */
+function toggleMobilePanel() {
+    const panel = document.querySelector('.user-panel');
+    const overlay = document.getElementById('mobileOverlay');
+    const btn = document.getElementById('mobileToggle');
+    panel.classList.toggle('open');
+    overlay.classList.toggle('open');
+    btn.textContent = panel.classList.contains('open') ? '✕' : '👥';
+}
+function closeMobilePanel() {
+    const panel = document.querySelector('.user-panel');
+    const overlay = document.getElementById('mobileOverlay');
+    const btn = document.getElementById('mobileToggle');
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    btn.textContent = '👥';
+}
+
+/* ── Escape key closes any open modal/panel ────────────────── */
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeMobilePanel();
+        hcpCloseSettings();
+    }
+});
+
+/* ── Init ──────────────────────────────────────────────────── */
+renderUserList();
+
+/* ── Auto-refresh user list when tab regains focus (picks up new users) ── */
+async function refreshUserList() {
+    try {
+        const res = await fetch('/api/users');
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        data.forEach(u => {
+            if (!allUsers.find(x => x.id === u.id)) {
+                allUsers.push(u);
+                const def = ROLE_DEFAULTS[u.user_type] || {};
+                permStore[u.id] = Object.fromEntries(MODULES.flatMap(m => m.items.map(i => [i.id, !!def[i.id]])));
+            }
+        });
+        renderUserList(document.getElementById('userSearch').value);
+    } catch(e) { /* silent */ }
+}
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshUserList();
+});
+</script>
+<script>
+/* ── HCP Universal Theme Engine ── */
+const HCP_THEMES = {
+  light: {'--bg':'linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)','--bg-main':'#f0fdf8','--bg-white':'#ffffff','--bg-topbar':'#ffffff','--hcp-bg':'linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)','--surface':'#ffffff','--surface-solid':'#ffffff','--surface2':'rgba(255,255,255,0.65)','--surface3':'#f1f5f9','--card':'#ffffff','--card-bg':'#ffffff','--sidebar':'#f8f9fb','--bg-sidebar':'#2c3e50','--border':'rgba(0,0,0,0.08)','--border2':'rgba(0,0,0,0.12)','--glass-border':'rgba(255,255,255,0.88)','--text':'#1e293b','--text-bright':'#0f172a','--text-primary':'#0f172a','--text-dim':'#64748b','--text-muted':'#94a3b8','--muted':'#94a3b8','--muted2':'#64748b','--brand':'#0d9488','--brand-dim':'#0f766e','--brand-dark':'#0f766e','--brand-glow':'rgba(13,148,136,0.14)','--accent':'#06b6d4','--accent2':'#6366f1','--primary':'#0d9488','--primary-hover':'#0f766e','--primary-light':'#f0fdfa','--topbar-bg':'rgba(255,255,255,0.88)','--sidebar-bg':'rgba(255,255,255,0.72)','--input-bg':'rgba(255,255,255,0.72)','--input-border':'rgba(0,0,0,0.1)','--table-head-bg':'rgba(248,250,252,0.9)','--table-row-hover':'rgba(13,148,136,0.04)','--shadow':'0 4px 20px rgba(0,0,0,0.06)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.06)','--topbar-shadow':'0 1px 0 #d1d9e6','--success':'#059669','--success-light':'#ecfdf5','--danger':'#ef4444','--warn':'#f59e0b','--info':'#06b6d4','--s0':'#f8fafc','--s1':'#f1f5f9','--s2':'#e2e8f0','--s3':'#cbd5e1','--s4':'#94a3b8','--s5':'#64748b','--t0':'#0f172a','--t1':'#1e293b','--t2':'#475569','--t3':'#94a3b8','--ac':'#0d9488','--ac-d':'#0f766e','--ac-g':'rgba(13,148,136,0.16)','--ac-s':'rgba(13,148,136,0.07)','--l0':'rgba(0,0,0,0.03)','--l1':'rgba(0,0,0,0.06)','--l2':'rgba(0,0,0,0.1)','--l3':'rgba(0,0,0,0.16)','--rd':'#ef4444','--am':'#f59e0b','--gr':'#10b981','--pu':'#8b5cf6','--accent-color':'#0d9488','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#f1f5f9','--text-main':'#1e293b','--text-secondary':'#64748b','--text-nav':'#bdc3c7','--topbar':'rgba(255,255,255,0.88)','--header':'#f8fafc','--row-hover':'rgba(13,148,136,0.04)','--scrollbar-track':'#f1f5f9','--scrollbar-thumb':'rgba(0,0,0,0.12)','--bg-input':'#ffffff','--bg-input-ro':'#f8fafc','--bg-modal':'#ffffff','--bg-stat-card':'#ffffff','--bg-table-head':'#f8fafc','--bg-chart-card':'#ffffff','--bg-actionbar':'#f1f5f9','--bg-sidebar-hover':'#34495e','--border-card':'rgba(0,0,0,0.08)','--border-light':'rgba(0,0,0,0.05)','--border-main':'#e2e8f0','--border-focus':'#93c5fd','--shadow-card':'0 2px 8px rgba(0,0,0,0.06)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.05)','--shadow-md':'0 4px 12px rgba(0,0,0,0.08)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.12)','--error-bg':'#fef2f2','--error-text':'#dc2626','--error-border':'#fecaca','--warn-bg':'#fffbeb','--warn-text':'#d97706','--warn-border':'#fde68a','--success-bg':'#f0fdf4','--success-text':'#059669','--success-border':'#a7f3d0','--input-focus':'#f0fdfa','--purple':'#7c3aed','--purple-light':'#f5f3ff','--danger-light':'#fef2f2','--warning':'#d97706','--warning-light':'#fffbeb','--green':'#10b981','--green-dim':'rgba(16,185,129,0.1)','--green-glow':'rgba(16,185,129,0.2)','--red':'#ef4444','--red-dim':'rgba(239,68,68,0.1)','--amber':'#f59e0b','--orange':'#f97316','--yellow':'#eab308','--blue':'#3b82f6','--radius':'12px','--badge-bg':'#f1f5f9','--brand-glow2':'rgba(13,148,136,0.07)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.06)','--sh-m':'0 4px 16px rgba(0,0,0,0.08)','--sh-l':'0 8px 32px rgba(0,0,0,0.12)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(239,68,68,0.15)','--rd-g':'rgba(239,68,68,0.08)','--gr-b':'rgba(16,185,129,0.15)','--gr-g':'rgba(16,185,129,0.08)','--bl':'#3b82f6','--bl-b':'rgba(59,130,246,0.15)','--pu-g':'rgba(139,92,246,0.08)','--pu-s':'rgba(139,92,246,0.15)','--wa':'#f59e0b','--wa-d':'#d97706','--fb':'#f8fafc','--fd':'#0f172a','--fm':'#1e293b'},
+  dark:  {'--bg':'linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)','--bg-main':'#0f172a','--bg-white':'#1e293b','--bg-topbar':'rgba(12,17,23,0.92)','--hcp-bg':'linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)','--surface':'rgba(22,28,40,0.85)','--surface-solid':'#161c28','--surface2':'rgba(22,28,40,0.65)','--surface3':'#1e2a3a','--card':'#1e293b','--card-bg':'#1e293b','--sidebar':'#1e293b','--bg-sidebar':'#1a2035','--border':'rgba(255,255,255,0.08)','--border2':'rgba(255,255,255,0.12)','--glass-border':'rgba(255,255,255,0.07)','--text':'#cbd5e1','--text-bright':'#f1f5f9','--text-primary':'#f1f5f9','--text-dim':'#94a3b8','--text-muted':'#475569','--muted':'#475569','--muted2':'#64748b','--brand':'#14b8a6','--brand-dim':'#0d9488','--brand-dark':'#0d9488','--brand-glow':'rgba(20,184,166,0.18)','--accent':'#22d3ee','--accent2':'#818cf8','--primary':'#14b8a6','--primary-hover':'#0d9488','--primary-light':'rgba(20,184,166,0.12)','--topbar-bg':'rgba(12,17,23,0.92)','--sidebar-bg':'rgba(16,20,32,0.92)','--input-bg':'rgba(255,255,255,0.05)','--input-border':'rgba(255,255,255,0.1)','--table-head-bg':'rgba(255,255,255,0.03)','--table-row-hover':'rgba(20,184,166,0.05)','--shadow':'0 4px 20px rgba(0,0,0,0.4)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.3)','--topbar-shadow':'0 1px 0 rgba(255,255,255,0.05)','--success':'#10b981','--success-light':'rgba(16,185,129,0.12)','--danger':'#f43f5e','--warn':'#f59e0b','--info':'#22d3ee','--s0':'#090e1a','--s1':'#0f1724','--s2':'#162030','--s3':'#1c2a3f','--s4':'#223349','--s5':'#293d55','--t0':'#f0f6ff','--t1':'#c8d8ee','--t2':'#8099b8','--t3':'#4a6080','--ac':'#00d4b4','--ac-d':'#00ae94','--ac-g':'rgba(0,212,180,0.16)','--ac-s':'rgba(0,212,180,0.07)','--l0':'rgba(255,255,255,0.04)','--l1':'rgba(255,255,255,0.08)','--l2':'rgba(255,255,255,0.14)','--l3':'rgba(255,255,255,0.22)','--rd':'#f43f5e','--am':'#fbbf24','--gr':'#34d399','--pu':'#a78bfa','--accent-color':'#14b8a6','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#0f172a','--text-main':'#cbd5e1','--text-secondary':'#94a3b8','--text-nav':'#475569','--topbar':'rgba(12,17,23,0.92)','--header':'rgba(255,255,255,0.03)','--row-hover':'rgba(20,184,166,0.05)','--scrollbar-track':'#0f172a','--scrollbar-thumb':'rgba(255,255,255,0.1)','--bg-input':'rgba(255,255,255,0.05)','--bg-input-ro':'rgba(255,255,255,0.03)','--bg-modal':'#1e293b','--bg-stat-card':'#1e293b','--bg-table-head':'rgba(255,255,255,0.03)','--bg-chart-card':'#1e293b','--bg-actionbar':'#0f172a','--bg-sidebar-hover':'rgba(255,255,255,0.07)','--border-card':'rgba(255,255,255,0.08)','--border-light':'rgba(255,255,255,0.04)','--border-main':'rgba(255,255,255,0.08)','--border-focus':'#0d9488','--shadow-card':'0 2px 8px rgba(0,0,0,0.3)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.3)','--shadow-md':'0 4px 12px rgba(0,0,0,0.35)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.45)','--error-bg':'rgba(239,68,68,0.12)','--error-text':'#f87171','--error-border':'rgba(239,68,68,0.25)','--warn-bg':'rgba(245,158,11,0.12)','--warn-text':'#fbbf24','--warn-border':'rgba(245,158,11,0.25)','--success-bg':'rgba(16,185,129,0.12)','--success-text':'#34d399','--success-border':'rgba(16,185,129,0.25)','--input-focus':'rgba(20,184,166,0.12)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.12)','--danger-light':'rgba(244,63,94,0.12)','--warning':'#fbbf24','--warning-light':'rgba(245,158,11,0.12)','--green':'#34d399','--green-dim':'rgba(52,211,153,0.1)','--green-glow':'rgba(52,211,153,0.2)','--red':'#f43f5e','--red-dim':'rgba(244,63,94,0.1)','--amber':'#fbbf24','--orange':'#fb923c','--yellow':'#fbbf24','--blue':'#60a5fa','--radius':'12px','--badge-bg':'rgba(255,255,255,0.07)','--brand-glow2':'rgba(20,184,166,0.09)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.3)','--sh-m':'0 4px 16px rgba(0,0,0,0.35)','--sh-l':'0 8px 32px rgba(0,0,0,0.45)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(244,63,94,0.15)','--rd-g':'rgba(244,63,94,0.08)','--gr-b':'rgba(52,211,153,0.15)','--gr-g':'rgba(52,211,153,0.08)','--bl':'#60a5fa','--bl-b':'rgba(96,165,250,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#fbbf24','--wa-d':'#f59e0b','--fb':'#0f172a','--fd':'#f1f5f9','--fm':'#e2e8f0'},
+  ocean: {'--bg':'linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)','--bg-main':'#082844','--bg-white':'#0c2d4e','--bg-topbar':'rgba(8,24,50,0.94)','--hcp-bg':'linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)','--surface':'rgba(14,42,71,0.82)','--surface-solid':'#0c2d4e','--surface2':'rgba(14,42,71,0.6)','--surface3':'#0f3460','--card':'#0c2d4e','--card-bg':'#0c2d4e','--sidebar':'#071e38','--bg-sidebar':'#051828','--border':'rgba(56,189,248,0.12)','--border2':'rgba(56,189,248,0.2)','--glass-border':'rgba(56,189,248,0.18)','--text':'#bae6fd','--text-bright':'#e0f2fe','--text-primary':'#e0f2fe','--text-dim':'#7dd3fc','--text-muted':'#4a7ea8','--muted':'#4a7ea8','--muted2':'#5b8db8','--brand':'#38bdf8','--brand-dim':'#0ea5e9','--brand-dark':'#0ea5e9','--brand-glow':'rgba(56,189,248,0.22)','--accent':'#67e8f9','--accent2':'#a78bfa','--primary':'#38bdf8','--primary-hover':'#0ea5e9','--primary-light':'rgba(56,189,248,0.12)','--topbar-bg':'rgba(8,24,50,0.94)','--sidebar-bg':'rgba(8,28,55,0.92)','--input-bg':'rgba(255,255,255,0.06)','--input-border':'rgba(56,189,248,0.2)','--table-head-bg':'rgba(255,255,255,0.04)','--table-row-hover':'rgba(56,189,248,0.06)','--shadow':'0 4px 20px rgba(0,0,0,0.5)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.4)','--topbar-shadow':'0 1px 0 rgba(56,189,248,0.1)','--success':'#34d399','--success-light':'rgba(52,211,153,0.15)','--danger':'#f87171','--warn':'#fbbf24','--info':'#67e8f9','--s0':'#051828','--s1':'#082035','--s2':'#0a2d4a','--s3':'#0d3a5e','--s4':'#104872','--s5':'#145686','--t0':'#e0f2fe','--t1':'#bae6fd','--t2':'#7dd3fc','--t3':'#38bdf8','--ac':'#38bdf8','--ac-d':'#0ea5e9','--ac-g':'rgba(56,189,248,0.16)','--ac-s':'rgba(56,189,248,0.07)','--l0':'rgba(56,189,248,0.04)','--l1':'rgba(56,189,248,0.08)','--l2':'rgba(56,189,248,0.14)','--l3':'rgba(56,189,248,0.22)','--rd':'#f87171','--am':'#fbbf24','--gr':'#34d399','--pu':'#a78bfa','--accent-color':'#38bdf8','--db-color':'#a78bfa','--zip-color':'#34d399','--bg-body':'#082844','--text-main':'#bae6fd','--text-secondary':'#7dd3fc','--text-nav':'#4a7ea8','--topbar':'rgba(8,24,50,0.94)','--header':'rgba(56,189,248,0.05)','--row-hover':'rgba(56,189,248,0.06)','--scrollbar-track':'#082844','--scrollbar-thumb':'rgba(56,189,248,0.15)','--bg-input':'rgba(255,255,255,0.06)','--bg-input-ro':'rgba(255,255,255,0.03)','--bg-modal':'#0c2d4e','--bg-stat-card':'#0c2d4e','--bg-table-head':'rgba(56,189,248,0.05)','--bg-chart-card':'#0c2d4e','--bg-actionbar':'#051828','--bg-sidebar-hover':'rgba(56,189,248,0.1)','--border-card':'rgba(56,189,248,0.12)','--border-light':'rgba(56,189,248,0.06)','--border-main':'rgba(56,189,248,0.15)','--border-focus':'#38bdf8','--shadow-card':'0 2px 8px rgba(0,0,0,0.4)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.4)','--shadow-md':'0 4px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.55)','--error-bg':'rgba(248,113,113,0.15)','--error-text':'#fca5a5','--error-border':'rgba(248,113,113,0.3)','--warn-bg':'rgba(251,191,36,0.15)','--warn-text':'#fde68a','--warn-border':'rgba(251,191,36,0.3)','--success-bg':'rgba(52,211,153,0.15)','--success-text':'#6ee7b7','--success-border':'rgba(52,211,153,0.3)','--input-focus':'rgba(56,189,248,0.15)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.15)','--danger-light':'rgba(248,113,113,0.15)','--warning':'#fbbf24','--warning-light':'rgba(251,191,36,0.15)','--green':'#34d399','--green-dim':'rgba(52,211,153,0.1)','--green-glow':'rgba(52,211,153,0.2)','--red':'#f87171','--red-dim':'rgba(248,113,113,0.1)','--amber':'#fbbf24','--orange':'#fb923c','--yellow':'#fde68a','--blue':'#67e8f9','--radius':'12px','--badge-bg':'rgba(56,189,248,0.1)','--brand-glow2':'rgba(56,189,248,0.1)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.4)','--sh-m':'0 4px 16px rgba(0,0,0,0.45)','--sh-l':'0 8px 32px rgba(0,0,0,0.55)','--am-b':'rgba(251,191,36,0.15)','--am-g':'rgba(251,191,36,0.08)','--rd-b':'rgba(248,113,113,0.15)','--rd-g':'rgba(248,113,113,0.08)','--gr-b':'rgba(52,211,153,0.15)','--gr-g':'rgba(52,211,153,0.08)','--bl':'#67e8f9','--bl-b':'rgba(103,232,249,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#fbbf24','--wa-d':'#f59e0b','--fb':'#051828','--fd':'#e0f2fe','--fm':'#bae6fd'},
+  rose:  {'--bg':'linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)','--bg-main':'#fdf2f8','--bg-white':'#ffffff','--bg-topbar':'#ffffff','--hcp-bg':'linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)','--surface':'rgba(255,255,255,0.85)','--surface-solid':'#ffffff','--surface2':'rgba(255,255,255,0.65)','--surface3':'#fdf2f8','--card':'#ffffff','--card-bg':'#ffffff','--sidebar':'#fff5f7','--bg-sidebar':'#9d174d','--border':'rgba(225,29,72,0.1)','--border2':'rgba(225,29,72,0.18)','--glass-border':'rgba(255,255,255,0.9)','--text':'#4a0520','--text-bright':'#1e0433','--text-primary':'#1e0433','--text-dim':'#9d174d','--text-muted':'#c084fc','--muted':'#c084fc','--muted2':'#a855f7','--brand':'#e11d48','--brand-dim':'#be123c','--brand-dark':'#be123c','--brand-glow':'rgba(225,29,72,0.14)','--accent':'#d946ef','--accent2':'#a855f7','--primary':'#e11d48','--primary-hover':'#be123c','--primary-light':'#fff1f2','--topbar-bg':'rgba(255,255,255,0.9)','--sidebar-bg':'rgba(255,255,255,0.76)','--input-bg':'rgba(255,255,255,0.75)','--input-border':'rgba(225,29,72,0.15)','--table-head-bg':'rgba(255,241,242,0.9)','--table-row-hover':'rgba(225,29,72,0.04)','--shadow':'0 4px 20px rgba(225,29,72,0.08)','--shadow-sm':'0 2px 8px rgba(225,29,72,0.06)','--topbar-shadow':'0 1px 0 #fecdd3','--success':'#059669','--success-light':'#ecfdf5','--danger':'#e11d48','--warn':'#d97706','--info':'#d946ef','--s0':'#fff5f7','--s1':'#ffe4e6','--s2':'#fecdd3','--s3':'#fda4af','--s4':'#fb7185','--s5':'#f43f5e','--t0':'#1e0433','--t1':'#4a0520','--t2':'#9d174d','--t3':'#be123c','--ac':'#e11d48','--ac-d':'#be123c','--ac-g':'rgba(225,29,72,0.16)','--ac-s':'rgba(225,29,72,0.07)','--l0':'rgba(225,29,72,0.03)','--l1':'rgba(225,29,72,0.07)','--l2':'rgba(225,29,72,0.12)','--l3':'rgba(225,29,72,0.2)','--rd':'#e11d48','--am':'#d97706','--gr':'#059669','--pu':'#a855f7','--accent-color':'#e11d48','--db-color':'#f472b6','--zip-color':'#34d399','--bg-body':'#fdf2f8','--text-main':'#4a0520','--text-secondary':'#9d174d','--text-nav':'#be185d','--topbar':'rgba(255,255,255,0.9)','--header':'#fff5f7','--row-hover':'rgba(225,29,72,0.04)','--scrollbar-track':'#fdf2f8','--scrollbar-thumb':'rgba(225,29,72,0.1)','--bg-input':'#ffffff','--bg-input-ro':'#fff5f7','--bg-modal':'#ffffff','--bg-stat-card':'#ffffff','--bg-table-head':'#fff5f7','--bg-chart-card':'#ffffff','--bg-actionbar':'#fff1f2','--bg-sidebar-hover':'#be185d','--border-card':'rgba(225,29,72,0.1)','--border-light':'rgba(225,29,72,0.06)','--border-main':'#fecdd3','--border-focus':'#e11d48','--shadow-card':'0 2px 8px rgba(225,29,72,0.06)','--shadow-topbar':'0 2px 4px rgba(225,29,72,0.05)','--shadow-md':'0 4px 12px rgba(225,29,72,0.1)','--shadow-lg':'0 10px 30px rgba(225,29,72,0.15)','--error-bg':'#fff1f2','--error-text':'#be123c','--error-border':'#fecdd3','--warn-bg':'#fffbeb','--warn-text':'#d97706','--warn-border':'#fde68a','--success-bg':'#f0fdf4','--success-text':'#059669','--success-border':'#a7f3d0','--input-focus':'#fff1f2','--purple':'#a855f7','--purple-light':'#fdf4ff','--danger-light':'#fff1f2','--warning':'#d97706','--warning-light':'#fffbeb','--green':'#059669','--green-dim':'rgba(5,150,105,0.1)','--green-glow':'rgba(5,150,105,0.2)','--red':'#e11d48','--red-dim':'rgba(225,29,72,0.1)','--amber':'#d97706','--orange':'#ea580c','--yellow':'#d97706','--blue':'#2563eb','--radius':'12px','--badge-bg':'#fff1f2','--brand-glow2':'rgba(225,29,72,0.07)','--restore-color':'#d946ef','--copy-color':'#d97706','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(225,29,72,0.06)','--sh-m':'0 4px 16px rgba(225,29,72,0.1)','--sh-l':'0 8px 32px rgba(225,29,72,0.15)','--am-b':'rgba(217,119,6,0.15)','--am-g':'rgba(217,119,6,0.08)','--rd-b':'rgba(225,29,72,0.15)','--rd-g':'rgba(225,29,72,0.08)','--gr-b':'rgba(5,150,105,0.15)','--gr-g':'rgba(5,150,105,0.08)','--bl':'#2563eb','--bl-b':'rgba(37,99,235,0.15)','--pu-g':'rgba(168,85,247,0.08)','--pu-s':'rgba(168,85,247,0.15)','--wa':'#d97706','--wa-d':'#b45309','--fb':'#fff5f7','--fd':'#1e0433','--fm':'#4a0520'},
+  slate: {'--bg':'linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)','--bg-main':'#0f172a','--bg-white':'#1e293b','--bg-topbar':'rgba(15,23,42,0.97)','--hcp-bg':'linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)','--surface':'rgba(30,41,59,0.9)','--surface-solid':'#1e293b','--surface2':'rgba(30,41,59,0.7)','--surface3':'#263548','--card':'#1e293b','--card-bg':'#1e293b','--sidebar':'#0f172a','--bg-sidebar':'#0f172a','--border':'rgba(148,163,184,0.1)','--border2':'rgba(148,163,184,0.18)','--glass-border':'rgba(148,163,184,0.1)','--text':'#94a3b8','--text-bright':'#e2e8f0','--text-primary':'#e2e8f0','--text-dim':'#64748b','--text-muted':'#475569','--muted':'#475569','--muted2':'#64748b','--brand':'#94a3b8','--brand-dim':'#64748b','--brand-dark':'#64748b','--brand-glow':'rgba(148,163,184,0.15)','--accent':'#e2e8f0','--accent2':'#cbd5e1','--primary':'#94a3b8','--primary-hover':'#64748b','--primary-light':'rgba(148,163,184,0.1)','--topbar-bg':'rgba(15,23,42,0.97)','--sidebar-bg':'rgba(15,23,42,0.95)','--input-bg':'rgba(255,255,255,0.04)','--input-border':'rgba(148,163,184,0.12)','--table-head-bg':'rgba(255,255,255,0.03)','--table-row-hover':'rgba(148,163,184,0.05)','--shadow':'0 4px 20px rgba(0,0,0,0.5)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.4)','--topbar-shadow':'0 1px 0 rgba(255,255,255,0.04)','--success':'#22c55e','--success-light':'rgba(34,197,94,0.12)','--danger':'#ef4444','--warn':'#f59e0b','--info':'#94a3b8','--s0':'#0f172a','--s1':'#1e293b','--s2':'#263548','--s3':'#2e3f57','--s4':'#384f6b','--s5':'#425f7f','--t0':'#f1f5f9','--t1':'#e2e8f0','--t2':'#94a3b8','--t3':'#64748b','--ac':'#94a3b8','--ac-d':'#64748b','--ac-g':'rgba(148,163,184,0.15)','--ac-s':'rgba(148,163,184,0.07)','--l0':'rgba(255,255,255,0.03)','--l1':'rgba(255,255,255,0.06)','--l2':'rgba(255,255,255,0.1)','--l3':'rgba(255,255,255,0.16)','--rd':'#ef4444','--am':'#f59e0b','--gr':'#22c55e','--pu':'#a78bfa','--accent-color':'#94a3b8','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#0f172a','--text-main':'#94a3b8','--text-secondary':'#64748b','--text-nav':'#475569','--topbar':'rgba(15,23,42,0.97)','--header':'rgba(255,255,255,0.03)','--row-hover':'rgba(148,163,184,0.05)','--scrollbar-track':'#0f172a','--scrollbar-thumb':'rgba(148,163,184,0.12)','--bg-input':'rgba(255,255,255,0.04)','--bg-input-ro':'rgba(255,255,255,0.02)','--bg-modal':'#1e293b','--bg-stat-card':'#1e293b','--bg-table-head':'rgba(255,255,255,0.03)','--bg-chart-card':'#1e293b','--bg-actionbar':'#0f172a','--bg-sidebar-hover':'rgba(148,163,184,0.08)','--border-card':'rgba(148,163,184,0.1)','--border-light':'rgba(148,163,184,0.06)','--border-main':'rgba(148,163,184,0.15)','--border-focus':'#94a3b8','--shadow-card':'0 2px 8px rgba(0,0,0,0.4)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.3)','--shadow-md':'0 4px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.55)','--error-bg':'rgba(239,68,68,0.12)','--error-text':'#fca5a5','--error-border':'rgba(239,68,68,0.2)','--warn-bg':'rgba(245,158,11,0.12)','--warn-text':'#fde68a','--warn-border':'rgba(245,158,11,0.2)','--success-bg':'rgba(34,197,94,0.12)','--success-text':'#86efac','--success-border':'rgba(34,197,94,0.2)','--input-focus':'rgba(148,163,184,0.12)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.12)','--danger-light':'rgba(239,68,68,0.12)','--warning':'#f59e0b','--warning-light':'rgba(245,158,11,0.12)','--green':'#22c55e','--green-dim':'rgba(34,197,94,0.1)','--green-glow':'rgba(34,197,94,0.2)','--red':'#ef4444','--red-dim':'rgba(239,68,68,0.1)','--amber':'#f59e0b','--orange':'#fb923c','--yellow':'#eab308','--blue':'#60a5fa','--radius':'12px','--badge-bg':'rgba(255,255,255,0.06)','--brand-glow2':'rgba(148,163,184,0.07)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.4)','--sh-m':'0 4px 16px rgba(0,0,0,0.45)','--sh-l':'0 8px 32px rgba(0,0,0,0.55)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(239,68,68,0.15)','--rd-g':'rgba(239,68,68,0.08)','--gr-b':'rgba(34,197,94,0.15)','--gr-g':'rgba(34,197,94,0.08)','--bl':'#60a5fa','--bl-b':'rgba(96,165,250,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#f59e0b','--wa-d':'#d97706','--fb':'#0f172a','--fd':'#f1f5f9','--fm':'#e2e8f0'}
+};
+function hcpApplyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('hcp_theme',t);
+  const vars=HCP_THEMES[t]||HCP_THEMES.light;
+  const css=':root{'+Object.entries(vars).map(([k,v])=>k+':'+v).join(';')+'}';
+  let el=document.getElementById('hcp-theme-vars');
+  if(!el){el=document.createElement('style');el.id='hcp-theme-vars';document.head.appendChild(el);}
+  el.textContent=css;
+  // Toggle :root.light class for pages using class-based theming (production_initiater etc.)
+  if(t==='light' || t==='rose'){
+    document.documentElement.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+  }
+  // Force body background
+  document.body.style.background='';
+  document.documentElement.style.background='';
+  document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));
+  const ICONS={light:'🌙',dark:'☀️',ocean:'🌊',rose:'🌸',slate:'◻️'};
+  const icon=document.getElementById('hcp-theme-icon')||document.getElementById('theme-icon')||document.querySelector('.theme-icon');
+  if(icon){icon.style.animation='none';void icon.offsetWidth;icon.style.animation='';icon.textContent=ICONS[t]||'🌙';}
+  const msg=document.getElementById('hcp-applied-msg');
+  if(msg){msg.style.display='block';clearTimeout(window._hcpMsgTimer);window._hcpMsgTimer=setTimeout(()=>msg.style.display='none',2000);}
+}
+window.hcpApplyTheme=hcpApplyTheme;
+window.hcpOpenSettings=function(){
+  document.getElementById('hcp-settings-overlay').classList.add('open');
+  const t=localStorage.getItem('hcp_theme')||'light';
+  document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));
+  const msg=document.getElementById('hcp-applied-msg');if(msg)msg.style.display='none';
+};
+window.hcpCloseSettings=function(){document.getElementById('hcp-settings-overlay').classList.remove('open');};
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')hcpCloseSettings();
+  if((e.ctrlKey||e.metaKey)&&e.key===','){e.preventDefault();hcpOpenSettings();}
+});
+hcpApplyTheme(localStorage.getItem('hcp_theme')||'light');
+/* ── END HCP Universal Theme Engine ── */
+</script>
+<!-- HCP Multi-Theme Settings -->
+<div id="hcp-settings-overlay" onclick="if(event.target===this)hcpCloseSettings()">
+  <div id="hcp-settings-panel">
+    <div class="hcp-settings-head">
+      <h3>⚙️ Appearance</h3>
+      <button class="hcp-settings-close" onclick="hcpCloseSettings()">✕</button>
+    </div>
+    <div class="hcp-settings-body">
+      <div class="hcp-settings-lbl">🎨 Theme — click a swatch to apply instantly</div>
+      <div class="hcp-theme-grid">
+        <div class="hcp-swatch" data-t="light" onclick="hcpApplyTheme('light')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#e0f2fe,#f0fdf4,#fefce8)"></div><div class="hcp-swatch-name">Light</div><div class="hcp-swatch-tag">Default</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="dark" onclick="hcpApplyTheme('dark')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0c1117,#0f1923,#111420)"></div><div class="hcp-swatch-name">Dark</div><div class="hcp-swatch-tag">Easy on eyes</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="ocean" onclick="hcpApplyTheme('ocean')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0ea5e9,#0284c7,#0369a1)"></div><div class="hcp-swatch-name">Ocean</div><div class="hcp-swatch-tag">Deep blue</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="rose" onclick="hcpApplyTheme('rose')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#fff1f2,#fce7f3,#fdf4ff)"></div><div class="hcp-swatch-name">Rose</div><div class="hcp-swatch-tag">Soft &amp; vibrant</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="slate" onclick="hcpApplyTheme('slate')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#1e293b,#0f172a,#1e293b)"></div><div class="hcp-swatch-name">Slate</div><div class="hcp-swatch-tag">Mono minimal</div><div class="hcp-active-dot"></div></div>
+      </div>
+      <div id="hcp-applied-msg" style="display:none;text-align:center;font-size:11px;font-weight:700;color:#0d9488;margin-top:10px;">✓ Theme applied</div>
+      <div style="margin-top:16px;text-align:right"><button onclick="hcpCloseSettings()" style="padding:9px 24px;border-radius:9px;border:none;background:#0d9488;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Done ✓</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,659 @@
+<!-- ═════════════════════════════════════════════════════════════════
+     INVENTORY · GODOWN VIEW & MANAGE GODOWNS  —  HTML SNIPPETS
+     ─────────────────────────────────────────────────────────────────
+     Add these into inventory_mgmt.html at the spots marked with
+     <!-- INSERT POINT N --> comments. See INTEGRATION.md.
+     ═════════════════════════════════════════════════════════════════ -->
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     INSERT POINT 1 — inside <style> block, append at the end
+     (just before the closing </style>)
+     ════════════════════════════════════════════════════════════════ -->
+<style>
+/* ─── Godown View (panel-godown-view) ─── */
+.gv-scan-bar{
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg, rgba(124,58,237,.06), rgba(124,58,237,.02));
+  border:1.5px solid rgba(124,58,237,.25);
+  border-radius:10px; padding:10px 14px; margin-bottom:14px;
+}
+.gv-scan-bar .gv-scan-icon{
+  width:36px; height:36px; flex-shrink:0;
+  background:#7c3aed; color:#fff;
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+}
+.gv-scan-bar input{
+  flex:1; padding:9px 12px; font-size:13px;
+  font-family:'Courier New', monospace; font-weight:700; letter-spacing:.5px;
+  text-transform:uppercase;
+  border:1.5px solid rgba(124,58,237,.3); border-radius:7px;
+  background:#fff; color:var(--text,#111827); outline:none;
+}
+.gv-scan-bar input:focus{ border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,.15); }
+.gv-scan-feedback{
+  font-size:11px; font-weight:600;
+  min-width:200px; min-height:14px;
+}
+.gv-scan-bar .btn-manual{
+  flex-shrink:0; padding:8px 12px; font-size:12px;
+  background:#fff; border:1.5px solid rgba(124,58,237,.3);
+  color:#7c3aed; border-radius:7px; cursor:pointer;
+  font-weight:600;
+}
+.gv-scan-bar .btn-manual:hover{ background:#7c3aed; color:#fff; }
+
+/* Three-pane layout */
+.gv-grid{
+  display:grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.3fr) minmax(280px, 1.5fr);
+  gap:12px;
+  min-height:500px;
+}
+@media (max-width: 900px){
+  .gv-grid{ grid-template-columns: 1fr; }
+}
+.gv-pane{
+  background:var(--card,#fff);
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:10px;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.gv-pane-head{
+  padding:10px 14px;
+  background:var(--surface,#f9fafb);
+  border-bottom:1px solid var(--border,#e5e7eb);
+  font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.5px;
+  color:var(--muted,#6b7280);
+  display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0;
+}
+.gv-pane-body{
+  flex:1;
+  overflow-y:auto;
+  padding:8px;
+  max-height:calc(100vh - 320px);
+  min-height:200px;
+}
+.gv-pane-search{
+  padding:8px 12px;
+  border-bottom:1px solid var(--border,#e5e7eb);
+  flex-shrink:0;
+}
+.gv-pane-search input{
+  width:100%; padding:6px 10px; font-size:12px;
+  border:1px solid var(--border,#e5e7eb); border-radius:6px;
+}
+
+/* Godown cards (pane 1) */
+.gv-godown-card{
+  padding:10px 12px;
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:7px;
+  margin-bottom:6px;
+  cursor:pointer;
+  transition:border-color .12s, background .12s, transform .08s;
+  background:#fff;
+}
+.gv-godown-card:hover{ border-color:#7c3aed; transform:translateX(2px); }
+.gv-godown-card.active{
+  border-color:#7c3aed;
+  background:rgba(124,58,237,.06);
+  box-shadow:inset 3px 0 0 #7c3aed;
+}
+.gv-godown-card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; margin-bottom:4px;
+}
+.gv-godown-name{
+  font-size:13px; font-weight:700; color:var(--text,#111827);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.gv-type-chip{
+  font-size:9px; font-weight:700;
+  padding:2px 6px; border-radius:3px;
+  text-transform:uppercase; letter-spacing:.4px;
+  border:1px solid;
+  flex-shrink:0;
+}
+.gv-godown-meta{
+  font-size:11px; color:var(--muted,#6b7280);
+  display:flex; gap:10px;
+  font-variant-numeric:tabular-nums;
+}
+.gv-godown-meta i{ font-size:10px; opacity:.6; margin-right:3px; }
+
+/* Item cards (pane 2) */
+.gv-item-card{
+  padding:9px 11px;
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:6px;
+  margin-bottom:5px;
+  cursor:pointer;
+  background:#fff;
+  transition:border-color .12s, transform .08s;
+}
+.gv-item-card:hover{ border-color:#7c3aed; }
+.gv-item-card.active{
+  border-color:#7c3aed; background:rgba(124,58,237,.06);
+  box-shadow:inset 3px 0 0 #7c3aed;
+}
+.gv-item-card-head{
+  display:flex; align-items:center; gap:6px;
+}
+.gv-item-brand-dot{
+  width:8px; height:8px; border-radius:50%;
+  flex-shrink:0;
+}
+.gv-item-name{
+  font-size:12.5px; font-weight:600; color:var(--text,#111827);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.gv-item-meta{
+  display:flex; justify-content:space-between;
+  font-size:11px; color:var(--muted,#6b7280);
+  margin-top:3px; padding-left:14px;
+}
+.gv-item-qty{
+  font-family:'JetBrains Mono', monospace;
+  font-weight:700; color:#7c3aed;
+}
+
+/* Box cards (pane 3) */
+.gv-box-card{
+  padding:8px 10px;
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:6px;
+  margin-bottom:5px;
+  background:#fff;
+  cursor:pointer;
+  transition:border-color .12s, background .12s;
+}
+.gv-box-card:hover{ border-color:#7c3aed; }
+.gv-box-card.flash{
+  border-color:#7c3aed;
+  background:rgba(124,58,237,.12);
+  animation:gvFlash 1.2s ease-out;
+}
+@keyframes gvFlash{
+  0%   { box-shadow:0 0 0 0 rgba(124,58,237,.6); }
+  100% { box-shadow:0 0 0 12px rgba(124,58,237,0); }
+}
+.gv-box-card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px;
+}
+.gv-box-code{
+  font-family:'Courier New', monospace;
+  font-size:11.5px; font-weight:700; color:var(--text,#111827);
+  background:none; padding:0;
+}
+.gv-box-status{
+  font-size:9px; font-weight:700;
+  padding:2px 6px; border-radius:3px;
+  letter-spacing:.4px;
+  flex-shrink:0;
+}
+.gv-box-meta{
+  font-size:10.5px; color:var(--muted,#6b7280);
+  margin-top:3px;
+  display:flex; justify-content:space-between;
+  font-variant-numeric:tabular-nums;
+}
+.gv-box-loc{
+  font-size:10px; color:var(--muted,#9ca3af);
+  margin-top:3px;
+}
+.gv-box-loc i{ font-size:9px; margin-right:3px; }
+
+/* ─── Box history modal (boxHistoryModal) ─── */
+.modal-card.xl{ max-width:920px; }
+
+.bhm-hero{
+  background:linear-gradient(135deg, rgba(124,58,237,.05), rgba(124,58,237,.01));
+  border:1px solid rgba(124,58,237,.2);
+  border-radius:10px;
+  padding:14px 16px;
+  margin-bottom:14px;
+}
+.bhm-hero-row{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:12px; margin-bottom:10px;
+}
+.bhm-hero-product{
+  display:flex; align-items:center; gap:10px;
+}
+.bhm-brand-dot{
+  width:10px; height:10px; border-radius:50%;
+  flex-shrink:0;
+}
+.bhm-product-name{
+  font-size:15px; font-weight:700; color:var(--text,#111827);
+}
+.bhm-product-sub{
+  font-size:11px; color:var(--muted,#6b7280); margin-top:2px;
+}
+.bhm-status-chip{
+  font-size:10px; font-weight:700;
+  padding:3px 8px; border-radius:4px;
+  letter-spacing:.4px;
+}
+.bhm-hero-stats{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(124,58,237,.15);
+}
+@media (max-width: 600px){
+  .bhm-hero-stats{ grid-template-columns: 1fr; }
+}
+.bhm-stat-lbl{
+  font-size:9px; font-weight:700;
+  color:var(--muted,#6b7280);
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.bhm-stat-val{
+  font-size:13px; font-weight:600; color:var(--text,#111827);
+  margin-top:2px;
+}
+
+.bhm-section{ margin-bottom:14px; }
+.bhm-section-title{
+  font-size:11px; font-weight:700;
+  color:var(--muted,#6b7280);
+  text-transform:uppercase; letter-spacing:.5px;
+  margin-bottom:8px;
+  display:flex; align-items:center; gap:6px;
+}
+.bhm-section-title i{ font-size:13px; }
+
+.bhm-grn-card{
+  background:var(--surface,#f9fafb);
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:8px;
+  padding:10px 14px;
+}
+.bhm-grn-row{
+  display:flex; justify-content:space-between;
+  padding:4px 0;
+  font-size:12px;
+}
+.bhm-grn-row + .bhm-grn-row{
+  border-top:1px dashed var(--border,#e5e7eb);
+}
+.bhm-grn-lbl{ color:var(--muted,#6b7280); }
+.bhm-grn-val{ color:var(--text,#111827); font-weight:500; }
+
+.bhm-timeline{
+  position:relative;
+  padding-left:28px;
+}
+.bhm-timeline::before{
+  content:'';
+  position:absolute; left:14px; top:8px; bottom:8px;
+  width:2px; background:var(--border,#e5e7eb);
+}
+.bhm-tl-item{
+  position:relative;
+  padding-bottom:14px;
+}
+.bhm-tl-icon{
+  position:absolute; left:-28px; top:0;
+  width:28px; height:28px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px;
+  border:2px solid #fff;
+  box-shadow:0 0 0 2px var(--border,#e5e7eb);
+  z-index:1;
+}
+.bhm-tl-body{
+  background:var(--card,#fff);
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:8px;
+  padding:8px 12px;
+  margin-left:6px;
+}
+.bhm-tl-head{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  margin-bottom:4px;
+}
+.bhm-tl-label{
+  font-size:12px; font-weight:700;
+}
+.bhm-tl-ref{
+  font-family:'Courier New', monospace;
+  font-size:10.5px; font-weight:700;
+  padding:1px 6px; border-radius:3px;
+  background:rgba(124,58,237,.1); color:#7c3aed;
+}
+.bhm-tl-time{
+  font-size:10.5px; color:var(--muted,#9ca3af);
+  margin-left:auto;
+  font-variant-numeric:tabular-nums;
+}
+.bhm-tl-route{
+  font-size:11.5px; color:var(--text,#111827);
+  margin:3px 0;
+  font-weight:500;
+}
+.bhm-tl-foot{
+  font-size:10.5px; color:var(--muted,#6b7280);
+  display:flex; gap:10px; flex-wrap:wrap;
+  margin-top:3px;
+}
+.bhm-tl-remarks{
+  font-style:italic;
+  color:#7c3aed;
+}
+
+/* ─── Manage Godowns table ─── */
+.mg-type-pill{
+  font-size:9.5px; font-weight:700;
+  padding:2px 7px; border-radius:3px;
+  text-transform:uppercase; letter-spacing:.4px;
+}
+.mg-type-godown   { background:#0ea5e91a; color:#0369a1; }
+.mg-type-floor    { background:#f59e0b1a; color:#92400e; }
+.mg-type-billing  { background:#6b72801a; color:#374151; }
+.mg-type-shipping { background:#8b5cf61a; color:#5b21b6; }
+
+.mg-default-pill{
+  font-size:9px; font-weight:700;
+  background:#16a34a; color:#fff;
+  padding:1px 5px; border-radius:3px;
+  margin-left:4px;
+  letter-spacing:.4px;
+}
+
+.btn-ghost.btn-sm{
+  padding:4px 8px; font-size:11px;
+  background:transparent;
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:5px; cursor:pointer;
+  margin-left:3px;
+}
+.btn-ghost.btn-sm:hover{ background:var(--surface,#f3f4f6); }
+
+/* Dark mode tweaks */
+[data-theme="dark"] .gv-pane,
+[data-theme="dark"] .gv-godown-card,
+[data-theme="dark"] .gv-item-card,
+[data-theme="dark"] .gv-box-card,
+[data-theme="dark"] .bhm-tl-body,
+[data-theme="dark"] .bhm-grn-card { background:#1f2937; border-color:#374151; }
+[data-theme="dark"] .gv-pane-head { background:#111827; border-color:#374151; }
+[data-theme="dark"] .gv-godown-name,
+[data-theme="dark"] .gv-item-name,
+[data-theme="dark"] .gv-box-code,
+[data-theme="dark"] .bhm-product-name,
+[data-theme="dark"] .bhm-stat-val { color:#e5e7eb; }
+</style>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     INSERT POINT 2 — inside the sidebar nav (<aside class="inv-nav">),
+     add a new section AFTER the existing "Manage" section and BEFORE
+     the "Vouchers" section. Look for:
+        <div class="inv-nav-section">
+          <div class="inv-nav-section-label">Vouchers</div>
+     and insert this block IMMEDIATELY ABOVE it.
+     ════════════════════════════════════════════════════════════════ -->
+<div class="inv-nav-section">
+  <div class="inv-nav-section-label">Stock</div>
+  <div class="inv-nav-item" data-panel="godown-view"
+       onclick="invSwitchPanel('godown-view')" title="Godown View">
+    <span class="ico"><i class="fas fa-building"></i></span>
+    <span>Godown View</span>
+  </div>
+  <div class="inv-nav-item" data-panel="manage-godowns"
+       onclick="invSwitchPanel('manage-godowns')" title="Manage Godowns">
+    <span class="ico"><i class="fas fa-warehouse"></i></span>
+    <span>Manage Godowns</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     INSERT POINT 3 — inside <div class="inv-wrap">, AFTER the existing
+     panels (panel-items, panel-brands, panel-suppliers, panel-grn) and
+     BEFORE the closing </div> of inv-wrap, add the two new panels.
+     ════════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════ GODOWN VIEW PANEL ═══════════ -->
+<div class="panel" id="panel-godown-view">
+
+  <!-- Scan bar -->
+  <div class="gv-scan-bar">
+    <div class="gv-scan-icon"><i class="fas fa-qrcode"></i></div>
+    <input type="text" id="inv-godown-scan-input"
+      placeholder="Scan box label or type code (e.g. PLIXBOTT91-G0234-B003)"
+      autocomplete="off" spellcheck="false"
+      onkeydown="invGvScanKey(event)">
+    <div id="inv-godown-scan-feedback" class="gv-scan-feedback"
+         style="color:var(--muted,#9ca3af)">Ready to scan</div>
+    <button class="btn-manual" onclick="invGvOpenManualScan()" title="Open manual entry dialog">
+      <i class="fas fa-keyboard"></i> Manual
+    </button>
+  </div>
+
+  <!-- Three-pane layout -->
+  <div class="gv-grid">
+
+    <!-- PANE 1: Godowns -->
+    <div class="gv-pane">
+      <div class="gv-pane-head">
+        <span>Godowns</span>
+        <button class="btn-ghost btn-sm" onclick="invGvLoad()" title="Refresh">
+          <i class="fas fa-sync"></i>
+        </button>
+      </div>
+      <div class="gv-pane-body" id="gv-godowns-pane-body">
+        <div class="no-data" style="padding:24px"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+      </div>
+    </div>
+
+    <!-- PANE 2: Items at selected godown -->
+    <div class="gv-pane">
+      <div class="gv-pane-head">
+        <span id="gv-items-pane-title">Items</span>
+      </div>
+      <div class="gv-pane-search">
+        <input type="search" id="gv-items-search"
+          placeholder="Filter items…"
+          oninput="invGvItemsSearchInput()">
+      </div>
+      <div class="gv-pane-body" id="gv-items-pane-body">
+        <div class="no-data" style="padding:24px;color:var(--muted,#9ca3af)">
+          Pick a godown to see its items.
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 3: Boxes for selected item -->
+    <div class="gv-pane">
+      <div class="gv-pane-head">
+        <span id="gv-boxes-pane-title">Boxes</span>
+      </div>
+      <div class="gv-pane-body" id="gv-boxes-pane-body">
+        <div class="no-data" style="padding:24px;color:var(--muted,#9ca3af)">
+          Pick an item to see its boxes.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════ MANAGE GODOWNS PANEL ═══════════ -->
+<div class="panel" id="panel-manage-godowns">
+
+  <div class="inv-toolbar">
+    <div style="font-size:13px;color:var(--muted,#6b7280)">
+      Manage warehouse / godown locations. These are shared across RM, PM, and FG.
+    </div>
+    <div style="flex:1"></div>
+    {% if can_edit %}
+    <button class="btn btn-primary" onclick="invMgNew()">
+      <i class="fas fa-plus"></i> New Godown
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="inv-table-wrap">
+    <div class="inv-table-scroll">
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Contact</th>
+            <th>Phone</th>
+            <th>GST Number</th>
+            <th>City / State</th>
+            <th class="td-num">Items</th>
+            <th class="td-num">Boxes</th>
+            <th style="width:90px"></th>
+          </tr>
+        </thead>
+        <tbody id="mg-tbody">
+          <tr><td colspan="9" class="no-data">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     INSERT POINT 4 — at the bottom of inventory_mgmt.html, just
+     before the closing </body> tag, add the modals.
+     ════════════════════════════════════════════════════════════════ -->
+
+<!-- ─────────────────────────────────────────────────────────────
+     BOX HISTORY MODAL
+─────────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="boxHistoryModal">
+  <div class="modal-card xl">
+    <div class="modal-head">
+      <div class="modal-title">
+        <i class="fas fa-route" style="color:#7c3aed"></i>
+        <span id="bhm-title">Box history</span>
+      </div>
+      <button class="modal-close" onclick="invCloseModal('boxHistoryModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="bhm-body">
+      <div class="no-data"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="invCloseModal('boxHistoryModal')">
+        <i class="fas fa-times"></i> Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────
+     GODOWN FORM MODAL  (New / Edit)
+─────────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="godownFormModal">
+  <form class="modal-card lg" id="mg-form" onsubmit="return invMgSave(event)">
+    <div class="modal-head">
+      <div class="modal-title">
+        <i class="fas fa-warehouse" style="color:#7c3aed"></i>
+        <span id="mg-modal-title">New Godown</span>
+      </div>
+      <button type="button" class="modal-close" onclick="invCloseModal('godownFormModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label>Name <span class="req">*</span></label>
+          <input type="text" name="name" required maxlength="300" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select name="type">
+            <option value="godown">Godown (warehouse)</option>
+            <option value="floor">Factory Floor</option>
+            <option value="billing">Billing Location</option>
+            <option value="shipping">Shipping Hub</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Default?</label>
+          <label style="font-weight:600;font-size:13px;padding:8px 0;display:flex;align-items:center;gap:8px;letter-spacing:0;text-transform:none">
+            <input type="checkbox" name="is_default" style="width:auto"> Mark as default godown
+          </label>
+        </div>
+        <div class="field">
+          <label>Contact Person</label>
+          <input type="text" name="contact" maxlength="300" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input type="text" name="phone" maxlength="100" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" maxlength="300" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>GST Number</label>
+          <input type="text" name="gst_number" maxlength="50" autocomplete="off"
+            style="font-family:'Courier New',monospace;text-transform:uppercase">
+        </div>
+        <div class="field full">
+          <label>Address</label>
+          <textarea name="address" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label>City</label>
+          <input type="text" name="city" maxlength="100">
+        </div>
+        <div class="field">
+          <label>State</label>
+          <input type="text" name="state" maxlength="100">
+        </div>
+        <div class="field">
+          <label>PIN</label>
+          <input type="text" name="pin" maxlength="10" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" onclick="invCloseModal('godownFormModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> Save
+      </button>
+    </div>
+  </form>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     INSERT POINT 5 — at the bottom, after the existing
+     <script src="…/inventory_mgmt.js"> tag, load the two new scripts.
+     The QR engine MUST load BEFORE inventory_godown.js.
+     ════════════════════════════════════════════════════════════════ -->
+<script src="{{ url_for('static', filename='pm_stock/pm_stock_qr.js') }}?v=2"></script>
+<script>
+  // Expose can_edit to inventory_godown.js so the Manage table can show
+  // edit/delete buttons only for permitted users.
+  window._INV_CAN_EDIT = {{ 'true' if can_edit else 'false' }};
+</script>
+<script src="{{ url_for('static', filename='inventory/inventory_godown.js') }}?v=1"></script>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     INSERT POINT 6 (optional) — paste the QR manual-entry modal
+     from pm_stock_qr_modal.html here, so the inventory page can use
+     it for the "Manual" button. (Or just keep it in pm_stock.html and
+     link to that page from here — but inline is simpler.)
+     ════════════════════════════════════════════════════════════════ -->
+<!-- ⬇ See pm_stock_qr_modal.html for the markup to paste. -->

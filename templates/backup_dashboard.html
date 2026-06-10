@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Backup Manager – HCP Portal</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--card:#22263a;--border:#2e3350;
+  --accent:#6c63ff;--accent2:#00d4aa;--danger:#ff4d6d;--warn:#f5a623;
+  --text:#e8eaf0;--muted:#8b90a8;--success:#22c55e;
+  --db-color:#818cf8;--zip-color:#34d399;--copy-color:#fbbf24;
+  --restore-color:#f472b6;--radius:14px;--shadow:0 4px 24px rgba(0,0,0,.35);
+}
+[data-theme="light"]{
+  --bg:#f0f6ff;--surface:#ffffff;--card:#ffffff;--border:#d1d9e6;
+  --accent:#6c63ff;--accent2:#0d9488;--danger:#e11d48;--warn:#d97706;
+  --text:#1e293b;--muted:#64748b;--success:#16a34a;
+  --db-color:#6c63ff;--zip-color:#0d9488;--copy-color:#d97706;
+  --restore-color:#db2777;--shadow:0 4px 20px rgba(0,0,0,.08);
+  --topbar-shadow:0 1px 0 #d1d9e6;
+}
+[data-theme="light"] body{background:linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)}
+[data-theme="light"] .topbar{box-shadow:var(--topbar-shadow,none)}
+[data-theme="light"] tbody tr:hover{background:rgba(108,99,255,.04)}
+[data-theme="light"] .badge-ok    {background:#dcfce7;color:#15803d;border-color:#bbf7d0}
+[data-theme="light"] .badge-error {background:#fee2e2;color:#dc2626;border-color:#fecaca}
+[data-theme="light"] .badge-db    {background:#ede9fe;color:#6c63ff;border-color:#c4b5fd}
+[data-theme="light"] .badge-zip   {background:#d1fae5;color:#0d9488;border-color:#6ee7b7}
+[data-theme="light"] .badge-copy  {background:#fef3c7;color:#d97706;border-color:#fde68a}
+[data-theme="light"] .badge-restore{background:#fce7f3;color:#db2777;border-color:#f9a8d4}
+[data-theme="light"] .badge-manual{background:#ede9fe;color:#6c63ff;border-color:#c4b5fd}
+[data-theme="light"] .badge-auto  {background:#fef3c7;color:#d97706;border-color:#fde68a}
+[data-theme="light"] .sched-tag   {background:#ede9fe;color:#6c63ff;border-color:#c4b5fd}
+[data-theme="light"] .dest-badge  {background:#dcfce7;color:#15803d;border-color:#bbf7d0}
+[data-theme="light"] .size-val    {color:var(--text-muted,#64748b)}
+[data-theme="light"] .run-card,.restore-card{background:var(--card-bg,#ffffff)}
+[data-theme="light"] #calc-wrapper,[data-theme="light"] .stat-card,[data-theme="light"] .schedule-banner,[data-theme="light"] .dest-card,[data-theme="light"] .table-wrap{background:var(--card-bg,#ffffff);border-color:#d1d9e6}
+
+@keyframes themeFlip{from{transform:scale(0.7) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;transition:background .3s,color .3s}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-left .icon{font-size:26px}
+.topbar-left h1{font-size:1.2rem;font-weight:700}
+.topbar-left span{font-size:.78rem;color:var(--muted)}
+.back-link{color:var(--muted);text-decoration:none;font-size:.85rem}
+.back-link:hover{color:var(--accent)}
+.main{max-width:1350px;margin:0 auto;padding:24px 20px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 16px;display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px}
+.stat-card.runs::before{background:var(--accent)}.stat-card.ok::before{background:var(--success)}.stat-card.err::before{background:var(--danger)}.stat-card.last::before{background:var(--accent2)}.stat-card.auto::before{background:var(--warn)}
+.stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.stat-value{font-size:1.65rem;font-weight:800}
+.stat-card.runs .stat-value{color:var(--accent)}.stat-card.ok .stat-value{color:var(--success)}.stat-card.err .stat-value{color:var(--danger)}
+.stat-card.last .stat-value{color:var(--accent2);font-size:.88rem;line-height:1.4}.stat-card.auto .stat-value{color:var(--warn);font-size:.88rem;line-height:1.4}
+.schedule-banner{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sched-info h3{font-size:.9rem;font-weight:700;margin-bottom:3px}.sched-info p{font-size:.78rem;color:var(--muted)}
+.sched-tags{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.sched-tag{background:rgba(108,99,255,.15);color:var(--accent);border:1px solid rgba(108,99,255,.3);border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:600}
+.dest-section{margin-bottom:24px}
+.section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.dest-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.dest-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;gap:14px}
+.dest-icon{font-size:26px;flex-shrink:0}.dest-info{flex:1;overflow:hidden}
+.dest-name{font-weight:700;font-size:.9rem;margin-bottom:2px}
+.dest-path{font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dest-badge{padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:rgba(34,197,94,.12);color:var(--success);border:1px solid rgba(34,197,94,.3)}
+.action-row{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:.85rem;font-weight:700;transition:all .15s;font-family:inherit}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover:not(:disabled){background:#5a52e8;transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-outline:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover:not(:disabled){background:#e83050;transform:translateY(-1px)}
+.btn-sm{padding:5px 13px;font-size:.76rem;border-radius:7px}
+.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tabs{display:flex;gap:4px;background:var(--surface);border-radius:12px;padding:4px;width:fit-content;margin-bottom:18px}
+.tab-btn{padding:7px 18px;border-radius:9px;border:none;cursor:pointer;font-size:.83rem;font-weight:600;color:var(--muted);background:transparent;transition:all .15s;font-family:inherit}
+.tab-btn.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{background:var(--surface);color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:11px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid rgba(46,51,80,.5);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(108,99,255,.05)}
+tbody td{padding:10px 14px;vertical-align:middle}
+.empty-row td{text-align:center;padding:36px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.badge-ok{background:rgba(34,197,94,.12);color:var(--success);border:1px solid rgba(34,197,94,.25)}
+.badge-error{background:rgba(255,77,109,.12);color:var(--danger);border:1px solid rgba(255,77,109,.25)}
+.badge-db{background:rgba(129,140,248,.12);color:var(--db-color);border:1px solid rgba(129,140,248,.25)}
+.badge-zip{background:rgba(52,211,153,.12);color:var(--zip-color);border:1px solid rgba(52,211,153,.25)}
+.badge-copy{background:rgba(251,191,36,.12);color:var(--copy-color);border:1px solid rgba(251,191,36,.25)}
+.badge-restore{background:rgba(244,114,182,.12);color:var(--restore-color);border:1px solid rgba(244,114,182,.25)}
+.badge-manual{background:rgba(108,99,255,.12);color:var(--accent);border:1px solid rgba(108,99,255,.25)}
+.badge-auto{background:rgba(245,166,35,.12);color:var(--warn);border:1px solid rgba(245,166,35,.25)}
+.size-val{font-family:monospace;color:var(--muted)}
+.dl-btn{padding:3px 11px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:.73rem;transition:all .12s;font-family:inherit}
+.dl-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.restore-btn{padding:3px 11px;border-radius:6px;border:1px solid rgba(244,114,182,.35);background:rgba(244,114,182,.08);color:var(--restore-color);cursor:pointer;font-size:.73rem;transition:all .12s;font-family:inherit;margin-left:4px}
+.restore-btn:hover{background:rgba(244,114,182,.18)}
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:.85rem;box-shadow:var(--shadow);max-width:420px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.175,.885,.32,1.275);display:flex;gap:10px;align-items:flex-start}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.ok{border-left:4px solid var(--success)}#toast.err{border-left:4px solid var(--danger)}#toast.warn{border-left:4px solid var(--warn)}
+#run-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center}
+#run-overlay.active{display:flex}
+.run-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:38px 44px;text-align:center;max-width:420px;width:92%}
+.run-card h2{font-size:1.15rem;margin-bottom:6px}.run-card p{color:var(--muted);font-size:.85rem;margin-bottom:22px}
+.big-spinner{width:52px;height:52px;border:4px solid rgba(108,99,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 18px}
+.progress-steps{text-align:left;margin-top:14px}
+.progress-step{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.83rem;color:var(--muted)}
+.progress-step.done .ps-icon{color:var(--success)}.progress-step.active .ps-icon{color:var(--accent)}.progress-step.wait .ps-icon{color:var(--border)}
+.ps-icon{font-size:15px;width:17px;flex-shrink:0}
+#restore-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;align-items:center;justify-content:center}
+#restore-modal.active{display:flex}
+.restore-card{background:var(--card);border:2px solid rgba(244,114,182,.4);border-radius:20px;padding:36px 40px;max-width:500px;width:94%;box-shadow:0 8px 40px rgba(244,114,182,.15)}
+.restore-card h2{font-size:1.1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.warn-box{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);border-radius:10px;padding:12px 16px;margin:14px 0;font-size:.82rem;color:var(--warn);line-height:1.65}
+.file-box{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:.8rem;color:var(--accent2);margin-bottom:14px;word-break:break-all}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+.restore-running{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 0}
+.restore-spinner{width:52px;height:52px;border:4px solid rgba(244,114,182,.2);border-top-color:var(--restore-color);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto}
+.restore-result-ok{color:var(--success);font-size:1.3rem;text-align:center;padding:10px 0}
+.restore-result-err{color:var(--danger);font-size:.86rem;text-align:center;padding:10px 0;line-height:1.6}
+
+/* ══ HCP MULTI-THEME ══════════════════════════════════════════════════════ */
+[data-theme="light"]{--hcp-bg:linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)}
+[data-theme="dark"]  {--hcp-bg:linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)}
+[data-theme="ocean"] {--hcp-bg:linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)}
+[data-theme="rose"]  {--hcp-bg:linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)}
+[data-theme="slate"] {--hcp-bg:linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)}
+
+/* Settings overlay */
+#hcp-settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  backdrop-filter:blur(8px);z-index:99998;justify-content:center;align-items:flex-start;padding-top:80px}
+#hcp-settings-overlay.open{display:flex}
+#hcp-settings-panel{background:var(--card-bg,#ffffff);border-radius:20px;width:420px;max-width:95vw;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);border:1px solid rgba(0,0,0,.08);
+  animation:hcpScaleIn .2s cubic-bezier(.4,0,.2,1);overflow:hidden}
+[data-theme="dark"] #hcp-settings-panel,
+[data-theme="ocean"] #hcp-settings-panel,
+[data-theme="slate"] #hcp-settings-panel{background:var(--surface,#1e293b);border-color:rgba(255,255,255,.1)}
+@keyframes hcpScaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.hcp-settings-head{display:flex;justify-content:space-between;align-items:center;
+  padding:18px 22px;border-bottom:1px solid rgba(0,0,0,.08)}
+[data-theme="dark"] .hcp-settings-head,
+[data-theme="ocean"] .hcp-settings-head,
+[data-theme="slate"] .hcp-settings-head{border-color:rgba(255,255,255,.08)}
+.hcp-settings-head h3{font-size:14px;font-weight:800;margin:0;
+  font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-bright,#0f172a)}
+[data-theme="dark"] .hcp-settings-head h3,
+[data-theme="ocean"] .hcp-settings-head h3,
+[data-theme="slate"] .hcp-settings-head h3{color:#f1f5f9}
+.hcp-settings-close{cursor:pointer;font-size:20px;color:var(--muted,#94a3b8);
+  background:none;border:none;line-height:1;padding:0}
+.hcp-settings-body{padding:20px 22px}
+.hcp-settings-lbl{font-size:9px;font-weight:800;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted,#94a3b8);margin-bottom:12px;
+  font-family:'Plus Jakarta Sans',sans-serif}
+.hcp-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px}
+.hcp-swatch{border-radius:12px;padding:10px 8px;cursor:pointer;
+  border:2px solid transparent;transition:all .18s;text-align:center}
+.hcp-swatch:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.hcp-swatch.active{border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.2)}
+.hcp-swatch-preview{width:100%;height:30px;border-radius:7px;margin-bottom:6px}
+.hcp-swatch-name{font-size:11px;font-weight:700;color:var(--text-main,#1e293b);
+  font-family:'Plus Jakarta Sans',sans-serif}
+[data-theme="dark"] .hcp-swatch-name,
+[data-theme="ocean"] .hcp-swatch-name,
+[data-theme="slate"] .hcp-swatch-name{color:var(--text-bright,#e2e8f0)}
+.hcp-swatch-tag{font-size:9px;color:var(--muted,#94a3b8);margin-top:2px}
+.hcp-swatch .hcp-active-dot{display:none;width:8px;height:8px;border-radius:50%;
+  background:#0d9488;margin:4px auto 0}
+.hcp-swatch.active .hcp-active-dot{display:block}
+@keyframes hcpFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Settings button */
+.hcp-settings-btn{width:34px;height:34px;border-radius:9px;
+  border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.6);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  font-size:15px;transition:all .2s;backdrop-filter:blur(8px);vertical-align:middle}
+.hcp-settings-btn:hover{transform:rotate(45deg);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+[data-theme="dark"] .hcp-settings-btn,
+[data-theme="ocean"] .hcp-settings-btn,
+[data-theme="slate"] .hcp-settings-btn{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.07)}
+/* ══ END HCP MULTI-THEME ═══════════════════════════════════════════════════ */
+
+</style>
+<link rel="stylesheet" href="/static/hcp_theme.css">
+</head>
+<body>
+
+{% set page_title = "Backup Dashboard" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Admin", "url": "#"}, {"label": "Backups", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="main">
+
+  <div class="stats-grid">
+    <div class="stat-card runs"><div class="stat-label">Total Runs</div><div class="stat-value" id="s-runs">—</div></div>
+    <div class="stat-card ok">  <div class="stat-label">Successful</div><div class="stat-value" id="s-ok">—</div></div>
+    <div class="stat-card err"> <div class="stat-label">Errors</div><div class="stat-value" id="s-err">—</div></div>
+    <div class="stat-card last"><div class="stat-label">Last Backup</div><div class="stat-value" id="s-last">—</div></div>
+    <div class="stat-card auto"><div class="stat-label">Last Auto</div><div class="stat-value" id="s-auto">—</div></div>
+  </div>
+
+  <div class="schedule-banner">
+    <span style="font-size:22px">🕐</span>
+    <div class="sched-info">
+      <h3>Autonomous Backup Schedule</h3>
+      <p>DB dump + App ZIP created automatically and copied to all 3 destinations every run.</p>
+    </div>
+    <div class="sched-tags">
+      <span class="sched-tag">🕑 Every 2 hours — 07:00 to 20:00</span>
+      <span class="sched-tag">🗑️ Keep latest 3 backups</span>
+    </div>
+  </div>
+
+  <!-- ⚠️ Unconfigured paths warning banner — shown until admin sets all 3 paths -->
+  <div id="paths-warning-banner" style="display:none;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:var(--radius);padding:14px 20px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px">
+    <span style="font-size:22px;flex-shrink:0">⚠️</span>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:.9rem;color:var(--warn);margin-bottom:4px">Backup Paths Not Configured</div>
+      <div style="font-size:.8rem;color:var(--muted);line-height:1.65">
+        You must set the <strong style="color:var(--text)">Primary and Secondary backup paths</strong> before any backup can run (the third copy is optional).
+        Click <strong style="color:var(--warn)">✏️ Configure Paths</strong> below to set them now.
+      </div>
+      <div id="paths-warning-missing" style="font-size:.78rem;color:var(--warn);margin-top:6px;font-family:monospace"></div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="togglePathEditor()" style="flex-shrink:0;border-color:var(--warn);color:var(--warn)">✏️ Configure Now</button>
+  </div>
+
+  <div class="dest-section">
+    <div class="section-title">Backup Destinations
+      <button class="btn btn-outline btn-sm" id="editPathsBtn" onclick="togglePathEditor()" style="margin-left:10px;font-size:.73rem">✏️ Configure Paths</button>
+    </div>
+
+    <!-- Live destination cards — populated by loadBackupConfig() -->
+    <div class="dest-grid" id="destGrid">
+      <div class="dest-card"><div class="dest-icon">⏳</div><div class="dest-info"><div class="dest-name">Loading paths…</div><div class="dest-path">—</div></div></div>
+    </div>
+
+    <!-- ── Path editor panel (hidden by default) ── -->
+    <div id="pathEditor" style="display:none;margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px">
+      <div style="font-size:.78rem;font-weight:700;margin-bottom:4px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Configure Backup Paths</div>
+      <div style="font-size:.74rem;color:var(--muted);margin-bottom:16px">Click <strong style="color:var(--text)">📂 Choose Folder</strong> to browse, or type the path manually. <strong style="color:var(--danger)">Primary and Secondary are required</strong> — the third copy is optional. Use absolute paths (e.g. /var/www/backups_hcp/primary).</div>
+      <div style="display:grid;gap:13px">
+
+        <label style="display:flex;flex-direction:column;gap:5px">
+          <span style="font-size:.8rem;font-weight:700">🖥️ Primary — Server Local <span style="color:var(--danger);font-weight:400">(where backups are written first)</span></span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="cfg_primary" type="text" placeholder='e.g. C:\backups\hcp  or  /srv/hcp/backups'
+                   style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border);
+                          background:var(--surface);color:var(--text);font-size:.83rem;font-family:monospace;outline:none">
+            <button type="button" class="btn btn-outline btn-sm" onclick="pickFolder('cfg_primary')" title="Browse for folder">📂 Choose Folder</button>
+          </div>
+          <span id="cfg_primary_hint" style="font-size:.71rem;color:var(--muted)">Current: <em id="cfg_primary_current">—</em></span>
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:5px">
+          <span style="font-size:.8rem;font-weight:700">💾 Secondary Backup — Mirror</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="cfg_drive_d" type="text" placeholder='e.g. /var/www/backups_hcp/secondary'
+                   style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border);
+                          background:var(--surface);color:var(--text);font-size:.83rem;font-family:monospace;outline:none">
+            <button type="button" class="btn btn-outline btn-sm" onclick="pickFolder('cfg_drive_d')" title="Browse for folder">📂 Choose Folder</button>
+          </div>
+          <span style="font-size:.71rem;color:var(--muted)">Current: <em id="cfg_drive_d_current">—</em></span>
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:5px">
+          <span style="font-size:.8rem;font-weight:700">🌐 Network / Third Copy — Mirror <span style="color:var(--muted);font-weight:400">(optional)</span></span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="cfg_network" type="text" placeholder='optional — e.g. /mnt/network_share/hcp_backup'
+                   style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border);
+                          background:var(--surface);color:var(--text);font-size:.83rem;font-family:monospace;outline:none">
+            <button type="button" class="btn btn-outline btn-sm" onclick="pickFolder('cfg_network')" title="Browse for folder">📂 Choose Folder</button>
+          </div>
+          <span style="font-size:.71rem;color:var(--muted)">Current: <em id="cfg_network_current">—</em></span>
+        </label>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:18px;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="saveBackupPaths()">💾 Save Paths</button>
+        <button class="btn btn-outline btn-sm" onclick="togglePathEditor()">Cancel</button>
+        <span id="pathSaveMsg" style="font-size:.8rem;margin-left:4px"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn btn-primary" id="btn-run"   onclick="triggerBackup()">▶ Run Full Backup Now</button>
+    <button class="btn btn-outline" id="btn-prune"  onclick="triggerPrune()">🗑️ Prune Old Backups</button>
+    <button class="btn btn-outline"                 onclick="refreshAll()">↻ Refresh</button>
+    <div id="last-refresh" style="margin-left:auto;font-size:.75rem;color:var(--muted)"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('log')">📋 Activity Log</button>
+    <button class="tab-btn"        onclick="switchTab('files')">📁 Backup Files &amp; Restore</button>
+  </div>
+
+  <!-- Activity Log Tab -->
+  <div class="tab-pane active" id="tab-log">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date &amp; Time</th><th>Run ID</th><th>Type</th><th>Triggered By</th><th>Destination</th><th>File</th><th>Size</th><th>Status</th><th>Message</th></tr></thead>
+        <tbody id="log-body"><tr class="empty-row"><td colspan="9">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Files & Restore Tab -->
+  <div class="tab-pane" id="tab-files">
+    <div style="background:rgba(244,114,182,.07);border:1px solid rgba(244,114,182,.25);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px">
+      <span style="font-size:20px;flex-shrink:0">🔄</span>
+      <div>
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:4px;color:var(--restore-color)">Manual Restore</div>
+        <div style="font-size:.8rem;color:var(--muted);line-height:1.6">
+          Click <strong style="color:var(--restore-color)">🔄 Restore DB</strong> on any <span class="badge badge-db" style="display:inline-flex;vertical-align:middle">🗄 DB Dump</span> file to restore MySQL to that point in time.
+          App ZIP files must be extracted manually.
+          <strong style="color:var(--warn)"> ⚠️ Restore OVERWRITES all current data.</strong>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date &amp; Time</th><th>Filename</th><th>Type</th><th>Destination</th><th>Size</th><th>Download</th><th>Restore</th></tr></thead>
+        <tbody id="files-body"><tr class="empty-row"><td colspan="7">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Backup Run Overlay -->
+<div id="run-overlay">
+  <div class="run-card">
+    <div class="big-spinner"></div>
+    <h2>Running Full Backup…</h2>
+    <p>Please wait. This may take a minute.</p>
+    <div class="progress-steps">
+      <div class="progress-step active" id="ps-db"><span class="ps-icon">⏳</span> MySQL Database dump (.sql.gz)</div>
+      <div class="progress-step wait"   id="ps-zip"><span class="ps-icon">○</span> App folder ZIP</div>
+      <div class="progress-step wait"   id="ps-copy"><span class="ps-icon">○</span> Copy to all 3 destinations</div>
+      <div class="progress-step wait"   id="ps-prune"><span class="ps-icon">○</span> Prune backups older than 3 days</div>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Confirm Modal -->
+<div id="restore-modal">
+  <div class="restore-card" id="restore-card-inner"><!-- filled by JS --></div>
+</div>
+
+<div id="toast"><span id="t-icon" style="font-size:17px;flex-shrink:0"></span><span id="t-msg" style="flex:1"></span></div>
+
+<script>
+let _restoreFilename='';
+let _toastTimer;
+
+// ── Theme ─────────────────────────────────────────────────────────
+(function(){
+  const saved = localStorage.getItem('hcp_backup_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  const icon = document.getElementById('theme-icon');
+  if(icon) icon.textContent = saved==='dark' ? '🌙' : '☀️';
+})();
+
+function toggleTheme(){
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('hcp_backup_theme', next);
+  const icon = document.getElementById('theme-icon');
+  icon.style.animation='none';
+  void icon.offsetWidth;
+  icon.style.animation='themeFlip .3s ease both';
+  icon.textContent = next==='dark' ? '🌙' : '☀️';
+}
+
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  document.getElementById('t-icon').textContent=type==='ok'?'✅':type==='err'?'❌':'⚠️';
+  document.getElementById('t-msg').textContent=msg;
+  el.className='show '+type;
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>el.className='',5000);
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['log','files'][i]===name));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+}
+
+function setStep(id,state){
+  const el=document.getElementById(id);if(!el)return;
+  el.className='progress-step '+state;
+  const ico=el.querySelector('.ps-icon');
+  ico.textContent=state==='done'?'✅':state==='active'?'⏳':state==='error'?'❌':'○';
+}
+
+// Stats — server returns DD/MM/YYYY HH:MM already
+async function loadStats(){
+  try{
+    const d=(await(await fetch('/api/backup/stats')).json());
+    if(d.status!=='ok')return;const s=d.stats;
+    document.getElementById('s-runs').textContent=s.total_runs??'—';
+    document.getElementById('s-ok').textContent  =s.success_count??'—';
+    document.getElementById('s-err').textContent =s.error_count??'—';
+    document.getElementById('s-last').textContent=s.last_run??'—';
+    document.getElementById('s-auto').textContent=s.last_auto??'—';
+  }catch(e){}
+}
+
+async function loadLog(){
+  try{
+    const d=(await(await fetch('/api/backup/log?limit=200')).json());
+    const tb=document.getElementById('log-body');
+    if(!d.logs||!d.logs.length){tb.innerHTML='<tr class="empty-row"><td colspan="9">No backup activity yet.</td></tr>';return;}
+    tb.innerHTML=d.logs.map(row=>{
+      const typeBadge=
+        row.backup_type==='db'      ?'<span class="badge badge-db">🗄 DB</span>':
+        row.backup_type==='appzip'  ?'<span class="badge badge-zip">🗜 ZIP</span>':
+        row.backup_type==='restore' ?'<span class="badge badge-restore">🔄 Restore</span>':
+                                     '<span class="badge badge-copy">📋 Copy</span>';
+      const byBadge=row.triggered_by==='manual'?'<span class="badge badge-manual">Manual</span>':'<span class="badge badge-auto">Auto</span>';
+      const stBadge=row.status==='ok'?'<span class="badge badge-ok">✓ OK</span>':'<span class="badge badge-error">✗ Error</span>';
+      const fname=row.filename?`<span style="font-family:monospace;font-size:.72rem;color:var(--muted)">${row.filename}</span>`:'<span style="color:var(--border)">—</span>';
+      const msg=row.message?`<span title="${row.message.replace(/"/g,'&quot;')}" style="color:var(--danger);font-size:.73rem;cursor:help">${row.message.slice(0,45)}…</span>`:'<span style="color:var(--border)">—</span>';
+      return`<tr>
+        <td style="white-space:nowrap;font-size:.8rem;font-family:monospace">${row.created_at||'—'}</td>
+        <td style="font-family:monospace;font-size:.7rem;color:var(--muted)">${row.run_id||'—'}</td>
+        <td>${typeBadge}</td><td>${byBadge}</td>
+        <td style="font-size:.78rem">${row.destination||'—'}</td>
+        <td>${fname}</td>
+        <td class="size-val">${row.size_kb?row.size_kb+' KB':'—'}</td>
+        <td>${stBadge}</td><td>${msg}</td>
+      </tr>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+async function loadFiles(){
+  try{
+    const d=(await(await fetch('/api/backup/files')).json());
+    const tb=document.getElementById('files-body');
+    if(!d.files||!d.files.length){tb.innerHTML='<tr class="empty-row"><td colspan="7">No backup files found in any destination.</td></tr>';return;}
+    tb.innerHTML=d.files.map(f=>{
+      const typeBadge=f.type==='db'?'<span class="badge badge-db">🗄 DB Dump</span>':'<span class="badge badge-zip">🗜 App ZIP</span>';
+      const dlBtn=(f.destination==='Primary (Server Local)'||f.destination==='Primary (local)')?`<button class="dl-btn" onclick="downloadFile('${f.filename}')">⬇ Download</button>`:'<span style="color:var(--muted);font-size:.72rem">Mirror copy</span>';
+      const restoreBtn=f.type==='db'?`<button class="restore-btn" onclick="openRestoreModal('${f.filename}')">🔄 Restore DB</button>`:'<span style="color:var(--border);font-size:.72rem">—</span>';
+      return`<tr>
+        <td style="white-space:nowrap;font-size:.8rem;font-family:monospace">${f.modified||'—'}</td>
+        <td style="font-family:monospace;font-size:.74rem;word-break:break-all">${f.filename}</td>
+        <td>${typeBadge}</td>
+        <td style="font-size:.78rem">${f.destination}</td>
+        <td class="size-val">${f.size_kb} KB</td>
+        <td>${dlBtn}</td><td>${restoreBtn}</td>
+      </tr>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+function downloadFile(filename){window.location.href='/api/backup/download/'+encodeURIComponent(filename);}
+
+// ── Restore Modal ─────────────────────────────────────────────────
+function openRestoreModal(filename){
+  _restoreFilename=filename;
+  document.getElementById('restore-card-inner').innerHTML=`
+    <h2>🔄 <span style="color:var(--restore-color)">Restore Database</span></h2>
+    <div style="font-size:.83rem;color:var(--muted);margin-bottom:10px">You are about to restore from:</div>
+    <div class="file-box">${filename}</div>
+    <div class="warn-box">
+      ⚠️ <strong>This will OVERWRITE your entire current database</strong> with data from the selected backup.<br><br>
+      All records &amp; changes made <strong>after this backup was created will be permanently lost</strong>.<br><br>
+      This action <strong>cannot be undone</strong>. Run a fresh backup first if needed.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline btn-sm" onclick="closeRestoreModal()">Cancel</button>
+      <button class="btn btn-danger  btn-sm" onclick="confirmRestore()">⚠️ Yes, Restore Now</button>
+    </div>`;
+  document.getElementById('restore-modal').classList.add('active');
+}
+
+function closeRestoreModal(){
+  document.getElementById('restore-modal').classList.remove('active');
+  _restoreFilename='';
+}
+
+async function confirmRestore(){
+  if(!_restoreFilename)return;
+  const filename=_restoreFilename;
+  document.getElementById('restore-card-inner').innerHTML=`
+    <h2>🔄 <span style="color:var(--restore-color)">Restoring Database…</span></h2>
+    <div class="restore-running">
+      <div class="restore-spinner"></div>
+      <div style="font-size:.85rem;color:var(--muted);text-align:center">Importing <span style="font-family:monospace;color:var(--accent2)">${filename}</span> into MySQL…</div>
+      <div style="font-size:.76rem;color:var(--muted)">Please do not close this window.</div>
+    </div>`;
+  try{
+    const d=(await(await fetch('/api/backup/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename,confirm:true})})).json());
+    if(d.status==='ok'){
+      document.getElementById('restore-card-inner').innerHTML=`
+        <h2>✅ <span style="color:var(--success)">Restore Complete</span></h2>
+        <div class="restore-result-ok">Database restored successfully!</div>
+        <div style="font-family:monospace;font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:6px">${filename}</div>
+        <div style="font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:20px">Duration: ${d.duration_sec}s</div>
+        <div class="btn-row" style="justify-content:center"><button class="btn btn-outline btn-sm" onclick="closeRestoreModal();refreshAll()">Close</button></div>`;
+      toast('✅ Database restored from '+filename,'ok');
+    }else{
+      document.getElementById('restore-card-inner').innerHTML=`
+        <h2>❌ <span style="color:var(--danger)">Restore Failed</span></h2>
+        <div class="restore-result-err">${d.message||'Unknown error occurred'}</div>
+        <div class="btn-row" style="justify-content:center;margin-top:16px"><button class="btn btn-outline btn-sm" onclick="closeRestoreModal()">Close</button></div>`;
+      toast('❌ Restore failed: '+(d.message||'unknown error'),'err');
+    }
+    refreshAll();
+  }catch(e){
+    document.getElementById('restore-card-inner').innerHTML=`
+      <h2>❌ <span style="color:var(--danger)">Request Failed</span></h2>
+      <div class="restore-result-err">${e.message}</div>
+      <div class="btn-row" style="justify-content:center;margin-top:16px"><button class="btn btn-outline btn-sm" onclick="closeRestoreModal()">Close</button></div>`;
+    toast('❌ Request failed: '+e.message,'err');
+  }
+}
+
+document.getElementById('restore-modal').addEventListener('click',function(e){if(e.target===this)closeRestoreModal();});
+
+// ── Backup trigger ────────────────────────────────────────────────
+async function triggerBackup(){
+  const btn=document.getElementById('btn-run');
+  btn.disabled=true;document.getElementById('run-overlay').classList.add('active');
+  setStep('ps-db','active');setStep('ps-zip','wait');setStep('ps-copy','wait');setStep('ps-prune','wait');
+  setTimeout(()=>{setStep('ps-db','done');setStep('ps-zip','active');},3000);
+  setTimeout(()=>{setStep('ps-zip','done');setStep('ps-copy','active');},7000);
+  setTimeout(()=>{setStep('ps-copy','done');setStep('ps-prune','active');},10000);
+  try{
+    const d=(await(await fetch('/api/backup/run',{method:'POST'})).json());
+    document.getElementById('run-overlay').classList.remove('active');btn.disabled=false;setStep('ps-prune','done');
+    if(d.status==='ok')          toast(`✅ Backup complete — DB: ${d.db_backup?.filename||'?'} · ZIP: ${d.app_backup?.filename||'?'} (${d.elapsed_sec}s)`,'ok');
+    else if(d.status==='partial') toast('⚠️ Partial backup — check Activity Log for errors','warn');
+    else                          toast('❌ Backup failed: '+(d.message||'unknown error'),'err');
+    refreshAll();
+  }catch(e){document.getElementById('run-overlay').classList.remove('active');btn.disabled=false;toast('❌ Request failed: '+e.message,'err');}
+}
+
+async function triggerPrune(){
+  const btn=document.getElementById('btn-prune');btn.disabled=true;
+  try{
+    const d=(await(await fetch('/api/backup/prune',{method:'POST'})).json());
+    btn.disabled=false;
+    d.status==='ok'?toast(`🗑️ Pruned ${d.deleted} file(s) older than 3 days from all destinations`,'ok'):toast('❌ Prune failed: '+d.message,'err');
+    refreshAll();
+  }catch(e){btn.disabled=false;toast('❌ Request failed: '+e.message,'err');}
+}
+
+function refreshAll(){
+  loadStats();loadLog();loadFiles();loadBackupConfig();
+  document.getElementById('last-refresh').textContent='Refreshed: '+new Date().toLocaleString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+// ── Backup Path Config ──────────────────────────────────────────────────────
+async function loadBackupConfig(){
+  try{
+    const r=await fetch('/api/backup/config');
+    const d=await r.json();
+    if(d.status!=='ok')return;
+    const cfg=d.config;
+
+    // Show/hide warning banner and disable Run button if paths are missing
+    const banner=document.getElementById('paths-warning-banner');
+    const runBtn=document.getElementById('btn-run');
+    const missing=d.missing_paths||[];
+    if(missing.length>0){
+      if(banner){banner.style.display='flex';}
+      const ml=document.getElementById('paths-warning-missing');
+      if(ml)ml.textContent='Missing: '+missing.join(', ');
+      if(runBtn){runBtn.disabled=true;runBtn.title='Configure all backup paths first';}
+    }else{
+      if(banner){banner.style.display='none';}
+      if(runBtn){runBtn.disabled=false;runBtn.title='';}
+    }
+    // Update dest cards
+    document.getElementById('destGrid').innerHTML=`
+      <div class="dest-card">
+        <div class="dest-icon">🖥️</div>
+        <div class="dest-info">
+          <div class="dest-name">Primary (Server Local)</div>
+          <div class="dest-path" title="${cfg.primary_path}">${cfg.primary_path||'—'}</div>
+        </div><div class="dest-badge">Always</div>
+      </div>
+      <div class="dest-card">
+        <div class="dest-icon">💾</div>
+        <div class="dest-info">
+          <div class="dest-name">Secondary Backup</div>
+          <div class="dest-path" title="${cfg.drive_d_path}">${cfg.drive_d_path||'—'}</div>
+        </div><div class="dest-badge">Mirror</div>
+      </div>
+      <div class="dest-card">
+        <div class="dest-icon">🌐</div>
+        <div class="dest-info">
+          <div class="dest-name">Network / Third Copy</div>
+          <div class="dest-path" title="${cfg.network_path}">${cfg.network_path||'(not set — optional)'}</div>
+        </div><div class="dest-badge">Mirror</div>
+      </div>`;
+    // Pre-fill editor inputs and hints
+    document.getElementById('cfg_primary').value=cfg.primary_path||'';
+    document.getElementById('cfg_drive_d').value=cfg.drive_d_path||'';
+    document.getElementById('cfg_network').value=cfg.network_path||'';
+    document.getElementById('cfg_primary_current').textContent=cfg.primary_path||'(default)';
+    document.getElementById('cfg_drive_d_current').textContent=cfg.drive_d_path||'(default)';
+    document.getElementById('cfg_network_current').textContent=cfg.network_path||'(default)';
+  }catch(e){console.error('loadBackupConfig',e);}
+}
+
+// ── Folder Picker (File System Access API with fallback) ─────────────────────
+async function pickFolder(inputId){
+  const input = document.getElementById(inputId);
+  // Modern browsers (Chrome/Edge): use showDirectoryPicker
+  if(window.showDirectoryPicker){
+    try{
+      const dir = await window.showDirectoryPicker({mode:'readwrite'});
+      // dir.name gives only the folder name; we build a best-effort path
+      // The API purposely hides the full OS path for security reasons.
+      // We show the folder name and let the user confirm/edit the full path.
+      const current = input.value.trim();
+      if(current){
+        // Replace only the last segment
+        const parts = current.replace(/\\/g,'/').split('/');
+        parts[parts.length-1] = dir.name;
+        input.value = parts.join('\\').replace(/\//g,'\\');
+      } else {
+        input.value = dir.name;
+      }
+      toast('📂 Folder selected: ' + dir.name + ' — please verify/complete the full path.','warn');
+      input.focus();
+    }catch(e){
+      if(e.name !== 'AbortError') toast('Folder picker error: '+e.message,'err');
+    }
+  } else {
+    // Fallback: simulate with a hidden <input type=file webkitdirectory>
+    let picker = document.getElementById('_folderPickerInput');
+    if(!picker){
+      picker = document.createElement('input');
+      picker.type = 'file';
+      picker.id = '_folderPickerInput';
+      picker.setAttribute('webkitdirectory','');
+      picker.style.display = 'none';
+      document.body.appendChild(picker);
+    }
+    picker.onchange = function(){
+      if(picker.files && picker.files.length > 0){
+        // webkitRelativePath gives "foldername/file.ext" — extract folder
+        const rel = picker.files[0].webkitRelativePath || '';
+        const folder = rel.split('/')[0];
+        if(folder) {
+          input.value = folder;
+          toast('📂 Folder selected: ' + folder + ' — please verify/complete the full path.','warn');
+          input.focus();
+        }
+      }
+      picker.value = '';
+    };
+    picker.click();
+  }
+}
+
+function togglePathEditor(){
+  const ed=document.getElementById('pathEditor');
+  const btn=document.getElementById('editPathsBtn');
+  const open=ed.style.display==='none'||ed.style.display==='';
+  ed.style.display=open?'block':'none';
+  btn.textContent=open?'✖ Close':'✏️ Configure Paths';
+  if(open)document.getElementById('cfg_primary').focus();
+}
+
+async function saveBackupPaths(){
+  const primary=document.getElementById('cfg_primary').value.trim();
+  const drive_d=document.getElementById('cfg_drive_d').value.trim();
+  const network=document.getElementById('cfg_network').value.trim();
+  const msg=document.getElementById('pathSaveMsg');
+
+  // Front-end validation — Primary and Secondary are mandatory; third copy optional
+  const missing=[];
+  if(!primary){missing.push('Primary (Server Local)');document.getElementById('cfg_primary').style.borderColor='var(--danger)';}
+  else document.getElementById('cfg_primary').style.borderColor='';
+  if(!drive_d){missing.push('Secondary Backup');document.getElementById('cfg_drive_d').style.borderColor='var(--danger)';}
+  else document.getElementById('cfg_drive_d').style.borderColor='';
+  document.getElementById('cfg_network').style.borderColor='';
+
+  if(missing.length>0){
+    msg.style.color='var(--danger)';
+    msg.textContent='❌ Required: '+missing.join(', ');
+    toast('❌ Primary and Secondary paths are required. Missing: '+missing.join(', '),'err');
+    return;
+  }
+
+  const body={primary_path:primary,drive_d_path:drive_d,network_path:network};
+  msg.style.color='var(--muted)';msg.textContent='Saving…';
+  try{
+    const r=await fetch('/api/backup/config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const d=await r.json();
+    if(d.status==='ok'){
+      msg.style.color='var(--success)';
+      msg.textContent='✅ Paths saved!';
+      await loadBackupConfig();
+      setTimeout(()=>{togglePathEditor();msg.textContent='';},1600);
+    }else{
+      msg.style.color='var(--danger)';
+      msg.textContent='❌ '+(d.message||'Save failed');
+    }
+  }catch(e){
+    msg.style.color='var(--danger)';
+    msg.textContent='❌ Network error';
+  }
+}
+
+refreshAll();
+setInterval(refreshAll,60000);
+</script>
+<script>
+/* ── HCP Universal Theme Engine ── */
+const HCP_THEMES = {
+  light: {'--bg':'linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)','--bg-main':'#f0fdf8','--bg-white':'#ffffff','--bg-topbar':'#ffffff','--hcp-bg':'linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)','--surface':'#ffffff','--surface-solid':'#ffffff','--surface2':'rgba(255,255,255,0.65)','--surface3':'#f1f5f9','--card':'#ffffff','--card-bg':'#ffffff','--sidebar':'#f8f9fb','--bg-sidebar':'#2c3e50','--border':'rgba(0,0,0,0.08)','--border2':'rgba(0,0,0,0.12)','--glass-border':'rgba(255,255,255,0.88)','--text':'#1e293b','--text-bright':'#0f172a','--text-primary':'#0f172a','--text-dim':'#64748b','--text-muted':'#94a3b8','--muted':'#94a3b8','--muted2':'#64748b','--brand':'#0d9488','--brand-dim':'#0f766e','--brand-dark':'#0f766e','--brand-glow':'rgba(13,148,136,0.14)','--accent':'#06b6d4','--accent2':'#6366f1','--primary':'#0d9488','--primary-hover':'#0f766e','--primary-light':'#f0fdfa','--topbar-bg':'rgba(255,255,255,0.88)','--sidebar-bg':'rgba(255,255,255,0.72)','--input-bg':'rgba(255,255,255,0.72)','--input-border':'rgba(0,0,0,0.1)','--table-head-bg':'rgba(248,250,252,0.9)','--table-row-hover':'rgba(13,148,136,0.04)','--shadow':'0 4px 20px rgba(0,0,0,0.06)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.06)','--topbar-shadow':'0 1px 0 #d1d9e6','--success':'#059669','--success-light':'#ecfdf5','--danger':'#ef4444','--warn':'#f59e0b','--info':'#06b6d4','--s0':'#f8fafc','--s1':'#f1f5f9','--s2':'#e2e8f0','--s3':'#cbd5e1','--s4':'#94a3b8','--s5':'#64748b','--t0':'#0f172a','--t1':'#1e293b','--t2':'#475569','--t3':'#94a3b8','--ac':'#0d9488','--ac-d':'#0f766e','--ac-g':'rgba(13,148,136,0.16)','--ac-s':'rgba(13,148,136,0.07)','--l0':'rgba(0,0,0,0.03)','--l1':'rgba(0,0,0,0.06)','--l2':'rgba(0,0,0,0.1)','--l3':'rgba(0,0,0,0.16)','--rd':'#ef4444','--am':'#f59e0b','--gr':'#10b981','--pu':'#8b5cf6','--accent-color':'#0d9488','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#f1f5f9','--text-main':'#1e293b','--text-secondary':'#64748b','--text-nav':'#bdc3c7','--topbar':'rgba(255,255,255,0.88)','--header':'#f8fafc','--row-hover':'rgba(13,148,136,0.04)','--scrollbar-track':'#f1f5f9','--scrollbar-thumb':'rgba(0,0,0,0.12)','--bg-input':'#ffffff','--bg-input-ro':'#f8fafc','--bg-modal':'#ffffff','--bg-stat-card':'#ffffff','--bg-table-head':'#f8fafc','--bg-chart-card':'#ffffff','--bg-actionbar':'#f1f5f9','--bg-sidebar-hover':'#34495e','--border-card':'rgba(0,0,0,0.08)','--border-light':'rgba(0,0,0,0.05)','--border-main':'#e2e8f0','--border-focus':'#93c5fd','--shadow-card':'0 2px 8px rgba(0,0,0,0.06)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.05)','--shadow-md':'0 4px 12px rgba(0,0,0,0.08)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.12)','--error-bg':'#fef2f2','--error-text':'#dc2626','--error-border':'#fecaca','--warn-bg':'#fffbeb','--warn-text':'#d97706','--warn-border':'#fde68a','--success-bg':'#f0fdf4','--success-text':'#059669','--success-border':'#a7f3d0','--input-focus':'#f0fdfa','--purple':'#7c3aed','--purple-light':'#f5f3ff','--danger-light':'#fef2f2','--warning':'#d97706','--warning-light':'#fffbeb','--green':'#10b981','--green-dim':'rgba(16,185,129,0.1)','--green-glow':'rgba(16,185,129,0.2)','--red':'#ef4444','--red-dim':'rgba(239,68,68,0.1)','--amber':'#f59e0b','--orange':'#f97316','--yellow':'#eab308','--blue':'#3b82f6','--radius':'12px','--badge-bg':'#f1f5f9','--brand-glow2':'rgba(13,148,136,0.07)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.06)','--sh-m':'0 4px 16px rgba(0,0,0,0.08)','--sh-l':'0 8px 32px rgba(0,0,0,0.12)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(239,68,68,0.15)','--rd-g':'rgba(239,68,68,0.08)','--gr-b':'rgba(16,185,129,0.15)','--gr-g':'rgba(16,185,129,0.08)','--bl':'#3b82f6','--bl-b':'rgba(59,130,246,0.15)','--pu-g':'rgba(139,92,246,0.08)','--pu-s':'rgba(139,92,246,0.15)','--wa':'#f59e0b','--wa-d':'#d97706','--fb':'#f8fafc','--fd':'#0f172a','--fm':'#1e293b'},
+  dark:  {'--bg':'linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)','--bg-main':'#0f172a','--bg-white':'#1e293b','--bg-topbar':'rgba(12,17,23,0.92)','--hcp-bg':'linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)','--surface':'rgba(22,28,40,0.85)','--surface-solid':'#161c28','--surface2':'rgba(22,28,40,0.65)','--surface3':'#1e2a3a','--card':'#1e293b','--card-bg':'#1e293b','--sidebar':'#1e293b','--bg-sidebar':'#1a2035','--border':'rgba(255,255,255,0.08)','--border2':'rgba(255,255,255,0.12)','--glass-border':'rgba(255,255,255,0.07)','--text':'#cbd5e1','--text-bright':'#f1f5f9','--text-primary':'#f1f5f9','--text-dim':'#94a3b8','--text-muted':'#475569','--muted':'#475569','--muted2':'#64748b','--brand':'#14b8a6','--brand-dim':'#0d9488','--brand-dark':'#0d9488','--brand-glow':'rgba(20,184,166,0.18)','--accent':'#22d3ee','--accent2':'#818cf8','--primary':'#14b8a6','--primary-hover':'#0d9488','--primary-light':'rgba(20,184,166,0.12)','--topbar-bg':'rgba(12,17,23,0.92)','--sidebar-bg':'rgba(16,20,32,0.92)','--input-bg':'rgba(255,255,255,0.05)','--input-border':'rgba(255,255,255,0.1)','--table-head-bg':'rgba(255,255,255,0.03)','--table-row-hover':'rgba(20,184,166,0.05)','--shadow':'0 4px 20px rgba(0,0,0,0.4)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.3)','--topbar-shadow':'0 1px 0 rgba(255,255,255,0.05)','--success':'#10b981','--success-light':'rgba(16,185,129,0.12)','--danger':'#f43f5e','--warn':'#f59e0b','--info':'#22d3ee','--s0':'#090e1a','--s1':'#0f1724','--s2':'#162030','--s3':'#1c2a3f','--s4':'#223349','--s5':'#293d55','--t0':'#f0f6ff','--t1':'#c8d8ee','--t2':'#8099b8','--t3':'#4a6080','--ac':'#00d4b4','--ac-d':'#00ae94','--ac-g':'rgba(0,212,180,0.16)','--ac-s':'rgba(0,212,180,0.07)','--l0':'rgba(255,255,255,0.04)','--l1':'rgba(255,255,255,0.08)','--l2':'rgba(255,255,255,0.14)','--l3':'rgba(255,255,255,0.22)','--rd':'#f43f5e','--am':'#fbbf24','--gr':'#34d399','--pu':'#a78bfa','--accent-color':'#14b8a6','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#0f172a','--text-main':'#cbd5e1','--text-secondary':'#94a3b8','--text-nav':'#475569','--topbar':'rgba(12,17,23,0.92)','--header':'rgba(255,255,255,0.03)','--row-hover':'rgba(20,184,166,0.05)','--scrollbar-track':'#0f172a','--scrollbar-thumb':'rgba(255,255,255,0.1)','--bg-input':'rgba(255,255,255,0.05)','--bg-input-ro':'rgba(255,255,255,0.03)','--bg-modal':'#1e293b','--bg-stat-card':'#1e293b','--bg-table-head':'rgba(255,255,255,0.03)','--bg-chart-card':'#1e293b','--bg-actionbar':'#0f172a','--bg-sidebar-hover':'rgba(255,255,255,0.07)','--border-card':'rgba(255,255,255,0.08)','--border-light':'rgba(255,255,255,0.04)','--border-main':'rgba(255,255,255,0.08)','--border-focus':'#0d9488','--shadow-card':'0 2px 8px rgba(0,0,0,0.3)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.3)','--shadow-md':'0 4px 12px rgba(0,0,0,0.35)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.45)','--error-bg':'rgba(239,68,68,0.12)','--error-text':'#f87171','--error-border':'rgba(239,68,68,0.25)','--warn-bg':'rgba(245,158,11,0.12)','--warn-text':'#fbbf24','--warn-border':'rgba(245,158,11,0.25)','--success-bg':'rgba(16,185,129,0.12)','--success-text':'#34d399','--success-border':'rgba(16,185,129,0.25)','--input-focus':'rgba(20,184,166,0.12)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.12)','--danger-light':'rgba(244,63,94,0.12)','--warning':'#fbbf24','--warning-light':'rgba(245,158,11,0.12)','--green':'#34d399','--green-dim':'rgba(52,211,153,0.1)','--green-glow':'rgba(52,211,153,0.2)','--red':'#f43f5e','--red-dim':'rgba(244,63,94,0.1)','--amber':'#fbbf24','--orange':'#fb923c','--yellow':'#fbbf24','--blue':'#60a5fa','--radius':'12px','--badge-bg':'rgba(255,255,255,0.07)','--brand-glow2':'rgba(20,184,166,0.09)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.3)','--sh-m':'0 4px 16px rgba(0,0,0,0.35)','--sh-l':'0 8px 32px rgba(0,0,0,0.45)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(244,63,94,0.15)','--rd-g':'rgba(244,63,94,0.08)','--gr-b':'rgba(52,211,153,0.15)','--gr-g':'rgba(52,211,153,0.08)','--bl':'#60a5fa','--bl-b':'rgba(96,165,250,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#fbbf24','--wa-d':'#f59e0b','--fb':'#0f172a','--fd':'#f1f5f9','--fm':'#e2e8f0'},
+  ocean: {'--bg':'linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)','--bg-main':'#082844','--bg-white':'#0c2d4e','--bg-topbar':'rgba(8,24,50,0.94)','--hcp-bg':'linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)','--surface':'rgba(14,42,71,0.82)','--surface-solid':'#0c2d4e','--surface2':'rgba(14,42,71,0.6)','--surface3':'#0f3460','--card':'#0c2d4e','--card-bg':'#0c2d4e','--sidebar':'#071e38','--bg-sidebar':'#051828','--border':'rgba(56,189,248,0.12)','--border2':'rgba(56,189,248,0.2)','--glass-border':'rgba(56,189,248,0.18)','--text':'#bae6fd','--text-bright':'#e0f2fe','--text-primary':'#e0f2fe','--text-dim':'#7dd3fc','--text-muted':'#4a7ea8','--muted':'#4a7ea8','--muted2':'#5b8db8','--brand':'#38bdf8','--brand-dim':'#0ea5e9','--brand-dark':'#0ea5e9','--brand-glow':'rgba(56,189,248,0.22)','--accent':'#67e8f9','--accent2':'#a78bfa','--primary':'#38bdf8','--primary-hover':'#0ea5e9','--primary-light':'rgba(56,189,248,0.12)','--topbar-bg':'rgba(8,24,50,0.94)','--sidebar-bg':'rgba(8,28,55,0.92)','--input-bg':'rgba(255,255,255,0.06)','--input-border':'rgba(56,189,248,0.2)','--table-head-bg':'rgba(255,255,255,0.04)','--table-row-hover':'rgba(56,189,248,0.06)','--shadow':'0 4px 20px rgba(0,0,0,0.5)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.4)','--topbar-shadow':'0 1px 0 rgba(56,189,248,0.1)','--success':'#34d399','--success-light':'rgba(52,211,153,0.15)','--danger':'#f87171','--warn':'#fbbf24','--info':'#67e8f9','--s0':'#051828','--s1':'#082035','--s2':'#0a2d4a','--s3':'#0d3a5e','--s4':'#104872','--s5':'#145686','--t0':'#e0f2fe','--t1':'#bae6fd','--t2':'#7dd3fc','--t3':'#38bdf8','--ac':'#38bdf8','--ac-d':'#0ea5e9','--ac-g':'rgba(56,189,248,0.16)','--ac-s':'rgba(56,189,248,0.07)','--l0':'rgba(56,189,248,0.04)','--l1':'rgba(56,189,248,0.08)','--l2':'rgba(56,189,248,0.14)','--l3':'rgba(56,189,248,0.22)','--rd':'#f87171','--am':'#fbbf24','--gr':'#34d399','--pu':'#a78bfa','--accent-color':'#38bdf8','--db-color':'#a78bfa','--zip-color':'#34d399','--bg-body':'#082844','--text-main':'#bae6fd','--text-secondary':'#7dd3fc','--text-nav':'#4a7ea8','--topbar':'rgba(8,24,50,0.94)','--header':'rgba(56,189,248,0.05)','--row-hover':'rgba(56,189,248,0.06)','--scrollbar-track':'#082844','--scrollbar-thumb':'rgba(56,189,248,0.15)','--bg-input':'rgba(255,255,255,0.06)','--bg-input-ro':'rgba(255,255,255,0.03)','--bg-modal':'#0c2d4e','--bg-stat-card':'#0c2d4e','--bg-table-head':'rgba(56,189,248,0.05)','--bg-chart-card':'#0c2d4e','--bg-actionbar':'#051828','--bg-sidebar-hover':'rgba(56,189,248,0.1)','--border-card':'rgba(56,189,248,0.12)','--border-light':'rgba(56,189,248,0.06)','--border-main':'rgba(56,189,248,0.15)','--border-focus':'#38bdf8','--shadow-card':'0 2px 8px rgba(0,0,0,0.4)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.4)','--shadow-md':'0 4px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.55)','--error-bg':'rgba(248,113,113,0.15)','--error-text':'#fca5a5','--error-border':'rgba(248,113,113,0.3)','--warn-bg':'rgba(251,191,36,0.15)','--warn-text':'#fde68a','--warn-border':'rgba(251,191,36,0.3)','--success-bg':'rgba(52,211,153,0.15)','--success-text':'#6ee7b7','--success-border':'rgba(52,211,153,0.3)','--input-focus':'rgba(56,189,248,0.15)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.15)','--danger-light':'rgba(248,113,113,0.15)','--warning':'#fbbf24','--warning-light':'rgba(251,191,36,0.15)','--green':'#34d399','--green-dim':'rgba(52,211,153,0.1)','--green-glow':'rgba(52,211,153,0.2)','--red':'#f87171','--red-dim':'rgba(248,113,113,0.1)','--amber':'#fbbf24','--orange':'#fb923c','--yellow':'#fde68a','--blue':'#67e8f9','--radius':'12px','--badge-bg':'rgba(56,189,248,0.1)','--brand-glow2':'rgba(56,189,248,0.1)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.4)','--sh-m':'0 4px 16px rgba(0,0,0,0.45)','--sh-l':'0 8px 32px rgba(0,0,0,0.55)','--am-b':'rgba(251,191,36,0.15)','--am-g':'rgba(251,191,36,0.08)','--rd-b':'rgba(248,113,113,0.15)','--rd-g':'rgba(248,113,113,0.08)','--gr-b':'rgba(52,211,153,0.15)','--gr-g':'rgba(52,211,153,0.08)','--bl':'#67e8f9','--bl-b':'rgba(103,232,249,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#fbbf24','--wa-d':'#f59e0b','--fb':'#051828','--fd':'#e0f2fe','--fm':'#bae6fd'},
+  rose:  {'--bg':'linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)','--bg-main':'#fdf2f8','--bg-white':'#ffffff','--bg-topbar':'#ffffff','--hcp-bg':'linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)','--surface':'rgba(255,255,255,0.85)','--surface-solid':'#ffffff','--surface2':'rgba(255,255,255,0.65)','--surface3':'#fdf2f8','--card':'#ffffff','--card-bg':'#ffffff','--sidebar':'#fff5f7','--bg-sidebar':'#9d174d','--border':'rgba(225,29,72,0.1)','--border2':'rgba(225,29,72,0.18)','--glass-border':'rgba(255,255,255,0.9)','--text':'#4a0520','--text-bright':'#1e0433','--text-primary':'#1e0433','--text-dim':'#9d174d','--text-muted':'#c084fc','--muted':'#c084fc','--muted2':'#a855f7','--brand':'#e11d48','--brand-dim':'#be123c','--brand-dark':'#be123c','--brand-glow':'rgba(225,29,72,0.14)','--accent':'#d946ef','--accent2':'#a855f7','--primary':'#e11d48','--primary-hover':'#be123c','--primary-light':'#fff1f2','--topbar-bg':'rgba(255,255,255,0.9)','--sidebar-bg':'rgba(255,255,255,0.76)','--input-bg':'rgba(255,255,255,0.75)','--input-border':'rgba(225,29,72,0.15)','--table-head-bg':'rgba(255,241,242,0.9)','--table-row-hover':'rgba(225,29,72,0.04)','--shadow':'0 4px 20px rgba(225,29,72,0.08)','--shadow-sm':'0 2px 8px rgba(225,29,72,0.06)','--topbar-shadow':'0 1px 0 #fecdd3','--success':'#059669','--success-light':'#ecfdf5','--danger':'#e11d48','--warn':'#d97706','--info':'#d946ef','--s0':'#fff5f7','--s1':'#ffe4e6','--s2':'#fecdd3','--s3':'#fda4af','--s4':'#fb7185','--s5':'#f43f5e','--t0':'#1e0433','--t1':'#4a0520','--t2':'#9d174d','--t3':'#be123c','--ac':'#e11d48','--ac-d':'#be123c','--ac-g':'rgba(225,29,72,0.16)','--ac-s':'rgba(225,29,72,0.07)','--l0':'rgba(225,29,72,0.03)','--l1':'rgba(225,29,72,0.07)','--l2':'rgba(225,29,72,0.12)','--l3':'rgba(225,29,72,0.2)','--rd':'#e11d48','--am':'#d97706','--gr':'#059669','--pu':'#a855f7','--accent-color':'#e11d48','--db-color':'#f472b6','--zip-color':'#34d399','--bg-body':'#fdf2f8','--text-main':'#4a0520','--text-secondary':'#9d174d','--text-nav':'#be185d','--topbar':'rgba(255,255,255,0.9)','--header':'#fff5f7','--row-hover':'rgba(225,29,72,0.04)','--scrollbar-track':'#fdf2f8','--scrollbar-thumb':'rgba(225,29,72,0.1)','--bg-input':'#ffffff','--bg-input-ro':'#fff5f7','--bg-modal':'#ffffff','--bg-stat-card':'#ffffff','--bg-table-head':'#fff5f7','--bg-chart-card':'#ffffff','--bg-actionbar':'#fff1f2','--bg-sidebar-hover':'#be185d','--border-card':'rgba(225,29,72,0.1)','--border-light':'rgba(225,29,72,0.06)','--border-main':'#fecdd3','--border-focus':'#e11d48','--shadow-card':'0 2px 8px rgba(225,29,72,0.06)','--shadow-topbar':'0 2px 4px rgba(225,29,72,0.05)','--shadow-md':'0 4px 12px rgba(225,29,72,0.1)','--shadow-lg':'0 10px 30px rgba(225,29,72,0.15)','--error-bg':'#fff1f2','--error-text':'#be123c','--error-border':'#fecdd3','--warn-bg':'#fffbeb','--warn-text':'#d97706','--warn-border':'#fde68a','--success-bg':'#f0fdf4','--success-text':'#059669','--success-border':'#a7f3d0','--input-focus':'#fff1f2','--purple':'#a855f7','--purple-light':'#fdf4ff','--danger-light':'#fff1f2','--warning':'#d97706','--warning-light':'#fffbeb','--green':'#059669','--green-dim':'rgba(5,150,105,0.1)','--green-glow':'rgba(5,150,105,0.2)','--red':'#e11d48','--red-dim':'rgba(225,29,72,0.1)','--amber':'#d97706','--orange':'#ea580c','--yellow':'#d97706','--blue':'#2563eb','--radius':'12px','--badge-bg':'#fff1f2','--brand-glow2':'rgba(225,29,72,0.07)','--restore-color':'#d946ef','--copy-color':'#d97706','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(225,29,72,0.06)','--sh-m':'0 4px 16px rgba(225,29,72,0.1)','--sh-l':'0 8px 32px rgba(225,29,72,0.15)','--am-b':'rgba(217,119,6,0.15)','--am-g':'rgba(217,119,6,0.08)','--rd-b':'rgba(225,29,72,0.15)','--rd-g':'rgba(225,29,72,0.08)','--gr-b':'rgba(5,150,105,0.15)','--gr-g':'rgba(5,150,105,0.08)','--bl':'#2563eb','--bl-b':'rgba(37,99,235,0.15)','--pu-g':'rgba(168,85,247,0.08)','--pu-s':'rgba(168,85,247,0.15)','--wa':'#d97706','--wa-d':'#b45309','--fb':'#fff5f7','--fd':'#1e0433','--fm':'#4a0520'},
+  slate: {'--bg':'linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)','--bg-main':'#0f172a','--bg-white':'#1e293b','--bg-topbar':'rgba(15,23,42,0.97)','--hcp-bg':'linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)','--surface':'rgba(30,41,59,0.9)','--surface-solid':'#1e293b','--surface2':'rgba(30,41,59,0.7)','--surface3':'#263548','--card':'#1e293b','--card-bg':'#1e293b','--sidebar':'#0f172a','--bg-sidebar':'#0f172a','--border':'rgba(148,163,184,0.1)','--border2':'rgba(148,163,184,0.18)','--glass-border':'rgba(148,163,184,0.1)','--text':'#94a3b8','--text-bright':'#e2e8f0','--text-primary':'#e2e8f0','--text-dim':'#64748b','--text-muted':'#475569','--muted':'#475569','--muted2':'#64748b','--brand':'#94a3b8','--brand-dim':'#64748b','--brand-dark':'#64748b','--brand-glow':'rgba(148,163,184,0.15)','--accent':'#e2e8f0','--accent2':'#cbd5e1','--primary':'#94a3b8','--primary-hover':'#64748b','--primary-light':'rgba(148,163,184,0.1)','--topbar-bg':'rgba(15,23,42,0.97)','--sidebar-bg':'rgba(15,23,42,0.95)','--input-bg':'rgba(255,255,255,0.04)','--input-border':'rgba(148,163,184,0.12)','--table-head-bg':'rgba(255,255,255,0.03)','--table-row-hover':'rgba(148,163,184,0.05)','--shadow':'0 4px 20px rgba(0,0,0,0.5)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.4)','--topbar-shadow':'0 1px 0 rgba(255,255,255,0.04)','--success':'#22c55e','--success-light':'rgba(34,197,94,0.12)','--danger':'#ef4444','--warn':'#f59e0b','--info':'#94a3b8','--s0':'#0f172a','--s1':'#1e293b','--s2':'#263548','--s3':'#2e3f57','--s4':'#384f6b','--s5':'#425f7f','--t0':'#f1f5f9','--t1':'#e2e8f0','--t2':'#94a3b8','--t3':'#64748b','--ac':'#94a3b8','--ac-d':'#64748b','--ac-g':'rgba(148,163,184,0.15)','--ac-s':'rgba(148,163,184,0.07)','--l0':'rgba(255,255,255,0.03)','--l1':'rgba(255,255,255,0.06)','--l2':'rgba(255,255,255,0.1)','--l3':'rgba(255,255,255,0.16)','--rd':'#ef4444','--am':'#f59e0b','--gr':'#22c55e','--pu':'#a78bfa','--accent-color':'#94a3b8','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#0f172a','--text-main':'#94a3b8','--text-secondary':'#64748b','--text-nav':'#475569','--topbar':'rgba(15,23,42,0.97)','--header':'rgba(255,255,255,0.03)','--row-hover':'rgba(148,163,184,0.05)','--scrollbar-track':'#0f172a','--scrollbar-thumb':'rgba(148,163,184,0.12)','--bg-input':'rgba(255,255,255,0.04)','--bg-input-ro':'rgba(255,255,255,0.02)','--bg-modal':'#1e293b','--bg-stat-card':'#1e293b','--bg-table-head':'rgba(255,255,255,0.03)','--bg-chart-card':'#1e293b','--bg-actionbar':'#0f172a','--bg-sidebar-hover':'rgba(148,163,184,0.08)','--border-card':'rgba(148,163,184,0.1)','--border-light':'rgba(148,163,184,0.06)','--border-main':'rgba(148,163,184,0.15)','--border-focus':'#94a3b8','--shadow-card':'0 2px 8px rgba(0,0,0,0.4)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.3)','--shadow-md':'0 4px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.55)','--error-bg':'rgba(239,68,68,0.12)','--error-text':'#fca5a5','--error-border':'rgba(239,68,68,0.2)','--warn-bg':'rgba(245,158,11,0.12)','--warn-text':'#fde68a','--warn-border':'rgba(245,158,11,0.2)','--success-bg':'rgba(34,197,94,0.12)','--success-text':'#86efac','--success-border':'rgba(34,197,94,0.2)','--input-focus':'rgba(148,163,184,0.12)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.12)','--danger-light':'rgba(239,68,68,0.12)','--warning':'#f59e0b','--warning-light':'rgba(245,158,11,0.12)','--green':'#22c55e','--green-dim':'rgba(34,197,94,0.1)','--green-glow':'rgba(34,197,94,0.2)','--red':'#ef4444','--red-dim':'rgba(239,68,68,0.1)','--amber':'#f59e0b','--orange':'#fb923c','--yellow':'#eab308','--blue':'#60a5fa','--radius':'12px','--badge-bg':'rgba(255,255,255,0.06)','--brand-glow2':'rgba(148,163,184,0.07)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.4)','--sh-m':'0 4px 16px rgba(0,0,0,0.45)','--sh-l':'0 8px 32px rgba(0,0,0,0.55)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(239,68,68,0.15)','--rd-g':'rgba(239,68,68,0.08)','--gr-b':'rgba(34,197,94,0.15)','--gr-g':'rgba(34,197,94,0.08)','--bl':'#60a5fa','--bl-b':'rgba(96,165,250,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#f59e0b','--wa-d':'#d97706','--fb':'#0f172a','--fd':'#f1f5f9','--fm':'#e2e8f0'}
+};
+function hcpApplyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('hcp_theme',t);
+  const vars=HCP_THEMES[t]||HCP_THEMES.light;
+  const css=':root{'+Object.entries(vars).map(([k,v])=>k+':'+v).join(';')+'}';
+  let el=document.getElementById('hcp-theme-vars');
+  if(!el){el=document.createElement('style');el.id='hcp-theme-vars';document.head.appendChild(el);}
+  el.textContent=css;
+  // Toggle :root.light class for pages using class-based theming (production_initiater etc.)
+  if(t==='light' || t==='rose'){
+    document.documentElement.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+  }
+  // Force body background
+  document.body.style.background='';
+  document.documentElement.style.background='';
+  document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));
+  const ICONS={light:'🌙',dark:'☀️',ocean:'🌊',rose:'🌸',slate:'◻️'};
+  const icon=document.getElementById('hcp-theme-icon')||document.getElementById('theme-icon')||document.querySelector('.theme-icon');
+  if(icon){icon.style.animation='none';void icon.offsetWidth;icon.style.animation='';icon.textContent=ICONS[t]||'🌙';}
+  const msg=document.getElementById('hcp-applied-msg');
+  if(msg){msg.style.display='block';clearTimeout(window._hcpMsgTimer);window._hcpMsgTimer=setTimeout(()=>msg.style.display='none',2000);}
+}
+window.hcpApplyTheme=hcpApplyTheme;
+window.hcpOpenSettings=function(){
+  document.getElementById('hcp-settings-overlay').classList.add('open');
+  const t=localStorage.getItem('hcp_theme')||'light';
+  document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));
+  const msg=document.getElementById('hcp-applied-msg');if(msg)msg.style.display='none';
+};
+window.hcpCloseSettings=function(){document.getElementById('hcp-settings-overlay').classList.remove('open');};
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')hcpCloseSettings();
+  if((e.ctrlKey||e.metaKey)&&e.key===','){e.preventDefault();hcpOpenSettings();}
+});
+hcpApplyTheme(localStorage.getItem('hcp_theme')||'light');
+/* ── END HCP Universal Theme Engine ── */
+</script>
+<!-- HCP Multi-Theme Settings -->
+<div id="hcp-settings-overlay" onclick="if(event.target===this)hcpCloseSettings()">
+  <div id="hcp-settings-panel">
+    <div class="hcp-settings-head">
+      <h3>⚙️ Appearance</h3>
+      <button class="hcp-settings-close" onclick="hcpCloseSettings()">✕</button>
+    </div>
+    <div class="hcp-settings-body">
+      <div class="hcp-settings-lbl">🎨 Theme — click a swatch to apply instantly</div>
+      <div class="hcp-theme-grid">
+        <div class="hcp-swatch" data-t="light" onclick="hcpApplyTheme('light')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#e0f2fe,#f0fdf4,#fefce8)"></div><div class="hcp-swatch-name">Light</div><div class="hcp-swatch-tag">Default</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="dark" onclick="hcpApplyTheme('dark')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0c1117,#0f1923,#111420)"></div><div class="hcp-swatch-name">Dark</div><div class="hcp-swatch-tag">Easy on eyes</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="ocean" onclick="hcpApplyTheme('ocean')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0ea5e9,#0284c7,#0369a1)"></div><div class="hcp-swatch-name">Ocean</div><div class="hcp-swatch-tag">Deep blue</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="rose" onclick="hcpApplyTheme('rose')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#fff1f2,#fce7f3,#fdf4ff)"></div><div class="hcp-swatch-name">Rose</div><div class="hcp-swatch-tag">Soft &amp; vibrant</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="slate" onclick="hcpApplyTheme('slate')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#1e293b,#0f172a,#1e293b)"></div><div class="hcp-swatch-name">Slate</div><div class="hcp-swatch-tag">Mono minimal</div><div class="hcp-active-dot"></div></div>
+      </div>
+      <div id="hcp-applied-msg" style="display:none;text-align:center;font-size:11px;font-weight:700;color:#0d9488;margin-top:10px;">✓ Theme applied</div>
+      <div style="margin-top:16px;text-align:right"><button onclick="hcpCloseSettings()" style="padding:9px 24px;border-radius:9px;border:none;background:#0d9488;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Done ✓</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

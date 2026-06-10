@@ -1,0 +1,204 @@
+/* Module CSS for login.html */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg:      #f1f5f9;
+            --white:   #ffffff;
+            --border:  #e2e8f0;
+            --blue:    #2563eb;
+            --blue-dk: #1d4ed8;
+            --blue-lt: #eff6ff;
+            --text:    #0f172a;
+            --text2:   #475569;
+            --text3:   #94a3b8;
+            --text4:   #cbd5e1;
+            --green-lt:#f0fdf4;
+            --red-lt:  #fef2f2;
+            --amber-lt:#fffbeb;
+        }
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Desktop: gradient background ── */
+        body {
+            background: var(--bg);
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse at 10% 20%, rgba(37,99,235,0.1) 0%, transparent 55%),
+                radial-gradient(ellipse at 90% 80%, rgba(124,58,237,0.07) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, rgba(16,163,74,0.04) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .page {
+            position: relative; z-index: 1; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 2rem 1.25rem;
+        }
+
+        .lwrap {
+            width: 100%; max-width: 400px;
+            animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+
+        /* Brand */
+        .top-brand {
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 12px; margin-bottom: 2rem;
+        }
+        .t-logo {
+            width: 76px; height: 76px; border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 6px 24px rgba(37,99,235,.18), 0 2px 6px rgba(0,0,0,.08);
+            border: 1.5px solid rgba(255,255,255,.8);
+            background: var(--white);
+        }
+        .t-logo img { width: 62px; height: 62px; object-fit: contain; }
+        .t-name { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.03em; color: var(--text); text-align: center; }
+        .t-name em { color: var(--blue); font-style: normal; }
+        .t-sub { font-size: 13px; color: var(--text3); text-align: center; font-weight: 500; }
+
+        /* Card */
+        .fcard {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.25rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.07), 0 24px 48px rgba(0,0,0,.04);
+        }
+
+        /* Alerts */
+        .alert {
+            display: flex; align-items: flex-start; gap: 9px;
+            padding: 11px 14px; border-radius: 10px;
+            font-size: 13.5px; line-height: 1.5; margin-bottom: 1.25rem;
+            font-weight: 500; border: 1px solid;
+        }
+        .alert-danger  { background: var(--red-lt);   border-color: #fca5a5; color: #991b1b; }
+        .alert-success { background: var(--green-lt); border-color: #86efac; color: #166534; }
+        .alert-warning { background: var(--amber-lt); border-color: #fde68a; color: #92400e; }
+        .alert-info    { background: var(--blue-lt);  border-color: #bfdbfe; color: #1e40af; }
+
+        /* Form heading */
+        .fhead { margin-bottom: 1.5rem; }
+        .fhead-title { font-size: 1.2rem; font-weight: 800; color: var(--text); letter-spacing: -0.02em; margin-bottom: 3px; }
+        .fhead-sub { font-size: 13px; color: var(--text3); font-weight: 400; }
+
+        /* Fields */
+        .fg { margin-bottom: 1.1rem; }
+        .fl { display: block; font-size: 12.5px; font-weight: 700; color: var(--text2); margin-bottom: 7px; }
+        .fi-wrap { position: relative; }
+        .fic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; opacity: 0.35; }
+        .fi {
+            width: 100%; padding: 11px 13px 11px 38px;
+            background: var(--bg); border: 1.5px solid var(--border);
+            border-radius: 10px; color: var(--text);
+            font-family: 'Inter', sans-serif; font-size: 14.5px;
+            outline: none; transition: all 0.15s;
+            -webkit-appearance: none; appearance: none;
+        }
+        .fi:focus { border-color: var(--blue); background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+        .fi::placeholder { color: var(--text4); }
+        .fi.pr { padding-right: 44px; }
+        .feye {
+            position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--text3);
+            cursor: pointer; font-size: 15px; padding: 4px; transition: color 0.15s; line-height: 1;
+        }
+        .feye:hover { color: var(--text2); }
+
+        /* Password strength */
+        .sbar { display: flex; gap: 4px; margin-top: 6px; }
+        .ss { flex: 1; height: 3px; border-radius: 100px; background: var(--border); transition: background 0.3s; }
+        .ss.weak { background: #f87171; }
+        .ss.med  { background: #fbbf24; }
+        .ss.str  { background: #34d399; }
+
+        /* Remember / forgot */
+        .fex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 1.4rem; }
+        .rem { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text2); cursor: pointer; user-select: none; }
+        .rem input { accent-color: var(--blue); width: 15px; height: 15px; cursor: pointer; }
+        .fgt { font-size: 13px; color: var(--blue); text-decoration: none; font-weight: 600; }
+        .fgt:hover { color: var(--blue-dk); text-decoration: underline; }
+
+        /* Submit button */
+        .btn {
+            width: 100%; padding: 13px;
+            background: var(--blue); border: 1px solid transparent;
+            border-radius: 11px; color: #fff;
+            font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14.5px;
+            cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 3px 12px rgba(37,99,235,.28);
+            letter-spacing: -0.01em;
+        }
+        .btn:hover { background: var(--blue-dk); box-shadow: 0 6px 20px rgba(37,99,235,.35); transform: translateY(-1px); }
+        .btn:active { transform: none; box-shadow: none; }
+        .btn.loading { pointer-events: none; opacity: 0.75; }
+        .spin { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.65s linear infinite; }
+        .btn.loading .spin { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Footer */
+        .divider { display: flex; align-items: center; gap: 10px; margin: 1.4rem 0 .9rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .divider span { font-size: 11px; color: var(--text3); font-weight: 600; white-space: nowrap; letter-spacing: 0.05em; text-transform: uppercase; }
+        .sec { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; color: var(--text3); }
+        .fver { text-align: center; margin-top: 1.5rem; font-size: 11.5px; color: var(--text4); font-weight: 500; }
+
+        /* ══ MOBILE — Android App Feel ══ */
+        @media (max-width: 480px) {
+            html, body { background: var(--white); }
+            body::before { display: none; }
+            .page { align-items: flex-start; padding: 0; min-height: 100vh; background: var(--white); }
+            .lwrap { max-width: 100%; animation: none; }
+
+            /* Full-screen split layout on mobile */
+            .top-brand {
+                background: linear-gradient(160deg, #2563eb 0%, #1d4ed8 60%, #1e40af 100%);
+                padding: 3.5rem 2rem 2.5rem;
+                margin-bottom: 0;
+                border-radius: 0;
+                gap: 14px;
+            }
+            .t-logo {
+                width: 80px; height: 80px; border-radius: 20px;
+                box-shadow: 0 8px 28px rgba(0,0,0,.25);
+                border-color: rgba(255,255,255,.3);
+            }
+            .t-name { color: #fff; font-size: 1.5rem; }
+            .t-name em { color: rgba(255,255,255,.85); }
+            .t-sub { color: rgba(255,255,255,.7); font-size: 13.5px; }
+
+            .fcard {
+                border-radius: 24px 24px 0 0;
+                border: none;
+                box-shadow: none;
+                padding: 1.75rem 1.5rem 2rem;
+                border-top: none;
+                margin-top: -16px;
+                position: relative;
+                z-index: 1;
+            }
+            .fhead-title { font-size: 1.25rem; }
+            .fi { font-size: 15px; padding: 13px 13px 13px 40px; border-radius: 12px; }
+            .btn { padding: 14px; font-size: 15px; border-radius: 13px; }
+            .fver { padding-bottom: 1.5rem; }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .page { padding: 1.5rem 1.25rem; align-items: center; }
+            .lwrap { max-width: 440px; }
+            .fcard { padding: 2rem 1.75rem; border-radius: 18px; }
+            .fi { font-size: 15px; border-radius: 11px; }
+            .btn { padding: 13px; font-size: 15px; }
+        }

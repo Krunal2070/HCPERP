@@ -1,0 +1,58 @@
+/* ═══ GLOBAL TOAST ═══ */
+        #gToastWrap { position:fixed; top:20px; right:20px; z-index:999999; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .g-toast { display:flex; align-items:center; gap:10px; padding:13px 18px; border-radius:12px; font-size:.83rem; font-weight:600; font-family:'Inter',sans-serif; box-shadow:0 6px 24px rgba(0,0,0,.15); pointer-events:all; transform:translateX(120%); transition:transform .35s cubic-bezier(.34,1.56,.64,1); min-width:260px; max-width:380px; }
+        .g-toast.show { transform:translateX(0); }
+        .g-toast.success { background:#f0fdf4; border:1.5px solid #86efac; color:#166534; }
+        .g-toast.danger, .g-toast.error { background:#fef2f2; border:1.5px solid #fca5a5; color:#991b1b; }
+        .g-toast.warning { background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; }
+        .g-toast.info { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1e40af; }
+        .g-toast-icon { font-size:1.1rem; flex-shrink:0; }
+        .g-toast-msg { flex:1; line-height:1.4; }
+        .g-toast-close { cursor:pointer; color:inherit; opacity:.5; font-size:1rem; font-weight:800; flex-shrink:0; padding:0 2px; }
+        .g-toast-close:hover { opacity:1; }
+
+/* Notif cards */
+        #notif-container { position: fixed; bottom: 24px; right: 16px; display: flex; flex-direction: column; gap: 10px; z-index: 8000; max-width: 340px; width: calc(100% - 32px); }
+        .notif-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 14px 16px; box-shadow: var(--sh-lg); animation: slideIn .35s cubic-bezier(0.16,1,0.3,1) both; transition: opacity .3s, transform .3s; }
+        .notif-card.removing { opacity: 0; transform: translateX(100%); }
+        .notif-card.overdue { border-left: 3px solid var(--red); }
+        .notif-card.soon { border-left: 3px solid var(--amber); }
+        @keyframes slideIn { from{opacity:0;transform:translateX(100%);} to{opacity:1;transform:translateX(0);} }
+        .notif-hdr { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px; }
+        .notif-badge { font-size:10px;font-weight:800;padding:3px 8px;border-radius:100px; }
+        .notif-badge.overdue { background:var(--red-lt);color:var(--red);border:1px solid var(--red-border); }
+        .notif-badge.soon { background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border); }
+        .notif-close { background:none;border:none;font-size:14px;cursor:pointer;color:var(--text3);padding:2px 6px;border-radius:6px;transition:background .12s; }
+        .notif-close:hover { background:var(--bg);color:var(--text); }
+        .notif-title { font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:3px; }
+        .notif-lead  { font-size:12px;color:var(--text2);margin-bottom:2px; }
+        .notif-time  { font-size:11.5px;color:var(--text3);margin-bottom:10px; }
+        .notif-btns  { display:flex;gap:6px;flex-wrap:wrap; }
+        .nb { padding:6px 12px;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center; }
+        .nb-done   { background:var(--green-lt);color:#166534;border:1px solid var(--green-border); }
+        .nb-snooze { background:var(--amber-lt);color:#92400e;border:1px solid var(--amber-border); }
+        .nb-view   { background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-border); }
+
+/* Celebration cards */
+        #celContainer { position:fixed;top:80px;right:16px;z-index:8000;display:flex;flex-direction:column;gap:10px;max-width:300px; }
+        .cel-card { background:var(--white);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:14px;box-shadow:var(--sh-lg);animation:slideIn .35s cubic-bezier(0.16,1,0.3,1) both;transition:opacity .3s; }
+        .cel-card.removing { opacity:0; }
+        .cel-card.cel-self { border-color:var(--amber-border);background:var(--amber-lt); }
+        .cel-strip { height:4px;margin:-14px -14px 10px;border-radius:var(--r-xl) var(--r-xl) 0 0; }
+        .cel-strip.birthday { background:linear-gradient(90deg,#f59e0b,#ef4444); }
+        .cel-strip.work_anniversary { background:linear-gradient(90deg,#2563eb,#7c3aed); }
+        .cel-strip.wedding_anniversary { background:linear-gradient(90deg,#ec4899,#f59e0b); }
+        .cel-top { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
+        .cel-av { width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0; }
+        .cel-av-img { width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0; }
+        .cel-name { font-size:13.5px;font-weight:800; }
+        .cel-type { font-size:11.5px;color:var(--text2); }
+        .cel-msg { font-size:12.5px;color:var(--text2);line-height:1.5;margin-bottom:10px; }
+        .cel-self-msg { font-size:12.5px;color:#92400e;line-height:1.5;margin-bottom:10px;font-weight:500; }
+        .cel-footer { display:flex;gap:6px;flex-wrap:wrap; }
+        .cel-btn { padding:6px 11px;border-radius:var(--r-sm);font-size:11.5px;font-weight:700;cursor:pointer;border:none;transition:all .15s;font-family:'Inter',sans-serif; }
+        .cel-wish { background:var(--blue);color:#fff; }
+        .cel-wished-done { background:var(--green-lt);color:#166534;border:1px solid var(--green-border); }
+        .cel-copy { background:var(--bg);color:var(--text2);border:1px solid var(--border); }
+        .cel-profile { background:var(--purple-lt);color:var(--purple);border:1px solid var(--purple-border); }
+        .cel-close { background:var(--bg);color:var(--text3);border:1px solid var(--border); }

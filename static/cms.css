@@ -1,0 +1,78 @@
+body {
+    margin:0;
+    font-family: Arial;
+    background:#f4f6f9;
+}
+
+.cms-wrapper {
+    display:flex;
+}
+
+.cms-sidebar {
+    width:220px;
+    background:#1f2d3d;
+    height:100vh;
+    padding:20px;
+}
+
+.cms-sidebar h2 {
+    color:white;
+}
+
+.cms-sidebar a {
+    display:block;
+    padding:10px;
+    color:#cfd8dc;
+    text-decoration:none;
+    margin-bottom:5px;
+}
+
+.cms-sidebar a:hover {
+    background:#34495e;
+}
+
+.cms-content {
+    flex:1;
+    padding:30px;
+}
+
+.card {
+    display:inline-block;
+    width:250px;
+    padding:20px;
+    margin:10px;
+    border-radius:8px;
+    color:white;
+}
+
+.income { background:#27ae60; }
+.expense { background:#c0392b; }
+.balance { background:#2980b9; }
+
+table {
+    width:100%;
+    border-collapse: collapse;
+    margin-top:20px;
+    background:white;
+}
+
+table th, table td {
+    padding:10px;
+    border:1px solid #ddd;
+}
+
+.pagination {
+    margin-top:20px;
+}
+
+.pagination a {
+    padding:6px 10px;
+    border:1px solid #ddd;
+    margin-right:5px;
+    text-decoration:none;
+}
+
+.pagination a.active {
+    background:#2980b9;
+    color:white;
+}

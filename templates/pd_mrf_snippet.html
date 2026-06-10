@@ -1,0 +1,272 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MATERIAL REQUEST (MRF) — Production Department
+     Paste this block ONCE just before </body> in production_department.html.
+     Then add the following button INSIDE `actions` of SP_CONFIG.inprocess:
+
+        <button class="btn btn-sm" onclick="openMrfPdModal()"
+          style="background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3)">
+          <i class="fa fa-clipboard-list"></i> Material Request
+        </button>
+
+     (Also optionally add the same button next to the header as a global shortcut.)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Modal: Create PD Material Request -->
+<div class="modal-overlay" id="mrfPdModal" style="z-index:1100">
+  <div class="modal-box wide-xl" style="width:min(1150px,98vw)">
+    <div class="modal-head">
+      <h3><i class="fa fa-clipboard-list"></i> New Material Request · Production</h3>
+      <button class="modal-close" onclick="closeModal('mrfPdModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+        <div>
+          <label style="font-size:.7rem;color:var(--muted2);font-weight:600">Voucher No (auto)</label>
+          <input type="text" id="mrf-pd-vno" readonly
+            style="background:var(--surface3);border:1px solid var(--border2);color:var(--text-bright);border-radius:7px;padding:6px 10px;width:100%;font-weight:700">
+        </div>
+        <div>
+          <label style="font-size:.7rem;color:var(--muted2);font-weight:600">Select In-Process Batch *</label>
+          <select id="mrf-pd-batch" onchange="mrfPdOnBatchChange()"
+            style="background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);border-radius:7px;padding:6px 10px;width:100%">
+            <option value="">— loading batches —</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.7rem;color:var(--muted2);font-weight:600">Product Code</label>
+          <input type="text" id="mrf-pd-pcode" readonly
+            style="background:var(--surface3);border:1px solid var(--border2);color:var(--text-bright);border-radius:7px;padding:6px 10px;width:100%">
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:.7rem;color:var(--muted2);font-weight:600">Required For / Purpose *</label>
+        <textarea id="mrf-pd-purpose" rows="2" placeholder="e.g. for soap batch in wax area"
+          style="background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);border-radius:7px;padding:6px 10px;width:100%;resize:vertical"></textarea>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+        <div style="font-size:.84rem;font-weight:700;color:var(--text-bright)">Items</div>
+        <button class="btn btn-brand btn-sm" onclick="mrfPdAddRow()"><i class="fa fa-plus"></i> Add Row</button>
+      </div>
+
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:.75rem">
+          <thead>
+            <tr style="background:var(--surface2)">
+              <th style="padding:7px;width:4%;text-align:center">Sr</th>
+              <th style="padding:7px;text-align:left">Material *</th>
+              <th style="padding:7px;width:16%;text-align:left">Supplier</th>
+              <th style="padding:7px;width:10%">UOM</th>
+              <th style="padding:7px;width:12%;text-align:right">Qty Demand *</th>
+              <th style="padding:7px;text-align:left">Remarks</th>
+              <th style="padding:7px;width:5%"></th>
+            </tr>
+          </thead>
+          <tbody id="mrf-pd-items-tbody"></tbody>
+        </table>
+      </div>
+
+      <div style="font-size:.7rem;color:var(--muted);margin-top:4px">
+        After save, admin will approve/reject per item. You can track status in
+        <a href="/material_requests" target="_blank" style="color:var(--brand);font-weight:600">Material Requests</a>.
+      </div>
+    </div>
+    <div class="modal-foot" style="padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface2)">
+      <button class="btn btn-secondary" onclick="closeModal('mrfPdModal')">Cancel</button>
+      <button class="btn btn-brand" onclick="mrfPdSubmit()"><i class="fa fa-paper-plane"></i> Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Floating shortcut pill (always visible on page) ═══ -->
+<div style="position:fixed;bottom:18px;left:18px;z-index:100">
+  <button class="btn btn-brand btn-sm" onclick="openMrfPdModal()"
+    style="background:#3b82f6;box-shadow:0 6px 16px rgba(59,130,246,.4);padding:8px 14px">
+    <i class="fa fa-clipboard-list"></i> Material Request
+  </button>
+  <a href="/material_requests" target="_blank" class="btn btn-secondary btn-sm"
+    style="margin-left:6px;padding:8px 12px">
+    <i class="fa fa-list-check"></i> My Requests
+  </a>
+</div>
+
+<script>
+(function(){
+    // namespace all functions with window so they can be invoked from onclick
+    let _mrfPdBatches = [];
+    let _mrfPdMaterials = [];  // loaded once, reused for autocomplete
+    let _rowCounter = 0;
+
+    async function _loadMaterials(){
+        if(_mrfPdMaterials.length) return _mrfPdMaterials;
+        try{
+            const r = await fetch('/api/mrf/materials?limit=200');
+            const j = await r.json();
+            if(j.status==='ok') _mrfPdMaterials = j.rows||[];
+        }catch(e){console.error(e)}
+        return _mrfPdMaterials;
+    }
+
+    async function _loadVoucherNo(){
+        try{
+            const r = await fetch('/api/mrf/next_voucher_no?dept=PD');
+            const j = await r.json();
+            if(j.status==='ok') document.getElementById('mrf-pd-vno').value = j.preview;
+        }catch(e){console.error(e)}
+    }
+
+    async function _loadBatches(){
+        try{
+            const r = await fetch('/api/mrf/inprocess_batches');
+            const j = await r.json();
+            _mrfPdBatches = (j.status==='ok' ? j.rows : []) || [];
+            const sel = document.getElementById('mrf-pd-batch');
+            if(!_mrfPdBatches.length){
+                sel.innerHTML = '<option value="">— no in-process batches —</option>';
+            } else {
+                sel.innerHTML = '<option value="">— select batch —</option>' +
+                    _mrfPdBatches.map(b=>{
+                        const lbl = `${b.batch_name}${b.product_code?' ['+b.product_code+']':''} — ${b.batch_size||'?'} KG`;
+                        return `<option value="${b.id}">${_esc(lbl)}</option>`;
+                    }).join('');
+            }
+        }catch(e){console.error(e)}
+    }
+
+    function _esc(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+    window.mrfPdOnBatchChange = function(){
+        const sel = document.getElementById('mrf-pd-batch');
+        const b = _mrfPdBatches.find(x=>String(x.id)===sel.value);
+        document.getElementById('mrf-pd-pcode').value = b ? (b.product_code||'') : '';
+    };
+
+    function _rowHtml(id){
+        // Build datalist options for material autocomplete
+        const opts = _mrfPdMaterials.map(m=>`<option data-id="${m.id}" data-sup="${_esc(m.supplier_name||'')}" data-uom="${_esc(m.uom||'KG')}" value="${_esc(m.material_name)}"></option>`).join('');
+        return `<tr id="mrfrow_${id}">
+            <td style="padding:5px;text-align:center">${id}</td>
+            <td style="padding:4px">
+                <input list="mrf-mat-list" type="text" class="mrf-mat" oninput="mrfPdFillFromMaterial(this)" placeholder="Start typing material…"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);border-radius:6px;padding:5px 8px">
+                <input type="hidden" class="mrf-mat-id">
+            </td>
+            <td style="padding:4px">
+                <input type="text" class="mrf-sup" placeholder="Supplier"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);border-radius:6px;padding:5px 8px">
+            </td>
+            <td style="padding:4px">
+                <input type="text" class="mrf-uom" value="KG"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);border-radius:6px;padding:5px 8px;text-align:center">
+            </td>
+            <td style="padding:4px">
+                <input type="number" step="any" min="0" class="mrf-qty"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);border-radius:6px;padding:5px 8px;text-align:right">
+            </td>
+            <td style="padding:4px">
+                <input type="text" class="mrf-rem"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text-bright);border-radius:6px;padding:5px 8px">
+            </td>
+            <td style="padding:5px;text-align:center">
+                <button class="btn btn-danger btn-sm" onclick="mrfPdDelRow(${id})" title="Remove row"><i class="fa fa-xmark"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    window.mrfPdAddRow = function(){
+        _rowCounter++;
+        const tb = document.getElementById('mrf-pd-items-tbody');
+        tb.insertAdjacentHTML('beforeend', _rowHtml(_rowCounter));
+        _ensureDataList();
+    };
+
+    window.mrfPdDelRow = function(id){
+        const el = document.getElementById('mrfrow_'+id);
+        if(el) el.remove();
+        if(!document.getElementById('mrf-pd-items-tbody').children.length) window.mrfPdAddRow();
+    };
+
+    window.mrfPdFillFromMaterial = function(inp){
+        const val = inp.value;
+        const mat = _mrfPdMaterials.find(m=>m.material_name===val);
+        const tr = inp.closest('tr');
+        if(mat){
+            tr.querySelector('.mrf-mat-id').value = mat.id;
+            if(!tr.querySelector('.mrf-sup').value) tr.querySelector('.mrf-sup').value = mat.supplier_name||'';
+            tr.querySelector('.mrf-uom').value = mat.uom||'KG';
+        } else {
+            tr.querySelector('.mrf-mat-id').value = '';
+        }
+    };
+
+    function _ensureDataList(){
+        let dl = document.getElementById('mrf-mat-list');
+        if(!dl){
+            dl = document.createElement('datalist');
+            dl.id = 'mrf-mat-list';
+            document.body.appendChild(dl);
+        }
+        dl.innerHTML = _mrfPdMaterials.map(m=>`<option value="${_esc(m.material_name)}"></option>`).join('');
+    }
+
+    window.openMrfPdModal = async function(){
+        document.getElementById('mrfPdModal').classList.add('open');
+        document.getElementById('mrf-pd-pcode').value = '';
+        document.getElementById('mrf-pd-purpose').value = '';
+        document.getElementById('mrf-pd-items-tbody').innerHTML = '';
+        _rowCounter = 0;
+        await Promise.all([_loadVoucherNo(), _loadBatches(), _loadMaterials()]);
+        _ensureDataList();
+        window.mrfPdAddRow();
+    };
+
+    window.mrfPdSubmit = async function(){
+        const batchId = document.getElementById('mrf-pd-batch').value;
+        if(!batchId){ alert('Please select an in-process batch'); return; }
+        const purpose = document.getElementById('mrf-pd-purpose').value.trim();
+        if(!purpose){ alert('Please enter the purpose'); return; }
+
+        const rows = document.querySelectorAll('#mrf-pd-items-tbody tr');
+        const items = [];
+        for(const tr of rows){
+            const name = tr.querySelector('.mrf-mat').value.trim();
+            const qty  = parseFloat(tr.querySelector('.mrf-qty').value);
+            if(!name) continue;
+            if(!(qty>0)){ alert('Each material must have a quantity > 0'); return; }
+            items.push({
+                material_id:   tr.querySelector('.mrf-mat-id').value || null,
+                material_name: name,
+                supplier_name: tr.querySelector('.mrf-sup').value.trim(),
+                uom:           tr.querySelector('.mrf-uom').value.trim()||'KG',
+                qty_demand:    qty,
+                remarks:       tr.querySelector('.mrf-rem').value.trim(),
+            });
+        }
+        if(!items.length){ alert('Please add at least one material row'); return; }
+
+        const b = _mrfPdBatches.find(x=>String(x.id)===batchId);
+        const payload = {
+            dept: 'PD',
+            batch_log_id: batchId,
+            batch_name:   b?b.batch_name:'',
+            product_code: b?b.product_code:'',
+            purpose: purpose,
+            items: items
+        };
+        try{
+            const r = await fetch('/api/mrf/create', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const j = await r.json();
+            if(j.status!=='ok') throw new Error(j.message||'save failed');
+            alert('Request submitted: ' + j.voucher_no);
+            closeModal('mrfPdModal');
+        }catch(e){
+            alert('Error: '+e.message);
+        }
+    };
+})();
+</script>

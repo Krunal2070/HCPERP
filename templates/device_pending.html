@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Device Awaiting Approval — HCP Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--brand:#0d9488;--brand-dark:#0f766e;--bg:#f8f9fb;--card:#fff;--text:#0f172a;--muted:#64748b;--border:#d1d5db;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{overflow-x:hidden;}
+  body{font-family:'Plus Jakarta Sans','Segoe UI',sans-serif;background:var(--bg);background-image:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(13,148,136,.05) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 85% 90%,rgba(6,182,212,.04) 0%,transparent 70%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:24px 16px;}
+  .card{background:var(--card);width:480px;max-width:100%;border-radius:20px;padding:38px 36px 32px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.07),0 16px 40px rgba(0,0,0,.05);border:1.5px solid var(--border);text-align:center;animation:up .5s cubic-bezier(.22,.68,0,1.2) both;position:relative;overflow:hidden;}
+  @keyframes up{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+  .card::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--brand-dark),var(--brand),#a8eddc,var(--brand));background-size:200% auto;animation:shimmer 3s linear infinite;}
+  @keyframes shimmer{0%{background-position:-200% center;}100%{background-position:200% center;}}
+  .ic{width:64px;height:64px;margin:0 auto 18px;border-radius:18px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(245,158,11,.25);}
+  .ic svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+  h1{font-size:1.35rem;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.3px;}
+  .sub{font-size:.9rem;color:var(--muted);margin-bottom:22px;line-height:1.55;}
+  .dev-id-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;}
+  .dev-id-box{background:#f1f5f9;border:1.5px dashed var(--border);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .dev-id-val{font-family:'SFMono-Regular','Consolas',monospace;font-size:.85rem;font-weight:600;color:var(--text);word-break:break-all;text-align:left;flex:1;}
+  .copy-btn{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;flex-shrink:0;transition:.15s;}
+  .copy-btn:hover{border-color:var(--brand);color:var(--brand);}
+  .copy-hint{font-size:.72rem;color:var(--muted);margin-bottom:24px;text-align:left;padding:0 4px;}
+  .btn-row{display:flex;gap:10px;}
+  .btn{flex:1;padding:13px;border-radius:10px;font-size:.95rem;font-weight:700;font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:#fff;box-shadow:0 4px 14px rgba(13,148,136,.18);}
+  .btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px);}
+  .btn-ghost{background:#fff;color:var(--muted);border-color:var(--border);}
+  .btn-ghost:hover{background:#f3f4f6;color:var(--text);}
+  .divider{height:1px;background:var(--border);margin:22px 0 14px;}
+  .foot{font-size:.78rem;color:#94a3b8;font-weight:500;}
+  .foot a{color:var(--brand);text-decoration:none;font-weight:700;}
+  .foot a:hover{text-decoration:underline;}
+  .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;font-size:.85rem;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:10;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media (max-width:480px){
+    .card{padding:30px 22px 24px;border-radius:16px;}
+    h1{font-size:1.18rem;}
+    .btn-row{flex-direction:column;}
+    .dev-id-val{font-size:.78rem;}
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="ic">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h1>Device awaiting approval</h1>
+    <p class="sub">This device is awaiting administrator approval. Please share your device ID below with your administrator to get access.</p>
+
+    <div class="dev-id-label">Your device ID</div>
+    <div class="dev-id-box">
+      <span class="dev-id-val" id="devId">{{ device_id or 'No device cookie present yet — refresh to issue one.' }}</span>
+      <button class="copy-btn" onclick="copyId()">Copy</button>
+    </div>
+    <div class="copy-hint">Share this ID with your admin (admin or sonal) so they can approve your device.</div>
+
+    <!-- Live status indicator — flips green the moment admin approves -->
+    <div id="statusInd" style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:.78rem;color:var(--muted);margin-bottom:18px;padding:9px 12px;background:#f1f5f9;border-radius:9px;">
+      <span class="pulse" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></span>
+      <span id="statusText">Checking for approval every few seconds&hellip;</span>
+    </div>
+
+    <div class="btn-row">
+      <a class="btn btn-ghost" href="/login">&larr; Back to login</a>
+      <a class="btn btn-primary" id="goLoginBtn" href="/login">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Try logging in
+      </a>
+    </div>
+
+    <div class="divider"></div>
+    <div class="foot">
+      Lost access from a previous device? <a href="/device_recover">Use a recovery code &rarr;</a>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+<style>
+  .pulse{animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+  .status-ok{background:#dcfce7 !important;color:#15803d !important;}
+  .status-ok .pulse{background:#15803d !important;animation:none !important;}
+  .status-blocked{background:#fee2e2 !important;color:#b91c1c !important;}
+  .status-blocked .pulse{background:#b91c1c !important;animation:none !important;}
+</style>
+
+<script>
+function copyId(){
+  const v=document.getElementById('devId').textContent.trim();
+  if(!v||v.indexOf('No device cookie')===0) return;
+  navigator.clipboard.writeText(v).then(()=>{
+    const t=document.getElementById('toast'); t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1800);
+  });
+}
+
+// ── Auto-poll for approval ─────────────────────────────────────────────────
+// Polls /api/device/check-status every 4 seconds. The moment admin approves
+// this device, the response flips to 'approved' and we redirect to /login.
+// Backoff: after 5 minutes of polling, slow to once per 15s to be polite.
+let pollCount = 0;
+let pollTimer = null;
+let lastStatus = 'pending';
+
+async function checkStatus(){
+  try {
+    const res = await fetch('/api/device/check-status', {cache:'no-store'});
+    const d = await res.json();
+    const ind  = document.getElementById('statusInd');
+    const text = document.getElementById('statusText');
+    if (d.status === 'approved') {
+      ind.classList.remove('status-blocked'); ind.classList.add('status-ok');
+      text.textContent = 'Approved — taking you to login…';
+      clearInterval(pollTimer);
+      // Small delay so the user sees the green confirmation
+      setTimeout(() => { window.location.href = '/login'; }, 1200);
+      return;
+    }
+    if (d.status === 'revoked') {
+      ind.classList.remove('status-ok'); ind.classList.add('status-blocked');
+      text.textContent = 'This device has been blocked. Contact admin.';
+      clearInterval(pollTimer);
+      return;
+    }
+    if (d.status === 'disabled') {
+      // Master switch is off — anyone can log in
+      ind.classList.add('status-ok');
+      text.textContent = 'Device check is disabled — please log in.';
+      clearInterval(pollTimer);
+      setTimeout(() => { window.location.href = '/login'; }, 800);
+      return;
+    }
+    // Still pending (or unknown — same UX)
+    lastStatus = d.status || 'pending';
+  } catch(e) {
+    // Network blip — just keep trying silently
+  }
+}
+
+function startPolling(){
+  // First check immediately, then every 4s. After ~5 min slow to 15s.
+  checkStatus();
+  pollTimer = setInterval(() => {
+    pollCount++;
+    checkStatus();
+    if (pollCount === 75) {       // ~5 minutes at 4s
+      clearInterval(pollTimer);
+      pollTimer = setInterval(checkStatus, 15000);
+    }
+  }, 4000);
+}
+
+// Pause polling when tab is hidden, resume when visible — saves server load
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  } else if (!pollTimer) {
+    pollCount = 0;
+    startPolling();
+  }
+});
+
+startPolling();
+</script>
+</body>
+</html>

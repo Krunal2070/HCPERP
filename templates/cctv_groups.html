@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CCTV Groups · HCP Wellness</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='hcp_theme.css') }}">
+<style>
+  body{margin:0;background:var(--bg,#0b1220);color:var(--text,#e6edf6);font-family:Segoe UI,Roboto,sans-serif}
+  .topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--border,#1f2a44);background:var(--panel,#0f1830);position:sticky;top:0;z-index:50}
+  .topbar a{color:inherit;text-decoration:none;font-size:13px;opacity:.85}
+  .topbar .title{font-weight:600;font-size:15px;flex:1}
+  .container{display:grid;grid-template-columns:340px 1fr;gap:14px;padding:14px;height:calc(100vh - 60px);box-sizing:border-box}
+  .panel{background:var(--panel,#0f1830);border:1px solid var(--border,#1f2a44);border-radius:8px;padding:14px;overflow:auto}
+  h3{margin:0 0 12px;font-size:14px}
+  button{background:var(--input,#1a2440);color:inherit;border:1px solid var(--border,#1f2a44);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}
+  button:hover{border-color:var(--h-accent,#0d9488)}
+  .btn-primary{background:var(--h-accent,#0d9488);border-color:var(--h-accent,#0d9488);color:#fff}
+  .btn-sm{padding:3px 8px;font-size:12px}
+  .btn-danger{color:#ef4444}
+  input,textarea,select{background:var(--input,#1a2440);color:inherit;border:1px solid var(--border,#1f2a44);border-radius:6px;padding:6px 10px;font-size:13px;width:100%;box-sizing:border-box}
+
+  .group-list .item{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border,#1f2a44);border-radius:6px;margin-bottom:6px;cursor:pointer}
+  .group-list .item:hover{border-color:var(--h-accent,#0d9488)}
+  .group-list .item.active{border-color:var(--h-accent,#0d9488);background:rgba(13,148,136,.08)}
+  .group-list .item .nm{flex:1;font-size:13px}
+  .group-list .item .meta{font-size:11px;opacity:.7}
+  .pill{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;background:rgba(99,102,241,.2);color:#a5b4fc}
+  .pill-shared{background:rgba(13,148,136,.2);color:#5eead4}
+
+  .editor h4{margin:6px 0 10px;font-size:13px;opacity:.85}
+  .cam-pickers{display:grid;grid-template-columns:1fr 1fr;gap:14px;height:calc(100% - 100px)}
+  .cam-pickers .col{display:flex;flex-direction:column;border:1px solid var(--border,#1f2a44);border-radius:6px;overflow:hidden}
+  .cam-pickers .col .head{padding:8px 10px;background:rgba(13,148,136,.08);font-size:12px;display:flex;justify-content:space-between;align-items:center}
+  .cam-pickers .col .body{flex:1;overflow:auto;padding:6px}
+  .cam-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:12px}
+  .cam-row:hover{background:rgba(13,148,136,.1)}
+  .cam-row .ch{font-family:monospace;color:#5eead4;min-width:38px}
+  .cam-row .nm{flex:1}
+  .cam-row .src{font-size:10px;opacity:.6}
+  .cam-row .pos{font-size:11px;color:#fbbf24;min-width:24px;text-align:right}
+  .toast{position:fixed;bottom:20px;right:20px;background:#0f1830;border:1px solid var(--h-accent,#0d9488);padding:10px 16px;border-radius:8px;display:none;font-size:13px;z-index:200}
+  .toast.show{display:block}
+  .empty{text-align:center;opacity:.5;padding:30px;font-size:13px}
+  .new-group-form{margin-bottom:14px;padding:10px;border:1px dashed var(--border,#1f2a44);border-radius:6px}
+  .new-group-form input,.new-group-form textarea{margin-bottom:6px}
+</style>
+</head>
+<body>
+
+{% set page_title = "CCTV Groups" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "CCTV", "url": "#"}, {"label": "Groups", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="container">
+
+  <!-- Left: groups list -->
+  <div class="panel">
+    <h3>My Groups</h3>
+
+    <div class="new-group-form">
+      <input id="newName" placeholder="Group name (e.g. Packing Floor)">
+      <textarea id="newDesc" placeholder="Description (optional)" rows="2"></textarea>
+      {% if (session.get('User_Type') or '')|lower == 'admin' %}
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted,#9aa6c0);margin-bottom:6px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="newShared" style="width:auto"> Share with all users
+        </label>
+      {% endif %}
+      <button class="btn-primary" style="width:100%" onclick="createGroup()">＋ Create Group</button>
+    </div>
+
+    <div class="group-list" id="groupList"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- Right: editor -->
+  <div class="panel">
+    <div id="emptyEditor" class="empty">Select a group from the left to edit its cameras.</div>
+
+    <div id="editor" class="editor" style="display:none;height:100%;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <h3 id="editorTitle" style="margin:0;flex:1"></h3>
+        <button class="btn-sm" onclick="renameGroup()">Rename</button>
+        <button class="btn-sm btn-danger" onclick="deleteGroup()">Delete group</button>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input id="searchAvail" placeholder="🔍 search available…" oninput="renderAvailable()">
+        <select id="filterRecorder" onchange="renderAvailable()" style="width:auto">
+          <option value="">All recorders</option>
+        </select>
+      </div>
+
+      <div class="cam-pickers">
+        <div class="col">
+          <div class="head"><span>Available cameras</span><span id="availCount" style="opacity:.6"></span></div>
+          <div class="body" id="availList"></div>
+        </div>
+        <div class="col">
+          <div class="head">
+            <span>In this group <span style="opacity:.6">(drag to reorder)</span></span>
+            <span><button class="btn-sm btn-primary" onclick="saveGroupCams()">💾 Save</button></span>
+          </div>
+          <div class="body" id="selectedList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let groups = [];
+let allCameras = [];
+let currentGroupId = null;
+let selectedIds = [];
+
+function toast(m, err=false){
+  const el = document.getElementById('toast');
+  el.textContent = m;
+  el.style.borderColor = err ? '#ef4444' : 'var(--h-accent, #0d9488)';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+async function loadGroups(){
+  const r = await fetch('/api/cctv/groups').then(r=>r.json());
+  groups = r.groups || [];
+  const list = document.getElementById('groupList');
+  if (!groups.length){ list.innerHTML = '<div class="empty">No groups yet. Create one above.</div>'; return }
+  list.innerHTML = groups.map(g => `
+    <div class="item ${g.id===currentGroupId?'active':''}" onclick="selectGroup(${g.id})">
+      <div class="nm">${esc(g.name)}
+        ${g.is_shared ? '<span class="pill pill-shared">shared</span>' : ''}
+        <div class="meta">${g.cam_count||0} cameras${g.description?(' · '+esc(g.description)):''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadAllCameras(){
+  const r = await fetch('/api/cctv/cameras').then(r=>r.json());
+  allCameras = (r.cameras||[]).filter(c => c.is_active);
+  // populate recorder filter
+  const sel = document.getElementById('filterRecorder');
+  const recs = [...new Map(allCameras.map(c=>[c.recorder_id, c.recorder_name])).entries()];
+  sel.innerHTML = '<option value="">All recorders</option>' +
+    recs.map(([id,nm])=>`<option value="${id}">${esc(nm)}</option>`).join('');
+}
+
+async function createGroup(){
+  const name = document.getElementById('newName').value.trim();
+  if (!name){ toast('Enter a group name', true); return }
+  const desc = document.getElementById('newDesc').value.trim();
+  const sharedEl = document.getElementById('newShared');
+  const body = { name, description: desc, is_shared: sharedEl ? sharedEl.checked : false };
+  const r = await fetch('/api/cctv/groups', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+  if (r.ok){
+    document.getElementById('newName').value=''; document.getElementById('newDesc').value='';
+    if (sharedEl) sharedEl.checked = false;
+    await loadGroups();
+    selectGroup(r.id);
+    toast('Created');
+  } else toast('Failed: '+r.error, true);
+}
+
+async function selectGroup(gid){
+  currentGroupId = gid;
+  await loadGroups();
+  const g = groups.find(x=>x.id===gid);
+  if (!g) return;
+  document.getElementById('emptyEditor').style.display='none';
+  document.getElementById('editor').style.display='flex';
+  document.getElementById('editorTitle').textContent = g.name;
+
+  const r = await fetch(`/api/cctv/groups/${gid}/cameras`).then(r=>r.json());
+  selectedIds = (r.cameras||[]).map(c=>c.id);
+  renderAvailable();
+  renderSelected();
+}
+
+function renderAvailable(){
+  const q = (document.getElementById('searchAvail').value||'').toLowerCase();
+  const recId = document.getElementById('filterRecorder').value;
+  const set = new Set(selectedIds);
+  const list = allCameras.filter(c => {
+    if (set.has(c.id)) return false;
+    if (recId && String(c.recorder_id) !== recId) return false;
+    if (q){
+      const hay = `${c.name} ${c.recorder_name} ${c.location||''} ${c.department||''} ch${c.channel}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  document.getElementById('availCount').textContent = list.length + ' avail.';
+  const el = document.getElementById('availList');
+  if (!list.length){ el.innerHTML = '<div class="empty">No matches.</div>'; return }
+  el.innerHTML = list.map(c => `
+    <div class="cam-row" onclick="addCam(${c.id})">
+      <div class="ch">CH${String(c.channel).padStart(2,'0')}</div>
+      <div class="nm">${esc(c.name)}<div class="src">${esc(c.recorder_name)} · ${esc(c.department||'-')}</div></div>
+      <div>＋</div>
+    </div>
+  `).join('');
+}
+
+function renderSelected(){
+  const el = document.getElementById('selectedList');
+  if (!selectedIds.length){ el.innerHTML = '<div class="empty">Click cameras on the left to add.</div>'; return }
+  const map = new Map(allCameras.map(c=>[c.id,c]));
+  el.innerHTML = selectedIds.map((id, idx) => {
+    const c = map.get(id);
+    if (!c) return '';
+    return `
+      <div class="cam-row" draggable="true"
+           ondragstart="dragStart(event,${idx})" ondragover="event.preventDefault()" ondrop="dropTo(event,${idx})">
+        <div class="pos">${idx+1}</div>
+        <div class="ch">CH${String(c.channel).padStart(2,'0')}</div>
+        <div class="nm">${esc(c.name)}<div class="src">${esc(c.recorder_name)}</div></div>
+        <button class="btn-sm" onclick="removeCam(${id})">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function addCam(id){
+  if (!selectedIds.includes(id)){ selectedIds.push(id); renderAvailable(); renderSelected() }
+}
+function removeCam(id){
+  selectedIds = selectedIds.filter(x=>x!==id);
+  renderAvailable(); renderSelected();
+}
+
+let dragIdx = null;
+function dragStart(e, idx){ dragIdx = idx; e.dataTransfer.effectAllowed='move' }
+function dropTo(e, idx){
+  if (dragIdx===null || dragIdx===idx) return;
+  const item = selectedIds.splice(dragIdx, 1)[0];
+  selectedIds.splice(idx, 0, item);
+  dragIdx = null;
+  renderSelected();
+}
+
+async function saveGroupCams(){
+  const r = await fetch(`/api/cctv/groups/${currentGroupId}/cameras`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({camera_ids: selectedIds})
+  }).then(r=>r.json());
+  if (r.ok){ toast(`Saved · ${r.count} cameras`); loadGroups() } else toast('Failed: '+r.error, true);
+}
+
+async function renameGroup(){
+  const g = groups.find(x=>x.id===currentGroupId);
+  if (!g) return;
+  const name = prompt('New name:', g.name);
+  if (!name) return;
+  const r = await fetch(`/api/cctv/groups/${currentGroupId}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name})
+  }).then(r=>r.json());
+  if (r.ok){ loadGroups(); toast('Renamed') } else toast('Failed: '+r.error, true);
+}
+
+async function deleteGroup(){
+  const g = groups.find(x=>x.id===currentGroupId);
+  if (!g) return;
+  if (!confirm(`Delete group "${g.name}"?`)) return;
+  const r = await fetch(`/api/cctv/groups/${currentGroupId}`, {method:'DELETE'}).then(r=>r.json());
+  if (r.ok){
+    currentGroupId = null;
+    document.getElementById('editor').style.display='none';
+    document.getElementById('emptyEditor').style.display='flex';
+    loadGroups();
+    toast('Deleted');
+  } else toast('Failed: '+r.error, true);
+}
+
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+(async ()=>{ await loadAllCameras(); await loadGroups() })();
+</script>
+</body>
+</html>

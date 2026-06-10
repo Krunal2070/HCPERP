@@ -1,0 +1,139 @@
+/* Module CSS for npd/milestone_master.html */
+
+/* ── Page Layout ── */
+    .mm-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+    @media(max-width:960px){ .mm-layout { grid-template-columns: 1fr; } }
+
+    /* ── Master Row ── */
+    .ms-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 13px 16px; border-bottom: 1px solid var(--border-muted);
+        transition: background .12s; cursor: grab;
+        background: var(--white);
+    }
+    .ms-row:last-child { border-bottom: none; }
+    .ms-row:hover { background: var(--sb-hover); }
+    .ms-row.dragging { opacity: .4; background: var(--blue-lt); }
+    .ms-row.drag-over { border-top: 2px solid var(--blue); }
+
+    .ms-drag-handle { color: var(--text4); font-size: 14px; cursor: grab; flex-shrink:0; padding: 0 2px; }
+    .ms-drag-handle:active { cursor: grabbing; }
+    .ms-icon { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+    .ms-info { flex: 1; min-width: 0; }
+    .ms-title { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ms-meta  { font-size: 11px; color: var(--text3); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .ms-type  { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; background: var(--bg); padding: 1px 7px; border-radius: 4px; border: 1px solid var(--border); color: var(--text2); }
+
+    .ms-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 100px; border: 1px solid; flex-shrink: 0; }
+    .ms-badge.both    { background: var(--blue-lt);   color: var(--blue);   border-color: var(--blue-border); }
+    .ms-badge.npd     { background: var(--purple-lt); color: var(--purple); border-color: var(--purple-border); }
+    .ms-badge.existing{ background: var(--green-lt);  color: var(--green);  border-color: var(--green-border); }
+
+    .ms-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .ms-btn { background: none; border: 1px solid var(--border); border-radius: 6px;
+              padding: 5px 9px; font-size: 12px; cursor: pointer; color: var(--text2);
+              font-family: inherit; transition: all .12s; }
+    .ms-btn:hover { background: var(--bg); }
+    .ms-btn.danger:hover { background: var(--red-lt); border-color: var(--red-border); color: var(--red); }
+    .ms-btn.edit:hover   { background: var(--blue-lt); border-color: var(--blue-border); color: var(--blue); }
+
+    /* Toggle switch */
+    .toggle-sw { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle-sw input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+        position: absolute; inset: 0; background: #cbd5e1; border-radius: 20px;
+        cursor: pointer; transition: .2s;
+    }
+    .toggle-slider::before {
+        content: ''; position: absolute;
+        width: 14px; height: 14px; left: 3px; top: 3px;
+        background: #fff; border-radius: 50%; transition: .2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-sw input:checked + .toggle-slider { background: var(--blue); }
+    .toggle-sw input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    /* inactive row */
+    .ms-row.inactive { opacity: .5; }
+
+    /* ── Add/Edit Form Card ── */
+    .form-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--sh-sm); position: sticky; top: 76px; }
+    .form-card-hdr { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .form-card-title { font-size: 14px; font-weight: 800; }
+    .form-card-body { padding: 18px; }
+
+    .form-row { margin-bottom: 14px; }
+    .form-label { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 5px; display: block; }
+    .form-input, .form-select, .form-textarea {
+        width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+        border-radius: var(--r-md); font-size: 13px; font-family: inherit;
+        color: var(--text); background: var(--white); outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+    .form-textarea { resize: vertical; min-height: 70px; }
+    .form-check-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); margin-bottom: 8px; }
+    .form-check-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--blue); }
+    .form-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn-submit { width: 100%; padding: 10px; background: var(--blue); color: #fff; border: none;
+                  border-radius: var(--r-md); font-size: 13.5px; font-weight: 700; font-family: inherit;
+                  cursor: pointer; transition: background .15s; margin-top: 4px; }
+    .btn-submit:hover { background: var(--blue-dk); }
+    .btn-cancel { width: 100%; padding: 9px; background: none; color: var(--text2); border: 1px solid var(--border);
+                  border-radius: var(--r-md); font-size: 13px; font-weight: 600; font-family: inherit;
+                  cursor: pointer; transition: all .15s; margin-top: 6px; }
+    .btn-cancel:hover { background: var(--bg); }
+
+    .sort-order-badge { font-size: 10px; font-weight: 800; color: var(--text3);
+                        background: var(--bg); border: 1px solid var(--border);
+                        padding: 2px 7px; border-radius: 100px; min-width: 28px; text-align: center; }
+    .saving-indicator { display:none; font-size:11px; color:var(--blue); padding:4px 10px; }
+
+/* ═══ MOBILE: Milestone Master ═══ */
+@media(max-width: 767px) {
+    /* Layout: stack left + right */
+    .mm-layout { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+    /* Milestone row — card style */
+    .ms-row {
+        flex-wrap: wrap !important;
+        padding: 14px 16px !important;
+        gap: 10px !important;
+        align-items: flex-start !important;
+    }
+    .ms-drag-handle { display: none !important; }
+    .sort-order-badge { font-size: 11px !important; padding: 3px 9px !important; }
+    .ms-icon { font-size: 20px !important; }
+    .ms-info { flex: 1 1 auto; min-width: 0; }
+    .ms-title { font-size: 14px !important; white-space: normal !important; }
+    .ms-meta { flex-wrap: wrap; gap: 6px !important; margin-top: 5px !important; }
+
+    /* Toggle + actions — move to second row right side */
+    .ms-row .toggle-sw { order: 2; }
+    .ms-row .ms-actions { order: 3; gap: 8px !important; }
+    .ms-btn { padding: 7px 12px !important; font-size: 13px !important; border-radius: 8px !important; }
+
+    /* Form: single column */
+    .form-inline { grid-template-columns: 1fr 1fr !important; }
+    .form-card { position: static !important; }
+    .form-card-body { padding: 16px !important; }
+    .form-input, .form-select, .form-textarea {
+        font-size: 15px !important;
+        padding: 11px 12px !important;
+        border-radius: 10px !important;
+    }
+    .btn-submit, .btn-cancel {
+        padding: 13px !important;
+        font-size: 14px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Card header */
+    .card-hdr { padding: 14px 16px !important; }
+
+    /* Page header */
+    .mm-layout + * { margin-top: 0; }
+}

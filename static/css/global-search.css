@@ -1,0 +1,13 @@
+/* Global App Search styles */
+
+@keyframes gsPop { from{opacity:0;transform:translateY(-14px) scale(.97)} to{opacity:1;transform:none} }
+.gs-item { display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;text-decoration:none;color:inherit;border-left:3px solid transparent;transition:all .1s; }
+.gs-item:hover,.gs-item.gs-active { background:#f0f7ff;border-left-color:#2563eb; }
+.gs-ic { width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0; }
+.gs-label { flex:1;min-width:0; }
+.gs-title { font-size:.85rem;font-weight:700;color:#0f172a; }
+.gs-sub { font-size:.72rem;color:#94a3b8;margin-top:1px; }
+.gs-tag { font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap; }
+.gs-section-hdr { padding:6px 16px 3px;font-size:.67rem;font-weight:800;color:#cbd5e1;text-transform:uppercase;letter-spacing:.09em; }
+.gs-empty { text-align:center;padding:2.5rem 1rem;color:#94a3b8; }
+#gsResults mark { background:#fef08a;color:#713f12;border-radius:2px;padding:0 1px; }

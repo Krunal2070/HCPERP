@@ -1,0 +1,123 @@
+{#  templates/partials/_sidebar.html
+    ONE unified, data-driven sidebar for every module (design: common-sidebar.css).
+
+    The page must:
+      1) load the stylesheet in <head>:
+         <link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+      2) wrap the include in its shell (so it can add page-specific extras):
+         <nav>... no — the partial renders its own <nav class="csb">. Just include it:
+         {% include 'partials/_sidebar.html' %}
+
+    Context:
+      sidebar_menu       : core/menus.get_menu('<module>', access=, role=, is_requester=)
+      active_item        : id of the highlighted item            (optional)
+      user_name, role    : footer info                            (optional)
+      show_user_footer   : True to show the footer user row       (optional)
+      sidebar_extra_html : page-specific HTML inside the <nav>     (optional)
+
+    Items keep the legacy `nav-a` / `nav-ic` / `nav-badge` classes and the
+    `sb-<id>` / dom_id ids so existing module JS (setSidebarActive, badge
+    polling, keyboard shortcuts) keeps working unchanged.
+#}
+<nav class="{{ sidebar_shell_class | default('sidebar', true) }} csb" id="appSidebar">
+  <div class="csb-brand">
+    <div class="csb-logo">{{ (sidebar_menu.brand or 'H')[0] | upper }}</div>
+    <div>
+      <div class="csb-name">{{ sidebar_menu.brand.split(' ')[0] }} <em>{{ sidebar_menu.brand.split(' ', 1)[1] if ' ' in sidebar_menu.brand else '' }}</em></div>
+      <div class="csb-tag">{{ sidebar_menu.tag }}</div>
+    </div>
+  </div>
+
+  {% if sidebar_menu.search %}
+  <div class="csb-search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="csbSearch" placeholder="Search menu…" autocomplete="off" spellcheck="false" oninput="csbFilter(this.value)">
+  </div>
+  {% endif %}
+
+  <div class="csb-nav" id="csbNav">
+    {% for sec in sidebar_menu.sections %}
+      <div class="csb-sec">{{ sec.label }}</div>
+      {% for it in sec['items'] %}
+        {% if it.submenu %}
+        <div class="csb-group">
+          <a class="csb-item nav-a csb-group-head{{ ' ' ~ sidebar_menu.item_class if sidebar_menu.item_class else '' }}"
+             id="{{ it.dom_id if it.dom_id else 'sb-' ~ it.id }}"
+             style="--ic:{{ it.color if it.color else '#4f46e5' }}"
+             onclick="csbToggleGroup(this){{ '; ' ~ it.action if it.action else '' }}"
+             data-label="{{ it.text|lower }}">
+            <span class="csb-ic nav-ic">{{ it.icon | safe }}</span>
+            <span class="csb-txt nav-txt">{{ it.text }}</span>
+            {% if it.badge %}<span id="{{ it.badge }}" class="csb-badge nav-badge"{% if it.badge_hidden %} style="display:none"{% endif %}>{{ it.badge_init if it.badge_init else '0' }}</span>{% endif %}
+            <span class="csb-arrow">▶</span>
+          </a>
+          <div class="csb-sub">
+            {% for sub in it.submenu %}
+            <a class="csb-item nav-a{{ ' ' ~ sidebar_menu.item_class if sidebar_menu.item_class else '' }}"
+               id="{{ sub.dom_id if sub.dom_id else 'sb-' ~ sub.id }}"
+               style="--ic:{{ sub.color if sub.color else '#4f46e5' }}"
+               {% if sub.href %}href="{{ sub.href }}"{% else %}onclick="{{ sub.action }}"{% endif %}
+               {% if sub.title %}title="{{ sub.title }}"{% endif %}
+               data-label="{{ sub.text|lower }}">
+              <span class="csb-ic nav-ic">{{ sub.icon | safe }}</span>
+              <span class="csb-txt nav-txt">{{ sub.text }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <a class="csb-item nav-a{{ ' ' ~ sidebar_menu.item_class if sidebar_menu.item_class else '' }}{{ ' active' if it.id == active_item else '' }}"
+           id="{{ it.dom_id if it.dom_id else 'sb-' ~ it.id }}"
+           style="--ic:{{ it.color if it.color else '#4f46e5' }}"
+           {% if it.href %}href="{{ it.href }}"{% if it.target %} target="{{ it.target }}"{% endif %}{% else %}onclick="{{ it.action }}"{% endif %}
+           {% if it.data_feature %}data-feature="{{ it.data_feature }}"{% endif %}
+           {% if it.title %}title="{{ it.title }}"{% endif %}
+           data-label="{{ it.text|lower }}">
+          <span class="csb-ic nav-ic">{{ it.icon | safe }}</span>
+          <span class="csb-txt nav-txt">{{ it.text }}</span>
+          {% if it.badge %}<span id="{{ it.badge }}" class="csb-badge nav-badge"{% if it.badge_hidden %} style="display:none"{% endif %}>{{ it.badge_init if it.badge_init else '0' }}</span>{% endif %}
+          {% if it.admin_tag %}<span class="csb-tagpill">ADMIN</span>{% endif %}
+          {% if it.kbd %}<span class="csb-kbd kbd-hint">{{ it.kbd }}</span>{% endif %}
+        </a>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  {% if show_user_footer %}
+  <div class="csb-foot">
+    <div class="csb-user">
+      <div class="csb-av">{{ (user_name or 'U')[0] | upper }}</div>
+      <div style="flex:1;min-width:0">
+        <div class="csb-uname">{{ user_name or 'User' }}</div>
+        <div class="csb-urole">{{ role or '' }}</div>
+      </div>
+      <a class="csb-logout" href="/logout">Logout</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if sidebar_extra_html %}{{ sidebar_extra_html | safe }}{% endif %}
+</nav>
+
+<script>
+/* Submenu collapse */
+function csbToggleGroup(head){
+  head.classList.toggle('open');
+  var sub=head.nextElementSibling;
+  if(sub&&sub.classList.contains('csb-sub')) sub.classList.toggle('open');
+}
+/* Menu search — filters items by label, hides empty sections */
+function csbFilter(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#csbNav .csb-item').forEach(function(a){
+    var hit=!q||(a.getAttribute('data-label')||'').indexOf(q)!==-1;
+    a.style.display=hit?'':'none';
+  });
+  document.querySelectorAll('#csbNav .csb-sec').forEach(function(s){
+    var n=s.nextElementSibling,any=false;
+    while(n&&!n.classList.contains('csb-sec')){ if(n.classList.contains('csb-item')&&n.style.display!=='none')any=true; n=n.nextElementSibling; }
+    s.style.display=any?'':'none';
+  });
+}
+</script>

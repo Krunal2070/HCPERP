@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CCTV Admin · HCP Wellness</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='hcp_theme.css') }}">
+<style>
+  body{margin:0;background:var(--bg,#0b1220);color:var(--text,#e6edf6);font-family:Segoe UI,Roboto,sans-serif}
+  .topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--border,#1f2a44);background:var(--panel,#0f1830);position:sticky;top:0;z-index:50}
+  .topbar a{color:inherit;text-decoration:none;font-size:13px;opacity:.85}
+  .topbar .title{font-weight:600;font-size:15px;flex:1;display:flex;align-items:center;gap:8px}
+  .container{padding:16px;max-width:1400px;margin:0 auto}
+  .panel{background:var(--panel,#0f1830);border:1px solid var(--border,#1f2a44);border-radius:8px;padding:16px;margin-bottom:18px}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .panel-h h3{margin:0;font-size:15px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border,#1f2a44)}
+  th{font-weight:600;color:var(--muted,#9aa6c0);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  tr:hover td{background:rgba(13,148,136,.06)}
+  button,.btn{background:var(--input,#1a2440);color:inherit;border:1px solid var(--border,#1f2a44);border-radius:6px;padding:6px 11px;font-size:13px;cursor:pointer}
+  button:hover,.btn:hover{border-color:var(--h-accent,#0d9488)}
+  .btn-primary{background:var(--h-accent,#0d9488);border-color:var(--h-accent,#0d9488);color:#fff}
+  .btn-primary:hover{filter:brightness(1.1)}
+  .btn-danger{color:#ef4444}
+  .btn-sm{padding:3px 8px;font-size:12px}
+  input,select,textarea{background:var(--input,#1a2440);color:inherit;border:1px solid var(--border,#1f2a44);border-radius:6px;padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box}
+  label{display:block;font-size:11px;color:var(--muted,#9aa6c0);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+  .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .form-grid .col-2{grid-column:span 2}
+  .form-grid .col-4{grid-column:span 4}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+  .pill-nvr{background:rgba(13,148,136,.2);color:#5eead4}
+  .pill-dvr{background:rgba(245,158,11,.2);color:#fbbf24}
+  .pill-ai{background:rgba(99,102,241,.2);color:#a5b4fc}
+  .pill-off{background:rgba(239,68,68,.15);color:#fca5a5}
+  .pill-on{background:rgba(16,185,129,.2);color:#6ee7b7}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:100}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel,#0f1830);border:1px solid var(--border,#1f2a44);border-radius:10px;padding:20px;width:760px;max-width:95vw;max-height:90vh;overflow:auto}
+  .modal h3{margin:0 0 14px}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end}
+  .toast{position:fixed;bottom:20px;right:20px;background:#0f1830;border:1px solid var(--h-accent,#0d9488);padding:10px 16px;border-radius:8px;z-index:200;display:none;font-size:13px}
+  .toast.show{display:block}
+  .toast.error{border-color:#ef4444}
+  .tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--border,#1f2a44)}
+  .tabs .tab{padding:8px 14px;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;font-size:13px}
+  .tabs .tab.active{background:var(--panel,#0f1830);border-color:var(--border,#1f2a44);color:var(--h-accent,#0d9488);font-weight:600}
+
+  /* go2rtc health chips */
+  .g2chip{background:var(--input,#1a2440);border:1px solid var(--border,#1f2a44);border-radius:8px;padding:10px 12px}
+  .g2chip-label{font-size:11px;color:var(--muted,#9aa6c0);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .g2chip-value{font-size:14px;font-weight:600}
+  .g2chip.ok{border-color:#10b981}
+  .g2chip.warn{border-color:#f59e0b}
+  .g2chip.err{border-color:#ef4444}
+  .g2chip.ok    .g2chip-value{color:#6ee7b7}
+  .g2chip.warn  .g2chip-value{color:#fbbf24}
+  .g2chip.err   .g2chip-value{color:#fca5a5}
+</style>
+</head>
+<body>
+
+{% set page_title = "CCTV Admin" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "CCTV", "url": "#"}, {"label": "Admin", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" data-tab="recorders">📡 Recorders</div>
+    <div class="tab" data-tab="cameras">📷 Cameras</div>
+    <div class="tab" data-tab="go2rtc">⚙ go2rtc Config</div>
+  </div>
+
+  <!-- ── RECORDERS TAB ── -->
+  <div class="panel" id="tab-recorders">
+    <div class="panel-h">
+      <h3>DVR / NVR Recorders</h3>
+      <button class="btn-primary" onclick="openRecorderModal()">＋ Add Recorder</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Name</th><th>Type</th><th>IP : Port</th><th>Channels</th>
+        <th>RTSP Style</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody id="recordersBody"><tr><td colspan="7" style="text-align:center;opacity:.6">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- ── CAMERAS TAB ── -->
+  <div class="panel" id="tab-cameras" style="display:none">
+    <div class="panel-h">
+      <h3>Cameras</h3>
+      <select id="filterRecorder" onchange="loadCameras()" style="width:auto">
+        <option value="">All recorders</option>
+      </select>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:60px">CH</th><th>Name</th><th>Recorder</th>
+        <th>Location</th><th>Department</th><th>AI</th><th>Active</th><th></th>
+      </tr></thead>
+      <tbody id="camerasBody"><tr><td colspan="8" style="text-align:center;opacity:.6">—</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- ── go2rtc TAB ── -->
+  <div class="panel" id="tab-go2rtc" style="display:none">
+    <div class="panel-h">
+      <h3>go2rtc — RTSP / WebRTC Gateway</h3>
+      <button class="btn-sm" onclick="refreshGo2rtc()">↻ Refresh</button>
+    </div>
+
+    <!-- Health card -->
+    <div id="g2health" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+      <div class="g2chip" id="g2chip_installed">
+        <div class="g2chip-label">Binary</div>
+        <div class="g2chip-value">checking…</div>
+      </div>
+      <div class="g2chip" id="g2chip_running">
+        <div class="g2chip-label">Process</div>
+        <div class="g2chip-value">checking…</div>
+      </div>
+      <div class="g2chip" id="g2chip_streams">
+        <div class="g2chip-label">Streams loaded</div>
+        <div class="g2chip-value">—</div>
+      </div>
+      <div class="g2chip" id="g2chip_service">
+        <div class="g2chip-label">Auto-start service</div>
+        <div class="g2chip-value">checking…</div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button id="g2_install"   class="btn-primary" onclick="g2Install()">⬇ Install go2rtc</button>
+      <button id="g2_sync"      onclick="g2Sync(false)">📝 Generate Config from DB</button>
+      <button id="g2_sync_restart" onclick="g2Sync(true)">🔄 Sync &amp; Restart</button>
+      <button id="g2_start"     onclick="g2Start()">▶ Start</button>
+      <button id="g2_stop"      onclick="g2Stop()">■ Stop</button>
+      <a id="g2_webui" target="_blank" style="text-decoration:none">
+        <button>🌐 Open go2rtc Web UI</button>
+      </a>
+    </div>
+
+    <!-- Service install -->
+    <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);padding:12px;border-radius:6px;margin-bottom:14px">
+      <div style="font-weight:600;margin-bottom:6px">Install as Windows Service (auto-start at boot)</div>
+      <div style="font-size:12px;opacity:.85;line-height:1.5;margin-bottom:8px">
+        Download the script below and <b>right-click → Run as administrator</b> on the PC where go2rtc lives.
+        It installs go2rtc as a Windows Service via NSSM, configures auto-start, and opens firewall ports
+        1984, 8554, 8555. One-time setup — after this, go2rtc starts automatically on every reboot.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="/cctv/go2rtc/install_service.bat" download>
+          <button>⬇ Download Service Installer (.bat)</button>
+        </a>
+        <a href="/cctv/go2rtc/uninstall_service.bat" download>
+          <button>⬇ Service Uninstaller</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- Log tail -->
+    <div class="panel-h" style="margin-top:14px">
+      <h3 style="margin:0">go2rtc.log (tail)</h3>
+      <button class="btn-sm" onclick="loadG2Log()">↻ Reload</button>
+    </div>
+    <textarea id="g2log" rows="14" readonly style="font-family:Consolas,monospace;font-size:11px;background:#000;color:#a8e6cf">(load to view)</textarea>
+
+    <!-- Raw YAML preview -->
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;font-size:13px;opacity:.85">Show raw YAML (for manual edits)</summary>
+      <textarea id="go2rtcYaml" rows="14" readonly style="font-family:Consolas,monospace;font-size:11px;margin-top:8px"></textarea>
+      <div style="margin-top:6px"><button class="btn-sm" onclick="generateConfig()">Reload YAML preview</button></div>
+    </details>
+  </div>
+
+</div>
+
+<!-- ── Recorder modal ── -->
+<div class="modal-bg" id="recorderModalBg">
+  <div class="modal">
+    <h3 id="recModalTitle">Add Recorder</h3>
+    <div class="form-grid">
+      <div class="col-2"><label>Name *</label><input id="rec_name" placeholder="e.g. Production Hall NVR"></div>
+      <div><label>Type *</label>
+        <select id="rec_kind"><option value="NVR">NVR</option><option value="DVR">DVR</option></select>
+      </div>
+      <div><label>Channels *</label><input id="rec_channels" type="number" min="1" max="128" value="16"></div>
+      <div class="col-2"><label>IP Address *</label><input id="rec_ip" placeholder="192.168.2.50"></div>
+      <div><label>RTSP Port</label><input id="rec_rtsp_port" type="number" value="554"></div>
+      <div><label>HTTP Port</label><input id="rec_http_port" type="number" value="80"></div>
+      <div class="col-2"><label>Username *</label><input id="rec_user" placeholder="admin"></div>
+      <div class="col-2"><label>Password</label><input id="rec_pass" type="password" placeholder="(leave blank to keep existing)"></div>
+      <div class="col-4">
+        <label>Stream Encryption Key <span style="opacity:.6;text-transform:none">— optional, only fill if your NVR/DVR has stream encryption enabled</span></label>
+        <input id="rec_enc_key" type="password" placeholder="(usually blank for LAN-only setup)">
+      </div>
+      <div class="col-2"><label>RTSP URL Style</label>
+        <select id="rec_template">
+          <option value="modern">modern — /Streaming/Channels/{ch}0{stream}  (recommended)</option>
+          <option value="legacy">legacy — /h264/ch{ch}/{main|sub}/av_stream</option>
+        </select>
+      </div>
+      <div><label>Active</label>
+        <select id="rec_active"><option value="1">Yes</option><option value="0">No</option></select>
+      </div>
+      <div></div>
+      <div class="col-4"><label>Notes</label><textarea id="rec_notes" rows="2" placeholder="Mount location, credentials hint, etc."></textarea></div>
+    </div>
+    <div style="margin-top:16px;display:flex;justify-content:space-between;gap:8px">
+      <div>
+        <button id="rec_test_btn" onclick="testRecorder()" style="display:none">🔌 Test Connection</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="closeRecorderModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveRecorder()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Camera edit modal ── -->
+<div class="modal-bg" id="camModalBg">
+  <div class="modal" style="width:520px">
+    <h3>Edit Camera</h3>
+    <div class="form-grid" style="grid-template-columns:repeat(2,1fr)">
+      <div class="col-2"><label>Name</label><input id="cam_name"></div>
+      <div class="col-2"><label>Location</label><input id="cam_location"></div>
+      <div><label>Department</label>
+        <select id="cam_dept">
+          <option value="">—</option>
+          <option>Production</option><option>QC</option><option>Packing</option>
+          <option>Warehouse</option><option>Office</option><option>Perimeter</option>
+        </select>
+      </div>
+      <div><label>AI Enabled</label>
+        <select id="cam_ai"><option value="0">No</option><option value="1">Yes</option></select>
+      </div>
+      <div><label>Active</label>
+        <select id="cam_active"><option value="1">Yes</option><option value="0">No</option></select>
+      </div>
+      <div><label>Sort Order</label><input id="cam_sort" type="number"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="closeCamModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveCamera()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let editingRecorderId = null;
+let editingCameraId = null;
+
+// ── Tabs ──
+document.querySelectorAll('.tabs .tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.tabs .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    ['recorders','cameras','go2rtc'].forEach(name => {
+      document.getElementById('tab-'+name).style.display = (name === t.dataset.tab) ? '' : 'none';
+    });
+    if (t.dataset.tab === 'cameras') loadCameras();
+    if (t.dataset.tab === 'go2rtc')  { refreshGo2rtc(); generateConfig() }
+  };
+});
+
+function toast(msg, isErr=false){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isErr?' error':'');
+  setTimeout(()=>el.classList.remove('show'), 3500);
+}
+
+// ── Recorders ──
+async function loadRecorders(){
+  const r = await fetch('/api/cctv/recorders').then(r=>r.json());
+  const tbody = document.getElementById('recordersBody');
+  if (!r.ok || !r.recorders.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;opacity:.6;padding:20px">No recorders configured. Click "Add Recorder" to get started.</td></tr>';
+    populateFilter([]);
+    return;
+  }
+  tbody.innerHTML = r.recorders.map(rec => `
+    <tr>
+      <td><b>${esc(rec.name)}</b></td>
+      <td><span class="pill pill-${rec.kind.toLowerCase()}">${rec.kind}</span></td>
+      <td><code>${rec.ip}:${rec.rtsp_port}</code></td>
+      <td>${rec.channel_count}</td>
+      <td><span style="opacity:.8;font-size:12px">${rec.rtsp_template}</span></td>
+      <td>${rec.is_active ? '<span class="pill pill-on">Active</span>' : '<span class="pill pill-off">Disabled</span>'}${rec.has_encryption_key ? ' <span class="pill" style="background:rgba(168,85,247,.2);color:#d8b4fe" title="Stream encryption key is set">🔒 enc</span>' : ''}</td>
+      <td><div class="row-actions">
+        <button class="btn-sm" onclick="testRecorderById(${rec.id})">Test</button>
+        <button class="btn-sm" onclick="editRecorder(${rec.id})">Edit</button>
+        <button class="btn-sm btn-danger" onclick="deleteRecorder(${rec.id},'${escJs(rec.name)}')">Delete</button>
+      </div></td>
+    </tr>
+  `).join('');
+  populateFilter(r.recorders);
+}
+
+function populateFilter(recs){
+  const sel = document.getElementById('filterRecorder');
+  sel.innerHTML = '<option value="">All recorders</option>';
+  recs.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r.id; o.textContent = `${r.name} (${r.kind})`;
+    sel.appendChild(o);
+  });
+}
+
+function openRecorderModal(){
+  editingRecorderId = null;
+  document.getElementById('recModalTitle').textContent = 'Add Recorder';
+  ['rec_name','rec_ip','rec_user','rec_pass','rec_enc_key','rec_notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('rec_kind').value = 'NVR';
+  document.getElementById('rec_channels').value = 16;
+  document.getElementById('rec_rtsp_port').value = 554;
+  document.getElementById('rec_http_port').value = 80;
+  document.getElementById('rec_template').value = 'modern';
+  document.getElementById('rec_active').value = '1';
+  document.getElementById('rec_test_btn').style.display = 'none';
+  document.getElementById('recorderModalBg').classList.add('show');
+}
+
+async function editRecorder(id){
+  const r = await fetch('/api/cctv/recorders').then(r=>r.json());
+  const rec = (r.recorders||[]).find(x => x.id === id);
+  if (!rec) return;
+  editingRecorderId = id;
+  document.getElementById('recModalTitle').textContent = 'Edit Recorder — ' + rec.name;
+  document.getElementById('rec_name').value = rec.name;
+  document.getElementById('rec_kind').value = rec.kind;
+  document.getElementById('rec_ip').value = rec.ip;
+  document.getElementById('rec_rtsp_port').value = rec.rtsp_port;
+  document.getElementById('rec_http_port').value = rec.http_port;
+  document.getElementById('rec_user').value = rec.username;
+  document.getElementById('rec_pass').value = '';
+  document.getElementById('rec_enc_key').value = '';
+  document.getElementById('rec_enc_key').placeholder = rec.has_encryption_key
+    ? '(encryption key is set — leave blank to keep, or enter a new one)'
+    : '(usually blank for LAN-only setup)';
+  document.getElementById('rec_channels').value = rec.channel_count;
+  document.getElementById('rec_template').value = rec.rtsp_template;
+  document.getElementById('rec_active').value = String(rec.is_active);
+  document.getElementById('rec_notes').value = rec.notes || '';
+  document.getElementById('rec_test_btn').style.display = '';
+  document.getElementById('recorderModalBg').classList.add('show');
+}
+
+function closeRecorderModal(){ document.getElementById('recorderModalBg').classList.remove('show') }
+
+async function saveRecorder(){
+  const body = {
+    name: document.getElementById('rec_name').value.trim(),
+    kind: document.getElementById('rec_kind').value,
+    ip:   document.getElementById('rec_ip').value.trim(),
+    rtsp_port: parseInt(document.getElementById('rec_rtsp_port').value)||554,
+    http_port: parseInt(document.getElementById('rec_http_port').value)||80,
+    username:  document.getElementById('rec_user').value.trim(),
+    password:  document.getElementById('rec_pass').value,
+    encryption_key: document.getElementById('rec_enc_key').value,
+    channel_count: parseInt(document.getElementById('rec_channels').value)||16,
+    rtsp_template: document.getElementById('rec_template').value,
+    is_active: parseInt(document.getElementById('rec_active').value),
+    notes: document.getElementById('rec_notes').value.trim(),
+  };
+  if (!body.name || !body.ip || !body.username){ toast('Name, IP and Username are required', true); return }
+
+  const url = editingRecorderId ? `/api/cctv/recorders/${editingRecorderId}` : '/api/cctv/recorders';
+  const method = editingRecorderId ? 'PUT' : 'POST';
+  // PUT shouldn't include empty password (keep existing). Same for encryption key:
+  // empty means "no change". To explicitly clear a saved key, send a single space — backend strips it.
+  if (method === 'PUT' && !body.password) delete body.password;
+  if (method === 'PUT' && !body.encryption_key) delete body.encryption_key;
+  const r = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}).then(r=>r.json());
+  if (!r.ok){ toast('Error: '+(r.error||'unknown'), true); return }
+  toast('Saved ✓');
+  closeRecorderModal();
+  loadRecorders();
+}
+
+async function deleteRecorder(id, name){
+  if (!confirm(`Delete recorder "${name}" and all its cameras? This cannot be undone.`)) return;
+  const r = await fetch(`/api/cctv/recorders/${id}`, {method:'DELETE'}).then(r=>r.json());
+  if (r.ok){ toast('Deleted'); loadRecorders() } else toast('Failed: '+r.error, true);
+}
+
+async function testRecorderById(id){
+  toast('Testing connection…');
+  const r = await fetch(`/api/cctv/recorders/${id}/test`, {method:'POST'}).then(r=>r.json());
+  if (r.ok && r.reachable) toast('✓ Reachable on HTTP port');
+  else toast('✗ Cannot reach: ' + (r.error||'timeout'), true);
+}
+async function testRecorder(){
+  if (editingRecorderId) testRecorderById(editingRecorderId);
+}
+
+// ── Cameras ──
+async function loadCameras(){
+  const recId = document.getElementById('filterRecorder').value;
+  const url = '/api/cctv/cameras' + (recId ? `?recorder_id=${recId}` : '');
+  const r = await fetch(url).then(r=>r.json());
+  const tbody = document.getElementById('camerasBody');
+  if (!r.ok || !r.cameras.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;opacity:.6;padding:20px">No cameras. Add a recorder first.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = r.cameras.map(c => `
+    <tr>
+      <td>CH${String(c.channel).padStart(2,'0')}</td>
+      <td><b>${esc(c.name||'')}</b></td>
+      <td><span class="pill pill-${c.recorder_kind.toLowerCase()}">${c.recorder_kind}</span> ${esc(c.recorder_name)}</td>
+      <td>${esc(c.location||'')}</td>
+      <td>${esc(c.department||'')}</td>
+      <td>${c.ai_enabled ? '<span class="pill pill-ai">AI</span>' : '—'}</td>
+      <td>${c.is_active ? '<span class="pill pill-on">Yes</span>' : '<span class="pill pill-off">No</span>'}</td>
+      <td><div class="row-actions">
+        <button class="btn-sm" onclick='editCamera(${JSON.stringify(c)})'>Edit</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function editCamera(c){
+  editingCameraId = c.id;
+  document.getElementById('cam_name').value = c.name||'';
+  document.getElementById('cam_location').value = c.location||'';
+  document.getElementById('cam_dept').value = c.department||'';
+  document.getElementById('cam_ai').value = String(c.ai_enabled);
+  document.getElementById('cam_active').value = String(c.is_active);
+  document.getElementById('cam_sort').value = c.sort_order;
+  document.getElementById('camModalBg').classList.add('show');
+}
+function closeCamModal(){ document.getElementById('camModalBg').classList.remove('show') }
+
+async function saveCamera(){
+  const body = {
+    name:       document.getElementById('cam_name').value.trim(),
+    location:   document.getElementById('cam_location').value.trim(),
+    department: document.getElementById('cam_dept').value,
+    ai_enabled: parseInt(document.getElementById('cam_ai').value),
+    is_active:  parseInt(document.getElementById('cam_active').value),
+    sort_order: parseInt(document.getElementById('cam_sort').value)||0,
+  };
+  const r = await fetch(`/api/cctv/cameras/${editingCameraId}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+  }).then(r=>r.json());
+  if (r.ok){ toast('Saved ✓'); closeCamModal(); loadCameras() } else toast('Failed: '+r.error, true);
+}
+
+// ── go2rtc ──
+async function generateConfig(){
+  const r = await fetch('/api/cctv/go2rtc/config').then(r=>r.json());
+  if (r.ok){
+    document.getElementById('go2rtcYaml').value = r.yaml;
+    toast(`Generated config for ${r.count} cameras`);
+  } else toast('Failed: '+r.error, true);
+}
+
+// ── Utils ──
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function escJs(s){ return (s||'').replace(/['\\]/g,'\\$&') }
+
+// ── go2rtc lifecycle controls ─────────────────────────────────────────────
+let g2State = null;
+
+async function refreshGo2rtc(){
+  try{
+    const r = await fetch('/api/cctv/go2rtc/status').then(r=>r.json());
+    g2State = r.status || {};
+    paintG2Chips(g2State);
+    paintG2Buttons(g2State);
+  }catch(e){
+    toast('Status check failed', true);
+  }
+}
+
+function chip(id, cls, label){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('ok','warn','err');
+  if (cls) el.classList.add(cls);
+  el.querySelector('.g2chip-value').textContent = label;
+}
+
+function paintG2Chips(s){
+  if (s.installed) chip('g2chip_installed','ok','✓ Installed');
+  else             chip('g2chip_installed','err','Not installed');
+
+  if (s.running)        chip('g2chip_running','ok',`✓ Running${s.version?(' · v'+s.version):''}`);
+  else if (s.installed) chip('g2chip_running','warn','Stopped');
+  else                  chip('g2chip_running','err','—');
+
+  if (s.running){
+    if (s.streams > 0)  chip('g2chip_streams','ok',`${s.streams} loaded`);
+    else                chip('g2chip_streams','warn','0 — sync config');
+  } else chip('g2chip_streams','','—');
+
+  if (s.service_status === 'running')      chip('g2chip_service','ok','✓ Service running');
+  else if (s.service_status === 'stopped') chip('g2chip_service','warn','Service stopped');
+  else                                     chip('g2chip_service','warn','Not installed as service');
+}
+
+function paintG2Buttons(s){
+  const el = (id) => document.getElementById(id);
+  el('g2_install').disabled    = !!s.installed;
+  el('g2_install').textContent = s.installed ? '✓ Installed' : '⬇ Install go2rtc';
+  el('g2_sync').disabled         = !s.installed;
+  el('g2_sync_restart').disabled = !s.installed;
+  el('g2_start').disabled = !s.installed || s.running;
+  el('g2_stop').disabled  = !s.running;
+  const wu = el('g2_webui');
+  wu.href = `http://${location.hostname}:1984`;
+  wu.style.opacity = s.running ? '1' : '.5';
+  wu.style.pointerEvents = s.running ? '' : 'none';
+}
+
+async function g2Install(){
+  if (!confirm('Download go2rtc_win64.zip from GitHub and extract to C:\\go2rtc\\?\n\n(~15 MB, requires internet on the portal server)')) return;
+  const btn = document.getElementById('g2_install');
+  btn.disabled = true; btn.textContent = 'Downloading…';
+  try{
+    const r = await fetch('/api/cctv/go2rtc/install', {method:'POST'}).then(r=>r.json());
+    if (r.ok){ toast('Installed at '+r.path) }
+    else toast('Install failed: '+r.error, true);
+  }catch(e){ toast('Network error: '+e.message, true) }
+  refreshGo2rtc();
+}
+
+async function g2Sync(restart){
+  const btn = restart ? document.getElementById('g2_sync_restart') : document.getElementById('g2_sync');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = restart ? 'Syncing & restarting…' : 'Generating…';
+  try{
+    const r = await fetch('/api/cctv/go2rtc/sync', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({restart})
+    }).then(r=>r.json());
+    if (r.ok){ toast(`Config written · ${r.streams} streams${restart?' · restarted':''}`) }
+    else toast('Sync failed: '+r.error, true);
+  }catch(e){ toast('Network error', true) }
+  finally{
+    btn.disabled = false; btn.textContent = orig;
+    refreshGo2rtc(); generateConfig();
+  }
+}
+
+async function g2Start(){
+  const r = await fetch('/api/cctv/go2rtc/start',{method:'POST'}).then(r=>r.json());
+  if (r.ok) toast(r.message||'Started'); else toast('Start failed: '+r.error, true);
+  refreshGo2rtc();
+}
+async function g2Stop(){
+  if (!confirm('Stop go2rtc? Live streams will go offline.')) return;
+  const r = await fetch('/api/cctv/go2rtc/stop',{method:'POST'}).then(r=>r.json());
+  if (r.ok) toast('Stopped'); else toast('Stop failed: '+r.error, true);
+  refreshGo2rtc();
+}
+async function loadG2Log(){
+  const r = await fetch('/api/cctv/go2rtc/log?lines=80').then(r=>r.json());
+  document.getElementById('g2log').value = r.log || '(empty)';
+}
+
+loadRecorders();
+</script>
+</body>
+</html>

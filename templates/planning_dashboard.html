@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>Planning Dashboard — HCP</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --brand: #0d9488; --brand-dim: #0f766e; --brand-glow: rgba(13,148,136,.15);
+  --accent: #6366f1; --amber: #f59e0b; --red: #ef4444; --green: #10b981;
+  --bg: #f0fdf4; --surface: #fff; --surface2: #f8fafc;
+  --border: rgba(0,0,0,.08); --text: #1e293b; --muted: #64748b;
+  --shadow: 0 2px 12px rgba(0,0,0,.07); --shadow-lg: 0 8px 32px rgba(0,0,0,.1);
+  --radius: 14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOPBAR ── */
+.topbar{height:56px;background:#fff;border-bottom:1px solid rgba(0,0,0,.08);
+  display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:100;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;}
+.logo-text{line-height:1.2;}
+.logo-name{font-size:12px;font-weight:800;color:#1e293b;letter-spacing:.2px;}
+.logo-sub{font-size:9px;color:#64748b;font-weight:600;}
+.topbar-sep{width:1px;height:26px;background:rgba(0,0,0,.1);flex-shrink:0;}
+.topbar-page{display:flex;align-items:center;gap:9px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green);font-weight:700;
+  padding:4px 10px;border-radius:20px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
+.back-btn{padding:6px 13px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#f8fafc;
+  color:#64748b;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:5px;font-family:inherit;}
+.back-btn:hover{background:var(--brand);color:#fff;border-color:var(--brand);}
+.user-chip{display:flex;align-items:center;gap:7px;padding:4px 12px 4px 4px;border-radius:20px;
+  background:#f8fafc;border:1px solid rgba(0,0,0,.08);}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;}
+.user-name{font-size:12px;font-weight:700;}
+.tasks-btn{height:30px;padding:0 12px;border-radius:8px;border:1px solid rgba(245,158,11,.35);
+  background:rgba(245,158,11,.1);color:#f59e0b;font-size:11px;font-weight:700;
+  display:inline-flex;align-items:center;gap:5px;text-decoration:none;white-space:nowrap;}
+.tasks-btn:hover{background:rgba(245,158,11,.2);}
+
+/* ── LAYOUT ── */
+.content-wrap{flex:1;padding:28px 32px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
+
+/* ── PANELS ── */
+.panel{display:none;flex-direction:column;gap:16px;animation:fadeIn .2s ease;}
+.panel.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PAGE TITLE ── */
+.page-title{font-size:20px;font-weight:800;color:#1e293b;margin-bottom:2px;}
+.page-sub{font-size:12px;color:#64748b;}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+.stat-card{background:#fff;border-radius:14px;padding:18px 20px;
+  border:1px solid rgba(0,0,0,.07);box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.stat-card.clickable{cursor:pointer;transition:box-shadow .15s,transform .15s,border-color .15s;}
+.stat-card.clickable:hover{box-shadow:0 4px 16px rgba(13,148,136,.15);border-color:rgba(13,148,136,.3);transform:translateY(-2px);}
+.stat-label{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
+.stat-val{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;margin-top:5px;line-height:1;}
+.stat-val.green{color:#10b981} .stat-val.amber{color:#f59e0b} .stat-val.brand{color:#0d9488} .stat-val.red{color:#ef4444} .stat-val.purple{color:#6366f1}
+.stat-sub{font-size:11px;color:#94a3b8;margin-top:4px;}
+.stat-hint{font-size:9px;color:#cbd5e1;margin-top:6px;font-weight:600;letter-spacing:.3px;}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.07);
+  box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;}
+.card-header{display:flex;align-items:center;gap:10px;padding:13px 18px;
+  border-bottom:1px solid rgba(0,0,0,.07);background:#f8fafc;flex-wrap:wrap;gap:8px;}
+.card-title{font-size:13px;font-weight:800;color:#1e293b;}
+.card-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px;
+  background:#0d9488;color:#fff;margin-left:auto;}
+.table-wrap{overflow-x:auto;max-height:420px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{position:sticky;top:0;background:#f8fafc;padding:9px 12px;
+  text-align:left;font-weight:700;color:#64748b;border-bottom:1px solid rgba(0,0,0,.07);white-space:nowrap;}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,.05);vertical-align:middle;color:#1e293b;}
+tbody tr:hover{background:rgba(13,148,136,.03);}
+tbody tr:last-child td{border-bottom:none;}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge-green{background:rgba(16,185,129,.12);color:#059669;}
+.badge-amber{background:rgba(245,158,11,.12);color:#d97706;}
+.badge-blue{background:rgba(13,148,136,.12);color:#0d9488;}
+.badge-red{background:rgba(239,68,68,.12);color:#ef4444;}
+.badge-grey{background:rgba(100,116,139,.1);color:#64748b;}
+.badge-purple{background:rgba(99,102,241,.12);color:#6366f1;}
+
+/* ── PIPELINE ── */
+.pipeline-card{background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.07);box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;}
+.pipeline-header{display:flex;align-items:center;gap:10px;padding:13px 18px 12px;border-bottom:1px solid rgba(0,0,0,.07);background:#f8fafc;flex-wrap:wrap;}
+.pipeline-search{flex:1;min-width:160px;padding:6px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.1);font-family:inherit;font-size:12px;background:#fff;outline:none;}
+.pipeline-search:focus{border-color:#0d9488;}
+.pipeline-list{padding:12px 16px;display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;}
+.pipeline-row{background:#f8fafc;border-radius:10px;padding:12px 16px;border:1px solid rgba(0,0,0,.07);
+  display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-items:center;transition:box-shadow .15s;}
+.pipeline-row:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);}
+.pr-left{display:flex;flex-direction:column;gap:6px;}
+.pr-top{display:flex;align-items:center;gap:8px;}
+.pr-name{font-size:12px;font-weight:700;color:#1e293b;}
+.pr-meta{font-size:10px;color:#64748b;}
+.pr-bar-row{display:flex;align-items:center;gap:8px;}
+.prog-track{flex:1;height:7px;border-radius:99px;background:rgba(0,0,0,.06);overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#0d9488,#6366f1);transition:width .5s ease;}
+.prog-fill.done{background:linear-gradient(90deg,#10b981,#34d399);}
+.pr-pct{font-size:12px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#0d9488;width:36px;text-align:right;flex-shrink:0;}
+.pr-right{display:flex;flex-direction:column;gap:5px;border-left:1px solid rgba(0,0,0,.07);padding-left:20px;}
+.milestone-row{display:flex;align-items:center;gap:8px;}
+.ms-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.12);background:#f1f5f9;}
+.ms-dot.done{background:#10b981;border-color:#10b981;}
+.ms-dot.active{background:#0d9488;border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.2);}
+.ms-label{font-size:10px;font-weight:600;color:#94a3b8;}
+.ms-label.done{color:#10b981;font-weight:700;}
+.ms-label.active{color:#0d9488;font-weight:700;}
+.ms-tick{margin-left:auto;font-size:10px;color:#10b981;}
+.empty-state{text-align:center;padding:40px 20px;color:#94a3b8;}
+.empty-state .ico{font-size:36px;margin-bottom:8px;}
+
+/* ── FILTER + REFRESH ── */
+.filter-bar{display:flex;align-items:center;gap:8px;padding:10px 18px;background:#f8fafc;border-bottom:1px solid rgba(0,0,0,.07);}
+.filter-bar input,.filter-bar select{padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-family:inherit;font-size:12px;background:#fff;outline:none;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:#0d9488;}
+.refresh-btn{padding:6px 13px;border-radius:8px;border:1px solid rgba(13,148,136,.3);
+  background:rgba(13,148,136,.08);color:#0d9488;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.refresh-btn:hover{background:#0d9488;color:#fff;}
+
+/* ── EXPAND ROW ── */
+.expand-btn{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.1);
+  background:#fff;color:#0d9488;font-size:13px;font-weight:800;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.expand-btn:hover{background:#0d9488;color:#fff;}
+.expand-row{display:none;background:rgba(13,148,136,.02);border-bottom:1px solid rgba(0,0,0,.06);}
+.expand-row.open{display:table-row;}
+.expand-inner{padding:10px 14px 14px 52px;}
+.expand-title{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+.batch-cards{display:flex;flex-wrap:wrap;gap:8px;}
+.batch-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:8px 12px;min-width:160px;flex:1;max-width:220px;}
+.bc-num{font-size:9px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;}
+.bc-stage{font-size:11px;font-weight:700;margin-top:3px;}
+.bc-stage.s0{color:#94a3b8}.bc-stage.s1{color:#f59e0b}.bc-stage.s2{color:#0d9488}.bc-stage.s3{color:#6366f1}.bc-stage.s4{color:#10b981}
+.proj-bar-wrap{margin-top:10px;border-top:1px solid rgba(0,0,0,.06);padding-top:10px;}
+.proj-bar-label{font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;display:flex;justify-content:space-between;}
+.proj-bar-track{width:100%;height:6px;border-radius:99px;background:rgba(0,0,0,.06);overflow:hidden;}
+.proj-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#0d9488,#6366f1);transition:width .5s;}
+.proj-bar-fill.done{background:linear-gradient(90deg,#10b981,#34d399);}
+
+/* ── WHATSAPP BTN ── */
+.wa-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;
+  border:1px solid #25d366;background:rgba(37,211,102,.08);color:#128c7e;
+  font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.wa-btn:hover{background:#25d366;color:#fff;}
+.wa-btn svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
+
+/* ── COL FILTERS ── */
+.col-filter-row th{padding:4px 6px!important;background:#fff!important;border-bottom:1px solid rgba(0,0,0,.07);}
+.col-filter-row input,.col-filter-row select{width:100%;padding:4px 7px;border-radius:6px;border:1px solid rgba(0,0,0,.1);background:#f8fafc;font-family:inherit;font-size:11px;outline:none;color:#1e293b;}
+.col-filter-row input:focus,.col-filter-row select:focus{border-color:#0d9488;}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;align-items:center;gap:5px;padding:10px 16px;border-top:1px solid rgba(0,0,0,.07);background:#f8fafc;flex-wrap:nowrap;overflow-x:auto;}
+.pg-info{font-size:11px;color:#64748b;margin-right:auto;font-weight:600;white-space:nowrap;}
+.pg-btn{min-width:30px;height:28px;padding:0 8px;border-radius:7px;border:1px solid rgba(0,0,0,.1);
+  background:#fff;color:#1e293b;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;white-space:nowrap;}
+.pg-btn:hover:not(:disabled){background:#0d9488;color:#fff;border-color:#0d9488;}
+.pg-btn.active{background:#0d9488;color:#fff;border-color:#0d9488;}
+.pg-btn:disabled{opacity:.35;cursor:default;}
+.pg-size{padding:4px 8px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-family:inherit;font-size:11px;background:#fff;color:#1e293b;outline:none;cursor:pointer;flex-shrink:0;}
+
+/* ── FORMULATION COST ── */
+.fmc-chips{display:flex;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid rgba(0,0,0,.07);background:#f8fafc;}
+.fmc-chip{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:9px;background:#fff;border:1px solid rgba(0,0,0,.08);}
+.fmc-chip-val{font-size:14px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:99px}
+
+/* ══ HCP MULTI-THEME ══ */
+[data-theme="light"]{--hcp-bg:linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)}
+[data-theme="dark"]  {--hcp-bg:linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)}
+[data-theme="ocean"] {--hcp-bg:linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)}
+[data-theme="rose"]  {--hcp-bg:linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)}
+[data-theme="slate"] {--hcp-bg:linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)}
+#hcp-settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);z-index:99998;justify-content:center;align-items:flex-start;padding-top:80px}
+#hcp-settings-overlay.open{display:flex}
+#hcp-settings-panel{background:#fff;border-radius:20px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.2);border:1px solid rgba(0,0,0,.08);animation:hcpScaleIn .2s cubic-bezier(.4,0,.2,1);overflow:hidden}
+@keyframes hcpScaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.hcp-settings-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid rgba(0,0,0,.08)}
+.hcp-settings-head h3{font-size:14px;font-weight:800;margin:0;font-family:'Plus Jakarta Sans',sans-serif;color:#0f172a}
+.hcp-settings-close{cursor:pointer;font-size:20px;color:#94a3b8;background:none;border:none;line-height:1;padding:0}
+.hcp-settings-body{padding:20px 22px}
+.hcp-settings-lbl{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#94a3b8;margin-bottom:12px;font-family:'Plus Jakarta Sans',sans-serif}
+.hcp-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px}
+.hcp-swatch{border-radius:12px;padding:10px 8px;cursor:pointer;border:2px solid transparent;transition:all .18s;text-align:center}
+.hcp-swatch:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.hcp-swatch.active{border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.2)}
+.hcp-swatch-preview{width:100%;height:30px;border-radius:7px;margin-bottom:6px}
+.hcp-swatch-name{font-size:11px;font-weight:700;color:#1e293b;font-family:'Plus Jakarta Sans',sans-serif}
+.hcp-swatch-tag{font-size:9px;color:#94a3b8;margin-top:2px}
+.hcp-swatch .hcp-active-dot{display:none;width:8px;height:8px;border-radius:50%;background:#0d9488;margin:4px auto 0}
+.hcp-swatch.active .hcp-active-dot{display:block}
+.hcp-settings-btn{width:32px;height:32px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:rgba(255,255,255,.6);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;}
+.hcp-settings-btn:hover{transform:rotate(45deg);}
+</style>
+<link rel="stylesheet" href="/static/hcp_theme.css">
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+{% set page_title = "Planning Dashboard" %}
+{% set page_subtitle = "Batch pipeline - Dispensing - Progress tracking" %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set live = True %}
+{% set quick_links = [{"label": "HCP Stock", "url": "/hcp_stock"}, {"label": "PM Stock", "url": "/pm_stock"}] %}
+{% set tasks_url = "/task_reminders" %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<!-- ── CONTENT WRAP ── -->
+<div class="content-wrap">
+
+  <!-- ══ HOME / KPI DASHBOARD ═══════════════════════════════════════════════ -->
+  <div class="panel active" id="tab-home">
+    <div style="display:flex;align-items:center;gap:0;">
+      <div>
+        <div class="page-title">📊 Planning Dashboard</div>
+        <div class="page-sub">Click any KPI card to view the full data</div>
+      </div>
+      <div id="today-date-badge" style="margin-left:auto;padding:5px 14px;border-radius:20px;background:#fff;border:1px solid rgba(0,0,0,.08);font-size:11px;font-weight:700;color:#64748b;"></div>
+    </div>
+
+    <!-- ── TODAY'S COMPLETION ── -->
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:-4px;">Today's Completion</div>
+
+    <!-- Overall donut only -->
+    <div style="background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.07);box-shadow:0 1px 4px rgba(0,0,0,.06);padding:20px 28px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
+
+      <!-- Donut -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+        <div style="position:relative;width:96px;height:96px;">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#f1f5f9" stroke-width="9"/>
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#0d9488" stroke-width="9"
+              stroke-linecap="round" stroke-dasharray="238.8" stroke-dashoffset="238.8"
+              id="today-donut-circle"
+              style="transition:stroke-dashoffset .7s ease,stroke .4s;transform:rotate(-90deg);transform-origin:48px 48px;"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;">
+            <span id="today-pct" style="font-size:20px;font-weight:800;color:#0d9488;font-family:'JetBrains Mono',monospace;line-height:1;">—</span>
+            <span style="font-size:8px;font-weight:700;color:#94a3b8;letter-spacing:.5px;">DONE</span>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:#1e293b;">Pipeline Completion</div>
+        <div style="font-size:10px;color:#94a3b8;"><span id="today-pipeline-done">—</span> / <span id="today-pipeline-total">—</span> batches QC approved</div>
+      </div>
+
+      <!-- Divider -->
+      <div style="width:1px;height:80px;background:rgba(0,0,0,.07);flex-shrink:0;"></div>
+
+      <!-- Quick stats inline -->
+      <div style="display:flex;gap:28px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;">In Process</div>
+          <div style="font-size:24px;font-weight:800;color:#0d9488;font-family:'JetBrains Mono',monospace;" id="kpi-val-s2">—</div>
+          <div style="font-size:10px;color:#94a3b8;"><span id="kpi-pct-s2">—</span> of pipeline</div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;">Production Done</div>
+          <div style="font-size:24px;font-weight:800;color:#6366f1;font-family:'JetBrains Mono',monospace;" id="kpi-val-s3">—</div>
+          <div style="font-size:10px;color:#94a3b8;"><span id="kpi-pct-s3">—</span> of pipeline</div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;">QC Approved</div>
+          <div style="font-size:24px;font-weight:800;color:#10b981;font-family:'JetBrains Mono',monospace;" id="kpi-val-s4">—</div>
+          <div style="font-size:10px;color:#94a3b8;"><span id="kpi-pct-s4">—</span> of pipeline</div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;">QC Pending</div>
+          <div style="font-size:24px;font-weight:800;color:#f59e0b;font-family:'JetBrains Mono',monospace;" id="kpi-val-qcp">—</div>
+          <div style="font-size:10px;color:#94a3b8;"><span id="kpi-pct-qcp">—</span> of completed</div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;">Dispensed Today</div>
+          <div style="font-size:24px;font-weight:800;color:#6366f1;font-family:'JetBrains Mono',monospace;" id="kpi-val-dsp">—</div>
+          <div style="font-size:10px;color:#94a3b8;"><span id="kpi-pct-dsp">—</span> of pipeline</div>
+        </div>
+      </div>
+
+    </div><!-- /today completion -->
+
+    <!-- Production Pipeline KPIs -->
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:-4px;">Production Pipeline</div>
+    <div class="stats-row">
+
+      <div class="stat-card clickable" onclick="switchTab('pipeline')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">Total Batches</div>
+          <div class="stat-val brand" id="h-total">—</div>
+          <div class="stat-sub">In pipeline</div>
+          <div class="stat-hint">↗ Progress Pipeline</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('pipeline')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">Dispensing Ready</div>
+          <div class="stat-val amber" id="h-s1">—</div>
+          <div class="stat-sub">Awaiting dispensing</div>
+          <div class="stat-hint">↗ Progress Pipeline</div>
+        </div>
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="#fef3c7" stroke-width="5"/><circle cx="24" cy="24" r="19" fill="none" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" id="dp-donut-s1" style="transition:stroke-dashoffset .6s;transform:rotate(-90deg);transform-origin:24px 24px;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span id="dp-pct-s1" style="font-size:9px;font-weight:800;color:#f59e0b;font-family:'JetBrains Mono',monospace;">0%</span></div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('inprocess')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">In Process</div>
+          <div class="stat-val brand" id="h-s2">—</div>
+          <div class="stat-sub">On production floor</div>
+          <div class="stat-hint">↗ In-Process</div>
+        </div>
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="#ccfbf1" stroke-width="5"/><circle cx="24" cy="24" r="19" fill="none" stroke="#0d9488" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" id="dp-donut-s2" style="transition:stroke-dashoffset .6s;transform:rotate(-90deg);transform-origin:24px 24px;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span id="dp-pct-s2" style="font-size:9px;font-weight:800;color:#0d9488;font-family:'JetBrains Mono',monospace;">0%</span></div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('completed')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">Production Done</div>
+          <div class="stat-val green" id="h-s3">—</div>
+          <div class="stat-sub">Awaiting QC</div>
+          <div class="stat-hint">↗ Completed + QC</div>
+        </div>
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="#ede9fe" stroke-width="5"/><circle cx="24" cy="24" r="19" fill="none" stroke="#6366f1" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" id="dp-donut-s3" style="transition:stroke-dashoffset .6s;transform:rotate(-90deg);transform-origin:24px 24px;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span id="dp-pct-s3" style="font-size:9px;font-weight:800;color:#6366f1;font-family:'JetBrains Mono',monospace;">0%</span></div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('completed')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">QC Approved</div>
+          <div class="stat-val green" id="h-s4">—</div>
+          <div class="stat-sub">Fully cleared</div>
+          <div class="stat-hint">↗ Completed + QC</div>
+        </div>
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="#d1fae5" stroke-width="5"/><circle cx="24" cy="24" r="19" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" id="dp-donut-s4" style="transition:stroke-dashoffset .6s;transform:rotate(-90deg);transform-origin:24px 24px;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span id="dp-pct-s4" style="font-size:9px;font-weight:800;color:#10b981;font-family:'JetBrains Mono',monospace;">0%</span></div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('completed')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">QC Pending</div>
+          <div class="stat-val amber" id="h-qc-pending">—</div>
+          <div class="stat-sub">Done, QC awaited</div>
+          <div class="stat-hint">↗ Completed + QC</div>
+        </div>
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="#fef3c7" stroke-width="5"/><circle cx="24" cy="24" r="19" fill="none" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" id="dp-donut-qcp" style="transition:stroke-dashoffset .6s;transform:rotate(-90deg);transform-origin:24px 24px;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span id="dp-pct-qcp" style="font-size:9px;font-weight:800;color:#f59e0b;font-family:'JetBrains Mono',monospace;">0%</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Batch Activity KPIs -->
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:-4px;margin-top:8px;">Batch Activity</div>
+    <div class="stats-row">
+
+      <div class="stat-card clickable" onclick="switchTab('processing')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">Processing Batches</div>
+          <div class="stat-val brand" id="h-proc">—</div>
+          <div class="stat-sub">Registered batches</div>
+          <div class="stat-hint">↗ Processing Batches</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('dispensing')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">Dispensing Records</div>
+          <div class="stat-val purple" id="h-dsp">—</div>
+          <div class="stat-sub">Today's entries</div>
+          <div class="stat-hint">↗ Daily Dispensing</div>
+        </div>
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="#ede9fe" stroke-width="5"/><circle cx="24" cy="24" r="19" fill="none" stroke="#6366f1" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" id="dp-donut-dsp" style="transition:stroke-dashoffset .6s;transform:rotate(-90deg);transform-origin:24px 24px;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span id="dp-pct-dsp" style="font-size:9px;font-weight:800;color:#6366f1;font-family:'JetBrains Mono',monospace;">0%</span></div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('inprocess')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">In-Process Logs</div>
+          <div class="stat-val amber" id="h-ip">—</div>
+          <div class="stat-sub">Floor activity logs</div>
+          <div class="stat-hint">↗ In-Process</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('fmcost')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">Formulations</div>
+          <div class="stat-val brand" id="h-fmc">—</div>
+          <div class="stat-sub">Total · <span id="h-fmc-missing" style="color:#f59e0b;">—</span> missing rate</div>
+          <div class="stat-hint">↗ Formulation Cost</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="switchTab('pipeline')" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div class="stat-label">Trial Batches</div>
+          <div class="stat-val purple" id="h-trial">—</div>
+          <div class="stat-sub">Trial type in pipeline</div>
+          <div class="stat-hint">↗ Progress Pipeline</div>
+        </div>
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="#ede9fe" stroke-width="5"/><circle cx="24" cy="24" r="19" fill="none" stroke="#6366f1" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" id="dp-donut-trial" style="transition:stroke-dashoffset .6s;transform:rotate(-90deg);transform-origin:24px 24px;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span id="dp-pct-trial" style="font-size:9px;font-weight:800;color:#6366f1;font-family:'JetBrains Mono',monospace;">0%</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Report Section -->
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:-4px;margin-top:8px;">Reports</div>
+    <div class="stats-row" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+
+      <!-- Leaderboard KPI — donut only -->
+      <div class="stat-card clickable" onclick="openLeaderboard()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 16px;">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;">🏆 Leaderboard</div>
+        <!-- Mini donut -->
+        <div style="position:relative;width:72px;height:72px;flex-shrink:0;">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#f1f5f9" stroke-width="8"/>
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#6366f1" stroke-width="8"
+              stroke-linecap="round" stroke-dasharray="175.9"
+              stroke-dashoffset="175.9"
+              id="lb-donut-circle"
+              style="transition:stroke-dashoffset .6s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <span id="lb-donut-pct" style="font-size:14px;font-weight:800;color:#6366f1;font-family:'JetBrains Mono',monospace;line-height:1;">—%</span>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:12px;font-weight:700;color:#1e293b;">Operator Performance</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Click to view full report</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ LEADERBOARD MODAL ══════════════════════════════════════════════════ -->
+  <div id="lb-modal-overlay" onclick="if(event.target===this)closeLeaderboard()"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);z-index:9000;justify-content:center;align-items:flex-start;padding:40px 20px;overflow-y:auto;">
+    <div style="background:#fff;border-radius:18px;width:100%;max-width:860px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;animation:fadeIn .2s ease;">
+
+      <!-- Modal Header -->
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid rgba(0,0,0,.08);background:#f8fafc;">
+        <span style="font-size:20px;">🏆</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#1e293b;">Operator Performance Leaderboard</div>
+          <div style="font-size:11px;color:#64748b;">Overall progress — batches processed, completed, QC approved per operator</div>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+          <select id="lb-filter-type" onchange="renderLeaderboard()" style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-family:inherit;font-size:12px;background:#fff;">
+            <option value="">All Roles</option>
+          </select>
+          <button onclick="closeLeaderboard()" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#64748b;">✕</button>
+        </div>
+      </div>
+
+      <!-- Summary bar -->
+      <div id="lb-summary-bar" style="display:flex;gap:16px;padding:12px 24px;background:#f0fdf4;border-bottom:1px solid rgba(13,148,136,.12);flex-wrap:wrap;"></div>
+
+      <!-- Leaderboard table -->
+      <div style="padding:20px 24px;">
+        <div id="lb-body" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px;">Loading leaderboard…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="panel" id="tab-pipeline">
+    <div style="display:flex;align-items:center;gap:12px;"><div><div class="page-title">📈 Progress Pipeline</div><div class="page-sub">Batch-level stage tracking — dispensing → in-process → QC</div></div><button onclick="switchTab('home')" style="margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#64748b;font-family:inherit;">← Back</button></div>
+    <div class="stats-row" id="pipeline-stats">
+      <div class="stat-card"><div class="stat-label">Total Batches</div><div class="stat-val brand" id="ps-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Dispensing Ready</div><div class="stat-val amber" id="ps-s1">—</div></div>
+      <div class="stat-card"><div class="stat-label">In Process</div><div class="stat-val brand" id="ps-s2">—</div></div>
+      <div class="stat-card"><div class="stat-label">Production Done</div><div class="stat-val green" id="ps-s3">—</div></div>
+      <div class="stat-card"><div class="stat-label">QC Approved</div><div class="stat-val green" id="ps-s4">—</div></div>
+    </div>
+    <div class="pipeline-card">
+      <div class="pipeline-header">
+        <span style="font-size:14px;font-weight:800;">Batch Progress Tracker</span>
+        <input class="pipeline-search" placeholder="🔍 Search batch..." id="pipeline-search" oninput="renderPipeline()">
+        <select id="pipeline-filter" onchange="renderPipeline()" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.1);font-family:inherit;font-size:12px;">
+          <option value="">All Stages</option>
+          <option value="0">Not Started</option>
+          <option value="1">Dispensing Ready</option>
+          <option value="2">In Process</option>
+          <option value="3">Production Done</option>
+          <option value="4">QC Approved</option>
+        </select>
+        <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
+      </div>
+      <div class="pipeline-list" id="pipeline-list">
+        <div class="empty-state"><div class="ico">⏳</div><p>Loading pipeline…</p></div>
+      </div>
+      <div class="pagination" id="pg-pipeline"></div>
+    </div>
+  </div>
+
+  <!-- ══ PROCESSING BATCHES TAB ════════════════════════════════════════════ -->
+  <div class="panel" id="tab-processing">
+    <div style="display:flex;align-items:center;gap:12px;"><div><div class="page-title">⚙️ Processing Batches</div><div class="page-sub">All batches registered in the production pipeline</div></div><button onclick="switchTab('home')" style="margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#64748b;font-family:inherit;">← Back</button></div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Processing Batches</span>
+        <input id="search-proc" placeholder="🔍 Search…" oninput="filterTable('tbl-proc',this.value)"
+          style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-size:12px;font-family:inherit;margin-left:auto;">
+        <button class="wa-btn" onclick="waShare('proc')" title="Share on WhatsApp">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.535 5.846L0 24l6.335-1.51A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.728.888.928-3.635-.235-.374A9.818 9.818 0 1 1 12 21.818z"/></svg>
+          WhatsApp
+        </button>
+        <span class="card-badge" id="cnt-proc">0</span>
+      </div>
+      <div class="table-wrap">
+        <table id="tbl-proc">
+          <thead><tr>
+            <th></th><th>#</th><th>Batch Name</th><th>Size (kg)</th><th>No. of Batches</th>
+            <th>Type</th><th>SKU Size</th><th>Dispensed</th><th>Added On</th><th>Added By</th>
+          </tr></thead>
+          <tbody id="body-proc"><tr><td colspan="10" style="text-align:center;padding:20px;color:#94a3b8;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pg-proc"></div>
+    </div>
+  </div>
+
+  <!-- ══ DAILY DISPENSING TAB ══════════════════════════════════════════════ -->
+  <div class="panel" id="tab-dispensing">
+    <div style="display:flex;align-items:center;gap:12px;"><div><div class="page-title">📋 Daily Dispensing</div><div class="page-sub">Day-wise batch dispensing records and remaining counts</div></div><button onclick="switchTab('home')" style="margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#64748b;font-family:inherit;">← Back</button></div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Daily Batch Dispensing Records</span>
+        <input type="date" id="dsp-date-filter" onchange="filterDsp()" style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-size:12px;margin-left:12px;">
+        <input id="search-dsp" placeholder="🔍 Search…" oninput="filterTable('tbl-dsp',this.value)"
+          style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-size:12px;font-family:inherit;margin-left:8px;">
+        <button class="wa-btn" onclick="waShare('dsp')" title="Share on WhatsApp">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.535 5.846L0 24l6.335-1.51A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.728.888.928-3.635-.235-.374A9.818 9.818 0 1 1 12 21.818z"/></svg>
+          WhatsApp
+        </button>
+        <span class="card-badge" id="cnt-dsp">0</span>
+      </div>
+      <div class="table-wrap">
+        <table id="tbl-dsp">
+          <thead><tr>
+            <th>Date</th><th>Batch Name</th><th>Batch Size</th><th>No. of Batches</th>
+            <th>Dispensed Today</th><th>Total Dispensed</th><th>Remaining</th><th>Remarks</th>
+          </tr></thead>
+          <tbody id="body-dsp"><tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pg-dsp"></div>
+    </div>
+  </div>
+
+  <!-- ══ IN PROCESS TAB ════════════════════════════════════════════════════ -->
+  <div class="panel" id="tab-inprocess">
+    <div style="display:flex;align-items:center;gap:12px;"><div><div class="page-title">🔄 In-Process Batches</div><div class="page-sub">Batches currently active on the production floor</div></div><button onclick="switchTab('home')" style="margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#64748b;font-family:inherit;">← Back</button></div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">In-Process Batches</span>
+        <input id="search-ip" placeholder="🔍 Search…" oninput="filterTable('tbl-ip',this.value)"
+          style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-size:12px;font-family:inherit;margin-left:auto;">
+        <button class="wa-btn" onclick="waShare('ip')" title="Share on WhatsApp">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.535 5.846L0 24l6.335-1.51A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.728.888.928-3.635-.235-.374A9.818 9.818 0 1 1 12 21.818z"/></svg>
+          WhatsApp
+        </button>
+        <span class="card-badge" id="cnt-ip">0</span>
+      </div>
+      <div class="table-wrap">
+        <table id="tbl-ip">
+          <thead><tr>
+            <th>#</th><th>Batch Name</th><th>Batch Size</th><th>Operator</th>
+            <th>Batches Processed</th><th>Product Code</th><th>Processing Date</th><th>Remarks</th>
+          </tr></thead>
+          <tbody id="body-ip"><tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pg-ip"></div>
+    </div>
+  </div>
+
+  <!-- ══ COMPLETED + QC TAB ════════════════════════════════════════════════ -->
+  <div class="panel" id="tab-completed">
+    <div style="display:flex;align-items:center;gap:12px;"><div><div class="page-title">✅ Completed + QC</div><div class="page-sub">Production completed batches with QC approval status</div></div><button onclick="switchTab('home')" style="margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#64748b;font-family:inherit;">← Back</button></div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Completed Batches + QC Status</span>
+        <label style="font-size:11px;font-weight:700;color:#64748b;margin-left:12px;">From</label>
+        <input type="date" id="comp-from" onchange="loadCompleted()" style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-size:12px;margin-left:5px;">
+        <label style="font-size:11px;font-weight:700;color:#64748b;margin-left:8px;">To</label>
+        <input type="date" id="comp-to" onchange="loadCompleted()" style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-size:12px;margin-left:5px;">
+        <button class="wa-btn" onclick="waShare('comp')" style="margin-left:8px;">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.535 5.846L0 24l6.335-1.51A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.728.888.928-3.635-.235-.374A9.818 9.818 0 1 1 12 21.818z"/></svg>
+          WhatsApp
+        </button>
+        <span class="card-badge" id="cnt-comp">0</span>
+      </div>
+      <div class="table-wrap">
+        <table id="tbl-comp">
+          <thead>
+            <tr>
+              <th>Completed On</th><th>Batch Name</th><th>Batch Size</th><th>Batches</th>
+              <th>Operator</th><th>TRS No.</th><th>Product Code</th>
+              <th>QC Status</th><th>QC By</th><th>QC Date</th><th>Remarks</th>
+            </tr>
+            <tr class="col-filter-row" id="comp-col-filters">
+              <th></th>
+              <th><input placeholder="Batch name…" id="cf-batch" oninput="applyCompFilters()"></th>
+              <th></th><th></th>
+              <th><input placeholder="Operator…" id="cf-operator" oninput="applyCompFilters()"></th>
+              <th><input placeholder="TRS No…" id="cf-trs" oninput="applyCompFilters()"></th>
+              <th></th>
+              <th><select id="cf-qcstatus" onchange="applyCompFilters()"><option value="">All</option><option>Approved</option><option>Rejected</option><option>Pending</option><option>Hold</option></select></th>
+              <th></th><th></th><th></th>
+            </tr>
+          </thead>
+          <tbody id="body-comp"><tr><td colspan="11" style="text-align:center;padding:20px;color:#94a3b8;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pg-comp"></div>
+    </div>
+  </div>
+
+  <!-- ══ FORMULATION COST TAB ══════════════════════════════════════════════ -->
+  <div class="panel" id="tab-fmcost">
+    <div style="display:flex;align-items:center;gap:12px;"><div><div class="page-title">💰 Formulation Cost</div><div class="page-sub">Per-kg cost per formulation — read only</div></div><button onclick="switchTab('home')" style="margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#64748b;font-family:inherit;">← Back</button></div>
+    <div class="card">
+      <div class="card-header" style="flex-wrap:wrap;gap:8px;">
+        <span class="card-title">Formulation Cost — ₹ per kg</span>
+        <input id="search-fmc" placeholder="🔍 Search formulation…" oninput="renderFmCost()"
+          style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-size:12px;font-family:inherit;margin-left:auto;min-width:180px;">
+        <select id="filter-fmc-brand" onchange="renderFmCost()" style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-family:inherit;font-size:12px;">
+          <option value="">All Brands</option>
+        </select>
+        <select id="filter-fmc-rate" onchange="renderFmCost()" style="padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,.1);font-family:inherit;font-size:12px;">
+          <option value="">All</option>
+          <option value="has">Rate Available</option>
+          <option value="missing">Rate Missing</option>
+        </select>
+        <button class="refresh-btn" onclick="loadFmCost()">↺ Refresh</button>
+        <span class="card-badge" id="cnt-fmc">0</span>
+      </div>
+
+      <!-- Summary chips -->
+      <div class="fmc-chips">
+        <div class="fmc-chip"><span class="fmc-chip-val" style="color:#0d9488;" id="fmc-total">—</span><span style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;">Total</span></div>
+        <div class="fmc-chip"><span class="fmc-chip-val" style="color:#10b981;" id="fmc-rated">—</span><span style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;">With Rate</span></div>
+        <div class="fmc-chip"><span class="fmc-chip-val" style="color:#f59e0b;" id="fmc-missing">—</span><span style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;">Missing Rate</span></div>
+      </div>
+
+      <!-- Selection action bar — shown when rows are checked -->
+      <div id="fmc-action-bar" style="display:none;align-items:center;gap:10px;padding:10px 16px;background:#f0fdf4;border-bottom:1px solid rgba(13,148,136,.2);">
+        <span id="fmc-sel-count" style="font-size:12px;font-weight:700;color:#0d9488;">0 selected</span>
+        <button onclick="fmcSelectAll()" style="padding:5px 11px;border-radius:7px;border:1px solid rgba(13,148,136,.3);background:rgba(13,148,136,.08);color:#0d9488;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">Select All Filtered</button>
+        <button onclick="fmcClearSel()" style="padding:5px 11px;border-radius:7px;border:1px solid rgba(0,0,0,.1);background:#fff;color:#64748b;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
+        <div style="width:1px;height:20px;background:rgba(0,0,0,.1);margin:0 4px;flex-shrink:0;"></div>
+        <!-- WhatsApp -->
+        <button onclick="fmcShareWA()" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px solid #25d366;background:rgba(37,211,102,.08);color:#128c7e;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#128c7e"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.535 5.846L0 24l6.335-1.51A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.728.888.928-3.635-.235-.374A9.818 9.818 0 1 1 12 21.818z"/></svg>
+          WhatsApp
+        </button>
+        <!-- Excel export -->
+        <button onclick="fmcExportExcel()" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);color:#059669;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Export Excel
+        </button>
+        <!-- Gmail -->
+        <button onclick="fmcShareGmail()" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px solid rgba(234,67,53,.35);background:rgba(234,67,53,.07);color:#ea4335;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea4335" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Gmail
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="tbl-fmc">
+          <thead><tr>
+            <th style="width:36px;"><input type="checkbox" id="fmc-chk-all" onchange="fmcToggleAll(this.checked)" style="cursor:pointer;accent-color:#0d9488;"></th>
+            <th>#</th><th>Brand</th><th>Formulation Name</th>
+            <th style="text-align:right;">Cost per kg (₹)</th>
+            <th style="text-align:center;">Status</th>
+          </tr></thead>
+          <tbody id="body-fmc"><tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pg-fmc"></div>
+    </div>
+  </div>
+
+</div><!-- /content-wrap -->
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let _pipeline = [], _processing = [], _dispensing = [], _inprocess = [], _completed = [];
+let _fmcost = [];
+let _refreshInterval = null;
+
+const _pg = {
+  proc:     { page:1, pageSize:20, filtered:[] },
+  dsp:      { page:1, pageSize:20, filtered:[] },
+  ip:       { page:1, pageSize:20, filtered:[] },
+  comp:     { page:1, pageSize:20, filtered:[] },
+  pipeline: { page:1, pageSize:10, filtered:[] },
+  fmc:      { page:1, pageSize:25, filtered:[] },
+};
+
+// ── Pagination ───────────────────────────────────────────────────────────────
+function pgSlice(key) {
+  const s = _pg[key];
+  return s.filtered.slice((s.page-1)*s.pageSize, s.page*s.pageSize);
+}
+
+function pgRender(key, containerId) {
+  const s = _pg[key];
+  const total = s.filtered.length;
+  const pages = Math.max(1, Math.ceil(total/s.pageSize));
+  if (s.page > pages) s.page = pages;
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (total === 0) { el.innerHTML=''; return; }
+  const start = (s.page-1)*s.pageSize+1;
+  const end = Math.min(s.page*s.pageSize, total);
+  let pgBtns = '';
+  for (let p=1; p<=pages; p++) {
+    if (p===1 || p===pages || Math.abs(p-s.page)<=2)
+      pgBtns += `<button class="pg-btn${p===s.page?' active':''}" onclick="_pgGo('${key}','${containerId}',${p})">${p}</button>`;
+    else if (Math.abs(p-s.page)===3)
+      pgBtns += `<span style="color:#94a3b8;font-size:12px;padding:0 2px;">…</span>`;
+  }
+  el.innerHTML = `<span class="pg-info">Showing ${start}–${end} of ${total}</span>
+    <select class="pg-size" onchange="_pgSize('${key}','${containerId}',this.value)">
+      ${[10,20,50,100].map(n=>`<option value="${n}"${n===s.pageSize?' selected':''}>${n}/page</option>`).join('')}
+    </select>
+    <button class="pg-btn" onclick="_pgGo('${key}','${containerId}',${s.page-1})" ${s.page<=1?'disabled':''}>‹</button>
+    ${pgBtns}
+    <button class="pg-btn" onclick="_pgGo('${key}','${containerId}',${s.page+1})" ${s.page>=pages?'disabled':''}>›</button>`;
+}
+
+function _pgGo(key, cid, page) {
+  const s=_pg[key]; s.page=Math.max(1,Math.min(Math.ceil(s.filtered.length/s.pageSize)||1,page));
+  if(key==='proc') renderProcessing();
+  else if(key==='dsp') renderDispensing(_dispensing);
+  else if(key==='ip') renderInprocess();
+  else if(key==='comp') renderCompleted();
+  else if(key==='pipeline') renderPipeline();
+  else if(key==='fmc') renderFmCost();
+}
+function _pgSize(key,cid,size){_pg[key].pageSize=parseInt(size);_pg[key].page=1;_pgGo(key,cid,1);}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'tab-'+name));
+  if (name === 'completed' && !_completed.length) loadCompleted();
+  if (name === 'fmcost') { if (!_fmcost.length) loadFmCost(); else renderFmCost(); }
+}
+
+// ── Load all ──────────────────────────────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadPipeline(), loadProcessing(), loadDispensing(), loadInprocess(), loadCompleted(), loadFmCost(true)]);
+}
+
+// ── Pipeline ──────────────────────────────────────────────────────────────────
+async function loadPipeline() {
+  try {
+    const r = await fetch('/api/planning/pipeline');
+    const d = await r.json();
+    if (d.status === 'ok') {
+      _pipeline = d.pipeline;
+      updateStats();
+      renderPipeline();
+    }
+  } catch(e) { console.error(e); }
+}
+
+function updateStats() {
+  const d = _pipeline;
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  const total = d.length;
+
+  // Pipeline tab stats
+  set('ps-total', total);
+  set('ps-s1', d.filter(r=>r.s1_dispensing_ready).length);
+  set('ps-s2', d.filter(r=>r.s2_inprocess).length);
+  set('ps-s3', d.filter(r=>r.s3_production_done).length);
+  set('ps-s4', d.filter(r=>r.s4_qc_approved).length);
+
+  // Home KPI numbers
+  set('h-total', total);
+  const s1=d.filter(r=>r.s1_dispensing_ready).length;
+  const s2=d.filter(r=>r.s2_inprocess).length;
+  const s3=d.filter(r=>r.s3_production_done).length;
+  const s4=d.filter(r=>r.s4_qc_approved).length;
+  const trial=d.filter(r=>r.batch_type==='Trial').length;
+  set('h-s1', s1); set('h-s2', s2); set('h-s3', s3); set('h-s4', s4); set('h-trial', trial);
+
+  // Pipeline donut helpers — circumference 2π×19 = 119.4
+  const C = 119.4;
+  const dp = (circleId, pctId, val, max) => {
+    const pct = max > 0 ? Math.round((val/max)*100) : 0;
+    const el = document.getElementById(circleId);
+    if (el) el.style.strokeDashoffset = C - (pct/100)*C;
+    const pe = document.getElementById(pctId);
+    if (pe) pe.textContent = pct + '%';
+  };
+  dp('dp-donut-s1','dp-pct-s1', s1, total);
+  dp('dp-donut-s2','dp-pct-s2', s2, total);
+  dp('dp-donut-s3','dp-pct-s3', s3, total);
+  dp('dp-donut-s4','dp-pct-s4', s4, total);
+  dp('dp-donut-trial','dp-pct-trial', trial, total);
+
+  // QC Pending donut updated from completed data
+  if (_completed.length === 0) {
+    set('h-qc-pending', d.filter(r=>r.s3_production_done && !r.s4_qc_approved).length);
+  } else {
+    updateQcKpis();
+  }
+  updateTodayCompletion();
+}
+
+// ── Today's Completion ────────────────────────────────────────────────────────
+function updateTodayCompletion() {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const s = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+
+  // Date badge
+  const badge = document.getElementById('today-date-badge');
+  if (badge) {
+    const now = new Date();
+    const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    badge.textContent = `📅 ${now.getDate()} ${M[now.getMonth()]} ${now.getFullYear()}`;
+  }
+
+  const total = _pipeline.length;
+  const r = (val, max) => max > 0 ? Math.round((val/max)*100) + '%' : '0%';
+
+  // Individual stats (plain text, no SVG donuts)
+  const s2 = _pipeline.filter(p=>p.s2_inprocess).length;
+  s('kpi-val-s2', s2); s('kpi-pct-s2', r(s2,total));
+
+  const s3 = _pipeline.filter(p=>p.s3_production_done).length;
+  s('kpi-val-s3', s3); s('kpi-pct-s3', r(s3,total));
+
+  const s4 = _pipeline.filter(p=>p.s4_qc_approved).length;
+  s('kpi-val-s4', s4); s('kpi-pct-s4', r(s4,total));
+
+  const totalCompleted = _completed.length;
+  const qcPending = _completed.filter(p => normaliseQcStatus(p.qc_status) === 'Pending').length;
+  s('kpi-val-qcp', qcPending); s('kpi-pct-qcp', r(qcPending,totalCompleted));
+
+  const dspToday = _dispensing.filter(p=>(p.batch_date||'').split('T')[0]===todayStr).length;
+  s('kpi-val-dsp', dspToday); s('kpi-pct-dsp', r(dspToday,total));
+
+  // Overall donut — circumference = 2π×38 = 238.8
+  const overallPct = total > 0 ? Math.round((s4/total)*100) : 0;
+  s('today-pct', overallPct + '%');
+  s('today-pipeline-done', s4);
+  s('today-pipeline-total', total);
+
+  const circle = document.getElementById('today-donut-circle');
+  if (circle) {
+    circle.style.strokeDashoffset = 238.8 - (overallPct/100)*238.8;
+    const color = overallPct >= 80 ? '#10b981' : overallPct >= 40 ? '#f59e0b' : '#ef4444';
+    circle.style.stroke = color;
+    const pctEl = document.getElementById('today-pct');
+    if (pctEl) pctEl.style.color = color;
+  }
+
+  // Leaderboard donut
+  const lbApproved = _completed.filter(p => normaliseQcStatus(p.qc_status) === 'Approved').length;
+  const lbPct = totalCompleted > 0 ? Math.round((lbApproved/totalCompleted)*100) : 0;
+  if (typeof updateLbDonut === 'function') updateLbDonut(lbPct);
+}
+
+function renderPipeline() {
+  const q  = (document.getElementById('pipeline-search').value || '').toLowerCase();
+  const sf = document.getElementById('pipeline-filter').value;
+  let rows = _pipeline;
+  if (q)  rows = rows.filter(r => r.batch_name.toLowerCase().includes(q));
+  if (sf !== '') rows = rows.filter(r => String(r.stage) === sf);
+  _pg.pipeline.filtered = rows;
+  const paged = pgSlice('pipeline');
+  const list = document.getElementById('pipeline-list');
+  if (!rows.length) {
+    list.innerHTML = `<div class="empty-state"><div class="ico">🔍</div><p>No batches match filter</p></div>`;
+    pgRender('pipeline','pg-pipeline'); return;
+  }
+  const STAGES = [
+    {label:'Dispensing Ready',key:'s1_dispensing_ready'},
+    {label:'In Process',key:'s2_inprocess'},
+    {label:'Production Done',key:'s3_production_done'},
+    {label:'QC Approved',key:'s4_qc_approved'},
+  ];
+  list.innerHTML = paged.map(r => {
+    const stage = r.stage||0, pct = stage*25, fillClass = pct>=100?'done':'';
+    const typeBadge = r.batch_type==='Trial'?'<span class="badge badge-amber">Trial</span>':'<span class="badge badge-blue">Regular</span>';
+    const nb = r.no_of_batch||1;
+    const nDisp=r.n_dispensed??(r.s1_dispensing_ready?1:0);
+    const nInp=r.n_inprocess??(r.s2_inprocess?1:0);
+    const nComp=r.n_completed??(r.s3_production_done?1:0);
+    const nQC=r.n_qcapproved??(r.s4_qc_approved?1:0);
+    const milestones = STAGES.map((s,i)=>{
+      const isDone=i<stage, isActive=i===stage&&stage<4;
+      const dotCls=isDone?'done':isActive?'active':'';
+      const lblCls=isDone?'done':isActive?'active':'';
+      const tick=isDone?'<span class="ms-tick">✓</span>':'';
+      const counts=[nDisp,nInp,nComp,nQC];
+      const countTag=nb>1?`<span style="font-size:9px;font-weight:700;color:#94a3b8;margin-left:auto;padding-right:4px;">${counts[i]}/${nb}</span>`:'';
+      return `<div class="milestone-row"><div class="ms-dot ${dotCls}"></div><span class="ms-label ${lblCls}">${s.label}</span>${countTag}${tick}</div>`;
+    }).join('');
+    const progressDetail=nb>1?`<span style="font-size:9px;color:#94a3b8;margin-left:4px;">${nQC} of ${nb} QC approved</span>`:'';
+    return `<div class="pipeline-row">
+      <div class="pr-left">
+        <div class="pr-top"><div class="pr-name">${esc(r.batch_name)}</div>${typeBadge}</div>
+        <div class="pr-meta">${r.batch_size} kg × ${nb} batches · Added ${fmtDate(r.added_on)}</div>
+        <div class="pr-bar-row"><div class="prog-track"><div class="prog-fill ${fillClass}" style="width:${pct}%"></div></div><div class="pr-pct">${pct}%</div></div>
+        ${progressDetail}
+      </div>
+      <div class="pr-right">${milestones}</div>
+    </div>`;
+  }).join('');
+  pgRender('pipeline','pg-pipeline');
+}
+
+// ── Processing ────────────────────────────────────────────────────────────────
+async function loadProcessing() {
+  try {
+    const r = await fetch('/api/planning/processing_batches');
+    const d = await r.json();
+    if (d.status === 'ok') {
+      _processing = d.rows;
+      const el=document.getElementById('nb-processing'); if(el) el.textContent=d.rows.length;
+      const h=document.getElementById('h-proc'); if(h) h.textContent=d.rows.length;
+      renderProcessing();
+    }
+  } catch(e) { console.error(e); }
+}
+
+function renderProcessing() {
+  const tbody = document.getElementById('body-proc');
+  const q = (document.getElementById('search-proc').value||'').toLowerCase();
+  _pg.proc.filtered = q ? _processing.filter(r=>(r.batch_name||'').toLowerCase().includes(q)||(r.added_by||'').toLowerCase().includes(q)) : [..._processing];
+  const rows = pgSlice('proc');
+  document.getElementById('cnt-proc').textContent = _pg.proc.filtered.length;
+  if (!_pg.proc.filtered.length) { tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:20px;color:#94a3b8;">No data</td></tr>`; pgRender('proc','pg-proc'); return; }
+  const offset = (_pg.proc.page-1)*_pg.proc.pageSize;
+  const pipelineMap={};
+  _pipeline.forEach(p=>{pipelineMap[p.id]=p;});
+  let html='';
+  rows.forEach((r,i)=>{
+    const pct=r.no_of_batch>0?Math.round((r.dispensed_batches/r.no_of_batch)*100):0;
+    const type=r.batch_type==='Trial'?'<span class="badge badge-amber">Trial</span>':'<span class="badge badge-blue">Regular</span>';
+    const rid=`proc-${r.id}`;
+    const pip=pipelineMap[r.id];
+    const nb=parseInt(r.no_of_batch)||1;
+    const nDisp=pip?(pip.n_dispensed??0):0,nInp=pip?(pip.n_inprocess??0):0,nComp=pip?(pip.n_completed??0):0,nQC=pip?(pip.n_qcapproved??0):0;
+    const qcPct=pip?pip.progress_pct:0;
+    const batchCards=Array.from({length:nb},(_,bi)=>{
+      let bStage=0,bLabel='Not started',bCls='s0';
+      if(bi<nQC){bStage=4;bLabel='QC Approved';bCls='s4';}
+      else if(bi<nComp){bStage=3;bLabel='Production Done';bCls='s3';}
+      else if(bi<nInp){bStage=2;bLabel='In Process';bCls='s2';}
+      else if(bi<nDisp){bStage=1;bLabel='Dispensing Ready';bCls='s1';}
+      return `<div class="batch-card"><div class="bc-num">Batch ${bi+1} of ${nb}</div><div class="bc-stage ${bCls}">${['⬜','🟡','🔵','🟣','✅'][bStage]} ${bLabel}</div></div>`;
+    }).join('');
+    html+=`<tr>
+      <td><button class="expand-btn" onclick="toggleExpand('${rid}')">+</button></td>
+      <td>${offset+i+1}</td><td><strong>${esc(r.batch_name)}</strong></td>
+      <td>${r.batch_size}</td><td>${nb}</td><td>${type}</td><td>${r.sku_size||'—'}</td>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div class="prog-track" style="width:60px;height:5px;"><div style="width:${pct}%;height:100%;border-radius:99px;background:#0d9488;"></div></div><span style="font-size:10px;color:#94a3b8;">${r.dispensed_batches}/${nb}</span></div></td>
+      <td>${fmtDate(r.added_on)}</td><td>${esc(r.added_by||'—')}</td>
+    </tr>
+    <tr class="expand-row" id="${rid}"><td colspan="10"><div class="expand-inner">
+      <div class="expand-title">Batch-wise Progress — ${esc(r.batch_name)}</div>
+      <div class="batch-cards">${batchCards}</div>
+      <div class="proj-bar-wrap"><div class="proj-bar-label"><span>Overall QC Progress</span><span>${nQC}/${nb} · ${qcPct}%</span></div>
+      <div class="proj-bar-track"><div class="proj-bar-fill${qcPct>=100?' done':''}" style="width:${qcPct}%"></div></div></div>
+    </div></td></tr>`;
+  });
+  tbody.innerHTML=html;
+  pgRender('proc','pg-proc');
+}
+
+function toggleExpand(id) {
+  const row=document.getElementById(id); if(!row) return;
+  const btn=row.previousElementSibling?.querySelector('.expand-btn');
+  const isOpen=row.classList.toggle('open');
+  if(btn) btn.textContent=isOpen?'−':'+';
+}
+
+// ── Dispensing ────────────────────────────────────────────────────────────────
+async function loadDispensing() {
+  try {
+    const r = await fetch('/api/planning/dsp_records');
+    const d = await r.json();
+    if (d.status === 'ok') {
+      _dispensing = d.rows;
+      const el2=document.getElementById('nb-dispensing'); if(el2) el2.textContent=d.rows.length;
+      const h=document.getElementById('h-dsp'); if(h) h.textContent=d.rows.length;
+      // Dispensing donut: today's records vs total pipeline
+      const todayStr2 = new Date().toISOString().split('T')[0];
+      const dspToday2 = d.rows.filter(r=>(r.batch_date||'').split('T')[0]===todayStr2).length;
+      const pipeTotal2 = _pipeline.length;
+      const C2 = 119.4;
+      const pct2 = pipeTotal2 > 0 ? Math.round((dspToday2/pipeTotal2)*100) : 0;
+      const de = document.getElementById('dp-donut-dsp'); if(de) de.style.strokeDashoffset = C2-(pct2/100)*C2;
+      const dp2 = document.getElementById('dp-pct-dsp'); if(dp2) dp2.textContent = pct2+'%';
+      updateTodayCompletion();
+      renderDispensing(_dispensing);
+    }
+  } catch(e) { console.error(e); }
+}
+
+function filterDsp() {
+  const date=document.getElementById('dsp-date-filter').value;
+  const q=(document.getElementById('search-dsp').value||'').toLowerCase();
+  let rows=_dispensing;
+  if(date) rows=rows.filter(r=>(r.batch_date||'').startsWith(date));
+  if(q) rows=rows.filter(r=>(r.batch_name||'').toLowerCase().includes(q));
+  _pg.dsp.filtered=rows; _pg.dsp.page=1; renderDispensing(rows);
+}
+
+function renderDispensing(sourceRows) {
+  const date=document.getElementById('dsp-date-filter').value;
+  const q=(document.getElementById('search-dsp').value||'').toLowerCase();
+  let filtered=sourceRows;
+  if(date) filtered=filtered.filter(r=>(r.batch_date||'').startsWith(date));
+  if(q) filtered=filtered.filter(r=>(r.batch_name||'').toLowerCase().includes(q));
+  _pg.dsp.filtered=filtered;
+  const tbody=document.getElementById('body-dsp');
+  document.getElementById('cnt-dsp').textContent=filtered.length;
+  if(!filtered.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8;">No data</td></tr>`;pgRender('dsp','pg-dsp');return;}
+  const rows=pgSlice('dsp');
+  tbody.innerHTML=rows.map(r=>{
+    const nb=parseInt(r.no_of_batches)||0;
+    const totalDisp=parseInt(r.total_dispensed_all)||parseInt(r.dispensed)||0;
+    const todayDisp=parseInt(r.dispensed_today??r.dispensed)||0;
+    const remaining=Math.max(0,nb-totalDisp);
+    const remBadge=remaining===0?'<span class="badge badge-green">Complete</span>':`<span class="badge badge-amber">${remaining} left</span>`;
+    return `<tr><td>${fmtDate(r.batch_date)}</td><td><strong>${esc(r.batch_name)}</strong></td>
+      <td>${r.batch_size} kg</td><td>${nb}</td><td>${todayDisp}</td><td>${totalDisp}</td>
+      <td>${remBadge}</td><td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.remarks||'—')}</td></tr>`;
+  }).join('');
+  pgRender('dsp','pg-dsp');
+}
+
+// ── In-Process ────────────────────────────────────────────────────────────────
+async function loadInprocess() {
+  try {
+    const r = await fetch('/api/planning/inprocess_batches');
+    const d = await r.json();
+    if (d.status === 'ok') {
+      _inprocess = d.rows;
+      const el=document.getElementById('nb-inprocess'); if(el) el.textContent=d.rows.length;
+      const h=document.getElementById('h-ip'); if(h) h.textContent=d.rows.length;
+      renderInprocess();
+    }
+  } catch(e) { console.error(e); }
+}
+
+function renderInprocess() {
+  const tbody=document.getElementById('body-ip');
+  const q=(document.getElementById('search-ip').value||'').toLowerCase();
+  _pg.ip.filtered=q?_inprocess.filter(r=>(r.batch_name||'').toLowerCase().includes(q)||(r.operator_name||'').toLowerCase().includes(q)):[..._inprocess];
+  document.getElementById('cnt-ip').textContent=_pg.ip.filtered.length;
+  if(!_pg.ip.filtered.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8;">No in-process batches</td></tr>`;pgRender('ip','pg-ip');return;}
+  const rows=pgSlice('ip');
+  const offset=(_pg.ip.page-1)*_pg.ip.pageSize;
+  tbody.innerHTML=rows.map((r,i)=>`<tr>
+    <td>${offset+i+1}</td><td><strong>${esc(r.batch_name)}</strong></td>
+    <td>${r.batch_size} kg</td><td>${esc(r.operator_name||'—')}</td>
+    <td>${r.batches_processed??'—'}</td><td>${esc(r.product_code||'—')}</td>
+    <td>${fmtDate(r.processing_datetime)}</td>
+    <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.remarks||'—')}</td>
+  </tr>`).join('');
+  pgRender('ip','pg-ip');
+}
+
+// ── Completed ─────────────────────────────────────────────────────────────────
+async function loadCompleted() {
+  const from=document.getElementById('comp-from').value;
+  const to=document.getElementById('comp-to').value;
+  let url='/api/planning/completed_batches';
+  const params=[];
+  if(from) params.push('from='+from);
+  if(to) params.push('to='+to);
+  if(params.length) url+='?'+params.join('&');
+  try {
+    const r=await fetch(url); const d=await r.json();
+    if(d.status==='ok'){
+      _completed=d.rows;
+      const el=document.getElementById('nb-completed'); if(el) el.textContent=d.rows.length;
+      // Update QC Pending KPI from real data
+      updateQcKpis();
+      renderCompleted();
+    }
+  } catch(e){console.error(e);}
+}
+
+function normaliseQcStatus(raw) {
+  let s = raw || 'Pending';
+  if (s.toLowerCase() === 'pass') s = 'Approved';
+  if (['fail','failed'].includes(s.toLowerCase())) s = 'Rejected';
+  return s;
+}
+
+function updateQcKpis() {
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  const pending  = _completed.filter(r => normaliseQcStatus(r.qc_status) === 'Pending').length;
+  const approved = _completed.filter(r => normaliseQcStatus(r.qc_status) === 'Approved').length;
+  set('h-qc-pending', pending);
+  if (_pipeline.length === 0) set('h-s4', approved);
+  // Animate QC Pending donut (% of completed)
+  const total = _completed.length;
+  const C = 119.4;
+  const pct = total > 0 ? Math.round((pending/total)*100) : 0;
+  const el = document.getElementById('dp-donut-qcp');
+  if (el) el.style.strokeDashoffset = C - (pct/100)*C;
+  const pe = document.getElementById('dp-pct-qcp');
+  if (pe) pe.textContent = pct + '%';
+  updateTodayCompletion();
+}
+
+function qcBadge(raw) {
+  const status = normaliseQcStatus(raw);
+  const m={'Approved':'badge-green','Rejected':'badge-red','Pending':'badge-amber','Hold':'badge-purple'};
+  return `<span class="badge ${m[status]||'badge-grey'}">${status}</span>`;
+}
+
+function applyCompFilters(){_pg.comp.page=1;renderCompleted();}
+
+function renderCompleted() {
+  const tbody=document.getElementById('body-comp');
+  const cfBatch=(document.getElementById('cf-batch')?.value||'').toLowerCase();
+  const cfOperator=(document.getElementById('cf-operator')?.value||'').toLowerCase();
+  const cfTrs=(document.getElementById('cf-trs')?.value||'').toLowerCase();
+  const cfQC=document.getElementById('cf-qcstatus')?.value||'';
+  _pg.comp.filtered=_completed.filter(r=>{
+    const qcNorm = normaliseQcStatus(r.qc_status);
+    if(cfBatch&&!(r.batch_name||'').toLowerCase().includes(cfBatch)) return false;
+    if(cfOperator&&!(r.operator_name||'').toLowerCase().includes(cfOperator)) return false;
+    if(cfTrs&&!(r.trs_no||'').toLowerCase().includes(cfTrs)) return false;
+    if(cfQC&&qcNorm!==cfQC) return false;
+    return true;
+  });
+  document.getElementById('cnt-comp').textContent=_pg.comp.filtered.length;
+  if(!_pg.comp.filtered.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:20px;color:#94a3b8;">No data. Adjust date range.</td></tr>`;pgRender('comp','pg-comp');return;}
+  const rows=pgSlice('comp');
+  tbody.innerHTML=rows.map(r=>`<tr>
+    <td>${fmtDate(r.completed_at||r.created_at)}</td>
+    <td><strong>${esc(r.batch_name)}</strong></td>
+    <td>${r.batch_size} kg</td><td>${r.no_of_batches??r.batches_processed??'—'}</td>
+    <td>${esc(r.operator_name||'—')}</td>
+    <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;">${esc(r.trs_no||'—')}</span></td>
+    <td>${esc(r.product_code||'—')}</td>
+    <td>${qcBadge(r.qc_status)}</td>
+    <td>${esc(r.qc_approved_by||'—')}</td>
+    <td>${fmtDate(r.qc_approval_dt)}</td>
+    <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.qc_remarks||'—')}</td>
+  </tr>`).join('');
+  pgRender('comp','pg-comp');
+}
+
+// ── Formulation Cost ──────────────────────────────────────────────────────────
+async function loadFmCost(silent=false) {
+  if (!silent) {
+    const tbody = document.getElementById('body-fmc');
+    if (tbody) tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">Loading formulations…</td></tr>`;
+  }
+  try {
+    const r=await fetch('/api/planning/formulation_costs');
+    const d=await r.json();
+    if(d.status==='ok'){
+      _fmcost=d.batches||[];
+      if (!silent) { _fmcSel.clear(); window._fmcAllFilteredSelected=false; }
+      const brands=[...new Set(_fmcost.map(r=>r.brand_name).filter(Boolean))].sort();
+      const sel=document.getElementById('filter-fmc-brand');
+      if(sel) sel.innerHTML=`<option value="">All Brands</option>`+brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+      // Always update KPI counts
+      const h=document.getElementById('h-fmc'); if(h) h.textContent=_fmcost.length;
+      const hm=document.getElementById('h-fmc-missing'); if(hm) hm.textContent=_fmcost.filter(r=>!r.has_rate||r.cost_per_kg===null).length;
+      if (!silent) renderFmCost();
+    } else if (!silent) {
+      const tbody=document.getElementById('body-fmc');
+      if(tbody) tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:#ef4444;">Error: ${esc(d.message||'Failed')}</td></tr>`;
+    }
+  } catch(e){ if(!silent) { const tbody=document.getElementById('body-fmc'); if(tbody) tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:#ef4444;">Network error</td></tr>`; } console.error(e); }
+}
+
+function renderFmCost() {
+  const q=(document.getElementById('search-fmc')?.value||'').toLowerCase();
+  const brandF=document.getElementById('filter-fmc-brand')?.value||'';
+  const rateF=document.getElementById('filter-fmc-rate')?.value||'';
+  let rows=_fmcost;
+  if(q) rows=rows.filter(r=>r.batch_name.toLowerCase().includes(q)||(r.brand_name||'').toLowerCase().includes(q));
+  if(brandF) rows=rows.filter(r=>(r.brand_name||'')===brandF);
+  if(rateF==='has') rows=rows.filter(r=>r.has_rate&&r.cost_per_kg!==null);
+  if(rateF==='missing') rows=rows.filter(r=>!r.has_rate||r.cost_per_kg===null);
+  _pg.fmc.filtered=rows;
+  const paged=pgSlice('fmc');
+  document.getElementById('cnt-fmc').textContent=rows.length;
+  const withRate=_fmcost.filter(r=>r.has_rate&&r.cost_per_kg!==null).length;
+  const noRate=_fmcost.filter(r=>!r.has_rate||r.cost_per_kg===null).length;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('fmc-total',_fmcost.length); set('fmc-rated',withRate); set('fmc-missing',noRate);
+  const tbody=document.getElementById('body-fmc');
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">No formulations match</td></tr>`;pgRender('fmc','pg-fmc');fmcUpdateActionBar();return;}
+  const offset=(_pg.fmc.page-1)*_pg.fmc.pageSize;
+  // _fmcPageMap maps numeric index → batch_name for current page (avoids HTML-escaping issues)
+  window._fmcPageMap={};
+  tbody.innerHTML=paged.map((r,i)=>{
+    const globalIdx=offset+i;
+    window._fmcPageMap[globalIdx]=r.batch_name;
+    const cpk=r.cost_per_kg!==null?`₹ ${Number(r.cost_per_kg).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`:'—';
+    const costStyle=r.cost_per_kg!==null?`font-family:'JetBrains Mono',monospace;font-weight:800;color:#0d9488;font-size:13px;`:`color:#94a3b8;`;
+    const statusBadge=(r.has_rate&&r.cost_per_kg!==null)?`<span class="badge badge-green">Rate Available</span>`:`<span class="badge badge-amber" title="Missing: ${esc((r.missing_rate||[]).join(', '))}">Rate Incomplete</span>`;
+    const brand=r.brand_name?`<span class="badge badge-blue" style="font-size:10px;">${esc(r.brand_name)}</span>`:`<span style="color:#94a3b8;font-size:11px;">—</span>`;
+    const isChecked=_fmcSel.has(r.batch_name)?'checked':'';
+    return `<tr>
+      <td style="text-align:center;"><input type="checkbox" class="fmc-row-chk" data-idx="${globalIdx}" ${isChecked} onchange="fmcRowChange(this)" style="cursor:pointer;accent-color:#0d9488;"></td>
+      <td style="color:#94a3b8;font-size:11px;">${offset+i+1}</td>
+      <td>${brand}</td><td><strong>${esc(r.batch_name)}</strong></td>
+      <td style="text-align:right;${costStyle}">${cpk}</td>
+      <td style="text-align:center;">${statusBadge}</td>
+    </tr>`;
+  }).join('');
+  pgRender('fmc','pg-fmc');
+  fmcUpdateActionBar();
+}
+
+// ── FMC selection — persists across pagination pages ─────────────────────────
+const _fmcSel = new Set(); // stores batch_name strings (raw, never escaped)
+window._fmcPageMap = {}; // idx → batch_name for current visible page
+
+function _fmcIdxToBatchName(idx) {
+  return window._fmcPageMap[idx] || null;
+}
+
+function fmcUpdateActionBar() {
+  const n = _fmcSel.size;
+  const bar = document.getElementById('fmc-action-bar');
+  const cnt = document.getElementById('fmc-sel-count');
+  if (bar) bar.style.display = n > 0 ? 'flex' : 'none';
+  if (cnt) cnt.textContent = `${n} selected`;
+  // sync header checkbox state
+  const allChk = document.getElementById('fmc-chk-all');
+  if (allChk) {
+    const pageNames = Object.values(window._fmcPageMap);
+    const allPageChecked = pageNames.length > 0 && pageNames.every(name => _fmcSel.has(name));
+    const someChecked = pageNames.some(name => _fmcSel.has(name));
+    allChk.checked = allPageChecked;
+    allChk.indeterminate = !allPageChecked && someChecked;
+  }
+}
+
+function fmcRowChange(chk) {
+  const idx = parseInt(chk.dataset.idx);
+  const name = _fmcIdxToBatchName(idx);
+  if (!name) return;
+  if (chk.checked) _fmcSel.add(name);
+  else _fmcSel.delete(name);
+  fmcUpdateActionBar();
+}
+
+function fmcToggleAll(checked) {
+  // Toggle only current visible page rows
+  Object.values(window._fmcPageMap).forEach(name => {
+    if (checked) _fmcSel.add(name);
+    else _fmcSel.delete(name);
+  });
+  document.querySelectorAll('.fmc-row-chk').forEach(c => c.checked = checked);
+  fmcUpdateActionBar();
+}
+
+function fmcSelectAll() {
+  // Add ALL filtered rows across ALL pages — no DOM needed
+  _pg.fmc.filtered.forEach(r => _fmcSel.add(r.batch_name));
+  // Sync only the currently visible checkboxes
+  document.querySelectorAll('.fmc-row-chk').forEach(c => {
+    const name = _fmcIdxToBatchName(parseInt(c.dataset.idx));
+    if (name) c.checked = _fmcSel.has(name);
+  });
+  fmcUpdateActionBar();
+}
+
+function fmcClearSel() {
+  _fmcSel.clear();
+  document.querySelectorAll('.fmc-row-chk').forEach(c => c.checked = false);
+  const allChk = document.getElementById('fmc-chk-all');
+  if (allChk) { allChk.checked = false; allChk.indeterminate = false; }
+  fmcUpdateActionBar();
+}
+
+function fmcGetSelectedRows() {
+  return _fmcost.filter(r => _fmcSel.has(r.batch_name));
+}
+
+// ── WhatsApp share ────────────────────────────────────────────────────────────
+function fmcShareWA() {
+  const rows=fmcGetSelectedRows();
+  if(!rows.length){alert('Select at least one formulation.');return;}
+  const now=new Date();
+  const dateStr=`${now.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]} ${now.getFullYear()}`;
+  const lines=[`💰 *Formulation Cost Report — HCP Planning*`,`📅 ${dateStr}`,`Total: ${rows.length} formulations\n`];
+  // Group by brand
+  const byBrand={};
+  rows.forEach(r=>{const b=r.brand_name||'(Unbranded)';if(!byBrand[b])byBrand[b]=[];byBrand[b].push(r);});
+  Object.entries(byBrand).sort(([a],[b])=>a.localeCompare(b)).forEach(([brand,items])=>{
+    lines.push(`*${brand}*`);
+    items.forEach(r=>{
+      const cpk=r.cost_per_kg!==null?`₹${Number(r.cost_per_kg).toFixed(2)}`:'Rate N/A';
+      lines.push(`  • ${r.batch_name} — ${cpk}/kg`);
+    });
+    lines.push('');
+  });
+  window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(lines.join('\n')),'_blank');
+}
+
+// ── Excel export ──────────────────────────────────────────────────────────────
+function fmcExportExcel() {
+  const rows=fmcGetSelectedRows();
+  if(!rows.length){alert('Select at least one formulation.');return;}
+  // Build CSV with BOM for Excel UTF-8
+  const bom='\uFEFF';
+  const headers=['#','Brand','Formulation Name','Cost per kg (₹)','Status'];
+  const csvRows=[headers.join(',')];
+  rows.forEach((r,i)=>{
+    const cpk=r.cost_per_kg!==null?Number(r.cost_per_kg).toFixed(2):'';
+    const status=(r.has_rate&&r.cost_per_kg!==null)?'Rate Available':'Rate Incomplete';
+    csvRows.push([
+      i+1,
+      `"${(r.brand_name||'').replace(/"/g,'""')}"`,
+      `"${r.batch_name.replace(/"/g,'""')}"`,
+      cpk,
+      status
+    ].join(','));
+  });
+  const csv=bom+csvRows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const now=new Date();
+  a.download=`Formulation_Cost_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Gmail share ───────────────────────────────────────────────────────────────
+function fmcShareGmail() {
+  const rows=fmcGetSelectedRows();
+  if(!rows.length){alert('Select at least one formulation.');return;}
+  const now=new Date();
+  const dateStr=`${now.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]} ${now.getFullYear()}`;
+  const subject=`Formulation Cost Report — HCP Planning (${dateStr})`;
+  // Group by brand for body
+  const byBrand={};
+  rows.forEach(r=>{const b=r.brand_name||'(Unbranded)';if(!byBrand[b])byBrand[b]=[];byBrand[b].push(r);});
+  const bodyLines=[`Formulation Cost Report — HCP Planning`,`Date: ${dateStr}`,`Total formulations: ${rows.length}`,``];
+  Object.entries(byBrand).sort(([a],[b])=>a.localeCompare(b)).forEach(([brand,items])=>{
+    bodyLines.push(`── ${brand} ──`);
+    items.forEach(r=>{
+      const cpk=r.cost_per_kg!==null?`₹${Number(r.cost_per_kg).toFixed(2)}/kg`:'Rate N/A';
+      bodyLines.push(`  ${r.batch_name}  —  ${cpk}`);
+    });
+    bodyLines.push('');
+  });
+  const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+  window.open(gmailUrl,'_blank');
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+let _lbData = []; // cached leaderboard data
+
+function updateLbDonut(pct) {
+  const circ = 175.9;
+  const circle = document.getElementById('lb-donut-circle');
+  const label  = document.getElementById('lb-donut-pct');
+  if (circle) {
+    circle.style.strokeDashoffset = circ - (pct/100)*circ;
+    const color = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+    circle.style.stroke = color;
+    if (label) { label.textContent = pct + '%'; label.style.color = color; }
+  }
+}
+
+async function openLeaderboard() {
+  document.getElementById('lb-modal-overlay').style.display = 'flex';
+  document.getElementById('lb-body').innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px;">Loading…</div>`;
+  try {
+    const r = await fetch('/api/planning/leaderboard');
+    const d = await r.json();
+    if (d.status === 'ok') {
+      _lbData = d.operators || [];
+    }
+  } catch(e) { console.error(e); }
+  renderLeaderboard();
+}
+
+function closeLeaderboard() {
+  document.getElementById('lb-modal-overlay').style.display = 'none';
+}
+
+function renderLeaderboard() {
+  const roleFilter = document.getElementById('lb-filter-type')?.value || '';
+  let rows = roleFilter ? _lbData.filter(r => r.user_type === roleFilter) : _lbData;
+
+  // Populate role filter from data
+  const sel = document.getElementById('lb-filter-type');
+  if (sel) {
+    const allRoles = [...new Set(_lbData.map(r => r.user_type).filter(Boolean))].sort();
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">All Roles</option>` + allRoles.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join('');
+    sel.value = cur;
+  }
+
+  // Summary bar
+  const totalOps  = rows.length;
+  const totalComp = rows.reduce((s,r) => s+r.completed, 0);
+  const totalQCA  = rows.reduce((s,r) => s+r.qc_approved, 0);
+  const totalInP  = rows.reduce((s,r) => s+r.inprocess, 0);
+  const ovPct     = totalComp > 0 ? Math.round((totalQCA/totalComp)*100) : 0;
+  document.getElementById('lb-summary-bar').innerHTML = [
+    ['Operators', totalOps, '#0d9488'],
+    ['Batches Completed', totalComp, '#10b981'],
+    ['QC Approved', totalQCA, '#10b981'],
+    ['In Process', totalInP, '#f59e0b'],
+    ['Overall QC Rate', ovPct+'%', ovPct>=80?'#10b981':ovPct>=40?'#f59e0b':'#ef4444'],
+  ].map(([l,v,c]) => `<div style="display:flex;flex-direction:column;gap:2px;">
+    <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#64748b;">${l}</div>
+    <div style="font-size:18px;font-weight:800;color:${c};font-family:'JetBrains Mono',monospace;">${v}</div>
+  </div>`).join('<div style="width:1px;background:rgba(0,0,0,.08);align-self:stretch;"></div>');
+
+  updateLbDonut(ovPct);
+
+  if (!rows.length) {
+    document.getElementById('lb-body').innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8;">No operator data yet</div>`;
+    return;
+  }
+
+  const maxScore = rows[0]?.score || 1;
+  const MEDAL = ['🥇','🥈','🥉'];
+  const COLORS = ['#f59e0b','#94a3b8','#cd7c2f'];
+  const CIRC = 113.1;
+
+  document.getElementById('lb-body').innerHTML = rows.map((r, i) => {
+    const rank = i + 1;
+    const barW = Math.round((r.score / maxScore) * 100);
+    const pctColor = r.completion_pct >= 80 ? '#10b981' : r.completion_pct >= 50 ? '#f59e0b' : '#ef4444';
+    const medal = rank <= 3 ? `<span style="font-size:20px;line-height:1;">${MEDAL[rank-1]}</span>` : `<span style="font-size:13px;font-weight:800;color:#94a3b8;width:24px;text-align:center;">#${rank}</span>`;
+    const offset = CIRC - (r.completion_pct / 100) * CIRC;
+    const roleTag = r.user_type ? `<span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:8px;background:rgba(99,102,241,.1);color:#6366f1;">${esc(r.user_type)}</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f8fafc;border-radius:12px;border:1px solid rgba(0,0,0,.06);">
+      <div style="flex-shrink:0;width:28px;display:flex;justify-content:center;">${medal}</div>
+      <div style="position:relative;width:42px;height:42px;flex-shrink:0;">
+        <svg width="42" height="42" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="18" fill="none" stroke="#f1f5f9" stroke-width="5"/>
+          <circle cx="21" cy="21" r="18" fill="none" stroke="${pctColor}" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${offset}"
+            style="transform:rotate(-90deg);transform-origin:21px 21px;"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:9px;font-weight:800;color:${pctColor};font-family:'JetBrains Mono',monospace;">${r.completion_pct}%</span>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:13px;font-weight:800;color:#1e293b;">${esc(r.name)}</div>
+          ${roleTag}
+        </div>
+        <div style="margin-top:7px;height:4px;border-radius:99px;background:#e2e8f0;overflow:hidden;">
+          <div style="height:100%;border-radius:99px;background:${rank<=3?COLORS[rank-1]:'#6366f1'};width:${barW}%;transition:width .5s ease;"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;flex-shrink:0;">
+        <div style="text-align:center;"><div style="font-size:16px;font-weight:800;color:#0d9488;font-family:'JetBrains Mono',monospace;">${r.inprocess}</div><div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;">In Process</div></div>
+        <div style="text-align:center;"><div style="font-size:16px;font-weight:800;color:#6366f1;font-family:'JetBrains Mono',monospace;">${r.completed}</div><div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;">Completed</div></div>
+        <div style="text-align:center;"><div style="font-size:16px;font-weight:800;color:#10b981;font-family:'JetBrains Mono',monospace;">${r.qc_approved}</div><div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;">QC ✓</div></div>
+        <div style="text-align:center;"><div style="font-size:16px;font-weight:800;color:#f59e0b;font-family:'JetBrains Mono',monospace;">${r.qc_pending}</div><div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;">QC Pend</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function filterTable(tblId, q) {
+  const map={'tbl-proc':()=>{_pg.proc.page=1;renderProcessing();},'tbl-dsp':()=>{_pg.dsp.page=1;renderDispensing(_dispensing);},'tbl-ip':()=>{_pg.ip.page=1;renderInprocess();},'tbl-comp':()=>{_pg.comp.page=1;renderCompleted();}};
+  if(map[tblId]) map[tblId]();
+}
+
+// ── WhatsApp share ────────────────────────────────────────────────────────────
+function waShare(tab) {
+  let lines=[];
+  const now=new Date();
+  const dateStr=`${now.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]} ${now.getFullYear()}`;
+  if(tab==='proc'){
+    lines.push(`📋 *Processing Batches — HCP Planning*`);
+    lines.push(`📅 ${dateStr}\n`);
+    _pg.proc.filtered.forEach((r,i)=>{lines.push(`${i+1}. ${r.batch_name} | ${r.batch_size}kg × ${r.no_of_batch} | ${r.batch_type}`);});
+  } else if(tab==='dsp'){
+    lines.push(`📋 *Daily Dispensing — HCP Planning*`);
+    lines.push(`📅 ${dateStr}\n`);
+    _pg.dsp.filtered.forEach((r,i)=>{lines.push(`${i+1}. ${r.batch_name} | Dispensed: ${r.dispensed_today??r.dispensed}`);});
+  } else if(tab==='ip'){
+    lines.push(`🔄 *In-Process Batches — HCP Planning*`);
+    lines.push(`📅 ${dateStr}\n`);
+    _pg.ip.filtered.forEach((r,i)=>{lines.push(`${i+1}. ${r.batch_name} | ${r.batch_size}kg | ${r.operator_name||'—'}`);});
+  } else if(tab==='comp'){
+    lines.push(`✅ *Completed + QC — HCP Planning*`);
+    lines.push(`📅 ${dateStr}\n`);
+    _pg.comp.filtered.forEach((r,i)=>{lines.push(`${i+1}. ${r.batch_name} | QC: ${r.qc_status||'Pending'} | TRS: ${r.trs_no||'—'}`);});
+  }
+  if(lines.length<=2){alert('No data to share.');return;}
+  window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(lines.join('\n')),'_blank');
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+const _M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(val){
+  if(!val) return '—';
+  const s=String(val).split('T')[0];
+  const parts=s.split('-');
+  if(parts.length!==3) return s;
+  const[y,m,d]=parts;
+  return `${parseInt(d,10)} ${_M[parseInt(m,10)-1]||m} ${y}`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const today=new Date().toISOString().split('T')[0];
+  const monthAgo=new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0];
+  document.getElementById('comp-from').value=monthAgo;
+  document.getElementById('comp-to').value=today;
+  loadAll();
+  _refreshInterval = setInterval(loadAll, 30000);
+  // Formulation cost refreshes every 60 seconds independently
+  setInterval(() => { if(_fmcost.length > 0) loadFmCost(); }, 60000);
+});
+</script>
+
+<script>
+/* ── HCP Universal Theme Engine ── */
+const HCP_THEMES={light:{'--bg':'#f1f5f9','--surface':'#ffffff','--surface2':'#f8fafc','--border':'rgba(0,0,0,0.08)','--text':'#1e293b','--muted':'#64748b','--brand':'#0d9488','--green':'#10b981','--amber':'#f59e0b','--red':'#ef4444','--accent':'#6366f1'},dark:{'--bg':'#0f172a','--surface':'rgba(22,28,40,0.85)','--surface2':'rgba(22,28,40,0.65)','--border':'rgba(255,255,255,0.08)','--text':'#cbd5e1','--muted':'#475569','--brand':'#14b8a6','--green':'#34d399','--amber':'#fbbf24','--red':'#f43f5e','--accent':'#22d3ee'},ocean:{'--bg':'#082844','--surface':'rgba(14,42,71,0.82)','--surface2':'rgba(14,42,71,0.6)','--border':'rgba(56,189,248,0.12)','--text':'#bae6fd','--muted':'#4a7ea8','--brand':'#38bdf8','--green':'#34d399','--amber':'#fbbf24','--red':'#f87171','--accent':'#67e8f9'},rose:{'--bg':'#fdf2f8','--surface':'rgba(255,255,255,0.85)','--surface2':'rgba(255,255,255,0.65)','--border':'rgba(225,29,72,0.1)','--text':'#4a0520','--muted':'#c084fc','--brand':'#e11d48','--green':'#059669','--amber':'#d97706','--red':'#e11d48','--accent':'#d946ef'},slate:{'--bg':'#0f172a','--surface':'rgba(30,41,59,0.9)','--surface2':'rgba(30,41,59,0.7)','--border':'rgba(148,163,184,0.1)','--text':'#94a3b8','--muted':'#475569','--brand':'#94a3b8','--green':'#22c55e','--amber':'#f59e0b','--red':'#ef4444','--accent':'#e2e8f0'}};
+function hcpApplyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('hcp_theme',t);
+  const vars=HCP_THEMES[t]||HCP_THEMES.light;
+  const css=':root{'+Object.entries(vars).map(([k,v])=>k+':'+v).join(';')+'}';
+  let el=document.getElementById('hcp-theme-vars');
+  if(!el){el=document.createElement('style');el.id='hcp-theme-vars';document.head.appendChild(el);}
+  el.textContent=css;
+  document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));
+}
+window.hcpApplyTheme=hcpApplyTheme;
+window.hcpOpenSettings=function(){document.getElementById('hcp-settings-overlay').classList.add('open');const t=localStorage.getItem('hcp_theme')||'light';document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));};
+window.hcpCloseSettings=function(){document.getElementById('hcp-settings-overlay').classList.remove('open');};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')hcpCloseSettings();if((e.ctrlKey||e.metaKey)&&e.key===','){e.preventDefault();hcpOpenSettings();}});
+hcpApplyTheme(localStorage.getItem('hcp_theme')||'light');
+</script>
+
+<!-- HCP Settings Panel -->
+<div id="hcp-settings-overlay" onclick="if(event.target===this)hcpCloseSettings()">
+  <div id="hcp-settings-panel">
+    <div class="hcp-settings-head">
+      <h3>⚙️ Appearance</h3>
+      <button class="hcp-settings-close" onclick="hcpCloseSettings()">✕</button>
+    </div>
+    <div class="hcp-settings-body">
+      <div class="hcp-settings-lbl">🎨 Theme</div>
+      <div class="hcp-theme-grid">
+        <div class="hcp-swatch" data-t="light" onclick="hcpApplyTheme('light')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#e0f2fe,#f0fdf4,#fefce8)"></div><div class="hcp-swatch-name">Light</div><div class="hcp-swatch-tag">Default</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="dark" onclick="hcpApplyTheme('dark')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0c1117,#0f1923,#111420)"></div><div class="hcp-swatch-name">Dark</div><div class="hcp-swatch-tag">Easy on eyes</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="ocean" onclick="hcpApplyTheme('ocean')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0ea5e9,#0284c7,#0369a1)"></div><div class="hcp-swatch-name">Ocean</div><div class="hcp-swatch-tag">Deep blue</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="rose" onclick="hcpApplyTheme('rose')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#fff1f2,#fce7f3,#fdf4ff)"></div><div class="hcp-swatch-name">Rose</div><div class="hcp-swatch-tag">Soft &amp; vibrant</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="slate" onclick="hcpApplyTheme('slate')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#1e293b,#0f172a,#1e293b)"></div><div class="hcp-swatch-name">Slate</div><div class="hcp-swatch-tag">Mono minimal</div><div class="hcp-active-dot"></div></div>
+      </div>
+      <div id="hcp-applied-msg" style="display:none;text-align:center;font-size:11px;font-weight:700;color:#0d9488;margin-top:10px;">✓ Theme applied</div>
+      <div style="margin-top:16px;text-align:right"><button onclick="hcpCloseSettings()" style="padding:9px 24px;border-radius:9px;border:none;background:#0d9488;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Done ✓</button></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

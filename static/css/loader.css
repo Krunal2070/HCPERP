@@ -1,0 +1,40 @@
+/* ══ Page Loader Bar ══════════════════════════════════════════════ */
+        #pgLoadBar {
+            position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+            background: linear-gradient(90deg, #2563eb, #60a5fa, #2563eb);
+            background-size: 200% 100%;
+            z-index: 999998; border-radius: 0 3px 3px 0;
+            transition: width 0.25s ease, opacity 0.4s ease;
+            opacity: 0; pointer-events: none;
+            box-shadow: 0 0 8px rgba(37,99,235,.6);
+            animation: pgShimmer 1.4s linear infinite;
+        }
+        #pgLoadBar.pgl-active { opacity: 1; }
+        @keyframes pgShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        #pgSpinner {
+            display: none; position: fixed; inset: 0; z-index: 999997;
+            background: rgba(248,250,252,.72); backdrop-filter: blur(1px);
+            align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+        }
+        #pgSpinner.pgs-show { display: flex; }
+        .pgs-ring {
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 3.5px solid #e2e8f0; border-top-color: #2563eb;
+            animation: pgspin .7s linear infinite;
+        }
+        .pgs-txt { font-size: .82rem; font-weight: 700; color: #64748b; letter-spacing: .03em; }
+        @keyframes pgspin { to { transform: rotate(360deg); } }
+        .btn-loading {
+            position: relative; pointer-events: none !important;
+            opacity: .8 !important; cursor: not-allowed !important;
+        }
+        .btn-loading .btn-spinner {
+            display: inline-block; width: 13px; height: 13px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+            animation: pgspin .65s linear infinite; vertical-align: middle; margin-right: 5px;
+        }
+        .btn-primary.btn-loading  { opacity:.75 !important; }
+        .btn-outline.btn-loading  { opacity:.75 !important; }
+        .btn-outline.btn-loading .btn-spinner { border-color: rgba(37,99,235,.2); border-top-color: #2563eb; }
+        .btn-danger.btn-loading   { opacity:.75 !important; }
+        .btn-danger.btn-loading  .btn-spinner { border-color: rgba(220,38,38,.2); border-top-color: #dc2626; }

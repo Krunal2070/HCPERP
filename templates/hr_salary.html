@@ -1,0 +1,2795 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>HR Salary Calculation · HCP Portal</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+html{overflow-y:auto}
+body{
+  min-height:100vh;background:var(--bg,#f0f4f8);
+  font-family:var(--font-body,'Plus Jakarta Sans',sans-serif);
+  color:var(--text,#1e293b);font-size:13px;-webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:99px}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:58px;
+  background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 60%,#2563eb 100%);
+  display:flex;align-items:center;padding:0 24px;gap:14px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(30,58,138,.3);
+}
+.logo-mark{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#fff;
+}
+.logo-text{line-height:1.25}
+.logo-name{font-size:13px;font-weight:800;color:#fff;letter-spacing:-.2px}
+.logo-sub{font-size:9.5px;color:rgba(255,255,255,.65);letter-spacing:.8px;text-transform:uppercase}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:9px}
+.tb-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  height:32px;padding:0 14px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.12);
+  color:#fff;font-size:11.5px;font-weight:700;
+  cursor:pointer;text-decoration:none;transition:all .18s;
+  font-family:inherit;
+}
+.tb-btn:hover{background:rgba(255,255,255,.24)}
+.tb-btn.home{background:rgba(255,255,255,.18)}
+
+/* ── PAGE LAYOUT ── */
+.main{max-width:1480px;margin:0 auto;padding:22px 22px 40px;}
+.page-head{margin-bottom:18px;animation:fadeUp .35s ease both}
+.page-title{font-size:22px;font-weight:800;color:#1e293b;letter-spacing:-.3px}
+.page-sub{font-size:12px;color:#64748b;margin-top:3px}
+
+.toolbar{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  background:#fff;padding:12px 14px;border-radius:12px;
+  border:1px solid rgba(0,0,0,.06);box-shadow:0 1px 3px rgba(0,0,0,.04);
+  margin-bottom:16px;
+}
+.tool-group{display:flex;align-items:center;gap:8px}
+.tool-label{font-size:10.5px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase}
+.tool-input,.tool-select{
+  height:34px;padding:0 12px;border-radius:8px;
+  border:1px solid #e2e8f0;background:#fff;font-size:12.5px;
+  font-family:inherit;color:#1e293b;outline:none;transition:border .15s;
+}
+.tool-input:focus,.tool-select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.tool-btn{
+  height:34px;padding:0 16px;border-radius:8px;border:none;cursor:pointer;
+  font-size:11.5px;font-weight:700;font-family:inherit;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap;
+}
+.tool-btn.primary{background:#2563eb;color:#fff}
+.tool-btn.primary:hover{background:#1d4ed8}
+.tool-btn.ghost{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.tool-btn.ghost:hover{background:#e2e8f0}
+.tool-btn.success{background:#059669;color:#fff}
+.tool-btn.success:hover{background:#047857}
+.tool-btn.wa{background:#25d366;color:#fff}
+.tool-btn.wa:hover{background:#128c7e}
+.tool-btn.danger{background:#dc2626;color:#fff}
+.tool-btn.danger:hover{background:#b91c1c}
+.tool-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:2px solid #e2e8f0;flex-wrap:wrap}
+.tab{
+  padding:10px 18px;background:none;border:none;cursor:pointer;
+  font-size:12.5px;font-weight:700;color:#64748b;font-family:inherit;
+  border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;
+}
+.tab:hover{color:#2563eb}
+.tab.active{color:#1e3a8a;border-bottom-color:#2563eb}
+.tab-panel{display:none;animation:fadeUp .25s ease both}
+.tab-panel.active{display:block}
+
+.grid-two{display:grid;grid-template-columns:320px 1fr;gap:14px}
+@media (max-width:1000px){ .grid-two{grid-template-columns:1fr} }
+
+.panel{
+  background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden;
+}
+.panel-head{
+  padding:12px 14px;border-bottom:1px solid #eef2f7;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:#fafbfc;flex-wrap:wrap;
+}
+.panel-title{font-size:12.5px;font-weight:800;color:#1e293b;letter-spacing:-.1px}
+.panel-body{padding:12px 14px}
+
+.emp-search{
+  width:100%;height:32px;padding:0 10px;border-radius:7px;
+  border:1px solid #e2e8f0;background:#fff;font-size:12px;font-family:inherit;outline:none;
+  margin-bottom:10px;
+}
+.emp-search:focus{border-color:#2563eb}
+.emp-list{max-height:560px;overflow-y:auto;margin:0 -6px;padding:0 6px}
+.emp-item{
+  padding:9px 10px;border-radius:7px;cursor:pointer;
+  border:1px solid transparent;margin-bottom:4px;transition:all .12s;
+}
+.emp-item:hover{background:#f1f5f9}
+.emp-item.active{background:#eff6ff;border-color:#2563eb}
+.emp-item-id{font-size:10px;font-weight:700;color:#64748b;letter-spacing:.4px}
+.emp-item-name{font-size:12.5px;font-weight:700;color:#1e293b;margin-top:1px}
+.emp-item-dept{font-size:10.5px;color:#94a3b8;margin-top:1px}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field-label{font-size:10px;font-weight:700;color:#64748b;letter-spacing:.5px;text-transform:uppercase}
+.field-input{
+  height:32px;padding:0 10px;border-radius:7px;border:1px solid #e2e8f0;
+  background:#fff;font-size:12.5px;font-family:inherit;color:#1e293b;outline:none;
+}
+.field-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.field-input.money{text-align:right;font-family:'JetBrains Mono',monospace}
+.field-input[readonly]{background:#f8fafc;color:#475569;font-weight:700}
+
+/* ── ATTENDANCE GRID ── */
+.att-wrap{overflow-x:auto;border:1px solid #e2e8f0;border-radius:8px;background:#fff;margin-bottom:12px}
+.att-grid{display:grid;gap:0;min-width:100%;font-size:11.5px;}
+.att-hd{
+  background:linear-gradient(180deg,#1e3a8a,#1d4ed8);color:#fff;
+  font-weight:800;padding:6px 4px;text-align:center;font-size:10px;letter-spacing:.3px;
+}
+.att-cell{padding:3px;border-bottom:1px solid #f1f5f9;border-right:1px solid #f1f5f9;text-align:center}
+.att-cell:last-child{border-right:none}
+.att-day-num{font-weight:800;color:#475569;background:#f8fafc;padding:6px 0}
+.att-status{
+  width:100%;height:26px;padding:0 2px;border-radius:5px;
+  border:1px solid #e2e8f0;background:#fff;font-size:11px;font-family:inherit;
+  font-weight:700;text-align:center;outline:none;
+}
+.att-status:focus{border-color:#2563eb}
+.att-status.p{background:#dcfce7;color:#166534;border-color:#86efac}
+.att-status.wo{background:#e0e7ff;color:#3730a3;border-color:#a5b4fc}
+.att-status.wop{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+.att-status.ph{background:#fce7f3;color:#9d174d;border-color:#f9a8d4}
+.att-status.php{background:#fbcfe8;color:#831843;border-color:#f472b6}
+.att-status.pl{background:#ffedd5;color:#9a3412;border-color:#fdba74}
+.att-status.cl{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.att-status.sl{background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe}
+.att-status.hd{background:#fef9c3;color:#854d0e;border-color:#fde047}
+.att-status.l,.att-status.a{background:#f1f5f9;color:#475569;border-color:#cbd5e1}
+.att-ot{
+  width:100%;height:26px;padding:0 4px;border-radius:5px;
+  border:1px solid #e2e8f0;background:#fff;font-size:11px;font-family:'JetBrains Mono',monospace;
+  text-align:right;outline:none;
+}
+.att-ot:focus{border-color:#2563eb}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.legend-item{
+  padding:3px 9px;border-radius:5px;font-size:10px;font-weight:800;letter-spacing:.3px;border:1px solid;
+}
+.legend-item.p{background:#dcfce7;color:#166534;border-color:#86efac}
+.legend-item.wo{background:#e0e7ff;color:#3730a3;border-color:#a5b4fc}
+.legend-item.wop{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+.legend-item.ph{background:#fce7f3;color:#9d174d;border-color:#f9a8d4}
+.legend-item.php{background:#fbcfe8;color:#831843;border-color:#f472b6}
+.legend-item.pl{background:#ffedd5;color:#9a3412;border-color:#fdba74}
+.legend-item.cl{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.legend-item.sl{background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe}
+.legend-item.hd{background:#fef9c3;color:#854d0e;border-color:#fde047}
+.legend-item.l{background:#f1f5f9;color:#475569;border-color:#cbd5e1}
+
+.section-title{
+  font-size:10.5px;font-weight:800;color:#64748b;letter-spacing:1.2px;text-transform:uppercase;
+  margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;
+}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:10px;}
+.kpi-tile{padding:10px 12px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;}
+.kpi-tile-label{font-size:9.5px;font-weight:800;color:#64748b;letter-spacing:.6px;text-transform:uppercase}
+.kpi-tile-value{
+  font-size:16px;font-weight:800;color:#1e293b;margin-top:3px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:-.3px;
+}
+.kpi-tile.accent-earn{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-color:#86efac}
+.kpi-tile.accent-earn .kpi-tile-value{color:#166534}
+.kpi-tile.accent-ded{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#fca5a5}
+.kpi-tile.accent-ded .kpi-tile-value{color:#991b1b}
+.kpi-tile.accent-final{background:linear-gradient(135deg,#1e3a8a,#2563eb);border-color:#1d4ed8}
+.kpi-tile.accent-final .kpi-tile-label{color:rgba(255,255,255,.7)}
+.kpi-tile.accent-final .kpi-tile-value{color:#fff;font-size:20px}
+
+/* ── SUMMARY TABLE ── */
+.sum-wrap{overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
+.sum-table{width:100%;border-collapse:collapse;font-size:12px}
+.sum-table thead th{
+  background:linear-gradient(180deg,#1e3a8a,#1d4ed8);color:#fff;font-weight:800;
+  font-size:10.5px;letter-spacing:.3px;padding:10px 8px;text-align:left;position:sticky;top:0;
+}
+.sum-table thead th.cb-col{width:30px;padding:8px}
+.sum-table tbody td{padding:8px;border-bottom:1px solid #f1f5f9}
+.sum-table tbody tr:hover{background:#f8fafc}
+.sum-table tbody tr.selected{background:#eff6ff}
+.sum-table .num{text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600}
+.sum-table .paid{font-weight:800;color:#059669}
+.sum-table .no-data{color:#94a3b8;font-style:italic;font-size:11px}
+.empty-note{padding:30px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}
+.mobile-pill{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:10px;
+  background:#e0f2fe;color:#075985;font-size:10.5px;font-weight:700;font-family:'JetBrains Mono',monospace;
+}
+.mobile-pill.none{background:#fee2e2;color:#991b1b}
+
+/* ── IMPORT (dropzone) ── */
+.dropzone{
+  border:2px dashed #cbd5e1;border-radius:10px;padding:28px;text-align:center;
+  background:#f8fafc;cursor:pointer;transition:all .18s;
+}
+.dropzone.hover{border-color:#2563eb;background:#eff6ff}
+.dropzone-icon{font-size:32px;margin-bottom:8px}
+.dropzone-main{font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.dropzone-sub{font-size:11px;color:#64748b}
+.dropzone input[type=file]{display:none}
+
+.imp-result{margin-top:14px;padding:14px;border-radius:10px;border:1px solid #e2e8f0}
+
+/* ── SMTP Preset Chips ── */
+.smtp-preset-chip{
+  padding:7px 14px;border-radius:999px;
+  border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;
+  font-size:11.5px;font-weight:700;color:#475569;font-family:inherit;
+  transition:all .15s;
+}
+.smtp-preset-chip:hover{border-color:#2563eb;color:#2563eb;background:#eff6ff}
+.smtp-preset-chip.active{
+  border-color:#2563eb;background:#2563eb;color:#fff;
+  box-shadow:0 2px 6px rgba(37,99,235,.25);
+}
+.imp-stat-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.imp-stat{padding:10px 14px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;min-width:120px}
+.imp-stat.ok{background:#dcfce7;border-color:#86efac}
+.imp-stat.warn{background:#fef3c7;border-color:#fcd34d}
+.imp-stat.err{background:#fee2e2;border-color:#fca5a5}
+.imp-stat-v{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1}
+.imp-stat-l{font-size:10px;font-weight:800;color:#64748b;letter-spacing:.6px;text-transform:uppercase;margin-top:4px}
+.imp-errors{max-height:200px;overflow-y:auto;font-size:11px;color:#991b1b;background:#fff;border-radius:6px;padding:8px 10px;font-family:'JetBrains Mono',monospace;line-height:1.6}
+
+/* ── WhatsApp queue modal ── */
+.toast{
+  position:fixed;bottom:22px;right:22px;z-index:999;
+  padding:12px 18px;border-radius:9px;font-size:12px;font-weight:700;
+  background:#059669;color:#fff;box-shadow:0 4px 14px rgba(5,150,105,.35);
+  opacity:0;transform:translateY(12px);transition:all .25s;pointer-events:none;
+  max-width:400px;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.err{background:#dc2626;box-shadow:0 4px 14px rgba(220,38,38,.35)}
+
+.modal-bg{
+  position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-bg.open{display:flex;animation:fadeUp .2s ease both}
+.modal{
+  background:#fff;border-radius:12px;max-width:720px;width:100%;max-height:90vh;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;display:flex;flex-direction:column;
+}
+.modal.sm{max-width:600px}
+.modal-head{padding:14px 18px;border-bottom:1px solid #eef2f7;display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:14px;font-weight:800;color:#1e293b}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:#64748b;padding:4px 8px;border-radius:4px}
+.modal-close:hover{background:#f1f5f9}
+.modal-body{padding:18px;overflow-y:auto;flex:1}
+.modal-foot{padding:12px 18px;border-top:1px solid #eef2f7;display:flex;gap:8px;justify-content:flex-end;background:#fafbfc;flex-wrap:wrap}
+
+/* WA Queue */
+.wa-row{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+  border:1px solid #e2e8f0;margin-bottom:6px;transition:all .15s;
+}
+.wa-row.done{background:#dcfce7;border-color:#86efac}
+.wa-row.current{background:#eff6ff;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+.wa-row.skipped{background:#fef3c7;border-color:#fcd34d}
+.wa-row.error{background:#fee2e2;border-color:#fca5a5}
+.wa-status-icon{
+  width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:#e2e8f0;color:#64748b;font-size:13px;font-weight:800;flex-shrink:0;
+}
+.wa-row.done .wa-status-icon{background:#059669;color:#fff}
+.wa-row.current .wa-status-icon{background:#2563eb;color:#fff;animation:spin 1.2s linear infinite}
+.wa-row.skipped .wa-status-icon{background:#f59e0b;color:#fff}
+.wa-row.error .wa-status-icon{background:#dc2626;color:#fff}
+.wa-info{flex:1;min-width:0}
+.wa-info-name{font-size:12.5px;font-weight:700;color:#1e293b}
+.wa-info-meta{font-size:10.5px;color:#64748b;margin-top:2px}
+.wa-info-warn{font-size:10.5px;color:#92400e;margin-top:2px;font-weight:700}
+
+.empty-emp{text-align:center;padding:40px 20px;color:#94a3b8;font-size:12px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #cbd5e1;border-top-color:#2563eb;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:-2px;margin-right:6px}
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+{% set page_title = "HR Salary" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "HR", "url": "#"}, {"label": "Salary", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="main">
+
+  <div class="page-head">
+    <div class="page-title">💼 HR Salary Calculation</div>
+    <div class="page-sub">Attendance → pro-rated earnings, statutory deductions &amp; paid salary. Bulk import &amp; WhatsApp delivery built-in.</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="tool-group">
+      <span class="tool-label">Month</span>
+      <input type="month" id="tb-month" class="tool-input" style="width:170px">
+    </div>
+    <div class="tool-group" style="margin-left:auto;flex-wrap:wrap">
+      <button class="tool-btn ghost" id="tb-add-emp">+ Add Employee</button>
+      <button class="tool-btn ghost" id="tb-import">📥 Import Employees</button>
+      <button class="tool-btn ghost" id="tb-import-att">📅 Import Attendance</button>
+      <button class="tool-btn ghost" id="tb-smtp-setup">⚙ Email Setup</button>
+      <button class="tool-btn success" id="tb-export">⬇ Export Month .xlsx</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="calc">Salary Calculator</button>
+    <button class="tab" data-tab="summary">Month Summary &amp; WhatsApp</button>
+    <button class="tab" data-tab="ytd">Year-to-Date (FY)</button>
+    <button class="tab" data-tab="loans">Loan Register</button>
+  </div>
+
+  <!-- ══ CALC TAB ══ -->
+  <div class="tab-panel active" id="panel-calc">
+    <div class="grid-two">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Employees</div>
+          <span id="emp-count" style="font-size:11px;font-weight:700;color:#64748b"></span>
+        </div>
+        <div class="panel-body">
+          <input type="search" id="emp-search" class="emp-search" placeholder="🔍 Search name / ID / dept...">
+          <div class="emp-list" id="emp-list"><div class="empty-emp">Loading...</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title" id="detail-title">Select an employee →</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="tool-btn ghost" id="btn-edit-emp" disabled>✏ Edit Master</button>
+            <button class="tool-btn ghost" id="btn-ytd-emp" disabled>📅 YTD</button>
+            <button class="tool-btn ghost" id="btn-loans-emp" disabled>💰 Loans</button>
+            <button class="tool-btn ghost" id="btn-pdf-slip" disabled>📄 PDF Slip</button>
+            <button class="tool-btn ghost" id="btn-email-single" disabled>📧 Email Slip</button>
+            <button class="tool-btn wa" id="btn-wa-single" disabled>📱 Send via WhatsApp</button>
+            <button class="tool-btn primary" id="btn-save-period" disabled>💾 Save Period</button>
+          </div>
+        </div>
+        <div class="panel-body" id="detail-body">
+          <div class="empty-emp" style="padding:80px 20px">
+            Select an employee from the left to begin salary calculation for the selected month.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUMMARY TAB ══ -->
+  <div class="tab-panel" id="panel-summary">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title" id="sum-title">Month Payroll Summary</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="tool-btn ghost" id="btn-refresh-summary">🔄 Refresh</button>
+          <button class="tool-btn ghost" id="btn-pdf-selected" disabled>📄 PDFs (ZIP)</button>
+          <button class="tool-btn ghost" id="btn-email-bulk" disabled>📧 Email Selected</button>
+          <button class="tool-btn wa" id="btn-wa-bulk" disabled>📱 Send Selected via WhatsApp</button>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div style="padding:10px 14px;font-size:11.5px;color:#64748b;border-bottom:1px solid #eef2f7;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="sel-all"> <b>Select all with data</b>
+          </label>
+          <span id="sel-count" style="font-weight:700;color:#2563eb"></span>
+        </div>
+        <div class="sum-wrap">
+          <table class="sum-table" id="sum-table">
+            <thead>
+              <tr>
+                <th class="cb-col"></th>
+                <th>SR</th><th>Emp ID</th><th>Name</th><th>Department</th>
+                <th>Contact</th>
+                <th class="num">Gross</th><th class="num">Days</th>
+                <th class="num">Earned</th><th class="num">Deduct.</th>
+                <th class="num">Paid Salary</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="sum-tbody">
+              <tr><td colspan="12" class="empty-note">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ YTD TAB ══ -->
+  <div class="tab-panel" id="panel-ytd">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-head">
+        <div class="panel-title" id="ytd-title">Year-to-Date · Company-wide</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="tool-label">Fiscal Year</span>
+          <select class="tool-select" id="ytd-fy" style="width:140px"></select>
+          <button class="tool-btn ghost" id="btn-refresh-ytd">🔄 Refresh</button>
+          <button class="tool-btn success" id="btn-export-ytd">⬇ Export .xlsx</button>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0">
+
+        <!-- Grand totals + chart -->
+        <div style="padding:14px 16px;border-bottom:1px solid #eef2f7">
+          <div class="kpi-row" id="ytd-grand" style="margin-bottom:10px"></div>
+          <div id="ytd-chart-wrap" style="background:#fafbfc;border:1px solid #eef2f7;border-radius:10px;padding:12px">
+            <div style="font-size:10.5px;font-weight:800;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Company Paid Salary &amp; Total Earned by Month</div>
+            <div id="ytd-chart" style="min-height:220px"></div>
+          </div>
+        </div>
+
+        <!-- Per-employee table -->
+        <div class="sum-wrap" style="border:none;border-radius:0">
+          <table class="sum-table" id="ytd-emp-table">
+            <thead>
+              <tr>
+                <th>SR</th><th>Emp ID</th><th>Name</th><th>Department</th>
+                <th class="num">Months</th>
+                <th class="num">Total Earned</th><th class="num">PF</th><th class="num">PT</th><th class="num">TDS</th>
+                <th class="num">Total Ded.</th><th class="num">Paid Salary</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="ytd-emp-tbody">
+              <tr><td colspan="12" class="empty-note">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOAN REGISTER TAB ══ -->
+  <div class="tab-panel" id="panel-loans">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-head">
+        <div class="panel-title" id="loans-title">Loan Register · Company-wide</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="tool-label">Filter</span>
+          <select class="tool-select" id="loans-status-filter" style="width:140px">
+            <option value="active" selected>Active</option>
+            <option value="">All</option>
+            <option value="closed">Closed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="tool-btn ghost" id="btn-refresh-loans">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div style="padding:14px 16px;border-bottom:1px solid #eef2f7">
+          <div class="kpi-row" id="loans-grand" style="margin-bottom:0"></div>
+        </div>
+        <div class="sum-wrap" style="border:none;border-radius:0">
+          <table class="sum-table" id="loans-table">
+            <thead>
+              <tr>
+                <th>SR</th><th>Emp ID</th><th>Name</th><th>Dept</th>
+                <th class="num">Principal</th>
+                <th class="num">EMI</th>
+                <th>Schedule</th>
+                <th>Start</th>
+                <th class="num">Paid</th>
+                <th class="num">Outstanding</th>
+                <th>Auto</th>
+                <th>Status</th>
+                <th>Next Due</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="loans-tbody">
+              <tr><td colspan="14" class="empty-note">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ LOAN DETAIL MODAL (per-employee) ══ -->
+<div class="modal-bg" id="loan-emp-modal">
+  <div class="modal" style="max-width:1040px">
+    <div class="modal-head">
+      <div class="modal-title" id="loan-emp-title">Loans · Employee</div>
+      <button class="modal-close" onclick="closeLoanEmpModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div id="loan-emp-summary" style="font-size:12px;color:#475569"></div>
+        <button class="tool-btn primary" id="btn-loan-new">+ New Loan</button>
+      </div>
+      <div id="loan-emp-list"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn ghost" onclick="closeLoanEmpModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOAN EDIT MODAL ══ -->
+<div class="modal-bg" id="loan-edit-modal">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div class="modal-title" id="loan-edit-title">New Loan</div>
+      <button class="modal-close" onclick="closeLoanEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label class="field-label">Loan Date *</label>
+          <input type="date" class="field-input" id="le-loan_date"></div>
+        <div class="field"><label class="field-label">Principal ₹ *</label>
+          <input type="number" class="field-input money" id="le-principal" step="1" min="1"></div>
+        <div class="field"><label class="field-label">Purpose</label>
+          <input class="field-input" id="le-purpose" placeholder="Medical, wedding, etc." maxlength="200"></div>
+        <div class="field" style="grid-column:span 2">
+          <label class="field-label">Schedule Mode *</label>
+          <select class="field-input" id="le-mode">
+            <option value="fixed_emi" selected>Fixed EMI (set amount; tenure auto-derived)</option>
+            <option value="fixed_tenure">Fixed Tenure (set months; EMI auto-derived)</option>
+          </select>
+        </div>
+        <div class="field" id="le-emi-wrap">
+          <label class="field-label">EMI Amount ₹ *</label>
+          <input type="number" class="field-input money" id="le-emi_amount" step="1" min="1"></div>
+        <div class="field" id="le-tenure-wrap" style="display:none">
+          <label class="field-label">Tenure (months) *</label>
+          <input type="number" class="field-input money" id="le-tenure_months" step="1" min="1"></div>
+        <div class="field"><label class="field-label">Start Month *</label>
+          <input type="month" class="field-input" id="le-start_month"></div>
+        <div class="field">
+          <label class="field-label">Auto-deduct from salary</label>
+          <label style="display:flex;align-items:center;gap:8px;padding-top:7px;cursor:pointer;font-size:12px;font-weight:600;color:#334155">
+            <input type="checkbox" id="le-auto_deduct" checked>
+            Yes, deduct EMI on period save
+          </label>
+        </div>
+        <div class="field" style="grid-column:span 2">
+          <label class="field-label">Remarks</label>
+          <input class="field-input" id="le-remarks" maxlength="500">
+        </div>
+      </div>
+      <div id="le-preview" style="margin-top:10px;font-size:11.5px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn danger" id="le-close-loan" style="margin-right:auto;display:none">🗙 Close Loan</button>
+      <button class="tool-btn ghost" onclick="closeLoanEditModal()">Cancel</button>
+      <button class="tool-btn primary" id="le-save">Save Loan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EMP YTD MODAL (single employee) ══ -->
+<div class="modal-bg" id="ytd-emp-modal">
+  <div class="modal" style="max-width:1040px">
+    <div class="modal-head">
+      <div class="modal-title" id="ytd-emp-title">Year-to-Date · Employee</div>
+      <button class="modal-close" onclick="closeYtdEmpModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:14px 18px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <span class="tool-label">Fiscal Year</span>
+        <select class="tool-select" id="ytd-emp-fy" style="width:140px"></select>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <a class="tool-btn ghost" id="ytd-emp-export" href="#">⬇ Export .xlsx</a>
+        </div>
+      </div>
+
+      <!-- Totals tiles -->
+      <div class="kpi-row" id="ytd-emp-totals" style="margin-bottom:10px"></div>
+
+      <!-- Chart -->
+      <div style="background:#fafbfc;border:1px solid #eef2f7;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:10.5px;font-weight:800;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">
+          Monthly Gross Earned &amp; Paid Salary
+        </div>
+        <div id="ytd-emp-chart" style="min-height:180px"></div>
+      </div>
+
+      <!-- Leave trajectory chart -->
+      <div style="background:#fafbfc;border:1px solid #eef2f7;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:10.5px;font-weight:800;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">
+          Leave Balance Trajectory (PL / CL / SL)
+        </div>
+        <div id="ytd-emp-leave" style="min-height:180px"></div>
+      </div>
+
+      <!-- 12-month table -->
+      <div class="sum-wrap">
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">Paid Days</th>
+              <th class="num">OT Hrs</th>
+              <th class="num">Gross Earned</th>
+              <th class="num">Incentive</th>
+              <th class="num">PF</th>
+              <th class="num">PT</th>
+              <th class="num">TDS</th>
+              <th class="num">Total Ded.</th>
+              <th class="num">Paid Salary</th>
+              <th class="num">PL Bal.</th>
+              <th class="num">CL Bal.</th>
+              <th class="num">SL Bal.</th>
+            </tr>
+          </thead>
+          <tbody id="ytd-emp-tbody-months">
+            <tr><td colspan="13" class="empty-note">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn ghost" onclick="closeYtdEmpModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EMP EDIT MODAL ══ -->
+<div class="modal-bg" id="emp-modal">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div class="modal-title" id="emp-modal-title">Add Employee</div>
+      <button class="modal-close" onclick="closeEmpModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label class="field-label">Emp ID *</label><input class="field-input" id="em-emp_id" maxlength="32"></div>
+        <div class="field" style="grid-column:span 2"><label class="field-label">Employee Name *</label><input class="field-input" id="em-emp_name" maxlength="200"></div>
+        <div class="field"><label class="field-label">Gender</label>
+          <select class="field-input" id="em-gender">
+            <option value="">—</option><option>MALE</option><option>FEMALE</option><option>OTHER</option>
+          </select>
+        </div>
+        <div class="field"><label class="field-label">Date of Joining</label><input type="date" class="field-input" id="em-doj"></div>
+        <div class="field"><label class="field-label">Designation</label><input class="field-input" id="em-designation"></div>
+        <div class="field"><label class="field-label">Department</label><input class="field-input" id="em-department"></div>
+        <div class="field"><label class="field-label">Status</label>
+          <select class="field-input" id="em-emp_status">
+            <option>PERMANENT</option><option>CONTRACT</option><option>TRAINEE</option><option>PROBATION</option>
+          </select>
+        </div>
+        <div class="field"><label class="field-label">Mobile (WhatsApp)</label><input class="field-input" id="em-mobile" placeholder="e.g. 9876543210" maxlength="20"></div>
+        <div class="field"><label class="field-label">Email</label><input type="email" class="field-input" id="em-email" placeholder="name@example.com" maxlength="200"></div>
+        <div class="field"><label class="field-label">Gross Salary (₹/month)</label><input type="number" class="field-input money" id="em-gross_salary" step="1" min="0"></div>
+        <div class="field"><label class="field-label">Medical (fixed ₹)</label><input type="number" class="field-input money" id="em-medical_fixed" step="1" value="1200"></div>
+        <div class="field"><label class="field-label">Loan Outstanding (₹)</label><input type="number" class="field-input money" id="em-loan_outstanding" step="1" min="0" value="0"></div>
+        <div class="field"><label class="field-label">Opening PL</label><input type="number" class="field-input money" id="em-opening_pl" step="0.5" value="0"></div>
+        <div class="field"><label class="field-label">Opening CL</label><input type="number" class="field-input money" id="em-opening_cl" step="0.5" value="0"></div>
+        <div class="field"><label class="field-label">Opening SL</label><input type="number" class="field-input money" id="em-opening_sl" step="0.5" value="0"></div>
+        <div class="field" style="grid-column:span 3">
+          <label class="field-label">PF (Provident Fund)</label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#334155">
+            <input type="checkbox" id="em-pf_applicable" checked>
+            <span>This employee is covered by EPF</span>
+            <span style="margin-left:auto;font-size:10.5px;color:#64748b;font-weight:500">
+              When ON: PF auto-deducts (12% of Basic, capped at ₹1,800 when Basic ≥ ₹15,000).
+              When OFF: no PF deduction.
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn danger" id="em-delete" style="margin-right:auto;display:none">🗑 Delete</button>
+      <button class="tool-btn ghost" onclick="closeEmpModal()">Cancel</button>
+      <button class="tool-btn primary" id="em-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ IMPORT MODAL ══ -->
+<div class="modal-bg" id="imp-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📥 Bulk Import Employees</div>
+      <button class="modal-close" onclick="closeImpModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.6">
+        Upload an <b>.xlsx</b> file with one row per employee. Columns:
+        <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">EMP ID</code>,
+        <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">EMPLOYEE NAME</code>,
+        <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">MOBILE</code>,
+        <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">GROSS SALARY</code>, etc.
+        Existing IDs are <b>updated</b>; new IDs are <b>inserted</b>.
+      </div>
+      <div style="margin-bottom:14px">
+        <a href="/api/hr_salary/import_template" class="tool-btn ghost">⬇ Download Template (.xlsx)</a>
+      </div>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="imp-file" accept=".xlsx">
+        <div class="dropzone-icon">📄</div>
+        <div class="dropzone-main" id="dz-main">Drag &amp; drop your .xlsx here, or click to browse</div>
+        <div class="dropzone-sub">One sheet named "Employees" (or the first sheet) · header row required</div>
+      </label>
+      <div id="imp-result" style="display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn ghost" onclick="closeImpModal()">Close</button>
+      <button class="tool-btn primary" id="imp-upload" disabled>Upload &amp; Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ATTENDANCE IMPORT MODAL ══ -->
+<div class="modal-bg" id="imp-att-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📅 Bulk Import Attendance</div>
+      <button class="modal-close" onclick="closeImpAttModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.6">
+        Upload attendance in either layout — the file header decides:
+        <br>• <b>Wide</b>: one row per employee, columns <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">1</code>…<code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">31</code> hold day codes.
+        <br>• <b>Long</b>: one row per (employee, date), with optional biometric <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">IN_TIME</code>/<code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">OUT_TIME</code> used when <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">STATUS</code> is blank.
+      </div>
+      <div style="margin-bottom:14px">
+        <a href="/api/hr_salary/attendance/import_template" class="tool-btn ghost">⬇ Download Template (.xlsx)</a>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:14px;grid-template-columns:1fr 1fr">
+        <div class="field">
+          <label class="field-label">Month (for WIDE layout — ignored by LONG)</label>
+          <input type="month" class="field-input" id="imp-att-month">
+        </div>
+        <div class="field">
+          <label class="field-label">Conflict handling</label>
+          <label style="display:flex;align-items:center;gap:8px;padding-top:7px;cursor:pointer;font-size:12px;font-weight:600;color:#334155">
+            <input type="checkbox" id="imp-att-overwrite">
+            Overwrite existing day codes
+          </label>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:2px;line-height:1.4">
+            Off (safe): blank days filled, existing kept. &nbsp;On: incoming replaces everything.
+          </div>
+        </div>
+      </div>
+
+      <label class="dropzone" id="dropzone-att">
+        <input type="file" id="imp-att-file" accept=".xlsx">
+        <div class="dropzone-icon">📅</div>
+        <div class="dropzone-main" id="dz-att-main">Drag &amp; drop your attendance .xlsx, or click to browse</div>
+        <div class="dropzone-sub">Header row required · "Instructions" sheets are ignored</div>
+      </label>
+      <div id="imp-att-result" style="display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn ghost" onclick="closeImpAttModal()">Close</button>
+      <button class="tool-btn primary" id="imp-att-upload" disabled>Upload &amp; Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SMTP / EMAIL SETUP MODAL ══ -->
+<div class="modal-bg" id="smtp-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">⚙ Email (SMTP) Setup</div>
+      <button class="modal-close" onclick="closeSmtpModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Quick preset chips — one click sets host/port/encryption -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10.5px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px">
+          Quick Preset
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="smtp-presets">
+          <button type="button" class="smtp-preset-chip" data-preset="gmail">📧 Gmail</button>
+          <button type="button" class="smtp-preset-chip" data-preset="outlook">📨 Outlook / Office 365</button>
+          <button type="button" class="smtp-preset-chip" data-preset="yahoo">📬 Yahoo Mail</button>
+          <button type="button" class="smtp-preset-chip" data-preset="zoho">✉ Zoho Mail</button>
+          <button type="button" class="smtp-preset-chip" data-preset="icloud">☁ iCloud Mail</button>
+          <button type="button" class="smtp-preset-chip" data-preset="custom">⚙ Custom</button>
+        </div>
+      </div>
+
+      <!-- Context-aware help banner (swaps text on preset click) -->
+      <div id="smtp-help-banner" style="font-size:12px;color:#475569;margin-bottom:14px;line-height:1.6;padding:10px 12px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe">
+        <b>Pick a preset above</b> to auto-fill the server settings. You only need to enter the sender's
+        email address and password.
+      </div>
+
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="field" style="grid-column:span 2">
+          <label class="field-label">SMTP Host *</label>
+          <input class="field-input" id="smtp-host" placeholder="smtp.gmail.com">
+        </div>
+        <div class="field">
+          <label class="field-label">Port *</label>
+          <input type="number" class="field-input money" id="smtp-port" value="587" min="1" max="65535">
+        </div>
+        <div class="field">
+          <label class="field-label">Encryption</label>
+          <select class="field-input" id="smtp-enc">
+            <option value="tls" selected>STARTTLS (port 587)</option>
+            <option value="ssl">SSL/TLS (port 465)</option>
+            <option value="none">None (plain, not recommended)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Username</label>
+          <input class="field-input" id="smtp-user" placeholder="payroll@company.com">
+        </div>
+        <div class="field">
+          <label class="field-label">Password
+            <span id="smtp-pwd-hint" style="color:#94a3b8;font-weight:500;font-size:9.5px;margin-left:4px"></span>
+          </label>
+          <input type="password" class="field-input" id="smtp-pwd" placeholder="(leave blank to keep existing)">
+        </div>
+        <div class="field">
+          <label class="field-label">From Email *</label>
+          <input class="field-input" id="smtp-from_email" placeholder="payroll@company.com">
+        </div>
+        <div class="field">
+          <label class="field-label">From Name</label>
+          <input class="field-input" id="smtp-from_name" placeholder="HR Payroll">
+        </div>
+        <div class="field" style="grid-column:span 2">
+          <label class="field-label">Reply-To (optional)</label>
+          <input class="field-input" id="smtp-reply_to" placeholder="hr@company.com">
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #e2e8f0;margin:16px 0 10px;padding-top:12px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px">
+          Send Test Message
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="email" class="field-input" id="smtp-test-to" placeholder="you@example.com" style="flex:1;min-width:200px">
+          <button class="tool-btn ghost" id="smtp-test-btn">📤 Send Test</button>
+        </div>
+        <div id="smtp-test-result" style="margin-top:8px;font-size:11.5px"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn ghost" onclick="closeSmtpModal()">Close</button>
+      <button class="tool-btn primary" id="smtp-save">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EMAIL SEND PROGRESS MODAL ══ -->
+<div class="modal-bg" id="email-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📧 Email Salary Slips</div>
+      <button class="modal-close" onclick="closeEmailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="email-pre" style="font-size:12px;color:#475569;margin-bottom:14px;line-height:1.6;padding:10px 12px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe">
+        The PDF slip is attached to each email. Only employees with an email on file will receive one.
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+        <div class="field" style="grid-column:span 2">
+          <label class="field-label">CC (optional) — comma or space separated</label>
+          <input class="field-input" id="email-cc" placeholder="hr@company.com, boss@company.com">
+        </div>
+        <div class="field" style="grid-column:span 2">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:#334155">
+            <input type="checkbox" id="email-attach-pdf" checked>
+            Attach PDF salary slip
+          </label>
+        </div>
+      </div>
+      <div id="email-progress" style="display:none"></div>
+      <div id="email-result" style="display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn ghost" onclick="closeEmailModal()">Cancel</button>
+      <button class="tool-btn primary" id="email-send-btn">📤 Send Emails</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WhatsApp QUEUE MODAL ══ -->
+<div class="modal-bg" id="wa-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📱 Send Salary Slips via WhatsApp</div>
+      <button class="modal-close" onclick="closeWaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.6;padding:10px 12px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe">
+        <b>How it works:</b> Make sure you're already signed into
+        <a href="https://web.whatsapp.com" target="_blank" rel="noopener" style="color:#2563eb">web.whatsapp.com</a>
+        in another tab. For each employee below, a WhatsApp tab opens with the slip pre-filled —
+        just press the green send button. For PDFs, download the ZIP first and attach manually if needed.
+        Browsers block rapid pop-ups; we send one at a time with your confirmation.
+      </div>
+      <div id="wa-queue"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="tool-btn ghost" id="wa-zip" style="margin-right:auto">⬇ Download all PDFs as ZIP</button>
+      <button class="tool-btn ghost" onclick="closeWaModal()">Cancel</button>
+      <button class="tool-btn wa" id="wa-next">▶ Open Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ───────────────────────────── STATE ─────────────────────────── */
+const ST = {
+  employees: [], filtered: [], selectedEmpId: null,
+  month: '', current: null, dirty: false, editingEmp: null,
+  summary: [], selectedForWa: new Set(),
+  waQueue: [], waIdx: 0,
+};
+const STATUS_CODES = ['','P','WO','WOP','PH','PHP','PL','CL','SL','HD','L','A',
+                      'PL-HD','CL-HD','SL-HD','WO-HD','PH-HD'];
+
+/* ─────────────────────────── HELPERS ─────────────────────────── */
+const $ = id => document.getElementById(id);
+const fmt = n => (n==null||isNaN(n)) ? '0' : Number(n).toLocaleString('en-IN',{maximumFractionDigits:2});
+const fmtMoney = n => '₹' + fmt(n);
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = (v, d) => { const n = parseFloat(v); return isNaN(n) ? d : n; };
+
+function toast(msg, isErr) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+async function api(url, opts) {
+  try {
+    const r = await fetch(url, opts || {});
+    const j = await r.json();
+    if (j.status !== 'ok') throw new Error(j.message || 'Request failed');
+    return j;
+  } catch (e) { toast(e.message || 'Network error', true); throw e; }
+}
+
+/* ─────────────────────────── TABS ────────────────────────────── */
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('panel-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'summary') loadSummary();
+    if (btn.dataset.tab === 'ytd')     loadCompanyYtd();
+    if (btn.dataset.tab === 'loans')   loadCompanyLoans();
+  });
+});
+
+/* ─────────────────────────── EMPLOYEES ──────────────────────── */
+async function loadEmployees() {
+  $('emp-list').innerHTML = '<div class="empty-emp">Loading...</div>';
+  try {
+    const j = await api('/api/hr_salary/employees');
+    ST.employees = j.employees || [];
+    applyEmpFilter();
+  } catch (e) { $('emp-list').innerHTML = '<div class="empty-emp">Failed to load.</div>'; }
+}
+function applyEmpFilter() {
+  const q = ($('emp-search').value || '').toLowerCase().trim();
+  ST.filtered = !q ? ST.employees.slice() : ST.employees.filter(e =>
+    (e.emp_id||'').toLowerCase().includes(q) ||
+    (e.emp_name||'').toLowerCase().includes(q) ||
+    (e.department||'').toLowerCase().includes(q) ||
+    (e.designation||'').toLowerCase().includes(q));
+  renderEmpList();
+}
+function renderEmpList() {
+  const el = $('emp-list');
+  $('emp-count').textContent = ST.filtered.length + ' of ' + ST.employees.length;
+  if (!ST.filtered.length) {
+    el.innerHTML = '<div class="empty-emp">No employees. Click <b>+ Add Employee</b> or <b>📥 Import Employees</b>.</div>';
+    return;
+  }
+  el.innerHTML = ST.filtered.map(e => `
+    <div class="emp-item ${e.emp_id===ST.selectedEmpId?'active':''}" data-emp="${esc(e.emp_id)}">
+      <div class="emp-item-id">#${esc(e.emp_id)} · ${esc(e.emp_status||'')}</div>
+      <div class="emp-item-name">${esc(e.emp_name)}</div>
+      <div class="emp-item-dept">${esc(e.department||'—')} · ${esc(e.designation||'')}</div>
+    </div>`).join('');
+  el.querySelectorAll('.emp-item').forEach(item =>
+    item.addEventListener('click', () => selectEmployee(item.dataset.emp)));
+}
+$('emp-search').addEventListener('input', applyEmpFilter);
+
+async function selectEmployee(empId) {
+  if (ST.dirty && !confirm('Unsaved changes. Discard them?')) return;
+  ST.selectedEmpId = empId;
+  ST.dirty = false;
+  renderEmpList();
+  await loadPeriod();
+}
+
+/* ──────────────── PERIOD LOAD / DETAIL RENDER ───────────────── */
+async function loadPeriod() {
+  if (!ST.selectedEmpId || !ST.month) return;
+  try {
+    const j = await api(`/api/hr_salary/period?emp_id=${encodeURIComponent(ST.selectedEmpId)}&month=${encodeURIComponent(ST.month)}`);
+    ST.current = j;
+    renderDetail();
+    ['btn-edit-emp','btn-save-period','btn-pdf-slip','btn-wa-single','btn-email-single','btn-ytd-emp','btn-loans-emp'].forEach(id => $(id).disabled = false);
+  } catch (e) {}
+}
+function renderDetail() {
+  if (!ST.current) return;
+  const e = ST.current.employee, p = ST.current.period, days = ST.current.days;
+  $('detail-title').textContent = `${e.emp_name}  ·  #${e.emp_id}  ·  ${ST.month}`;
+
+  $('detail-body').innerHTML = `
+    <div class="section-title">Period Inputs</div>
+    <div class="form-grid">
+      <div class="field"><label class="field-label">Actual Days (BF)</label><input type="number" class="field-input money" id="p-actual_days" value="${p.actual_days||31}" min="28" max="31"></div>
+      <div class="field"><label class="field-label">Gross Salary ₹ (BH)</label><input type="number" class="field-input money" id="p-gross_salary" value="${p.gross_salary||0}" step="1"></div>
+      <div class="field"><label class="field-label">Medical Fixed ₹ (BL)</label><input type="number" class="field-input money" id="p-medical_fixed" value="${p.medical_fixed||1200}" step="1"></div>
+      <div class="field"><label class="field-label">Opening PL</label><input type="number" class="field-input money" id="p-opening_pl" value="${p.opening_pl||0}" step="0.5"></div>
+      <div class="field"><label class="field-label">Opening CL</label><input type="number" class="field-input money" id="p-opening_cl" value="${p.opening_cl||0}" step="0.5"></div>
+      <div class="field"><label class="field-label">Opening SL</label><input type="number" class="field-input money" id="p-opening_sl" value="${p.opening_sl||0}" step="0.5"></div>
+      <div class="field"><label class="field-label">Arrear ₹ (BU)</label><input type="number" class="field-input money" id="p-arrear" value="${p.arrear||0}" step="1"></div>
+      <div class="field"><label class="field-label">Loan Amount ₹ (BW)</label><input type="number" class="field-input money" id="p-loan_amount" value="${p.loan_amount||0}" step="1"></div>
+      <div class="field"><label class="field-label">Loan Deduction ₹ (BY)</label><input type="number" class="field-input money" id="p-loan_deduction" value="${p.loan_deduction||0}" step="1"></div>
+      <div class="field"><label class="field-label">Other Deduction ₹ (BZ)</label><input type="number" class="field-input money" id="p-other_deduction" value="${p.other_deduction||0}" step="1"></div>
+      <div class="field"><label class="field-label">TDS ₹ (CC)</label><input type="number" class="field-input money" id="p-tds" value="${p.tds||0}" step="1"></div>
+      <div class="field" style="grid-column:span 2">
+        <label class="field-label">PF Applicable (CB)</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:600;color:#334155;height:34px;box-sizing:border-box">
+          <input type="checkbox" class="field-input" id="p-pf_applicable" style="width:auto;margin:0" ${(p.pf_applicable == null ? true : Number(p.pf_applicable) === 1) ? 'checked' : ''}>
+          <span>Deduct PF for this month</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section-title">Daily Attendance &amp; Overtime</div>
+    <div class="legend">
+      <span class="legend-item p">P Present</span><span class="legend-item wo">WO Week Off</span>
+      <span class="legend-item wop">WOP Paid Week Off</span><span class="legend-item ph">PH Public Holiday</span>
+      <span class="legend-item php">PHP Paid PH</span><span class="legend-item pl">PL Priv. Leave</span>
+      <span class="legend-item cl">CL Casual</span><span class="legend-item sl">SL Sick</span>
+      <span class="legend-item hd">HD Half Day</span><span class="legend-item l">L/A Absent</span>
+    </div>
+
+    <div class="att-wrap">
+      <div class="att-grid" style="grid-template-columns:44px 1fr 1fr">
+        <div class="att-hd">Day</div><div class="att-hd">Status</div><div class="att-hd">OT (hrs)</div>
+        ${days.map(d => `
+          <div class="att-cell att-day-num">${d.day_num}</div>
+          <div class="att-cell">
+            <select class="att-status ${(d.status_code||'').toLowerCase().split('-')[0]}" data-d="${d.day_num}" data-f="status_code">
+              ${STATUS_CODES.map(c => `<option value="${c}" ${c===d.status_code?'selected':''}>${c||'—'}</option>`).join('')}
+            </select>
+          </div>
+          <div class="att-cell">
+            <input type="number" class="att-ot" data-d="${d.day_num}" data-f="ot_hours" value="${d.ot_hours||0}" min="0" max="24" step="0.5">
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="section-title">Attendance Totals</div>
+    <div class="kpi-row" id="att-totals"></div>
+    <div class="section-title">Earning Heads (pro-rated per paid days)</div>
+    <div class="kpi-row" id="earn-heads"></div>
+    <div class="section-title">Earnings</div>
+    <div class="kpi-row" id="earn-sum"></div>
+    <div class="section-title">Deductions</div>
+    <div class="kpi-row" id="ded-sum"></div>
+    <div class="section-title">Final</div>
+    <div class="kpi-row" id="final-sum"></div>
+  `;
+
+  $('detail-body').querySelectorAll('.field-input, .att-status, .att-ot').forEach(inp => {
+    inp.addEventListener('input', () => { ST.dirty = true; recomputeLocal(); });
+    inp.addEventListener('change', () => {
+      ST.dirty = true;
+      recomputeLocal();
+      if (inp.classList.contains('att-status'))
+        inp.className = 'att-status ' + (inp.value||'').toLowerCase().split('-')[0];
+    });
+  });
+  renderCalcDisplay(ST.current.calc);
+}
+
+function readPeriodFromForm() {
+  return {
+    actual_days:num($('p-actual_days').value,31), gross_salary:num($('p-gross_salary').value,0),
+    medical_fixed:num($('p-medical_fixed').value,0),
+    opening_pl:num($('p-opening_pl').value,0), opening_cl:num($('p-opening_cl').value,0),
+    opening_sl:num($('p-opening_sl').value,0),
+    arrear:num($('p-arrear').value,0), loan_amount:num($('p-loan_amount').value,0),
+    loan_deduction:num($('p-loan_deduction').value,0),
+    other_deduction:num($('p-other_deduction').value,0), tds:num($('p-tds').value,0),
+    pf_applicable: $('p-pf_applicable') && $('p-pf_applicable').checked ? 1 : 0,
+    ot_hours:0, remarks:'',
+  };
+}
+function readDaysFromForm() {
+  const days = [];
+  document.querySelectorAll('.att-status').forEach(sel => {
+    const dn = parseInt(sel.dataset.d, 10);
+    const ot = document.querySelector(`.att-ot[data-d="${dn}"]`);
+    days.push({day_num:dn, status_code:sel.value||'', ot_hours:num(ot?ot.value:0,0)});
+  });
+  days.sort((a,b) => a.day_num-b.day_num);
+  return days;
+}
+
+let _calcTimer = null;
+async function recomputeLocal() {
+  clearTimeout(_calcTimer);
+  _calcTimer = setTimeout(async () => {
+    try {
+      const j = await api('/api/hr_salary/calc', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({period:readPeriodFromForm(), days:readDaysFromForm()})
+      });
+      renderCalcDisplay(j.calc);
+    } catch (e) {}
+  }, 250);
+}
+
+function renderCalcDisplay(c) {
+  if (!c) return;
+  const tile = (l, v, cls) => `<div class="kpi-tile ${cls||''}"><div class="kpi-tile-label">${l}</div><div class="kpi-tile-value">${v}</div></div>`;
+  $('att-totals').innerHTML = [
+    tile('Present (AO)', fmt(c.AO_total_present)), tile('Paid Holiday (AP)', fmt(c.AP_paid_holiday)),
+    tile('PL Used (AR)', fmt(c.AR_pl_used)), tile('CL Used (AS)', fmt(c.AS_cl_used)),
+    tile('SL Used (AT)', fmt(c.AT_sl_used)), tile('WO (AU)', fmt(c.AU_total_wo)),
+    tile('WOP (AV)', fmt(c.AV_total_wop)), tile('PHP (AW)', fmt(c.AW_total_php)),
+    tile('OT hrs (BD)', fmt(c.BD_ot_hours)), tile('OT days (BE)', fmt(c.BE_ot_days)),
+    tile('Paid Days (BG)', fmt(c.BG_total_days)),
+    tile('Closing PL', fmt(c.BA_closing_pl)), tile('Closing CL', fmt(c.BB_closing_cl)),
+    tile('Closing SL', fmt(c.BC_closing_sl)),
+  ].join('');
+  $('earn-heads').innerHTML = [
+    tile('Basic (BI) 50%', fmtMoney(c.BI_basic)),
+    tile('HRA (BJ) Basic×40%', fmtMoney(c.BJ_hra)),
+    tile('Conv. (BK) B×30%', fmtMoney(c.BK_conveyance)),
+    tile('Medical (BL) fixed', fmtMoney(c.BL_medical)),
+    tile('Other (BM)', fmtMoney(c.BM_other_allow)),
+  ].join('');
+  $('earn-sum').innerHTML = [
+    tile('Earned Basic (BN)', fmtMoney(c.BN_earned_basic)),
+    tile('Earned HRA (BO)', fmtMoney(c.BO_earned_hra)),
+    tile('Earned Conv. (BP)', fmtMoney(c.BP_earned_conv)),
+    tile('Earned Medical (BQ)', fmtMoney(c.BQ_earned_medical)),
+    tile('Earned Other (BR)', fmtMoney(c.BR_earned_other)),
+    tile('Prod. Incentive (BS)', fmtMoney(c.BS_prod_incentive),'accent-earn'),
+    tile('Gross Earning (BT)', fmtMoney(c.BT_gross_earning),'accent-earn'),
+    tile('Arrear (BU)', fmtMoney(c.BU_arrear)),
+    tile('Total Earned (BV)', fmtMoney(c.BV_total_earned),'accent-earn'),
+  ].join('');
+  $('ded-sum').innerHTML = [
+    tile('Loan Ded. (BY)', fmtMoney(c.BY_loan_deduction),'accent-ded'),
+    tile('Loan Balance (BX)', fmtMoney(c.BX_balance_loan)),
+    tile('Other (BZ)', fmtMoney(c.BZ_other_deduction),'accent-ded'),
+    tile('PT (CA) ≥₹12k→₹200', fmtMoney(c.CA_pt),'accent-ded'),
+    tile(Number(c.pf_applicable) === 0 ? 'PF (CB) — exempt' : 'PF (CB) 12%/₹1800',
+         fmtMoney(c.CB_pf), 'accent-ded'),
+    tile('TDS (CC)', fmtMoney(c.CC_tds),'accent-ded'),
+    tile('Total Deduction (CD)', fmtMoney(c.CD_total_deduction),'accent-ded'),
+  ].join('');
+  $('final-sum').innerHTML = tile('PAID SALARY (CE)', fmtMoney(c.CE_paid_salary),'accent-final');
+}
+
+/* ─────────────────── DETAIL BUTTONS ─────────────────────────── */
+$('btn-save-period').addEventListener('click', async () => {
+  if (!ST.selectedEmpId) return;
+  try {
+    const j = await api('/api/hr_salary/period/save', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        emp_id:ST.selectedEmpId, period_month:ST.month,
+        period:readPeriodFromForm(), days:readDaysFromForm()})
+    });
+    ST.dirty = false;
+    renderCalcDisplay(j.calc);
+    if (j.auto_loan_emi_applied && j.auto_loan_emi_applied > 0) {
+      toast(`✓ Saved · ${j.auto_loan_emi_count} loan EMI(s) auto-deducted: ₹${fmt(j.auto_loan_emi_applied)}`);
+      // Refresh the period so the updated loan_deduction shows in the form
+      await loadPeriod();
+    } else {
+      toast('✓ Saved');
+    }
+  } catch (e) {}
+});
+
+$('btn-pdf-slip').addEventListener('click', () => {
+  if (!ST.selectedEmpId) return;
+  if (ST.dirty) { toast('Please save the period first', true); return; }
+  window.open(`/api/hr_salary/slip_pdf?emp_id=${encodeURIComponent(ST.selectedEmpId)}&month=${encodeURIComponent(ST.month)}`, '_blank');
+});
+
+$('btn-wa-single').addEventListener('click', async () => {
+  if (!ST.selectedEmpId) return;
+  if (ST.dirty) { toast('Please save the period first', true); return; }
+  try {
+    const j = await api('/api/hr_salary/whatsapp/prepare', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({month:ST.month, emp_ids:[ST.selectedEmpId]})
+    });
+    const items = j.items || [];
+    if (!items.length) { toast('Nothing to send', true); return; }
+    openWaModal(items);
+  } catch (e) {}
+});
+
+/* ─────────────────── EMP MODAL ──────────────────────────────── */
+function openEmpModal(emp) {
+  ST.editingEmp = emp;
+  $('emp-modal-title').textContent = emp ? 'Edit Employee' : 'Add Employee';
+  $('em-delete').style.display = emp ? 'inline-flex' : 'none';
+  const set = (id, v) => { $(id).value = v == null ? '' : v; };
+  set('em-emp_id',         emp ? emp.emp_id : '');
+  $('em-emp_id').disabled = !!emp;
+  set('em-emp_name',       emp ? emp.emp_name : '');
+  set('em-gender',         emp ? (emp.gender||'') : '');
+  set('em-doj',            emp && emp.doj ? String(emp.doj).slice(0,10) : '');
+  set('em-designation',    emp ? (emp.designation||'') : '');
+  set('em-department',     emp ? (emp.department||'') : '');
+  set('em-emp_status',     emp ? (emp.emp_status||'PERMANENT') : 'PERMANENT');
+  set('em-mobile',         emp ? (emp.mobile||'') : '');
+  set('em-email',          emp ? (emp.email||'')  : '');
+  set('em-gross_salary',   emp ? (emp.gross_salary||0) : 0);
+  set('em-medical_fixed',  emp ? (emp.medical_fixed||1200) : 1200);
+  set('em-loan_outstanding', emp ? (emp.loan_outstanding||0) : 0);
+  set('em-opening_pl',     emp ? (emp.opening_pl||0) : 0);
+  set('em-opening_cl',     emp ? (emp.opening_cl||0) : 0);
+  set('em-opening_sl',     emp ? (emp.opening_sl||0) : 0);
+  $('em-pf_applicable').checked = emp ? (emp.pf_applicable == null ? true : !!Number(emp.pf_applicable)) : true;
+  $('emp-modal').classList.add('open');
+}
+function closeEmpModal() { $('emp-modal').classList.remove('open'); ST.editingEmp = null; }
+window.closeEmpModal = closeEmpModal;
+
+$('tb-add-emp').addEventListener('click', () => openEmpModal(null));
+$('btn-edit-emp').addEventListener('click', () => {
+  if (ST.current && ST.current.employee) openEmpModal(ST.current.employee);
+});
+$('em-save').addEventListener('click', async () => {
+  const payload = {
+    emp_id: $('em-emp_id').value.trim(), emp_name: $('em-emp_name').value.trim(),
+    gender: $('em-gender').value.trim(), doj: $('em-doj').value || null,
+    designation: $('em-designation').value.trim(), department: $('em-department').value.trim(),
+    emp_status: $('em-emp_status').value.trim(), mobile: $('em-mobile').value.trim(),
+    email: $('em-email').value.trim(),
+    gross_salary: num($('em-gross_salary').value,0),
+    medical_fixed: num($('em-medical_fixed').value,1200),
+    loan_outstanding: num($('em-loan_outstanding').value,0),
+    opening_pl: num($('em-opening_pl').value,0),
+    opening_cl: num($('em-opening_cl').value,0),
+    opening_sl: num($('em-opening_sl').value,0),
+    pf_applicable: $('em-pf_applicable').checked ? 1 : 0,
+  };
+  if (!payload.emp_id || !payload.emp_name) { toast('Emp ID and Name required', true); return; }
+  try {
+    await api('/api/hr_salary/employee/save', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+    });
+    closeEmpModal(); toast('✓ Saved'); await loadEmployees();
+    if (payload.emp_id === ST.selectedEmpId) loadPeriod();
+  } catch (e) {}
+});
+$('em-delete').addEventListener('click', async () => {
+  if (!ST.editingEmp) return;
+  if (!confirm(`Delete (deactivate) "${ST.editingEmp.emp_name}" (#${ST.editingEmp.emp_id})?`)) return;
+  try {
+    await api('/api/hr_salary/employee/delete', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({emp_id: ST.editingEmp.emp_id})
+    });
+    closeEmpModal(); toast('✓ Deleted');
+    if (ST.editingEmp.emp_id === ST.selectedEmpId) {
+      ST.selectedEmpId = null; ST.current = null;
+      $('detail-title').textContent = 'Select an employee →';
+      $('detail-body').innerHTML = '<div class="empty-emp" style="padding:80px 20px">Select an employee.</div>';
+      ['btn-edit-emp','btn-save-period','btn-pdf-slip','btn-wa-single','btn-email-single','btn-ytd-emp','btn-loans-emp'].forEach(id => $(id).disabled = true);
+    }
+    await loadEmployees();
+  } catch (e) {}
+});
+
+/* ─────────────────── IMPORT MODAL ───────────────────────────── */
+$('tb-import').addEventListener('click', () => {
+  $('imp-result').style.display = 'none';
+  $('imp-result').innerHTML = '';
+  $('imp-file').value = '';
+  $('imp-upload').disabled = true;
+  $('dz-main').textContent = 'Drag & drop your .xlsx here, or click to browse';
+  $('imp-modal').classList.add('open');
+});
+function closeImpModal() { $('imp-modal').classList.remove('open'); }
+window.closeImpModal = closeImpModal;
+
+const dz = $('dropzone');
+dz.addEventListener('click', () => $('imp-file').click());
+['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation(); dz.classList.add('hover');
+}));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation(); dz.classList.remove('hover');
+}));
+dz.addEventListener('drop', e => {
+  if (e.dataTransfer.files.length) {
+    $('imp-file').files = e.dataTransfer.files;
+    $('imp-file').dispatchEvent(new Event('change'));
+  }
+});
+$('imp-file').addEventListener('change', () => {
+  const f = $('imp-file').files[0];
+  if (!f) { $('imp-upload').disabled = true; return; }
+  $('dz-main').textContent = '📄 ' + f.name + '  ·  ' + (f.size/1024).toFixed(1) + ' KB';
+  $('imp-upload').disabled = false;
+});
+
+$('imp-upload').addEventListener('click', async () => {
+  const f = $('imp-file').files[0];
+  if (!f) return;
+  const fd = new FormData(); fd.append('file', f);
+  $('imp-upload').disabled = true;
+  $('imp-upload').innerHTML = '<span class="spinner"></span>Uploading...';
+  try {
+    const r = await fetch('/api/hr_salary/import', { method:'POST', body:fd });
+    const j = await r.json();
+    if (j.status !== 'ok') throw new Error(j.message || 'Import failed');
+    const card = (cls, v, l) => `<div class="imp-stat ${cls}"><div class="imp-stat-v">${v}</div><div class="imp-stat-l">${l}</div></div>`;
+    let html = '<div class="imp-stat-row">' +
+      card('ok', j.inserted, 'Inserted') +
+      card('ok', j.updated,  'Updated') +
+      (j.skipped ? card('warn', j.skipped, 'Skipped') : '') +
+      '</div>';
+    if (j.errors && j.errors.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#991b1b;margin-bottom:6px">Errors (' + j.errors.length + '):</div>';
+      html += '<div class="imp-errors">' + j.errors.map(esc).join('<br>') + '</div>';
+    }
+    $('imp-result').innerHTML = html;
+    $('imp-result').style.display = 'block';
+    toast(`✓ Imported — ${j.inserted} new · ${j.updated} updated`);
+    await loadEmployees();
+  } catch (e) { toast(e.message, true); }
+  finally {
+    $('imp-upload').disabled = false;
+    $('imp-upload').textContent = 'Upload & Import';
+  }
+});
+
+/* ─────────────────── ATTENDANCE IMPORT MODAL ────────────────── */
+$('tb-import-att').addEventListener('click', () => {
+  $('imp-att-result').style.display = 'none';
+  $('imp-att-result').innerHTML = '';
+  $('imp-att-file').value = '';
+  $('imp-att-upload').disabled = true;
+  $('imp-att-month').value = ST.month;          // default = currently-selected month
+  $('imp-att-overwrite').checked = false;
+  $('dz-att-main').textContent = 'Drag & drop your attendance .xlsx, or click to browse';
+  $('imp-att-modal').classList.add('open');
+});
+function closeImpAttModal() { $('imp-att-modal').classList.remove('open'); }
+window.closeImpAttModal = closeImpAttModal;
+
+const dzAtt = $('dropzone-att');
+dzAtt.addEventListener('click', () => $('imp-att-file').click());
+['dragenter','dragover'].forEach(ev => dzAtt.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation(); dzAtt.classList.add('hover');
+}));
+['dragleave','drop'].forEach(ev => dzAtt.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation(); dzAtt.classList.remove('hover');
+}));
+dzAtt.addEventListener('drop', e => {
+  if (e.dataTransfer.files.length) {
+    $('imp-att-file').files = e.dataTransfer.files;
+    $('imp-att-file').dispatchEvent(new Event('change'));
+  }
+});
+$('imp-att-file').addEventListener('change', () => {
+  const f = $('imp-att-file').files[0];
+  if (!f) { $('imp-att-upload').disabled = true; return; }
+  $('dz-att-main').textContent = '📄 ' + f.name + '  ·  ' + (f.size/1024).toFixed(1) + ' KB';
+  $('imp-att-upload').disabled = false;
+});
+
+$('imp-att-upload').addEventListener('click', async () => {
+  const f = $('imp-att-file').files[0];
+  if (!f) return;
+  const fd = new FormData();
+  fd.append('file', f);
+  fd.append('month', $('imp-att-month').value || '');
+  fd.append('overwrite', $('imp-att-overwrite').checked ? '1' : '0');
+
+  $('imp-att-upload').disabled = true;
+  $('imp-att-upload').innerHTML = '<span class="spinner"></span>Uploading...';
+  try {
+    const r = await fetch('/api/hr_salary/attendance/import', { method:'POST', body:fd });
+    const j = await r.json();
+    if (j.status !== 'ok') throw new Error(j.message || 'Import failed');
+
+    const card = (cls, v, l) =>
+      `<div class="imp-stat ${cls}"><div class="imp-stat-v">${v}</div><div class="imp-stat-l">${l}</div></div>`;
+    let html = '<div class="imp-stat-row">' +
+      card('ok',   j.inserted,         'Days Inserted') +
+      card('ok',   j.updated,          'Days Updated') +
+      (j.skipped_existing   ? card('warn', j.skipped_existing,   'Kept (safe mode)') : '') +
+      (j.skipped_unknown_emp? card('err',  j.skipped_unknown_emp,'Unknown Emp IDs')  : '') +
+      card('ok',   j.employees_touched,'Employees') +
+      '</div>';
+
+    if (j.months_touched && j.months_touched.length) {
+      html += '<div style="font-size:11.5px;color:#334155;margin-bottom:8px">' +
+              '<b>Months processed:</b> ' + j.months_touched.map(esc).join(', ') +
+              (j.overwrite_mode ? ' &nbsp;·&nbsp; <span style="color:#b45309">Overwrite ON</span>'
+                                : ' &nbsp;·&nbsp; <span style="color:#059669">Safe mode</span>') +
+              '</div>';
+    }
+    if (j.errors && j.errors.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#991b1b;margin-bottom:6px">' +
+              'Errors / warnings (' + j.errors.length + '):</div>';
+      html += '<div class="imp-errors">' + j.errors.map(esc).join('<br>') + '</div>';
+    }
+    $('imp-att-result').innerHTML = html;
+    $('imp-att-result').style.display = 'block';
+
+    toast(`✓ Attendance imported — ${j.inserted} new · ${j.updated} updated · ${j.employees_touched} employees`);
+
+    // Refresh the currently-open detail + summary to reflect new data
+    if (ST.selectedEmpId) await loadPeriod();
+    if (document.querySelector('.tab.active').dataset.tab === 'summary') loadSummary();
+  } catch (e) { toast(e.message, true); }
+  finally {
+    $('imp-att-upload').disabled = false;
+    $('imp-att-upload').textContent = 'Upload & Import';
+  }
+});
+
+/* ─────────────────── SMTP / EMAIL SETUP ─────────────────────── */
+function closeSmtpModal() { $('smtp-modal').classList.remove('open'); }
+window.closeSmtpModal = closeSmtpModal;
+
+/* ── SMTP server presets — one-click auto-fill ── */
+const SMTP_PRESETS = {
+  gmail: {
+    label: 'Gmail / Google Workspace',
+    host: 'smtp.gmail.com', port: 587, enc: 'tls',
+    help: `<b>📧 Gmail / Google Workspace</b><br>
+      Server settings auto-filled. You just need:
+      <ol style="margin:6px 0 0 18px;padding:0;line-height:1.7">
+        <li>The sender email address in <b>Username</b> and <b>From Email</b></li>
+        <li>A Google <b>App Password</b> (not your account password) —
+          <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">create one here</a>.
+          2-Step Verification must be on.</li>
+      </ol>`,
+  },
+  outlook: {
+    label: 'Outlook / Office 365',
+    host: 'smtp.office365.com', port: 587, enc: 'tls',
+    help: `<b>📨 Outlook.com / Microsoft 365</b><br>
+      Server settings auto-filled. Enter your full email address in <b>Username</b> and <b>From Email</b>,
+      and your account password. If your tenant enforces MFA, generate an
+      <a href="https://support.microsoft.com/en-us/account-billing/5896ed9b-4263-e681-128a-a6f2979a7944" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">app password</a>
+      instead of your regular password.`,
+  },
+  yahoo: {
+    label: 'Yahoo Mail',
+    host: 'smtp.mail.yahoo.com', port: 465, enc: 'ssl',
+    help: `<b>📬 Yahoo Mail</b><br>
+      Server settings auto-filled. Yahoo requires an
+      <a href="https://help.yahoo.com/kb/generate-manage-third-party-passwords-sln15241.html" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">app password</a>
+      — your normal Yahoo login password will NOT work.`,
+  },
+  zoho: {
+    label: 'Zoho Mail',
+    host: 'smtp.zoho.in', port: 465, enc: 'ssl',
+    help: `<b>✉ Zoho Mail (India region)</b><br>
+      Server settings auto-filled. Enter your Zoho email as Username and use the account password
+      (or an <a href="https://help.zoho.com/portal/en/kb/bigin/channels/email/articles/generate-and-use-an-app-specific-password" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">app-specific password</a> if 2FA is enabled).
+      If your Zoho account is on the <code style="background:#fff;padding:1px 4px;border-radius:3px">.com</code> region,
+      change host to <code style="background:#fff;padding:1px 4px;border-radius:3px">smtp.zoho.com</code>.`,
+  },
+  icloud: {
+    label: 'iCloud Mail',
+    host: 'smtp.mail.me.com', port: 587, enc: 'tls',
+    help: `<b>☁ iCloud Mail</b><br>
+      Server settings auto-filled. iCloud REQUIRES an
+      <a href="https://support.apple.com/en-us/HT204397" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">app-specific password</a>
+      — your Apple ID password will NOT work. 2FA must be on.`,
+  },
+  custom: {
+    label: 'Custom / Self-hosted',
+    host: '', port: 587, enc: 'tls',
+    help: `<b>⚙ Custom SMTP server</b><br>
+      Enter the host, port, encryption, credentials and sender info manually.
+      Ask your mail provider for the correct values. Common ports:
+      <b>587</b> (STARTTLS), <b>465</b> (SSL/TLS), <b>25</b> (plain, rarely allowed).`,
+  },
+};
+ST.smtpPresetActive = null;
+
+function applySmtpPreset(key) {
+  const p = SMTP_PRESETS[key];
+  if (!p) return;
+  ST.smtpPresetActive = key;
+
+  // Only overwrite server fields — don't wipe credentials the user may have typed
+  if (key !== 'custom') {
+    $('smtp-host').value = p.host;
+    $('smtp-port').value = p.port;
+    $('smtp-enc').value  = p.enc;
+  }
+  $('smtp-help-banner').innerHTML = p.help;
+
+  document.querySelectorAll('.smtp-preset-chip').forEach(c =>
+    c.classList.toggle('active', c.dataset.preset === key));
+}
+
+function detectSmtpPresetFromHost() {
+  const h = ($('smtp-host').value || '').trim().toLowerCase();
+  if (!h) return null;
+  for (const [k, p] of Object.entries(SMTP_PRESETS)) {
+    if (p.host && p.host.toLowerCase() === h) return k;
+  }
+  // Partial matches for user-typed variants
+  if (h.includes('gmail'))              return 'gmail';
+  if (h.includes('office365') || h.includes('outlook')) return 'outlook';
+  if (h.includes('yahoo'))              return 'yahoo';
+  if (h.includes('zoho'))               return 'zoho';
+  if (h.includes('me.com') || h.includes('icloud')) return 'icloud';
+  return 'custom';
+}
+
+document.querySelectorAll('.smtp-preset-chip').forEach(chip => {
+  chip.addEventListener('click', () => applySmtpPreset(chip.dataset.preset));
+});
+
+async function loadSmtpConfig() {
+  try {
+    const j = await api('/api/hr_salary/smtp/config');
+    const c = j.config || {};
+    $('smtp-host').value       = c.smtp_host || '';
+    $('smtp-port').value       = c.smtp_port || 587;
+    if      (c.use_ssl) $('smtp-enc').value = 'ssl';
+    else if (c.use_tls) $('smtp-enc').value = 'tls';
+    else                $('smtp-enc').value = 'none';
+    $('smtp-user').value       = c.username || '';
+    $('smtp-from_email').value = c.from_email || '';
+    $('smtp-from_name').value  = c.from_name || 'HR Payroll';
+    $('smtp-reply_to').value   = c.reply_to || '';
+    $('smtp-pwd').value = '';
+    $('smtp-pwd-hint').textContent = c.has_password ? '(stored — leave blank to keep)' : '';
+
+    // Auto-detect & highlight matching preset based on saved host
+    const detected = detectSmtpPresetFromHost();
+    if (detected) applySmtpPreset(detected);
+    else {
+      ST.smtpPresetActive = null;
+      document.querySelectorAll('.smtp-preset-chip').forEach(c => c.classList.remove('active'));
+    }
+  } catch (e) {}
+}
+
+$('tb-smtp-setup').addEventListener('click', async () => {
+  $('smtp-test-result').innerHTML = '';
+  $('smtp-test-to').value = '';
+  await loadSmtpConfig();
+  $('smtp-modal').classList.add('open');
+});
+
+$('smtp-save').addEventListener('click', async () => {
+  const enc = $('smtp-enc').value;
+  const payload = {
+    smtp_host:  $('smtp-host').value.trim(),
+    smtp_port:  num($('smtp-port').value, 587),
+    use_tls:    enc === 'tls',
+    use_ssl:    enc === 'ssl',
+    username:   $('smtp-user').value.trim(),
+    password:   $('smtp-pwd').value,           // blank = keep existing on server
+    from_email: $('smtp-from_email').value.trim(),
+    from_name:  $('smtp-from_name').value.trim(),
+    reply_to:   $('smtp-reply_to').value.trim(),
+  };
+  if (!payload.smtp_host || !payload.smtp_port) {
+    toast('Host and port required', true); return;
+  }
+  if (!payload.from_email) { toast('From-email required', true); return; }
+  $('smtp-save').disabled = true;
+  $('smtp-save').innerHTML = '<span class="spinner"></span>Saving...';
+  try {
+    await api('/api/hr_salary/smtp/config', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    toast('✓ SMTP settings saved');
+    await loadSmtpConfig();
+  } catch (e) {}
+  finally {
+    $('smtp-save').disabled = false;
+    $('smtp-save').textContent = 'Save Settings';
+  }
+});
+
+$('smtp-test-btn').addEventListener('click', async () => {
+  const to = $('smtp-test-to').value.trim();
+  if (!to) { toast('Enter a recipient', true); return; }
+  const btn = $('smtp-test-btn');
+  const result = $('smtp-test-result');
+  result.innerHTML = '<span class="spinner"></span> Sending test...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/hr_salary/smtp/test', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({to}),
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+      result.innerHTML = '<span style="color:#059669;font-weight:700">✓ Test sent successfully</span>';
+    } else {
+      result.innerHTML = '<span style="color:#991b1b;font-weight:700">✗ ' + esc(j.message || 'Failed') + '</span>';
+    }
+  } catch (e) {
+    result.innerHTML = '<span style="color:#991b1b;font-weight:700">✗ ' + esc(e.message || 'Network error') + '</span>';
+  } finally { btn.disabled = false; }
+});
+
+/* ─────────────────── EMAIL SEND MODAL ───────────────────────── */
+// ST.emailTargetIds holds the IDs we want to send to; set by single / bulk triggers
+ST.emailTargetIds = [];
+
+function openEmailModal(empIds) {
+  ST.emailTargetIds = [...empIds];
+  const count = empIds.length;
+  $('email-pre').innerHTML = count === 1
+    ? 'Sending slip for <b>1 employee</b>. The PDF is attached.'
+    : `Sending slips for <b>${count} employees</b>. Each gets their own PDF attached.`;
+  $('email-cc').value = '';
+  $('email-attach-pdf').checked = true;
+  $('email-progress').style.display = 'none';
+  $('email-progress').innerHTML = '';
+  $('email-result').style.display = 'none';
+  $('email-result').innerHTML = '';
+  $('email-send-btn').disabled = false;
+  $('email-send-btn').textContent = '📤 Send Emails';
+  $('email-modal').classList.add('open');
+}
+function closeEmailModal() { $('email-modal').classList.remove('open'); }
+window.closeEmailModal = closeEmailModal;
+
+$('email-send-btn').addEventListener('click', async () => {
+  if (!ST.emailTargetIds.length) { toast('Nothing to send', true); return; }
+  const btn = $('email-send-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Sending...';
+  $('email-progress').style.display = 'block';
+  $('email-progress').innerHTML =
+    '<div style="padding:14px;text-align:center;color:#64748b;font-size:12px">' +
+    '<span class="spinner"></span> Sending ' + ST.emailTargetIds.length +
+    ' email(s)... this may take a few seconds per recipient.</div>';
+  $('email-result').style.display = 'none';
+
+  try {
+    const r = await fetch('/api/hr_salary/email/send', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        month:   ST.month,
+        emp_ids: ST.emailTargetIds,
+        cc:      $('email-cc').value.trim(),
+        attach_pdf: $('email-attach-pdf').checked,
+      }),
+    });
+    const j = await r.json();
+    if (j.status !== 'ok') throw new Error(j.message || 'Send failed');
+
+    const sent     = j.sent    || [];
+    const skipped  = j.skipped || [];
+    $('email-progress').style.display = 'none';
+
+    const card = (cls, v, l) =>
+      `<div class="imp-stat ${cls}"><div class="imp-stat-v">${v}</div><div class="imp-stat-l">${l}</div></div>`;
+    let html = '<div class="imp-stat-row">' +
+      card('ok',   sent.length,    'Sent') +
+      (skipped.length ? card('warn', skipped.length, 'Skipped') : '') +
+      '</div>';
+
+    if (sent.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:6px">Sent to:</div>';
+      html += '<div class="imp-errors" style="color:#166534">' +
+        sent.map(s => `#${esc(s.emp_id)} ${esc(s.emp_name)} → ${esc(s.to)}`).join('<br>') +
+      '</div>';
+    }
+    if (skipped.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#991b1b;margin:10px 0 6px">Skipped:</div>';
+      html += '<div class="imp-errors">' +
+        skipped.map(s => `#${esc(s.emp_id)} ${esc(s.emp_name)} — ${esc(s.reason)}`).join('<br>') +
+      '</div>';
+    }
+    $('email-result').innerHTML = html;
+    $('email-result').style.display = 'block';
+    toast(`✓ Emails sent: ${sent.length}${skipped.length ? `, skipped: ${skipped.length}` : ''}`);
+    btn.textContent = '✓ Done';
+  } catch (e) {
+    $('email-progress').style.display = 'none';
+    $('email-result').innerHTML = '<div style="color:#991b1b;font-weight:700;padding:10px">✗ ' + esc(e.message) + '</div>';
+    $('email-result').style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '📤 Send Emails';
+  }
+});
+
+/* Single-employee email (detail pane) */
+$('btn-email-single').addEventListener('click', () => {
+  if (!ST.selectedEmpId) return;
+  if (ST.dirty) { toast('Please save the period first', true); return; }
+  openEmailModal([ST.selectedEmpId]);
+});
+
+/* Bulk email (summary tab) */
+$('btn-email-bulk').addEventListener('click', () => {
+  if (!ST.selectedForWa.size) return;
+  openEmailModal([...ST.selectedForWa]);
+});
+
+/* ─────────────────── YEAR-TO-DATE (FY) ──────────────────────── */
+ST.ytd_fy = null;              // numeric starting year (e.g. 2025 = FY 2025-26)
+ST.ytd_company = null;
+ST.ytd_emp = null;
+
+function currentFyStartYear() {
+  const d = new Date();
+  // Months are 0-indexed in JS: Jan=0, Feb=1, Mar=2, Apr=3
+  return d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
+}
+function fyLabel(start) { return `FY ${start}-${String(start+1).slice(-2)}`; }
+function populateFySelect(el, selected) {
+  const cur = currentFyStartYear();
+  const opts = [];
+  for (let y = cur + 1; y >= cur - 4; y--) {
+    opts.push(`<option value="${y}" ${y===selected?'selected':''}>${fyLabel(y)}</option>`);
+  }
+  el.innerHTML = opts.join('');
+}
+
+/* ── Minimal inline-SVG bar+line chart. No external libs. ── */
+/* data = { labels:[], bars:[{label,values,color}], lines:[{label,values,color}] } */
+function renderBarLineChart(containerId, data, opts) {
+  opts = opts || {};
+  const host = $(containerId);
+  if (!host) return;
+  const W = host.clientWidth || 800;
+  const H = opts.height || 240;
+  const pad = {l: 56, r: 12, t: 12, b: 40};
+  const labels = data.labels || [];
+  const bars   = data.bars   || [];
+  const lines  = data.lines  || [];
+
+  // Flatten all values for y-axis scale
+  const allVals = [];
+  bars.forEach(b => (b.values||[]).forEach(v => allVals.push(v||0)));
+  lines.forEach(l => (l.values||[]).forEach(v => allVals.push(v||0)));
+  const maxY = Math.max(1, ...allVals);
+  // Nice round ceiling
+  const ceil = Math.pow(10, Math.floor(Math.log10(maxY)));
+  const yMax = Math.ceil(maxY / ceil) * ceil;
+
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+  const bandW = plotW / Math.max(1, labels.length);
+  const yTo = v => pad.t + plotH - (v / yMax) * plotH;
+  const xCenter = i => pad.l + bandW * (i + 0.5);
+
+  // Y gridlines + labels (5 steps)
+  const grid = [];
+  const yLbls = [];
+  for (let i = 0; i <= 5; i++) {
+    const v = yMax * i / 5;
+    const y = yTo(v);
+    grid.push(`<line x1="${pad.l}" y1="${y}" x2="${W - pad.r}" y2="${y}" stroke="#e2e8f0" stroke-width="1"/>`);
+    yLbls.push(`<text x="${pad.l - 6}" y="${y+4}" font-size="10" fill="#94a3b8" text-anchor="end">${fmt(v)}</text>`);
+  }
+
+  // X labels
+  const xLbls = labels.map((l, i) =>
+    `<text x="${xCenter(i)}" y="${H - pad.b + 14}" font-size="10" fill="#64748b" text-anchor="middle">${esc(l)}</text>`
+  ).join('');
+
+  // Bars — if multiple bar series, side-by-side
+  const barW = Math.max(8, (bandW * 0.6) / Math.max(1, bars.length));
+  const barHtml = bars.map((b, bi) =>
+    (b.values||[]).map((v, i) => {
+      if (!v) return '';
+      const y = yTo(v);
+      const x = xCenter(i) - (bars.length * barW)/2 + bi*barW;
+      return `<rect x="${x}" y="${y}" width="${barW-1.5}" height="${pad.t + plotH - y}" fill="${b.color||'#2563eb'}" rx="2">
+                <title>${esc(b.label)} · ${esc(labels[i])} · ${fmt(v)}</title>
+              </rect>`;
+    }).join('')
+  ).join('');
+
+  // Lines
+  const lineHtml = lines.map(ln => {
+    const vals = ln.values || [];
+    const pts = vals.map((v, i) => `${xCenter(i)},${yTo(v||0)}`).join(' ');
+    const dots = vals.map((v, i) =>
+      `<circle cx="${xCenter(i)}" cy="${yTo(v||0)}" r="2.5" fill="${ln.color||'#f97316'}">
+         <title>${esc(ln.label)} · ${esc(labels[i])} · ${fmt(v||0)}</title>
+       </circle>`
+    ).join('');
+    return `<polyline points="${pts}" fill="none" stroke="${ln.color||'#f97316'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
+  }).join('');
+
+  // Legend
+  const legend = [...bars.map(b => ({label:b.label, color:b.color, type:'bar'})),
+                  ...lines.map(l => ({label:l.label, color:l.color, type:'line'}))]
+    .map(it => `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-size:11px;color:#475569">
+      <span style="width:${it.type==='bar'?12:18}px;height:${it.type==='bar'?12:2}px;background:${it.color};border-radius:2px;display:inline-block"></span>
+      ${esc(it.label)}
+    </span>`).join('');
+
+  host.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" style="display:block">
+      ${grid.join('')}
+      ${yLbls.join('')}
+      ${barHtml}
+      ${lineHtml}
+      ${xLbls}
+    </svg>
+    <div style="margin-top:6px">${legend}</div>
+  `;
+}
+
+/* ── Company-wide YTD ──────────────────────────────────────── */
+async function loadCompanyYtd() {
+  if (ST.ytd_fy == null) ST.ytd_fy = currentFyStartYear();
+  populateFySelect($('ytd-fy'), ST.ytd_fy);
+
+  $('ytd-emp-tbody').innerHTML = '<tr><td colspan="12" class="empty-note">Loading...</td></tr>';
+  $('ytd-grand').innerHTML = '';
+  $('ytd-chart').innerHTML = '<div style="color:#94a3b8;font-size:11px;padding:60px 0;text-align:center"><span class="spinner"></span> Loading…</div>';
+
+  try {
+    const j = await api(`/api/hr_salary/ytd_company?fy=${ST.ytd_fy}`);
+    ST.ytd_company = j;
+    $('ytd-title').textContent = `Year-to-Date · Company-wide · ${j.fy_label}`;
+
+    const tile = (l, v, cls) =>
+      `<div class="kpi-tile ${cls||''}"><div class="kpi-tile-label">${l}</div><div class="kpi-tile-value">${v}</div></div>`;
+    $('ytd-grand').innerHTML = [
+      tile('Employees (had data)', fmt(j.grand.employees_with_any_data)),
+      tile('Total Earned',         fmtMoney(j.grand.total_earned), 'accent-earn'),
+      tile('Total Deduction',      fmtMoney(j.grand.total_deduction), 'accent-ded'),
+      tile('PF',                   fmtMoney(j.grand.pf)),
+      tile('PT',                   fmtMoney(j.grand.pt)),
+      tile('TDS',                  fmtMoney(j.grand.tds)),
+      tile('Net Paid Salary',      fmtMoney(j.grand.paid_salary), 'accent-final'),
+    ].join('');
+
+    // Chart: bars = paid salary, line = total earned
+    const monthLabels = (j.company_by_month || []).map(m =>
+      m.period_month.replace(/^\d{4}-/, '').replace(/^0/, '')
+        .replace(/^(\d+)$/, s => ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(s,10)])
+    );
+    renderBarLineChart('ytd-chart', {
+      labels: monthLabels,
+      bars:  [{label: 'Paid Salary',   values: j.company_by_month.map(m => m.paid_salary),   color: '#2563eb'}],
+      lines: [{label: 'Total Earned',  values: j.company_by_month.map(m => m.total_earned),  color: '#f97316'}],
+    }, {height: 260});
+
+    // Per-employee table
+    const tb = $('ytd-emp-tbody');
+    if (!j.employees.length) {
+      tb.innerHTML = '<tr><td colspan="12" class="empty-note">No employees.</td></tr>';
+      return;
+    }
+    tb.innerHTML = j.employees.map((e, i) => {
+      const t = e.totals || {};
+      return `<tr>
+        <td>${i+1}</td>
+        <td>#${esc(e.emp_id)}</td>
+        <td>${esc(e.emp_name)}</td>
+        <td>${esc(e.department||'—')}</td>
+        <td class="num">${fmt(t.months_paid||0)} / 12</td>
+        <td class="num">${fmtMoney(t.total_earned||0)}</td>
+        <td class="num">${fmtMoney(t.pf||0)}</td>
+        <td class="num">${fmtMoney(t.pt||0)}</td>
+        <td class="num">${fmtMoney(t.tds||0)}</td>
+        <td class="num">${fmtMoney(t.total_deduction||0)}</td>
+        <td class="num paid">${fmtMoney(t.paid_salary||0)}</td>
+        <td><button class="tool-btn ghost" style="height:26px;padding:0 10px;font-size:11px" onclick="openYtdEmpModal('${esc(e.emp_id)}')">Open</button></td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    $('ytd-emp-tbody').innerHTML = '<tr><td colspan="12" class="empty-note">Failed to load.</td></tr>';
+    $('ytd-chart').innerHTML = '<div style="color:#94a3b8;padding:40px 0;text-align:center;font-size:11px">Failed to load chart</div>';
+  }
+}
+
+$('ytd-fy').addEventListener('change', () => {
+  ST.ytd_fy = parseInt($('ytd-fy').value, 10) || currentFyStartYear();
+  loadCompanyYtd();
+});
+$('btn-refresh-ytd').addEventListener('click', loadCompanyYtd);
+
+$('btn-export-ytd').addEventListener('click', () => {
+  if (ST.ytd_fy == null) ST.ytd_fy = currentFyStartYear();
+  // Build a CSV client-side from the already-loaded data
+  if (!ST.ytd_company) { toast('Load YTD first', true); return; }
+  const j = ST.ytd_company;
+  const hdr = ['SR','EMP ID','NAME','DEPARTMENT', ...j.months, 'MONTHS','TOTAL EARNED','PF','PT','TDS','TOTAL DED','PAID SALARY'];
+  const rows = [hdr];
+  (j.employees || []).forEach((e, i) => {
+    const t = e.totals || {};
+    const monthCols = j.months.map(m => {
+      const mm = (e.monthly || []).find(x => x.period_month === m);
+      return mm && mm.has_data ? mm.paid_salary : 0;
+    });
+    rows.push([i+1, e.emp_id, e.emp_name, e.department || '',
+               ...monthCols,
+               t.months_paid||0, t.total_earned||0, t.pf||0, t.pt||0, t.tds||0,
+               t.total_deduction||0, t.paid_salary||0]);
+  });
+  const csv = rows.map(r => r.map(c => {
+    const s = (c==null?'':String(c));
+    return /[,"\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `YTD_Company_${j.fy_label.replace(/\s/g,'')}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('✓ CSV downloaded');
+});
+
+/* ── Single-employee YTD modal ─────────────────────────────── */
+function closeYtdEmpModal() { $('ytd-emp-modal').classList.remove('open'); }
+window.closeYtdEmpModal = closeYtdEmpModal;
+
+async function openYtdEmpModal(empId) {
+  if (!empId) return;
+  ST.ytd_emp_id = empId;
+  if (ST.ytd_emp_fy == null) ST.ytd_emp_fy = currentFyStartYear();
+  populateFySelect($('ytd-emp-fy'), ST.ytd_emp_fy);
+  $('ytd-emp-modal').classList.add('open');
+  await loadEmployeeYtd();
+}
+window.openYtdEmpModal = openYtdEmpModal;
+
+$('ytd-emp-fy').addEventListener('change', () => {
+  ST.ytd_emp_fy = parseInt($('ytd-emp-fy').value, 10) || currentFyStartYear();
+  loadEmployeeYtd();
+});
+
+async function loadEmployeeYtd() {
+  const emp = ST.ytd_emp_id;
+  if (!emp) return;
+  $('ytd-emp-tbody-months').innerHTML = '<tr><td colspan="13" class="empty-note">Loading...</td></tr>';
+  $('ytd-emp-totals').innerHTML = '';
+  $('ytd-emp-chart').innerHTML = '<div style="color:#94a3b8;font-size:11px;padding:60px 0;text-align:center"><span class="spinner"></span> Loading…</div>';
+  $('ytd-emp-leave').innerHTML = '<div style="color:#94a3b8;font-size:11px;padding:60px 0;text-align:center"><span class="spinner"></span> Loading…</div>';
+
+  try {
+    const j = await api(`/api/hr_salary/ytd?emp_id=${encodeURIComponent(emp)}&fy=${ST.ytd_emp_fy}`);
+    ST.ytd_emp = j;
+    $('ytd-emp-title').textContent = `Year-to-Date · ${j.employee.emp_name} · #${j.employee.emp_id} · ${j.fy_label}`;
+
+    const tile = (l, v, cls) =>
+      `<div class="kpi-tile ${cls||''}"><div class="kpi-tile-label">${l}</div><div class="kpi-tile-value">${v}</div></div>`;
+    const t = j.totals;
+    $('ytd-emp-totals').innerHTML = [
+      tile('Months with data',   fmt(t.months_with_data)),
+      tile('Total Paid Days',    fmt(t.BG_total_days)),
+      tile('OT Hours',           fmt(t.BD_ot_hours)),
+      tile('Total Earned',       fmtMoney(t.BV_total_earned), 'accent-earn'),
+      tile('PF (annual)',        fmtMoney(t.CB_pf), 'accent-ded'),
+      tile('PT (annual)',        fmtMoney(t.CA_pt), 'accent-ded'),
+      tile('TDS (annual)',       fmtMoney(t.CC_tds), 'accent-ded'),
+      tile('Total Deduction',    fmtMoney(t.CD_total_deduction), 'accent-ded'),
+      tile('Net Paid Salary',    fmtMoney(t.CE_paid_salary),    'accent-final'),
+    ].join('');
+
+    // Short month labels
+    const monthLabels = j.months.map(ym => {
+      const mo = parseInt(ym.split('-')[1], 10);
+      return ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo] + " '" + ym.slice(2,4);
+    });
+
+    // Salary chart
+    renderBarLineChart('ytd-emp-chart', {
+      labels: monthLabels,
+      bars:  [{label: 'Paid Salary', values: j.months_data.map(m => m.has_data ? m.CE_paid_salary : 0), color: '#2563eb'}],
+      lines: [{label: 'Gross Earned', values: j.months_data.map(m => m.has_data ? m.BV_total_earned : 0), color: '#f97316'}],
+    }, {height: 220});
+
+    // Leave trajectory chart: 3 lines (closing balances)
+    renderBarLineChart('ytd-emp-leave', {
+      labels: monthLabels,
+      bars:  [],
+      lines: [
+        {label: 'PL Balance', values: j.months_data.map(m => m.has_data ? m.BA_closing_pl : null), color: '#059669'},
+        {label: 'CL Balance', values: j.months_data.map(m => m.has_data ? m.BB_closing_cl : null), color: '#d97706'},
+        {label: 'SL Balance', values: j.months_data.map(m => m.has_data ? m.BC_closing_sl : null), color: '#7c3aed'},
+      ],
+    }, {height: 200});
+
+    // Per-month table
+    $('ytd-emp-tbody-months').innerHTML = j.months_data.map((m, i) => {
+      const label = monthLabels[i];
+      if (!m.has_data) {
+        return `<tr>
+          <td><b>${label}</b></td>
+          <td colspan="12" class="no-data" style="text-align:center">— no data —</td>
+        </tr>`;
+      }
+      return `<tr>
+        <td><b>${label}</b></td>
+        <td class="num">${fmt(m.BG_total_days)}</td>
+        <td class="num">${fmt(m.BD_ot_hours)}</td>
+        <td class="num">${fmtMoney(m.BT_gross_earning)}</td>
+        <td class="num">${fmtMoney(m.BS_prod_incentive)}</td>
+        <td class="num">${fmtMoney(m.CB_pf)}</td>
+        <td class="num">${fmtMoney(m.CA_pt)}</td>
+        <td class="num">${fmtMoney(m.CC_tds)}</td>
+        <td class="num">${fmtMoney(m.CD_total_deduction)}</td>
+        <td class="num paid">${fmtMoney(m.CE_paid_salary)}</td>
+        <td class="num">${fmt(m.BA_closing_pl)}</td>
+        <td class="num">${fmt(m.BB_closing_cl)}</td>
+        <td class="num">${fmt(m.BC_closing_sl)}</td>
+      </tr>`;
+    }).join('');
+
+    // Export link — build a CSV for this employee
+    $('ytd-emp-export').onclick = (ev) => {
+      ev.preventDefault();
+      const hdr = ['MONTH','PAID DAYS','OT HRS','GROSS EARNED','INCENTIVE','PF','PT','TDS','TOTAL DED','PAID SALARY','PL BAL','CL BAL','SL BAL'];
+      const rows = [hdr];
+      j.months_data.forEach((m, i) => {
+        if (!m.has_data) { rows.push([monthLabels[i]]); return; }
+        rows.push([monthLabels[i], m.BG_total_days, m.BD_ot_hours,
+                   m.BT_gross_earning, m.BS_prod_incentive,
+                   m.CB_pf, m.CA_pt, m.CC_tds, m.CD_total_deduction, m.CE_paid_salary,
+                   m.BA_closing_pl, m.BB_closing_cl, m.BC_closing_sl]);
+      });
+      rows.push([]);
+      rows.push(['TOTALS', t.BG_total_days, t.BD_ot_hours, t.BT_gross_earning,
+                 t.BS_prod_incentive, t.CB_pf, t.CA_pt, t.CC_tds,
+                 t.CD_total_deduction, t.CE_paid_salary]);
+      const csv = rows.map(r => r.map(c => {
+        const s = (c==null?'':String(c));
+        return /[,"\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+      }).join(',')).join('\n');
+      const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `YTD_${j.employee.emp_id}_${j.fy_label.replace(/\s/g,'')}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast('✓ CSV downloaded');
+    };
+  } catch (e) {
+    $('ytd-emp-tbody-months').innerHTML = '<tr><td colspan="13" class="empty-note">Failed to load.</td></tr>';
+  }
+}
+
+$('btn-ytd-emp').addEventListener('click', () => {
+  if (!ST.selectedEmpId) return;
+  openYtdEmpModal(ST.selectedEmpId);
+});
+
+/* ─────────────────── LOAN REGISTER ──────────────────────────── */
+ST.loansCompany = null;
+ST.loansEmp = null;          // { employee, loans } for open modal
+ST.loanEditing = null;       // loan object being edited (or null = new)
+ST.loanEditEmpId = null;     // emp_id whose modal opened this edit
+
+function monthAdd(ym, delta) {
+  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return '';
+  const [y, m] = ym.split('-').map(Number);
+  const total = y * 12 + (m - 1) + delta;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+  return `${String(ny).padStart(4,'0')}-${String(nm).padStart(2,'0')}`;
+}
+function formatYm(ym) {
+  if (!ym) return '—';
+  const [y, m] = ym.split('-').map(Number);
+  const names = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${names[m] || m} '${String(y).slice(2)}`;
+}
+
+/* ── Company-wide loan register ─────────────────────────────── */
+async function loadCompanyLoans() {
+  $('loans-tbody').innerHTML = '<tr><td colspan="14" class="empty-note">Loading...</td></tr>';
+  $('loans-grand').innerHTML = '';
+  try {
+    const filter = $('loans-status-filter').value;
+    const url = `/api/hr_salary/loans/all${filter ? ('?status=' + encodeURIComponent(filter)) : ''}`;
+    const j = await api(url);
+    ST.loansCompany = j;
+    const g = j.grand || {};
+    const tile = (l, v, cls) =>
+      `<div class="kpi-tile ${cls||''}"><div class="kpi-tile-label">${l}</div><div class="kpi-tile-value">${v}</div></div>`;
+    $('loans-grand').innerHTML = [
+      tile('Active Loans',       fmt(g.active_count || 0)),
+      tile('Principal Total',    fmtMoney(g.principal_total || 0)),
+      tile('Outstanding Total',  fmtMoney(g.outstanding_total || 0), 'accent-ded'),
+    ].join('');
+    renderLoansTable(j.loans || []);
+  } catch (e) {
+    $('loans-tbody').innerHTML = '<tr><td colspan="14" class="empty-note">Failed to load.</td></tr>';
+  }
+}
+
+function renderLoansTable(loans) {
+  const tb = $('loans-tbody');
+  if (!loans.length) {
+    tb.innerHTML = '<tr><td colspan="14" class="empty-note">No loans.</td></tr>';
+    return;
+  }
+  const badge = (st) => {
+    const colors = {
+      active:    ['#dcfce7','#166534'],
+      closed:    ['#e0e7ff','#3730a3'],
+      cancelled: ['#fef3c7','#92400e'],
+    };
+    const [bg, fg] = colors[st] || ['#f1f5f9','#475569'];
+    return `<span style="padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:${bg};color:${fg}">${esc(st||'')}</span>`;
+  };
+  tb.innerHTML = loans.map((lo, i) => {
+    const t = lo.totals || {};
+    const scheduleDesc = lo.schedule_mode === 'fixed_tenure'
+      ? `${lo.tenure_months || '?'} mo`
+      : `EMI ₹${fmt(lo.emi_amount)}`;
+    const autoPill = lo.auto_deduct
+      ? '<span style="padding:2px 7px;border-radius:8px;background:#dcfce7;color:#166534;font-size:10px;font-weight:800">AUTO</span>'
+      : '<span style="padding:2px 7px;border-radius:8px;background:#f1f5f9;color:#64748b;font-size:10px;font-weight:800">MANUAL</span>';
+    return `<tr>
+      <td>${i+1}</td>
+      <td>#${esc(lo.emp_id)}</td>
+      <td>${esc(lo.emp_name)}</td>
+      <td>${esc(lo.department || '—')}</td>
+      <td class="num">${fmtMoney(lo.principal)}</td>
+      <td class="num">${fmtMoney(lo.emi_amount)}</td>
+      <td>${scheduleDesc}</td>
+      <td>${formatYm(lo.start_month)}</td>
+      <td class="num">${fmtMoney(t.paid || 0)} <span style="color:#94a3b8;font-size:10px">(${t.paid_count||0}/${t.total_count||0})</span></td>
+      <td class="num paid">${fmtMoney(t.outstanding || 0)}</td>
+      <td>${autoPill}</td>
+      <td>${badge(lo.status)}</td>
+      <td>${formatYm(t.next_due)}</td>
+      <td style="white-space:nowrap">
+        <button class="tool-btn ghost" style="height:26px;padding:0 10px;font-size:11px" onclick="openLoanEmpModal('${esc(lo.emp_id)}')">Open</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+$('loans-status-filter').addEventListener('change', loadCompanyLoans);
+$('btn-refresh-loans').addEventListener('click', loadCompanyLoans);
+
+/* ── Per-employee loan list modal ──────────────────────────── */
+async function openLoanEmpModal(empId) {
+  if (!empId) return;
+  ST.loanEditEmpId = empId;
+  $('loan-emp-title').textContent = `Loans · Loading...`;
+  $('loan-emp-summary').innerHTML = '<span class="spinner"></span> Loading…';
+  $('loan-emp-list').innerHTML = '';
+  $('loan-emp-modal').classList.add('open');
+  try {
+    const j = await api(`/api/hr_salary/loans?emp_id=${encodeURIComponent(empId)}`);
+    ST.loansEmp = j;
+    renderLoanEmpModal();
+  } catch (e) {
+    $('loan-emp-list').innerHTML = '<div class="empty-emp">Failed to load.</div>';
+  }
+}
+window.openLoanEmpModal = openLoanEmpModal;
+
+function closeLoanEmpModal() { $('loan-emp-modal').classList.remove('open'); }
+window.closeLoanEmpModal = closeLoanEmpModal;
+
+function renderLoanEmpModal() {
+  const j = ST.loansEmp;
+  if (!j) return;
+  $('loan-emp-title').textContent = `Loans · ${j.employee.emp_name} · #${j.employee.emp_id}`;
+
+  if (!j.loans.length) {
+    $('loan-emp-summary').innerHTML = '<i>No loans on record. Click <b>+ New Loan</b> to add one.</i>';
+    $('loan-emp-list').innerHTML = '';
+    return;
+  }
+
+  const outstandingTotal = j.loans.reduce((s, lo) => s + (lo.totals?.outstanding || 0), 0);
+  $('loan-emp-summary').innerHTML =
+    `<b>${j.loans.length}</b> loan(s) · Outstanding: <b style="color:#991b1b">${fmtMoney(outstandingTotal)}</b>`;
+
+  $('loan-emp-list').innerHTML = j.loans.map(lo => renderLoanCard(lo)).join('');
+
+  // Bind inline action handlers
+  document.querySelectorAll('.loan-card .loan-edit-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const lid = parseInt(b.dataset.lid, 10);
+      const lo = j.loans.find(x => x.id === lid);
+      if (lo) openLoanEditModal(lo);
+    });
+  });
+  document.querySelectorAll('.loan-card .loan-close-btn').forEach(b => {
+    b.addEventListener('click', async () => {
+      const lid = parseInt(b.dataset.lid, 10);
+      if (!confirm('Close this loan? It will stop auto-deducting.')) return;
+      try {
+        await api('/api/hr_salary/loans/close', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({id:lid, status:'closed'}),
+        });
+        toast('✓ Loan closed');
+        await openLoanEmpModal(ST.loanEditEmpId);
+      } catch (e) {}
+    });
+  });
+  document.querySelectorAll('.loan-card .mark-paid-btn').forEach(b => {
+    b.addEventListener('click', async () => {
+      const sid = parseInt(b.dataset.sid, 10);
+      try {
+        await api('/api/hr_salary/loans/mark_paid', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({schedule_id: sid, status: 'paid'}),
+        });
+        toast('✓ Marked paid');
+        await openLoanEmpModal(ST.loanEditEmpId);
+      } catch (e) {}
+    });
+  });
+  document.querySelectorAll('.loan-card .mark-skip-btn').forEach(b => {
+    b.addEventListener('click', async () => {
+      const sid = parseInt(b.dataset.sid, 10);
+      if (!confirm('Skip this installment? It will not auto-deduct this month.')) return;
+      try {
+        await api('/api/hr_salary/loans/mark_paid', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({schedule_id: sid, status: 'skipped'}),
+        });
+        toast('✓ Skipped');
+        await openLoanEmpModal(ST.loanEditEmpId);
+      } catch (e) {}
+    });
+  });
+  document.querySelectorAll('.loan-card .mark-unpay-btn').forEach(b => {
+    b.addEventListener('click', async () => {
+      const sid = parseInt(b.dataset.sid, 10);
+      if (!confirm('Revert this installment to pending?')) return;
+      try {
+        await api('/api/hr_salary/loans/mark_paid', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({schedule_id: sid, status: 'pending'}),
+        });
+        toast('✓ Reset to pending');
+        await openLoanEmpModal(ST.loanEditEmpId);
+      } catch (e) {}
+    });
+  });
+}
+
+function renderLoanCard(lo) {
+  const t = lo.totals || {};
+  const sched = lo.schedule || [];
+  const statusBadge = {
+    active:    '<span style="padding:2px 8px;border-radius:10px;background:#dcfce7;color:#166534;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase">Active</span>',
+    closed:    '<span style="padding:2px 8px;border-radius:10px;background:#e0e7ff;color:#3730a3;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase">Closed</span>',
+    cancelled: '<span style="padding:2px 8px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase">Cancelled</span>',
+  }[lo.status] || '';
+  const autoBadge = lo.auto_deduct
+    ? '<span style="padding:2px 7px;border-radius:8px;background:#dcfce7;color:#166534;font-size:10px;font-weight:800">AUTO-DEDUCT</span>'
+    : '<span style="padding:2px 7px;border-radius:8px;background:#f1f5f9;color:#64748b;font-size:10px;font-weight:800">MANUAL</span>';
+
+  const modeDesc = lo.schedule_mode === 'fixed_tenure'
+    ? `Fixed Tenure · ${lo.tenure_months} months`
+    : `Fixed EMI · ₹${fmt(lo.emi_amount)}/mo`;
+
+  const scheduleRows = sched.map(s => {
+    const stIcon = {
+      paid:    '<span style="color:#059669;font-weight:800">✓ paid</span>',
+      partial: '<span style="color:#d97706;font-weight:800">◐ partial</span>',
+      skipped: '<span style="color:#92400e;font-weight:800">⊘ skipped</span>',
+      pending: '<span style="color:#94a3b8">· pending</span>',
+    }[s.status || 'pending'];
+    const canEdit = lo.status === 'active';
+    let actions = '';
+    if (canEdit) {
+      if ((s.status || 'pending') === 'pending') {
+        actions = `<button class="mark-paid-btn" data-sid="${s.id}" style="padding:2px 8px;border:none;background:#059669;color:#fff;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;margin-right:4px">Paid</button>
+                   <button class="mark-skip-btn" data-sid="${s.id}" style="padding:2px 8px;border:none;background:#f59e0b;color:#fff;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">Skip</button>`;
+      } else {
+        actions = `<button class="mark-unpay-btn" data-sid="${s.id}" style="padding:2px 8px;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">Undo</button>`;
+      }
+    }
+    return `<tr>
+      <td style="padding:4px 8px;border-bottom:1px solid #f1f5f9">${s.installment_no}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #f1f5f9">${formatYm(s.period_month)}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-family:'JetBrains Mono',monospace">${fmtMoney(s.scheduled_amount)}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-family:'JetBrains Mono',monospace">${fmtMoney(s.paid_amount || 0)}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #f1f5f9">${stIcon}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #f1f5f9;text-align:right">${actions}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="loan-card" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:12px;overflow:hidden">
+    <div style="padding:10px 14px;background:#fafbfc;border-bottom:1px solid #eef2f7;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#1e293b">
+          ₹${fmt(lo.principal)} · ${modeDesc} · starts ${formatYm(lo.start_month)}
+        </div>
+        <div style="font-size:10.5px;color:#64748b;margin-top:2px">
+          ${statusBadge} ${autoBadge}
+          ${lo.purpose ? ' · <b>' + esc(lo.purpose) + '</b>' : ''}
+          ${lo.loan_date ? ' · taken ' + esc(lo.loan_date) : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        ${lo.status === 'active' ? `
+          <button class="loan-edit-btn tool-btn ghost" data-lid="${lo.id}" style="height:28px;padding:0 10px;font-size:11px">✏ Edit</button>
+          <button class="loan-close-btn tool-btn danger" data-lid="${lo.id}" style="height:28px;padding:0 10px;font-size:11px">🗙 Close</button>
+        ` : ''}
+      </div>
+    </div>
+    <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+      <div class="kpi-tile"><div class="kpi-tile-label">Scheduled</div><div class="kpi-tile-value" style="font-size:14px">${fmtMoney(t.scheduled||0)}</div></div>
+      <div class="kpi-tile accent-earn"><div class="kpi-tile-label">Paid</div><div class="kpi-tile-value" style="font-size:14px">${fmtMoney(t.paid||0)}</div></div>
+      <div class="kpi-tile accent-ded"><div class="kpi-tile-label">Outstanding</div><div class="kpi-tile-value" style="font-size:14px">${fmtMoney(t.outstanding||0)}</div></div>
+      <div class="kpi-tile"><div class="kpi-tile-label">Installments</div><div class="kpi-tile-value" style="font-size:14px">${t.paid_count||0} / ${t.total_count||0}</div></div>
+      <div class="kpi-tile"><div class="kpi-tile-label">Next Due</div><div class="kpi-tile-value" style="font-size:14px">${formatYm(t.next_due)}</div></div>
+    </div>
+    <div style="padding:0 14px 12px">
+      <table style="width:100%;border-collapse:collapse;font-size:11.5px;background:#fff">
+        <thead>
+          <tr style="background:#f1f5f9">
+            <th style="padding:6px 8px;text-align:left;color:#475569;font-weight:800;font-size:10px;letter-spacing:.5px">#</th>
+            <th style="padding:6px 8px;text-align:left;color:#475569;font-weight:800;font-size:10px;letter-spacing:.5px">Month</th>
+            <th style="padding:6px 8px;text-align:right;color:#475569;font-weight:800;font-size:10px;letter-spacing:.5px">Scheduled</th>
+            <th style="padding:6px 8px;text-align:right;color:#475569;font-weight:800;font-size:10px;letter-spacing:.5px">Paid</th>
+            <th style="padding:6px 8px;text-align:left;color:#475569;font-weight:800;font-size:10px;letter-spacing:.5px">Status</th>
+            <th style="padding:6px 8px;text-align:right;color:#475569;font-weight:800;font-size:10px;letter-spacing:.5px">Action</th>
+          </tr>
+        </thead>
+        <tbody>${scheduleRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ── Loan CREATE / EDIT modal ──────────────────────────────── */
+function closeLoanEditModal() { $('loan-edit-modal').classList.remove('open'); }
+window.closeLoanEditModal = closeLoanEditModal;
+
+function openLoanEditModal(loan) {
+  ST.loanEditing = loan || null;
+  const isNew = !loan;
+  $('loan-edit-title').textContent = isNew ? 'New Loan' : 'Edit Loan';
+  $('le-close-loan').style.display = isNew ? 'none' : 'inline-flex';
+
+  const today = new Date().toISOString().slice(0, 10);
+  const curMonth = today.slice(0, 7);
+
+  $('le-loan_date').value      = loan ? (loan.loan_date || today) : today;
+  $('le-principal').value      = loan ? (loan.principal || '') : '';
+  $('le-purpose').value        = loan ? (loan.purpose || '')   : '';
+  $('le-mode').value           = loan ? (loan.schedule_mode || 'fixed_emi') : 'fixed_emi';
+  $('le-emi_amount').value     = loan && loan.schedule_mode !== 'fixed_tenure' ? (loan.emi_amount || '') : '';
+  $('le-tenure_months').value  = loan && loan.schedule_mode === 'fixed_tenure' ? (loan.tenure_months || '') : '';
+  $('le-start_month').value    = loan ? (loan.start_month || curMonth) : curMonth;
+  $('le-auto_deduct').checked  = loan ? !!loan.auto_deduct : true;
+  $('le-remarks').value        = loan ? (loan.remarks || '') : '';
+
+  updateLoanEditModeUI();
+  updateLoanPreview();
+  $('loan-edit-modal').classList.add('open');
+}
+
+function updateLoanEditModeUI() {
+  const m = $('le-mode').value;
+  $('le-emi-wrap').style.display    = m === 'fixed_emi'    ? 'flex' : 'none';
+  $('le-tenure-wrap').style.display = m === 'fixed_tenure' ? 'flex' : 'none';
+}
+
+function updateLoanPreview() {
+  const mode = $('le-mode').value;
+  const principal = num($('le-principal').value, 0);
+  const emi = num($('le-emi_amount').value, 0);
+  const tenure = parseInt($('le-tenure_months').value || 0, 10);
+  const start = $('le-start_month').value || '';
+  const pre = $('le-preview');
+
+  if (principal <= 0) { pre.innerHTML = 'Enter principal to see schedule preview.'; return; }
+
+  if (mode === 'fixed_emi') {
+    if (emi <= 0) { pre.innerHTML = 'Enter EMI amount to see schedule preview.'; return; }
+    const fullMonths = Math.floor(principal / emi);
+    const residual = Math.round((principal - fullMonths * emi) * 100) / 100;
+    const totalMonths = fullMonths + (residual > 0 ? 1 : 0);
+    const endMonth = monthAdd(start, totalMonths - 1);
+    pre.innerHTML =
+      `<b>Schedule preview:</b> ${fullMonths} full EMI(s) of ₹${fmt(emi)}` +
+      (residual > 0 ? ` + final residual of ₹${fmt(residual)}` : '') +
+      ` = <b>${totalMonths} installments</b>, ` +
+      `from ${formatYm(start)} to ${formatYm(endMonth)}. Total ₹${fmt(principal)}.`;
+  } else {
+    if (tenure <= 0) { pre.innerHTML = 'Enter tenure (months) to see schedule preview.'; return; }
+    const base = Math.round(principal / tenure);
+    const residual = Math.round((principal - base * (tenure - 1)) * 100) / 100;
+    const endMonth = monthAdd(start, tenure - 1);
+    pre.innerHTML =
+      `<b>Schedule preview:</b> ${tenure - 1} installments of ₹${fmt(base)}` +
+      ` + final installment of ₹${fmt(residual)}` +
+      ` = <b>${tenure} installments</b>, ` +
+      `from ${formatYm(start)} to ${formatYm(endMonth)}. Total ₹${fmt(principal)}.`;
+  }
+}
+
+$('le-mode').addEventListener('change', () => { updateLoanEditModeUI(); updateLoanPreview(); });
+['le-principal','le-emi_amount','le-tenure_months','le-start_month'].forEach(id =>
+  $(id).addEventListener('input', updateLoanPreview));
+
+$('btn-loan-new').addEventListener('click', () => openLoanEditModal(null));
+
+$('le-save').addEventListener('click', async () => {
+  const empId = ST.loanEditEmpId;
+  if (!empId) { toast('No employee context', true); return; }
+
+  const mode = $('le-mode').value;
+  const payload = {
+    id:            ST.loanEditing ? ST.loanEditing.id : null,
+    emp_id:        empId,
+    loan_date:     $('le-loan_date').value || null,
+    principal:     num($('le-principal').value, 0),
+    schedule_mode: mode,
+    emi_amount:    mode === 'fixed_emi'    ? num($('le-emi_amount').value, 0)    : 0,
+    tenure_months: mode === 'fixed_tenure' ? parseInt($('le-tenure_months').value || 0, 10) : 0,
+    start_month:   $('le-start_month').value || '',
+    auto_deduct:   $('le-auto_deduct').checked,
+    purpose:       $('le-purpose').value.trim(),
+    remarks:       $('le-remarks').value.trim(),
+  };
+
+  if (payload.principal <= 0) { toast('Principal must be > 0', true); return; }
+  if (!payload.start_month) { toast('Start month required', true); return; }
+  if (mode === 'fixed_emi' && payload.emi_amount <= 0) { toast('EMI amount must be > 0', true); return; }
+  if (mode === 'fixed_tenure' && payload.tenure_months <= 0) { toast('Tenure must be > 0', true); return; }
+
+  const btn = $('le-save');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving...';
+  try {
+    let r = await fetch('/api/hr_salary/loans/save', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    let j = await r.json();
+
+    // Handle "payments exist — pass force=true" case
+    if (j.status === 'error' && /already paid/i.test(j.message || '')) {
+      if (confirm(j.message + '\n\nRegenerate anyway? (previous payments will be erased)')) {
+        r = await fetch('/api/hr_salary/loans/save', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({...payload, force: true}),
+        });
+        j = await r.json();
+      } else { throw new Error('Cancelled'); }
+    }
+    if (j.status !== 'ok') throw new Error(j.message || 'Save failed');
+
+    toast(`✓ Loan saved · ${j.tenure} installments`);
+    closeLoanEditModal();
+    await openLoanEmpModal(empId);
+    if (document.querySelector('.tab.active').dataset.tab === 'loans') loadCompanyLoans();
+  } catch (e) {
+    if (e.message !== 'Cancelled') toast(e.message || 'Save failed', true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Loan';
+  }
+});
+
+$('le-close-loan').addEventListener('click', async () => {
+  if (!ST.loanEditing) return;
+  if (!confirm('Close this loan? Pending installments will remain but no auto-deductions will occur.')) return;
+  try {
+    await api('/api/hr_salary/loans/close', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: ST.loanEditing.id, status: 'closed'}),
+    });
+    toast('✓ Loan closed');
+    closeLoanEditModal();
+    await openLoanEmpModal(ST.loanEditEmpId);
+    if (document.querySelector('.tab.active').dataset.tab === 'loans') loadCompanyLoans();
+  } catch (e) {}
+});
+
+/* Detail-pane button */
+$('btn-loans-emp').addEventListener('click', () => {
+  if (!ST.selectedEmpId) return;
+  openLoanEmpModal(ST.selectedEmpId);
+});
+
+/* ─────────────────── MONTH CHANGE ───────────────────────────── */
+$('tb-month').addEventListener('change', async () => {
+  if (ST.dirty && !confirm('Unsaved changes. Discard?')) { $('tb-month').value = ST.month; return; }
+  ST.month = $('tb-month').value;
+  ST.dirty = false;
+  if (ST.selectedEmpId) await loadPeriod();
+  if (document.querySelector('.tab.active').dataset.tab === 'summary') loadSummary();
+});
+$('tb-export').addEventListener('click', () => {
+  window.location.href = `/api/hr_salary/export?month=${encodeURIComponent(ST.month)}`;
+});
+
+/* ─────────────────── SUMMARY + BULK ACTIONS ─────────────────── */
+$('btn-refresh-summary').addEventListener('click', loadSummary);
+
+async function loadSummary() {
+  const tb = $('sum-tbody');
+  tb.innerHTML = '<tr><td colspan="12" class="empty-note">Loading...</td></tr>';
+  $('sum-title').textContent = `Month Payroll Summary — ${ST.month}`;
+  try {
+    const j = await api(`/api/hr_salary/month_summary?month=${encodeURIComponent(ST.month)}`);
+    ST.summary = j.rows || [];
+    ST.selectedForWa.clear();
+    renderSummary();
+  } catch (e) {
+    tb.innerHTML = '<tr><td colspan="12" class="empty-note">Failed to load.</td></tr>';
+  }
+}
+function renderSummary() {
+  const tb = $('sum-tbody');
+  if (!ST.summary.length) {
+    tb.innerHTML = '<tr><td colspan="12" class="empty-note">No employees yet. Add or import employees to begin.</td></tr>';
+    updateBulkButtons(); return;
+  }
+  tb.innerHTML = ST.summary.map((r, i) => {
+    const checked = ST.selectedForWa.has(r.emp_id) ? 'checked' : '';
+    const selCls  = ST.selectedForWa.has(r.emp_id) ? 'selected' : '';
+    const mobileHtml = r.has_data
+      ? (r.mobile ? `<span class="mobile-pill">📱 ${esc(r.mobile)}</span>` : `<span class="mobile-pill none">no mobile</span>`)
+      : '—';
+    const emailHtml = r.has_data
+      ? (r.email ? `<span class="mobile-pill" style="background:#dcfce7;color:#166534">✉ ${esc(r.email)}</span>` : `<span class="mobile-pill none">no email</span>`)
+      : '';
+    const contactCell = `<div style="display:flex;flex-direction:column;gap:3px">${mobileHtml}${emailHtml ? emailHtml : ''}</div>`;
+    if (!r.has_data) {
+      return `<tr data-emp="${esc(r.emp_id)}">
+        <td class="cb-col">—</td><td>${i+1}</td><td>#${esc(r.emp_id)}</td>
+        <td>${esc(r.emp_name)}</td><td>${esc(r.department||'—')}</td>
+        <td>${contactCell}</td>
+        <td colspan="5" class="no-data">— no period data for this month —</td>
+        <td><button class="tool-btn ghost" style="height:26px;padding:0 10px;font-size:11px" onclick="selectEmpFromSummary('${esc(r.emp_id)}')">Open</button></td>
+      </tr>`;
+    }
+    // Row is checkable if EITHER mobile OR email is present (enables WhatsApp OR email)
+    const canSelect = !!(r.mobile || r.email);
+    return `<tr data-emp="${esc(r.emp_id)}" class="${selCls}">
+      <td class="cb-col">${canSelect ? `<input type="checkbox" class="row-cb" data-emp="${esc(r.emp_id)}" ${checked}>` : ''}</td>
+      <td>${i+1}</td><td>#${esc(r.emp_id)}</td>
+      <td>${esc(r.emp_name)}</td><td>${esc(r.department||'—')}</td>
+      <td>${contactCell}</td>
+      <td class="num">${fmtMoney(r.gross)}</td>
+      <td class="num">${fmt(r.total_days)}</td>
+      <td class="num">${fmtMoney(r.total_earned)}</td>
+      <td class="num">${fmtMoney(r.total_deduction)}</td>
+      <td class="num paid">${fmtMoney(r.paid_salary)}</td>
+      <td style="white-space:nowrap">
+        <a class="tool-btn ghost" style="height:26px;padding:0 8px;font-size:11px" href="/api/hr_salary/slip_pdf?emp_id=${encodeURIComponent(r.emp_id)}&month=${encodeURIComponent(ST.month)}" target="_blank">📄 PDF</a>
+      </td>
+    </tr>`;
+  }).join('');
+  tb.querySelectorAll('.row-cb').forEach(cb => cb.addEventListener('change', () => {
+    const eid = cb.dataset.emp;
+    if (cb.checked) ST.selectedForWa.add(eid); else ST.selectedForWa.delete(eid);
+    cb.closest('tr').classList.toggle('selected', cb.checked);
+    updateBulkButtons();
+  }));
+  updateBulkButtons();
+}
+function updateBulkButtons() {
+  const n = ST.selectedForWa.size;
+  $('sel-count').textContent = n ? `${n} selected` : '';
+  $('btn-wa-bulk').disabled = !n;
+  $('btn-pdf-selected').disabled = !n;
+  $('btn-email-bulk').disabled = !n;
+}
+window.selectEmpFromSummary = function(eid) {
+  document.querySelector('.tab[data-tab="calc"]').click();
+  setTimeout(() => selectEmployee(eid), 50);
+};
+$('sel-all').addEventListener('change', () => {
+  ST.selectedForWa.clear();
+  if ($('sel-all').checked) {
+    ST.summary.forEach(r => {
+      if (r.has_data && (r.mobile || r.email)) ST.selectedForWa.add(r.emp_id);
+    });
+  }
+  renderSummary();
+});
+
+$('btn-wa-bulk').addEventListener('click', async () => {
+  if (!ST.selectedForWa.size) return;
+  try {
+    const j = await api('/api/hr_salary/whatsapp/prepare', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({month:ST.month, emp_ids: [...ST.selectedForWa]})
+    });
+    openWaModal(j.items || []);
+  } catch (e) {}
+});
+
+$('btn-pdf-selected').addEventListener('click', async () => {
+  if (!ST.selectedForWa.size) return;
+  const btn = $('btn-pdf-selected');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Zipping...';
+  try {
+    const r = await fetch('/api/hr_salary/slips_zip', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({month:ST.month, emp_ids:[...ST.selectedForWa]})
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(()=>({message:'zip failed'}));
+      throw new Error(j.message || 'zip failed');
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Salary_Slips_${ST.month}.zip`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('✓ ZIP downloaded');
+  } catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+});
+
+/* ─────────────────── WhatsApp QUEUE ─────────────────────────── */
+function openWaModal(items) {
+  ST.waQueue = items;
+  ST.waIdx   = 0;
+  renderWaQueue();
+  $('wa-modal').classList.add('open');
+  updateWaNextBtn();
+}
+function closeWaModal() { $('wa-modal').classList.remove('open'); }
+window.closeWaModal = closeWaModal;
+
+function renderWaQueue() {
+  const q = $('wa-queue');
+  if (!ST.waQueue.length) {
+    q.innerHTML = '<div class="empty-emp">Nothing to send.</div>';
+    return;
+  }
+  q.innerHTML = ST.waQueue.map((it, i) => {
+    let status = 'pending';
+    if (it._result === 'done')    status = 'done';
+    else if (it._result === 'skipped') status = 'skipped';
+    else if (it._result === 'error')   status = 'error';
+    else if (i === ST.waIdx)           status = 'current';
+
+    const icon = ({done:'✓', current:'▸', skipped:'!', error:'✕', pending:i+1})[status];
+    const warning = it.warning ? `<div class="wa-info-warn">⚠ ${esc(it.warning)}</div>` : '';
+    const mobile  = it.mobile ? `<span class="mobile-pill">📱 ${esc(it.mobile)}</span>` : '';
+    return `<div class="wa-row ${status}">
+      <div class="wa-status-icon">${icon}</div>
+      <div class="wa-info">
+        <div class="wa-info-name">#${esc(it.emp_id)} — ${esc(it.emp_name)}
+          ${it.paid_salary ? `<span style="float:right;color:#059669;font-family:'JetBrains Mono',monospace">${fmtMoney(it.paid_salary)}</span>` : ''}
+        </div>
+        <div class="wa-info-meta">${esc(it.department || '—')} ${mobile}</div>
+        ${warning}
+      </div>
+    </div>`;
+  }).join('');
+}
+function updateWaNextBtn() {
+  const btn = $('wa-next');
+  // Skip past items that have no mobile/no period
+  while (ST.waIdx < ST.waQueue.length) {
+    const it = ST.waQueue[ST.waIdx];
+    if (it._result) { ST.waIdx++; continue; }
+    if (!it.wa_link) { it._result = 'skipped'; ST.waIdx++; continue; }
+    break;
+  }
+  if (ST.waIdx >= ST.waQueue.length) {
+    btn.textContent = '✓ All Done';
+    btn.disabled = true;
+    renderWaQueue();
+    return;
+  }
+  const cur = ST.waQueue[ST.waIdx];
+  btn.disabled = false;
+  btn.textContent = `▶ Open WhatsApp for ${cur.emp_name}`;
+  renderWaQueue();
+}
+
+$('wa-next').addEventListener('click', () => {
+  if (ST.waIdx >= ST.waQueue.length) return;
+  const cur = ST.waQueue[ST.waIdx];
+  if (!cur.wa_link) {
+    cur._result = 'skipped'; ST.waIdx++; updateWaNextBtn(); return;
+  }
+  const w = window.open(cur.wa_link, '_blank', 'noopener');
+  if (!w) {
+    toast('Browser blocked the popup — allow popups for this site', true);
+    return;
+  }
+  cur._result = 'done';
+  ST.waIdx++;
+  updateWaNextBtn();
+});
+
+$('wa-zip').addEventListener('click', async () => {
+  const emp_ids = ST.waQueue.filter(it => it.has_period).map(it => it.emp_id);
+  if (!emp_ids.length) { toast('No slips to zip', true); return; }
+  const btn = $('wa-zip');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Zipping...';
+  try {
+    const r = await fetch('/api/hr_salary/slips_zip', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({month:ST.month, emp_ids})
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(()=>({message:'zip failed'}));
+      throw new Error(j.message || 'zip failed');
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Salary_Slips_${ST.month}.zip`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('✓ ZIP downloaded — attach from WhatsApp manually if needed');
+  } catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+});
+
+/* ─────────────────── INIT ───────────────────────────────────── */
+(function init() {
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  ST.month = `${d.getFullYear()}-${mm}`;
+  $('tb-month').value = ST.month;
+  loadEmployees();
+})();
+</script>
+</body>
+</html>

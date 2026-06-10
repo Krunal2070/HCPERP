@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice Document Checklist – HCP Wellness Pvt Ltd</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Screen ── */
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #f1f5f9;
+  padding: 24px;
+}
+
+.screen-header {
+  max-width: 720px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.screen-header h1 { font-size: 17px; font-weight: 800; color: #0f172a; }
+.screen-header p  { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+.btn-print {
+  padding: 9px 22px;
+  border-radius: 10px;
+  background: #0d9488;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-print:hover { background: #0f766e; }
+
+/* ── A4 sheet (screen preview) ── */
+.a4-sheet {
+  width: 210mm;
+  height: 297mm;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.10);
+  padding: 6mm 11mm 6mm;
+  display: flex;
+  flex-direction: column;
+  gap: 3mm;
+  overflow: hidden;
+}
+
+/* ── Single checklist card ── */
+.cl-card {
+  flex: 1;
+  border: 1.2px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 2.5mm 5mm 2.5mm;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card header */
+.cl-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1.2mm;
+  margin-bottom: 1.2mm;
+}
+.cl-company {
+  font-size: 7pt;
+  font-weight: 800;
+  color: #0d9488;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.cl-title {
+  font-size: 9pt;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 1px;
+}
+.cl-docno {
+  font-size: 6.5pt;
+  color: #94a3b8;
+  text-align: right;
+  line-height: 1.9;
+}
+.cl-docno span {
+  display: inline-block;
+  border-bottom: 1px solid #94a3b8;
+  min-width: 26mm;
+}
+
+/* Items table */
+.cl-table {
+  width: 100%;
+  border-collapse: collapse;
+  flex: 1;
+}
+.cl-table td {
+  padding: 0.7mm 0;
+  vertical-align: middle;
+}
+.cl-table tr + tr td { border-top: 1px dotted #e8ecf0; }
+
+.ci-num  { width: 5mm; font-size: 6.5pt; font-weight: 800; color: #94a3b8; }
+.ci-box  { width: 6mm; }
+.ci-box-inner {
+  width: 12px; height: 12px;
+  border: 1.5px solid #334155;
+  border-radius: 2px;
+  display: inline-block;
+}
+.ci-text { font-size: 8pt; font-weight: 600; color: #1e293b; }
+
+/* Footer */
+.cl-footer {
+  display: flex;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1.5mm;
+  padding-top: 1.5mm;
+}
+.cf-col {
+  flex: 1;
+  padding: 0 2.5mm;
+  border-right: 1px solid #e8ecf0;
+}
+.cf-col:first-child { padding-left: 0; }
+.cf-col:last-child  { padding-right: 0; border-right: none; }
+.cf-label {
+  font-size: 5.5pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: #94a3b8;
+  margin-bottom: 1mm;
+}
+.cf-line {
+  border-bottom: 1px solid #334155;
+  height: 6px;
+}
+
+/* ── Print ── */
+@media print {
+  body { background: #fff; padding: 0; }
+  .screen-header { display: none !important; }
+  .a4-sheet {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 6mm 11mm 6mm;
+  }
+  @page { size: A4 portrait; margin: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="screen-header">
+  <div>
+    <h1>📋 Invoice Document Checklist</h1>
+    <p>HCP Wellness Pvt Ltd · Purchase Dept &nbsp;—&nbsp; 3 slips per A4 sheet</p>
+  </div>
+  <button class="btn-print" onclick="window.print()">🖨️ Print</button>
+</div>
+
+<div class="a4-sheet">
+
+  <div class="cl-card">
+    <div class="cl-head">
+      <div>
+        <div class="cl-company">HCP Wellness Pvt Ltd · Purchase Dept.</div>
+        <div class="cl-title">Invoice Document Checklist</div>
+      </div>
+      <div class="cl-docno">Invoice No.&nbsp;<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><br>GRN No.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+    </div>
+    <table class="cl-table"><tbody>
+      <tr><td class="ci-num">1</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Material Cost Per Kg matching against PO</td></tr>
+      <tr><td class="ci-num">2</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Invoice Total Calculations Check</td></tr>
+      <tr><td class="ci-num">3</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">PO Number matching in Printed PO vs Invoice</td></tr>
+      <tr><td class="ci-num">4</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Material Quantity matching Invoice vs GRN</td></tr>
+      <tr><td class="ci-num">5</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">GST Check — Invoice vs PO</td></tr>
+    </tbody></table>
+    <div class="cl-footer">
+      <div class="cf-col"><div class="cf-label">Checked By</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Signature</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Date</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Remarks</div><div class="cf-line"></div></div>
+    </div>
+  </div>
+
+  <div class="cl-card">
+    <div class="cl-head">
+      <div>
+        <div class="cl-company">HCP Wellness Pvt Ltd · Purchase Dept.</div>
+        <div class="cl-title">Invoice Document Checklist</div>
+      </div>
+      <div class="cl-docno">Invoice No.&nbsp;<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><br>GRN No.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+    </div>
+    <table class="cl-table"><tbody>
+      <tr><td class="ci-num">1</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Material Cost Per Kg matching against PO</td></tr>
+      <tr><td class="ci-num">2</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Invoice Total Calculations Check</td></tr>
+      <tr><td class="ci-num">3</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">PO Number matching in Printed PO vs Invoice</td></tr>
+      <tr><td class="ci-num">4</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Material Quantity matching Invoice vs GRN</td></tr>
+      <tr><td class="ci-num">5</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">GST Check — Invoice vs PO</td></tr>
+    </tbody></table>
+    <div class="cl-footer">
+      <div class="cf-col"><div class="cf-label">Checked By</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Signature</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Date</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Remarks</div><div class="cf-line"></div></div>
+    </div>
+  </div>
+
+  <div class="cl-card">
+    <div class="cl-head">
+      <div>
+        <div class="cl-company">HCP Wellness Pvt Ltd · Purchase Dept.</div>
+        <div class="cl-title">Invoice Document Checklist</div>
+      </div>
+      <div class="cl-docno">Invoice No.&nbsp;<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><br>GRN No.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+    </div>
+    <table class="cl-table"><tbody>
+      <tr><td class="ci-num">1</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Material Cost Per Kg matching against PO</td></tr>
+      <tr><td class="ci-num">2</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Invoice Total Calculations Check</td></tr>
+      <tr><td class="ci-num">3</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">PO Number matching in Printed PO vs Invoice</td></tr>
+      <tr><td class="ci-num">4</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">Material Quantity matching Invoice vs GRN</td></tr>
+      <tr><td class="ci-num">5</td><td class="ci-box"><span class="ci-box-inner"></span></td><td class="ci-text">GST Check — Invoice vs PO</td></tr>
+    </tbody></table>
+    <div class="cl-footer">
+      <div class="cf-col"><div class="cf-label">Checked By</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Signature</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Date</div><div class="cf-line"></div></div>
+      <div class="cf-col"><div class="cf-label">Remarks</div><div class="cf-line"></div></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

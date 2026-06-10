@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Material Rates | R&D Sampling</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body, 'Inter', 'Segoe UI', system-ui, sans-serif);
+            background: var(--bg, #f0f4f8);
+            color: var(--text, #1e293b);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Navbar ── */
+        .top-navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 60%,#2563eb 100%);
+            border-bottom: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            box-shadow: 0 2px 16px rgba(30,58,138,.28);
+        }
+        [data-theme="dark"]     .top-navbar { background: var(--topbar-bg,rgba(10,14,26,.93)); border-bottom:1px solid var(--border); box-shadow:var(--shadow-sm); }
+        [data-theme="midnight"] .top-navbar { background: var(--topbar-bg,rgba(0,0,0,.96)); border-bottom:1px solid var(--border); box-shadow:var(--shadow-sm); }
+        [data-theme="ocean"]    .top-navbar { background: var(--topbar-bg,rgba(0,30,60,.96)); border-bottom:1px solid var(--border); box-shadow:var(--shadow-sm); }
+        [data-theme="sage"]     .top-navbar { background: var(--topbar-bg,rgba(255,255,255,.96)); border-bottom:1px solid var(--border); box-shadow:var(--shadow-sm); }
+        .company-logo { height: 38px; width: auto; object-fit: contain; }
+        .btn-delete {
+            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+            border-radius: 8px; padding: 6px 12px; cursor: pointer;
+            font-size: 0.78rem; font-weight: 700; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+
+        /* ── Navbar title — bright white on dark blue ── */
+        .navbar-title-main {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.01em;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        }
+        .navbar-title-main .navbar-sep {
+            font-weight: 300;
+            color: rgba(255,255,255,0.65);
+        }
+        [data-theme="sage"] .navbar-title-main { color: var(--text, #0c4a6e); }
+        [data-theme="sage"] .navbar-title-main .navbar-sep { color: var(--muted2, #64748b); }
+
+        /* ── Page body ── */
+        .page-body {
+            padding: 80px 24px 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .top-navbar .user-label { color: rgba(255,255,255,.85); font-size:0.83rem; }
+        [data-theme="sage"] .top-navbar .user-label { color: var(--muted2, #64748b); }
+
+        /* ── Page header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border, #e2e8f0);
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 36px;
+            padding: 0 16px;
+            border-radius: 9px;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .back-btn:hover { border-color: #0891b2; color: #0891b2; background: #f0f9ff; }
+        .page-title-wrap { flex: 1; }
+        .page-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text, #0c4a6e);
+            margin: 0 0 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .page-subtitle { font-size: 0.78rem; color: var(--muted2, #64748b); }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+        }
+        .search-wrap i.fa-search {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.82rem;
+        }
+        .search-wrap input {
+            width: 100%;
+            padding: 9px 12px 9px 34px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            font-size: 0.84rem;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--surface, #fff);
+        }
+        .search-wrap input:focus { border-color: #0891b2; }
+        .search-wrap .spinner {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #0891b2;
+            display: none;
+        }
+        .btn-wa {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: 9px;
+            border: none;
+            background: linear-gradient(135deg, #075e54, #128C7E);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(18,140,126,0.35);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-wa:hover { background: linear-gradient(135deg, #064e47, #0e7a70); }
+
+        /* ── Card + table ── */
+        .table-card {
+            background: var(--surface, #fff);
+            border-radius: 14px;
+            border: 1px solid var(--border, #e2e8f0);
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06));
+            overflow: hidden;
+        }
+        .table-wrap { overflow-y: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+            table-layout: fixed;
+        }
+        colgroup col:nth-child(1) { width: 42px; }
+        colgroup col:nth-child(2) { width: 38%; }
+        colgroup col:nth-child(3) { width: 32%; }
+        colgroup col:nth-child(4) { width: 16%; }
+        colgroup col:nth-child(5) { width: 14%; }
+
+        thead tr {
+            background: var(--surface2, #f0f9ff);
+            border-bottom: 2px solid var(--border2, #bae6fd);
+        }
+        thead th {
+            padding: 11px 14px;
+            text-align: left;
+            font-size: 0.66rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: var(--muted2, #0c4a6e);
+            position: sticky;
+            top: 0;
+            background: var(--surface2, #f0f9ff);
+            z-index: 2;
+        }
+        thead th.rate-col { text-align: right; color: #0891b2; }
+        thead th.center-col { text-align: center; }
+
+        tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.1s;
+        }
+        tbody tr:hover { background: var(--teal-glow2, var(--text-05, #f0f9ff)); }
+        tbody tr:nth-child(even) { background: var(--surface2, #f8fafc); }
+        tbody tr:nth-child(even):hover { background: var(--teal-glow2, #f0f9ff); }
+
+        tbody td {
+            padding: 9px 14px;
+            color: var(--text, #1e293b);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border, #f1f5f9);
+        }
+        td.material-name { font-weight: 600; }
+        td.supplier { color: var(--text-60, var(--muted2, #475569)); }
+        td.rate { text-align: right; font-weight: 800; font-family: 'Courier New', monospace; color: var(--teal, #0891b2); }
+        td.rate.na { color: var(--muted, #94a3b8); font-weight: 400; }
+        td.updated { color: var(--muted, #94a3b8); font-size: 0.74rem; text-align: center; }
+
+        /* ── Footer bar ── */
+        .table-footer {
+            padding: 10px 16px;
+            background: var(--surface2, #f8fafc);
+            border-top: 1px solid var(--border, #e2e8f0);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--muted2, #64748b);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* ── Pagination ── */
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .pg-btn {
+            min-width: 32px;
+            height: 32px;
+            padding: 0 8px;
+            border-radius: 7px;
+            border: 1.5px solid var(--border, #e2e8f0);
+            background: var(--surface, #fff);
+            color: var(--text, #374151);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .pg-btn:hover:not(:disabled) { border-color: #0891b2; color: #0891b2; background: #f0f9ff; }
+        .pg-btn.active { background: #0891b2; border-color: #0891b2; color: #fff; }
+        .pg-btn:disabled { opacity: 0.38; cursor: default; }
+        .pg-info {
+            font-size: 0.76rem;
+            color: var(--muted2, #64748b);
+            white-space: nowrap;
+        }
+
+        /* ── Empty / loading states ── */
+        .state-row td {
+            text-align: center;
+            padding: 48px;
+            color: #94a3b8;
+            font-size: 0.88rem;
+        }
+    </style>
+    <link rel="stylesheet" href="/static/hcptheme.css">
+    <script>(function(){var t=localStorage.getItem("hcp_theme")||"light";if(["light","dark","midnight","ocean","sage"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);})()</script>
+</head>
+<body>
+
+<!-- Navbar -->
+{% set page_title = "Material Rates" %}
+{% set page_subtitle = "Supplier and last purchase rate" %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<!-- Page body -->
+<div class="page-body">
+
+    <!-- Page header -->
+    <div class="page-header">
+        <div class="page-title-wrap">
+            <div class="page-title">
+                <i class="fas fa-tags" style="color:#0891b2;font-size:1.1rem;"></i>
+                Material Rates &amp; Suppliers
+            </div>
+            <div class="page-subtitle">Current supplier and last purchase rate from procurement database</div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search material name or supplier…"
+                   oninput="doSearch()" autocomplete="off">
+            <i class="fas fa-spinner fa-spin spinner" id="searchSpinner"></i>
+        </div>
+        <button class="btn-wa" onclick="sendWhatsApp()">
+            <i class="fab fa-whatsapp"></i> Send via WhatsApp
+        </button>
+    </div>
+
+    <!-- Table card -->
+    <div class="table-card">
+        <div class="table-wrap">
+            <table>
+                <colgroup>
+                    <col><col><col><col><col>
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="padding:11px 14px;width:42px;">
+                            <input type="checkbox" id="selectAll" onchange="toggleAll(this)"
+                                   style="width:14px;height:14px;accent-color:#0891b2;cursor:pointer;"
+                                   title="Select / deselect all across all pages">
+                        </th>
+                        <th>Material Name</th>
+                        <th>Supplier</th>
+                        <th class="rate-col">Last Rate (&#8377;/kg)</th>
+                        <th class="center-col">Updated</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr class="state-row">
+                        <td colspan="5">
+                            <i class="fas fa-spinner fa-spin" style="font-size:1.5rem;display:block;margin-bottom:10px;"></i>
+                            Loading materials…
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span id="countLabel">—</span>
+            <div class="pagination" id="paginationBar"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   State
+───────────────────────────────────────────── */
+var _allMaterials   = [];   // full filtered list
+var _selectedIds    = new Set();  // IDs selected across ALL pages
+var _currentPage    = 1;
+var PAGE_SIZE       = 15;
+var _searchTimer    = null;
+
+/* ─────────────────────────────────────────────
+   Boot
+───────────────────────────────────────────── */
+window.addEventListener("load", function(){ loadMaterials(""); });
+
+/* ─────────────────────────────────────────────
+   Load from API
+───────────────────────────────────────────── */
+function loadMaterials(q) {
+    var spinner = document.getElementById("searchSpinner");
+    var tbody   = document.getElementById("tableBody");
+    spinner.style.display = "block";
+    fetch("/api/rd/material_rates?q=" + encodeURIComponent(q))
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            _allMaterials = data.materials || [];
+            // Keep only selections that still exist in new result set
+            var idSet = new Set(_allMaterials.map(function(m){ return String(m.id); }));
+            _selectedIds.forEach(function(id){ if (!idSet.has(id)) _selectedIds.delete(id); });
+            _currentPage = 1;
+            renderPage();
+        })
+        .catch(function(){
+            tbody.innerHTML = "<tr class='state-row'><td colspan='5' style='color:#dc2626;'>Failed to load. Please refresh.</td></tr>";
+            document.getElementById("paginationBar").innerHTML = "";
+        })
+        .finally(function(){ spinner.style.display = "none"; });
+}
+
+/* ─────────────────────────────────────────────
+   Search debounce
+───────────────────────────────────────────── */
+function doSearch() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(function(){
+        var q = (document.getElementById("searchInput").value || "").trim();
+        loadMaterials(q);
+    }, 300);
+}
+
+/* ─────────────────────────────────────────────
+   Render current page
+───────────────────────────────────────────── */
+function renderPage() {
+    var total     = _allMaterials.length;
+    var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (_currentPage > totalPages) _currentPage = totalPages;
+
+    var start = (_currentPage - 1) * PAGE_SIZE;
+    var end   = Math.min(start + PAGE_SIZE, total);
+    var rows  = _allMaterials.slice(start, end);
+
+    renderTable(rows);
+    renderPagination(totalPages, total);
+    updateCount();
+}
+
+/* ─────────────────────────────────────────────
+   Render table rows for current page
+───────────────────────────────────────────── */
+function renderTable(rows) {
+    var tbody = document.getElementById("tableBody");
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    if (!rows.length) {
+        tbody.innerHTML = "<tr class='state-row'><td colspan='5'><i class='fas fa-search' style='font-size:1.4rem;display:block;margin-bottom:8px;opacity:0.35;'></i>No materials found.</td></tr>";
+        return;
+    }
+
+    rows.forEach(function(m) {
+        var rateNum = parseFloat(m.last_purchase_rate);
+        var hasRate = !isNaN(rateNum) && m.last_purchase_rate !== null && m.last_purchase_rate !== "";
+        var rateStr = hasRate ? "\u20b9" + rateNum.toLocaleString("en-IN", {minimumFractionDigits:2, maximumFractionDigits:2}) : "\u2014";
+        var updated = m.updated_at ? String(m.updated_at).slice(0,10) : "\u2014";
+        var idStr   = String(m.id);
+
+        var tr = document.createElement("tr");
+
+        // Checkbox — reflect cross-page selection state
+        var tdCb = document.createElement("td");
+        tdCb.style.padding = "9px 14px";
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "row-cb";
+        cb.value = idStr;
+        cb.dataset.name     = m.material_name || "";
+        cb.dataset.supplier = m.supplier_name || "";
+        cb.dataset.rate     = m.last_purchase_rate || "";
+        cb.checked          = _selectedIds.has(idStr);
+        cb.style.cssText    = "width:14px;height:14px;accent-color:#0891b2;cursor:pointer;";
+        cb.addEventListener("change", function(){
+            if (this.checked) { _selectedIds.add(this.value); }
+            else              { _selectedIds.delete(this.value); }
+            updateCount();
+        });
+        tdCb.appendChild(cb);
+        tr.appendChild(tdCb);
+
+        // Material name
+        var tdName = document.createElement("td");
+        tdName.className = "material-name";
+        tdName.title = m.material_name || "";
+        tdName.textContent = m.material_name || "\u2014";
+        tr.appendChild(tdName);
+
+        // Supplier
+        var tdSupp = document.createElement("td");
+        tdSupp.className = "supplier";
+        tdSupp.title = m.supplier_name || "";
+        tdSupp.textContent = m.supplier_name || "\u2014";
+        tr.appendChild(tdSupp);
+
+        // Rate
+        var tdRate = document.createElement("td");
+        tdRate.className = "rate" + (hasRate ? "" : " na");
+        tdRate.textContent = rateStr;
+        tr.appendChild(tdRate);
+
+        // Updated
+        var tdUpd = document.createElement("td");
+        tdUpd.className = "updated";
+        tdUpd.textContent = updated;
+        tr.appendChild(tdUpd);
+
+        tbody.appendChild(tr);
+    });
+}
+
+/* ─────────────────────────────────────────────
+   Pagination bar
+───────────────────────────────────────────── */
+function renderPagination(totalPages, totalItems) {
+    var bar = document.getElementById("paginationBar");
+    bar.innerHTML = "";
+    if (totalPages <= 1) return;
+
+    function pgBtn(label, page, isCurrent, disabled, isIcon) {
+        var btn = document.createElement("button");
+        btn.className = "pg-btn" + (isCurrent ? " active" : "");
+        btn.disabled  = disabled;
+        if (isIcon) btn.innerHTML = label;
+        else        btn.textContent = label;
+        if (!disabled && !isCurrent) {
+            btn.addEventListener("click", function(){ goToPage(page); });
+        }
+        return btn;
+    }
+
+    // Prev
+    bar.appendChild(pgBtn('<i class="fas fa-chevron-left"></i>', _currentPage - 1, false, _currentPage === 1, true));
+
+    // Page number buttons — show at most 7 slots
+    var pages = buildPageRange(_currentPage, totalPages);
+    pages.forEach(function(p) {
+        if (p === "…") {
+            var el = document.createElement("span");
+            el.textContent = "…";
+            el.style.cssText = "padding:0 4px;font-size:0.78rem;color:#94a3b8;line-height:32px;";
+            bar.appendChild(el);
+        } else {
+            bar.appendChild(pgBtn(p, p, p === _currentPage, false, false));
+        }
+    });
+
+    // Next
+    bar.appendChild(pgBtn('<i class="fas fa-chevron-right"></i>', _currentPage + 1, false, _currentPage === totalPages, true));
+
+    // Page info
+    var info = document.createElement("span");
+    info.className = "pg-info";
+    var start = (_currentPage - 1) * PAGE_SIZE + 1;
+    var end   = Math.min(_currentPage * PAGE_SIZE, totalItems);
+    info.textContent = start + "–" + end + " of " + totalItems;
+    bar.appendChild(info);
+}
+
+function buildPageRange(current, total) {
+    if (total <= 7) {
+        var arr = [];
+        for (var i = 1; i <= total; i++) arr.push(i);
+        return arr;
+    }
+    if (current <= 4) return [1,2,3,4,5,"…",total];
+    if (current >= total - 3) return [1,"…",total-4,total-3,total-2,total-1,total];
+    return [1,"…",current-1,current,current+1,"…",total];
+}
+
+function goToPage(page) {
+    _currentPage = page;
+    renderPage();
+    // Scroll table top
+    var wrap = document.querySelector(".table-wrap");
+    if (wrap) wrap.scrollTop = 0;
+}
+
+/* ─────────────────────────────────────────────
+   Select All (across ALL pages)
+───────────────────────────────────────────── */
+function toggleAll(cb) {
+    if (cb.checked) {
+        // Select every item in the full filtered list
+        _allMaterials.forEach(function(m){ _selectedIds.add(String(m.id)); });
+    } else {
+        _selectedIds.clear();
+    }
+    // Reflect on visible checkboxes
+    document.querySelectorAll(".row-cb").forEach(function(c){
+        c.checked = _selectedIds.has(c.value);
+    });
+    updateCount();
+}
+
+/* ─────────────────────────────────────────────
+   Count label + selectAll indicator
+───────────────────────────────────────────── */
+function updateCount() {
+    var n   = _selectedIds.size;
+    var tot = _allMaterials.length;
+    var el  = document.getElementById("countLabel");
+    el.textContent = n ? (n + " of " + tot + " selected") : (tot + " material" + (tot !== 1 ? "s" : ""));
+    var sa = document.getElementById("selectAll");
+    sa.indeterminate = n > 0 && n < tot;
+    sa.checked       = n === tot && tot > 0;
+}
+
+/* ─────────────────────────────────────────────
+   WhatsApp — uses _selectedIds (cross-page)
+───────────────────────────────────────────── */
+function sendWhatsApp() {
+    if (!_selectedIds.size) { alert("Select at least one material to share."); return; }
+    var selected = _allMaterials.filter(function(m){ return _selectedIds.has(String(m.id)); });
+    var lines = selected.map(function(m, i){
+        var rateNum = parseFloat(m.last_purchase_rate);
+        var rate    = isNaN(rateNum) ? "Rate N/A" : "\u20b9" + rateNum.toLocaleString("en-IN", {minimumFractionDigits:2}) + "/kg";
+        return (i+1) + ". *" + (m.material_name||"") + "*\n   Supplier: " + (m.supplier_name||"\u2014") + "\n   Last Rate: " + rate;
+    }).join("\n\n");
+    var msg = "*Material Rates \u2014 HCP Wellness*\n\n" + lines + "\n\n_Shared from R&D Sampling Portal_";
+    window.open("https://web.whatsapp.com/send?text=" + encodeURIComponent(msg), "_blank");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Management — HCP Portal</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcp-notebooklm.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcp-notebooklm-effects.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script>
+(function(){
+  var valid=['light','dark','midnight','ocean','sage'];
+  var t=localStorage.getItem('hcp_theme')||'light';
+  if(valid.indexOf(t)===-1) t='light';
+  document.documentElement.setAttribute('data-theme',t);
+})();
+</script>
+<style>
+  :root{
+    --mu-primary: var(--nb-primary,#1A73E8);
+    --mu-surface: var(--nb-surface,#fff);
+    --mu-bg: var(--nb-bg,#FAF9F5);
+    --mu-text: var(--nb-text,#1F1F1F);
+    --mu-muted: var(--nb-text-muted,#5F6368);
+    --mu-subtle: var(--nb-text-subtle,#80868B);
+    --mu-border: var(--nb-border,rgba(0,0,0,.07));
+    --mu-border-strong: var(--nb-border-strong,rgba(0,0,0,.12));
+    --mu-radius: var(--nb-radius-md,12px);
+    --mu-radius-lg: var(--nb-radius-lg,16px);
+    --mu-shadow-md: var(--nb-shadow-md,0 4px 14px rgba(0,0,0,.07));
+    --mu-shadow-lg: var(--nb-shadow-lg,0 14px 32px rgba(0,0,0,.10));
+    --mu-font: var(--nb-font,'Plus Jakarta Sans','Inter','Segoe UI',system-ui,sans-serif);
+    --mu-ease: var(--nb-ease,cubic-bezier(.22,1,.36,1));
+  }
+  *{box-sizing:border-box;}
+  html{overflow-x:hidden;}
+  body{
+    margin:0; font-family:var(--mu-font); color:var(--mu-text);
+    background:var(--mu-bg);
+    background-image:
+      radial-gradient(ellipse 70% 55% at 12% 0%, rgba(26,115,232,.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 70% at 95% 100%, rgba(0,137,123,.05) 0%, transparent 65%);
+    min-height:100vh; overflow-x:hidden; overflow-y:auto;
+  }
+  .mu-wrap{width:100%; max-width:100%; margin:0 auto; padding:26px clamp(16px,3vw,48px) 60px;}
+  .mu-head{display:flex; align-items:center; gap:13px; margin-bottom:20px; flex-wrap:wrap;}
+  .mu-head .ic{width:44px; height:44px; border-radius:13px; flex-shrink:0; background:var(--nb-grad-blue, linear-gradient(135deg,#1A73E8,#64B5F6)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; box-shadow:var(--mu-shadow-md);}
+  .mu-head h1{margin:0; font-size:20px; font-weight:800; letter-spacing:-.3px;}
+  .mu-head p{margin:2px 0 0; font-size:12.5px; color:var(--mu-muted);}
+  .mu-back{font-size:12.5px; color:var(--mu-primary); text-decoration:none; font-weight:700;}
+  .mu-back:hover{text-decoration:underline;}
+  .mu-add{margin-left:auto; padding:11px 18px; border:none; border-radius:11px; background:var(--nb-grad-blue, linear-gradient(135deg,#1A73E8,#64B5F6)); color:#fff; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:7px; box-shadow:var(--mu-shadow-md); transition:transform .15s var(--mu-ease), filter .15s;}
+  .mu-add:hover{transform:translateY(-1px); filter:brightness(1.05);}
+
+  .stats-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;}
+  @media (max-width:1180px){ .stats-grid{grid-template-columns:repeat(3,1fr);} }
+
+  /* Single-login toggle bar (admin only) */
+  .single-login-bar{
+    display:flex; align-items:center; gap:16px;
+    background:linear-gradient(135deg,#fff,#fef9f5);
+    border:1.5px solid var(--mu-border-strong); border-radius:var(--mu-radius-lg);
+    padding:13px 18px; margin-bottom:18px; flex-wrap:wrap;
+  }
+  .sl-info{display:flex; align-items:center; gap:13px; flex:1; min-width:0;}
+  .sl-icon{
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    background:linear-gradient(135deg,#F57C00,#FFB74D); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:17px;
+    box-shadow:0 3px 10px rgba(245,124,0,.22);
+  }
+  .sl-text h4{margin:0 0 2px; font-size:13.5px; font-weight:700; letter-spacing:-.2px;}
+  .sl-text p{margin:0; font-size:11.5px; color:var(--mu-muted); line-height:1.4;}
+  .sl-toggle-wrap{display:flex; align-items:center; gap:9px; flex-shrink:0;}
+  .sl-state{
+    font-size:11px; font-weight:800; color:var(--mu-muted); letter-spacing:.5px;
+    min-width:28px; text-align:left;
+  }
+  .sl-state.on{color:var(--mu-primary);}
+  .sw-lg{width:46px; height:24px;}
+  .sw-lg .track::before{height:18px; width:18px;}
+  .sw-lg input:checked + .track::before{transform:translateX(22px);}
+  @media (max-width:700px){
+    .single-login-bar{padding:12px 14px;}
+    .sl-text h4{font-size:13px;}
+    .sl-text p{font-size:11px;}
+  }
+  @media (max-width:980px){ .stats-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:480px){ .stats-grid{grid-template-columns:1fr 1fr; gap:8px;} }
+
+  .mu-filters{display:flex; gap:9px; margin-bottom:18px; flex-wrap:wrap;}
+  .mu-filters input, .mu-filters select{padding:11px 14px; font-size:13px; font-family:inherit; color:var(--mu-text); background:var(--mu-surface); border:1.5px solid var(--mu-border-strong); border-radius:11px; outline:none; transition:border-color var(--mu-ease), box-shadow var(--mu-ease);}
+  .mu-filters input{flex:1; min-width:160px;}
+  .mu-filters select{min-width:140px;}
+  .mu-filters input:focus, .mu-filters select:focus{border-color:var(--mu-primary); box-shadow:0 0 0 4px rgba(26,115,232,.12);}
+
+  .mu-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(248px,1fr)); gap:16px;}
+  .ucard{position:relative; display:flex; flex-direction:column; background:var(--mu-surface); border:1px solid var(--mu-border); border-radius:var(--mu-radius-lg); overflow:hidden; min-height:222px; box-shadow:0 2px 6px rgba(0,0,0,.04); transition:transform .25s var(--mu-ease), box-shadow .25s var(--mu-ease), border-color .25s;}
+  .ucard:hover{transform:translateY(-5px); border-color:var(--mu-border-strong); box-shadow:0 10px 30px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.05);}
+  .ucard.inactive{opacity:.66;}
+  .ucard-cover{height:96px; position:relative; display:flex; align-items:center; justify-content:center; background:var(--cover-tint,#E8F0FE); overflow:hidden;}
+  .ucard-cover::before{content:''; position:absolute; inset:0; background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.6), transparent 60%); pointer-events:none;}
+  .ucard-ava{width:54px; height:54px; border-radius:50%; z-index:1; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; background:var(--ava-grad, linear-gradient(135deg,#1A73E8,#64B5F6)); box-shadow:0 3px 8px rgba(0,0,0,.14);}
+  .ucard-ava img{width:100%; height:100%; border-radius:50%; object-fit:cover;}
+  .ucard-status{position:absolute; top:10px; right:10px; z-index:1; font-size:10.5px; font-weight:600; background:rgba(255,255,255,.88); padding:2px 9px; border-radius:999px;}
+  .ucard-status.on{color:var(--nb-success,#137333);}
+  .ucard-status.off{color:var(--mu-muted);}
+  .ucard-status.locked{color:var(--nb-danger,#C5221F); background:rgba(252,232,230,.95);}
+  .ucard.locked{outline:1.5px solid rgba(197,34,31,.18); outline-offset:-1.5px;}
+  .ucard-status i{font-size:7px; vertical-align:middle; margin-right:4px;}
+  .ucard-body{padding:12px 15px 14px; display:flex; flex-direction:column; flex:1;}
+  .ucard-meta{font-size:10.5px; font-weight:600; color:var(--mu-muted); text-transform:uppercase; letter-spacing:.3px; margin-bottom:3px; overflow-wrap:anywhere;}
+  .ucard-name{font-size:15px; font-weight:700; line-height:1.3; margin-bottom:2px; overflow-wrap:anywhere;}
+  .ucard-user{font-size:12px; color:var(--mu-muted); margin-bottom:10px; overflow-wrap:anywhere;}
+  .ucard-badges{display:flex; gap:5px; flex-wrap:wrap; margin-bottom:12px;}
+  .ubadge{font-size:10.5px; font-weight:600; padding:2px 9px; border-radius:999px;}
+  .ubadge.type{background:var(--nb-primary-light,#E8F0FE); color:#185FA5;}
+  .ubadge.lvl{background:var(--nb-surface-2,#F1EFE8); color:#5F5E5A;}
+  .ucard-actions{margin-top:auto; display:flex; gap:6px;}
+  .uact{font-size:12px; padding:7px 10px; border:1.5px solid var(--mu-border-strong); border-radius:8px; background:var(--mu-surface); cursor:pointer; font-family:inherit; color:var(--mu-text); display:inline-flex; align-items:center; justify-content:center; gap:5px; transition:all var(--mu-ease);}
+  .uact:hover{background:var(--nb-primary-light,#E8F0FE); border-color:var(--mu-primary); color:var(--mu-primary);}
+  .uact.edit{flex:1;}
+  .uact.danger:hover{background:var(--nb-danger-light,#FCE8E6); border-color:var(--nb-danger,#C5221F); color:var(--nb-danger,#C5221F);}
+  .mu-empty{text-align:center; color:var(--mu-subtle); padding:50px 0; font-size:14px; grid-column:1/-1;}
+
+  /* Modal — used by edit + reset + lookup CRUD */
+  .mu-modal-bg{position:fixed; inset:0; background:var(--nb-overlay,rgba(31,31,31,.45)); display:none; align-items:flex-start; justify-content:center; z-index:100; padding:24px 18px; backdrop-filter:blur(2px); overflow-y:auto;}
+  .mu-modal-bg.show{display:flex;}
+  .mu-modal{background:var(--mu-surface); border-radius:var(--mu-radius-lg); box-shadow:var(--nb-shadow-xl,0 24px 60px rgba(0,0,0,.18)); width:560px; max-width:100%; max-height:calc(100vh - 48px); margin:auto 0; display:flex; flex-direction:column; min-height:0; animation:muPop .28s var(--nb-ease-spring,cubic-bezier(.34,1.56,.64,1));}
+  .mu-modal.sm{width:420px;}
+  @keyframes muPop{from{opacity:0; transform:scale(.95) translateY(8px);} to{opacity:1; transform:none;}}
+  .mu-modal-h{display:flex; align-items:center; gap:11px; padding:16px 20px; border-bottom:1px solid var(--mu-border); flex-shrink:0;}
+  .mu-modal-h .ava{width:40px; height:40px; border-radius:50%; color:#fff; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; background:var(--nb-grad-blue, linear-gradient(135deg,#1A73E8,#64B5F6)); flex-shrink:0;}
+  .mu-modal-h h3{margin:0; font-size:14px; font-weight:800;}
+  .mu-modal-h p{margin:0; font-size:12px; color:var(--mu-muted);}
+  .mu-modal-h .x{margin-left:auto; cursor:pointer; color:var(--mu-subtle); font-size:18px; background:none; border:none;}
+  .mu-modal-h .x:hover{color:var(--mu-text);}
+  .mu-modal-b{padding:18px 20px; overflow-y:auto; flex:1 1 auto; min-height:0; -webkit-overflow-scrolling:touch;}
+  .mu-modal-f{display:flex; gap:8px; padding:14px 20px; border-top:1px solid var(--mu-border); background:var(--nb-surface-2,#FAFAFA); border-radius:0 0 var(--mu-radius-lg) var(--mu-radius-lg); flex-shrink:0; flex-wrap:wrap;}
+
+  .mu-row{display:grid; grid-template-columns:1fr 1fr; gap:13px 14px;}
+  .mu-fld label{display:block; font-size:11px; font-weight:700; color:var(--mu-muted); margin-bottom:5px;}
+  .mu-fld label .req{color:var(--nb-danger,#C5221F); margin-left:2px;}
+  .mu-fld input, .mu-fld select{width:100%; padding:10px 12px; font-size:13px; font-family:inherit; color:var(--mu-text); background:var(--mu-surface); border:1.5px solid var(--mu-border-strong); border-radius:10px; outline:none; transition:border-color var(--mu-ease), box-shadow var(--mu-ease);}
+  .mu-fld input:focus, .mu-fld select:focus{border-color:var(--mu-primary); box-shadow:0 0 0 4px rgba(26,115,232,.12);}
+  .mu-fld.span2{grid-column:span 2;}
+  .mu-section{font-size:10.5px; font-weight:800; color:var(--mu-subtle); text-transform:uppercase; letter-spacing:.55px; margin:18px 0 10px; display:flex; align-items:center; gap:8px;}
+  .mu-section::after{content:''; flex:1; height:1px; background:var(--mu-border);}
+  .mu-section:first-child{margin-top:0;}
+  .mu-select-wrap{display:flex; gap:8px;}
+  .mu-select-wrap select, .mu-select-wrap input{flex:1;}
+  .mu-addbtn{flex-shrink:0; width:40px; border:1.5px solid var(--mu-border-strong); border-radius:10px; background:var(--nb-primary-light,#E8F0FE); color:var(--mu-primary); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all var(--mu-ease);}
+  .mu-addbtn:hover{background:var(--mu-primary); color:#fff;}
+  .mu-toggle{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 13px; background:var(--nb-surface-2,#FAFAFA); border:1px solid var(--mu-border); border-radius:11px; margin-top:14px;}
+  .mu-toggle .tt{display:flex; align-items:center; gap:9px; font-size:12.5px; font-weight:600;}
+  .mu-toggle .tt i{color:var(--mu-subtle);}
+  .sw{position:relative; width:40px; height:22px; flex-shrink:0;}
+  .sw input{opacity:0; width:0; height:0; position:absolute;}
+  .sw .track{position:absolute; inset:0; border-radius:22px; background:#cfd4da; transition:background var(--mu-ease); cursor:pointer;}
+  .sw .track::before{content:''; position:absolute; height:16px; width:16px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform var(--mu-ease); box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .sw input:checked + .track{background:var(--mu-primary);}
+  .sw input:checked + .track::before{transform:translateX(18px);}
+
+  .btn{padding:10px 16px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; border:1.5px solid transparent; transition:all var(--mu-ease); display:inline-flex; align-items:center; gap:6px;}
+  .btn-ghost{background:var(--mu-surface); border-color:var(--mu-border-strong); color:var(--mu-muted);}
+  .btn-ghost:hover{background:#f3f4f6;}
+  .btn-primary{background:var(--nb-grad-blue, linear-gradient(135deg,#1A73E8,#0f766e)); color:#fff; box-shadow:var(--mu-shadow-md);}
+  .btn-primary:hover{filter:brightness(1.05); transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:.55; cursor:not-allowed; transform:none;}
+  .btn-key{background:var(--mu-surface); border-color:var(--mu-border-strong); color:var(--mu-primary);}
+  .btn-key:hover{background:var(--nb-primary-light,#E8F0FE);}
+
+  .mu-add-row{display:flex; gap:8px; margin-bottom:14px;}
+  .mu-add-row input{flex:1; padding:9px 12px; font-size:13px; font-family:inherit; border:1.5px solid var(--mu-border-strong); border-radius:9px; outline:none;}
+  .mu-add-row input.lvl{flex:0 0 84px;}
+  .mu-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:320px; overflow-y:auto;}
+  .mu-li{display:flex; align-items:center; gap:9px; padding:9px 11px; border:1px solid var(--mu-border); border-radius:10px; background:var(--nb-surface-2,#FAFAFA); font-size:13px;}
+  .mu-li.inactive{opacity:.5;}
+  .mu-li .nm{flex:1; font-weight:600;}
+  .mu-li .nm input{width:100%; border:1px solid var(--mu-primary); border-radius:7px; padding:5px 8px; font-size:13px; font-family:inherit;}
+  .mu-li .lock{font-size:10px; color:var(--mu-subtle); background:#eef0f2; padding:2px 7px; border-radius:6px; font-weight:700;}
+  .mu-ic{cursor:pointer; color:var(--mu-subtle); background:none; border:none; padding:5px; font-size:13px; border-radius:6px;}
+  .mu-ic:hover{color:var(--mu-text); background:rgba(0,0,0,.05);}
+  .mu-ic.del:hover{color:var(--nb-danger,#C5221F);}
+
+  .mu-toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:#1F1F1F; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; box-shadow:var(--mu-shadow-lg); opacity:0; pointer-events:none; transition:all .3s var(--mu-ease); z-index:200; display:flex; align-items:center; gap:9px;}
+  .mu-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .mu-toast.ok{background:var(--nb-success,#137333);}
+  .mu-toast.err{background:var(--nb-danger,#C5221F);}
+
+  /* ── MOBILE ─────────────────────────────────────────────────────── */
+  @media (max-width:700px){
+    .mu-wrap{padding:14px 12px 40px;}
+    .mu-head{gap:10px;}
+    .mu-head h1{font-size:17px;}
+    .mu-head .ic{width:38px; height:38px; font-size:17px;}
+    .mu-back{flex:1 0 100%; order:5; text-align:center; margin-top:4px;}
+    .mu-add{flex:1 0 100%; justify-content:center; margin-left:0; order:6; margin-top:4px;}
+    .mu-filters input, .mu-filters select{width:100%; min-width:0; font-size:16px;}
+    .mu-filters{flex-direction:column;}
+    .mu-grid{grid-template-columns:1fr; gap:12px;}
+    .mu-modal{border-radius:14px;}
+    .mu-modal-b{padding:14px 16px;}
+    .mu-row{grid-template-columns:1fr;}
+    .mu-fld.span2{grid-column:span 1;}
+    .mu-fld input, .mu-fld select{font-size:16px;}
+    .mu-modal-f{padding:12px 16px;}
+    .btn{padding:10px 14px; font-size:13px;}
+  }
+  @media (max-width:380px){
+    .mu-head h1{font-size:16px;}
+    .mu-head p{font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<div class="mu-wrap">
+
+  <div class="mu-head">
+    <div class="ic"><i class="fa-solid fa-users-gear"></i></div>
+    <div>
+      <h1>User Management</h1>
+      <p><a class="mu-back" href="/">&larr; Dashboard</a> &nbsp;·&nbsp; <span id="muCount">{{ users|length }}</span> accounts</p>
+    </div>
+    <button class="mu-add" onclick="window.location.href='/create_user'"><i class="fa-solid fa-plus"></i>Add new user</button>
+  </div>
+
+  {# Global single-login enforcement toggle — admin only #}
+  {% if (role or '')|lower == 'admin' %}
+  <div class="single-login-bar">
+    <div class="sl-info">
+      <div class="sl-icon"><i class="fa-solid fa-user-shield"></i></div>
+      <div class="sl-text">
+        <h4>One login per user</h4>
+        <p>When ON, a new login automatically signs the user out from any other device. Applies to all accounts including admins.</p>
+      </div>
+    </div>
+    <div class="sl-toggle-wrap">
+      <label class="sw sw-lg">
+        <input type="checkbox" id="singleLoginToggle" {% if single_session_enabled %}checked{% endif %} onchange="toggleSingleLogin(this)">
+        <span class="track"></span>
+      </label>
+      <span class="sl-state {% if single_session_enabled %}on{% endif %}" id="singleLoginState">{{ 'ON' if single_session_enabled else 'OFF' }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="stats-grid">
+    <div class="inv-stat-card stat-total" style="position:relative; overflow:hidden; background:linear-gradient(150deg,#fff,#eef0ff); border:1px solid var(--mu-border-strong); border-radius:var(--mu-radius-lg); padding:14px 16px;">
+      <div class="inv-stat-card-label" style="font-size:10.5px; font-weight:600; color:var(--mu-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;"><i class="fa-solid fa-users" style="color:#5E35B1; margin-right:6px;"></i>Total users</div>
+      <div class="inv-stat-card-value" style="font-size:26px; font-weight:700; line-height:1; font-family:var(--nb-font-mono,monospace);">{{ users|length }}</div>
+      <div class="inv-stat-card-sub" style="font-size:10.5px; color:var(--mu-subtle); margin-top:6px;">all accounts</div>
+    </div>
+    <div class="inv-stat-card stat-success" style="position:relative; overflow:hidden; background:linear-gradient(150deg,#fff,#e6f6ec); border:1px solid var(--mu-border-strong); border-radius:var(--mu-radius-lg); padding:14px 16px;">
+      <div class="inv-stat-card-label" style="font-size:10.5px; font-weight:600; color:var(--mu-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;"><i class="fa-solid fa-circle-check" style="color:#137333; margin-right:6px;"></i>Active</div>
+      <div class="inv-stat-card-value" style="font-size:26px; font-weight:700; line-height:1; font-family:var(--nb-font-mono,monospace);">{{ users|selectattr('is_active','equalto',1)|list|length }}</div>
+      <div class="inv-stat-card-sub" style="font-size:10.5px; color:var(--mu-subtle); margin-top:6px;">can sign in</div>
+    </div>
+    <div class="inv-stat-card stat-neutral" style="position:relative; overflow:hidden; background:linear-gradient(150deg,#fff,#f0f1f3); border:1px solid var(--mu-border-strong); border-radius:var(--mu-radius-lg); padding:14px 16px;">
+      <div class="inv-stat-card-label" style="font-size:10.5px; font-weight:600; color:var(--mu-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;"><i class="fa-solid fa-ban" style="color:#5F6368; margin-right:6px;"></i>Inactive</div>
+      <div class="inv-stat-card-value" style="font-size:26px; font-weight:700; line-height:1; font-family:var(--nb-font-mono,monospace);">{{ users|rejectattr('is_active','equalto',1)|list|length }}</div>
+      <div class="inv-stat-card-sub" style="font-size:10.5px; color:var(--mu-subtle); margin-top:6px;">disabled</div>
+    </div>
+    <div class="inv-stat-card stat-info" style="position:relative; overflow:hidden; background:linear-gradient(150deg,#fff,#e8f0fe); border:1px solid var(--mu-border-strong); border-radius:var(--mu-radius-lg); padding:14px 16px;">
+      <div class="inv-stat-card-label" style="font-size:10.5px; font-weight:600; color:var(--mu-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;"><i class="fa-solid fa-shield-halved" style="color:#1A73E8; margin-right:6px;"></i>Admins</div>
+      <div class="inv-stat-card-value" style="font-size:26px; font-weight:700; line-height:1; font-family:var(--nb-font-mono,monospace);">{{ users|selectattr('user_type','equalto','admin')|list|length }}</div>
+      <div class="inv-stat-card-sub" style="font-size:10.5px; color:var(--mu-subtle); margin-top:6px;">full access</div>
+    </div>
+    <div class="inv-stat-card stat-locked" style="position:relative; overflow:hidden; background:linear-gradient(150deg,#fff,#fde8e7); border:1px solid var(--mu-border-strong); border-radius:var(--mu-radius-lg); padding:14px 16px;">
+      <div class="inv-stat-card-label" style="font-size:10.5px; font-weight:600; color:var(--mu-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;"><i class="fa-solid fa-lock" style="color:#C5221F; margin-right:6px;"></i>Locked</div>
+      <div class="inv-stat-card-value" style="font-size:26px; font-weight:700; line-height:1; font-family:var(--nb-font-mono,monospace);">{{ users|selectattr('is_locked','equalto',1)|list|length }}</div>
+      <div class="inv-stat-card-sub" style="font-size:10.5px; color:var(--mu-subtle); margin-top:6px;">auto-locked</div>
+    </div>
+  </div>
+
+  <div class="mu-filters">
+    <input type="text" id="muSearch" placeholder="Search name, username, email, department…" oninput="filterCards()">
+    <select id="muType" onchange="filterCards()">
+      <option value="">All types</option>
+      {% for it in (lookups.user_type if lookups else []) %}<option value="{{ it.value }}">{{ it.value }}</option>{% endfor %}
+    </select>
+    <select id="muStatus" onchange="filterCards()">
+      <option value="">All status</option>
+      <option value="1">Active</option>
+      <option value="0">Inactive</option>
+    </select>
+  </div>
+
+  <div class="mu-grid" id="muGrid">
+    {% set covers = ['#E8F0FE','#E0F2F1','#EDE7F6','#FFF8E1','#E0F7FA','#FCE4EC'] %}
+    {% set avas = ['linear-gradient(135deg,#1A73E8,#64B5F6)','linear-gradient(135deg,#00897B,#4DB6AC)','linear-gradient(135deg,#5E35B1,#9575CD)','linear-gradient(135deg,#F57C00,#FFB74D)','linear-gradient(135deg,#00838F,#4DD0E1)','linear-gradient(135deg,#C2185B,#F06292)'] %}
+    {% for u in users %}
+      {% set ci = loop.index0 % 6 %}
+      {% set nm = (u.full_name or u.username or '?') %}
+      {% set parts = nm.split() %}
+      {% set initials = (parts[0][0] ~ (parts[-1][0] if parts|length > 1 else '')) | upper %}
+      <div class="ucard {{ '' if u.is_active else 'inactive' }} {{ 'locked' if u.is_locked else '' }}"
+           data-name="{{ (u.full_name or '')|lower }}" data-user="{{ (u.username or '')|lower }}"
+           data-email="{{ (u.email or '')|lower }}" data-dept="{{ (u.department or '')|lower }}"
+           data-type="{{ u.user_type or '' }}" data-active="{{ 1 if u.is_active else 0 }}"
+           data-locked="{{ 1 if u.is_locked else 0 }}"
+           data-id="{{ u.id }}"
+           data-json='{{ {"id":u.id,"username":u.username,"full_name":u.full_name,"email":u.email,"mobile":u.mobile,"employee_id":u.employee_id,"department":u.department,"designation":u.designation,"user_type":u.user_type,"access_level":u.access_level,"is_active":u.is_active,"is_locked":u.is_locked}|tojson|forceescape }}'>
+        <div class="ucard-cover" style="--cover-tint:{{ covers[ci] }};">
+          <div class="ucard-ava" style="--ava-grad:{{ avas[ci] }};">
+            {% if u.profile_photo %}<img src="{{ u.profile_photo }}" alt="">{% else %}{{ initials }}{% endif %}
+          </div>
+          {% if u.is_locked %}
+            <span class="ucard-status locked"><i class="fa-solid fa-lock"></i>Locked</span>
+          {% else %}
+            <span class="ucard-status {{ 'on' if u.is_active else 'off' }}"><i class="fa-solid fa-circle"></i>{{ 'Active' if u.is_active else 'Inactive' }}</span>
+          {% endif %}
+        </div>
+        <div class="ucard-body">
+          <div class="ucard-meta">{{ u.department or '—' }}</div>
+          <div class="ucard-name">{{ u.full_name or u.username }}</div>
+          <div class="ucard-user">@{{ u.username }}</div>
+          <div class="ucard-badges">
+            {% if u.user_type %}<span class="ubadge type">{{ u.user_type }}</span>{% endif %}
+            {% if u.access_level is not none %}<span class="ubadge lvl">Level {{ u.access_level }}</span>{% endif %}
+          </div>
+          <div class="ucard-actions">
+            <button class="uact edit" onclick="openEdit(this)"><i class="fa-solid fa-pen"></i> Edit</button>
+            {% if u.is_locked %}
+              <button class="uact" style="color:#C5221F; border-color:#fcc;" title="Unlock account" onclick="unlockUser({{ u.id }}, '{{ u.username }}')"><i class="fa-solid fa-unlock"></i> Unlock</button>
+            {% endif %}
+            <button class="uact" title="Reset password" onclick="openReset({{ u.id }}, '{{ u.username }}')"><i class="fa-solid fa-key"></i></button>
+            <button class="uact danger" title="{{ 'Disable' if u.is_active else 'Enable' }}" onclick="toggleUser({{ u.id }}, {{ 0 if u.is_active else 1 }})"><i class="fa-solid fa-power-off"></i></button>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="mu-empty">No users yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ===== EDIT MODAL (mirrors create page) ===== -->
+<div class="mu-modal-bg hcp-modal-bg" id="editBg" onclick="if(event.target===this)closeEdit()">
+  <div class="mu-modal">
+    <div class="mu-modal-h">
+      <div class="ava" id="editAva">?</div>
+      <div style="flex:1;"><h3>Edit user</h3><p id="editSub">@username</p></div>
+      <button class="x" onclick="closeEdit()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mu-modal-b">
+      <input type="hidden" id="e_id">
+      <input type="hidden" id="e_role" value="">
+      <div class="mu-section">Identity</div>
+      <div class="mu-row">
+        <div class="mu-fld"><label>Full name <span class="req">*</span></label><input type="text" id="e_full_name"></div>
+        <div class="mu-fld"><label>Username <span class="req">*</span></label><input type="text" id="e_username"></div>
+        <div class="mu-fld"><label>Email</label><input type="email" id="e_email"></div>
+        <div class="mu-fld"><label>Mobile</label><input type="text" id="e_mobile"></div>
+        <div class="mu-fld span2"><label>Employee ID</label><input type="text" id="e_employee_id"></div>
+      </div>
+
+      <div class="mu-section">Role &amp; access</div>
+      <div class="mu-row">
+        <div class="mu-fld">
+          <label>Department</label>
+          <div class="mu-select-wrap">
+            <select id="e_department"><option value="">-- Select --</option>{% for it in (lookups.department if lookups else []) %}<option value="{{ it.value }}">{{ it.value }}</option>{% endfor %}</select>
+            <button type="button" class="mu-addbtn" onclick="openLookup('department')" title="Manage"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="mu-fld">
+          <label>Designation</label>
+          <div class="mu-select-wrap">
+            <select id="e_designation"><option value="">-- Select --</option>{% for it in (lookups.designation if lookups else []) %}<option value="{{ it.value }}">{{ it.value }}</option>{% endfor %}</select>
+            <button type="button" class="mu-addbtn" onclick="openLookup('designation')" title="Manage"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="mu-fld">
+          <label>User type <span class="req">*</span></label>
+          <div class="mu-select-wrap">
+            <select id="e_user_type"><option value="">-- Select --</option>{% for it in (lookups.user_type if lookups else []) %}<option value="{{ it.value }}">{{ it.value }}</option>{% endfor %}</select>
+            <button type="button" class="mu-addbtn" onclick="openLookup('user_type')" title="Manage"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="mu-fld">
+          <label>Access level <span class="req">*</span></label>
+          <div class="mu-select-wrap">
+            <select id="e_access_level"><option value="">-- Select --</option>{% for it in (lookups.access_level if lookups else []) %}<option value="{{ it.level_int }}">{{ it.label }}</option>{% endfor %}</select>
+            <button type="button" class="mu-addbtn" onclick="openLookup('access_level')" title="Manage"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mu-toggle">
+        <span class="tt"><i class="fa-solid fa-circle-check"></i>Account active</span>
+        <label class="sw"><input type="checkbox" id="e_is_active"><span class="track"></span></label>
+      </div>
+    </div>
+    <div class="mu-modal-f">
+      <button class="btn btn-key" onclick="openReset(document.getElementById('e_id').value, document.getElementById('e_username').value)"><i class="fa-solid fa-key"></i>Reset password</button>
+      <button class="btn btn-ghost" style="margin-left:auto;" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveEdit()"><i class="fa-solid fa-check"></i>Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESET PASSWORD MODAL ===== -->
+<div class="mu-modal-bg hcp-modal-bg" id="resetBg" onclick="if(event.target===this)closeReset()">
+  <div class="mu-modal sm">
+    <div class="mu-modal-h">
+      <div class="ava"><i class="fa-solid fa-key" style="font-size:15px;"></i></div>
+      <div style="flex:1;"><h3>Reset password</h3><p id="resetSub">@username</p></div>
+      <button class="x" onclick="closeReset()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mu-modal-b">
+      <input type="hidden" id="r_id">
+      <div class="mu-fld">
+        <label>New temporary password <span class="req">*</span></label>
+        <div class="mu-select-wrap">
+          <input type="text" id="r_pwd" placeholder="At least 4 characters">
+          <button type="button" class="mu-addbtn" style="width:auto; padding:0 12px; font-size:12px; font-weight:700;" onclick="genReset()">Gen</button>
+        </div>
+      </div>
+    </div>
+    <div class="mu-modal-f">
+      <button class="btn btn-ghost" style="margin-left:auto;" onclick="closeReset()">Cancel</button>
+      <button class="btn btn-primary" id="resetBtn" onclick="doReset()"><i class="fa-solid fa-check"></i>Set password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOOKUP CRUD MODAL ===== -->
+<div class="mu-modal-bg hcp-modal-bg" id="lookupBg" onclick="if(event.target===this)closeLookup()">
+  <div class="mu-modal sm">
+    <div class="mu-modal-h">
+      <div class="ava"><i class="fa-solid fa-sliders" style="font-size:15px;"></i></div>
+      <div style="flex:1;"><h3 id="lookupTitle">Manage</h3></div>
+      <button class="x" onclick="closeLookup()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mu-modal-b">
+      <div class="mu-add-row">
+        <input id="lk_input" type="text" placeholder="Add new…" onkeydown="if(event.key==='Enter')addLookup()">
+        <input id="lk_level" class="lvl" type="number" placeholder="Lvl" style="display:none;">
+        <button class="btn btn-primary" style="padding:9px 13px;" onclick="addLookup()"><i class="fa-solid fa-plus"></i></button>
+      </div>
+      <ul class="mu-list" id="lk_list"><li style="text-align:center; color:var(--mu-subtle); padding:14px;">Loading…</li></ul>
+    </div>
+  </div>
+</div>
+
+<div class="mu-toast" id="toast"></div>
+
+<script>
+const LOOKUP_META = {
+  department:   {title:'Manage Departments', hasLevel:false, selId:'e_department'},
+  designation:  {title:'Manage Designations', hasLevel:false, selId:'e_designation'},
+  user_type:    {title:'Manage User Types',  hasLevel:false, selId:'e_user_type'},
+  access_level: {title:'Manage Access Levels', hasLevel:true, selId:'e_access_level'},
+};
+let currentKind = null;
+function toast(m,k){const t=document.getElementById('toast'); t.textContent=m; t.className='mu-toast show '+(k||''); clearTimeout(t._t); t._t=setTimeout(()=>{t.className='mu-toast '+(k||'');},2800);}
+function initials(n){const p=(n||'').trim().split(/\s+/).filter(Boolean); if(!p.length)return '?'; return (p[0][0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
+
+function filterCards(){
+  const q=document.getElementById('muSearch').value.toLowerCase();
+  const t=document.getElementById('muType').value;
+  const s=document.getElementById('muStatus').value;
+  let shown=0;
+  document.querySelectorAll('.ucard').forEach(c=>{
+    const hay=[c.dataset.name,c.dataset.user,c.dataset.email,c.dataset.dept].join(' ');
+    let ok = hay.includes(q);
+    if(t && c.dataset.type!==t) ok=false;
+    if(s!=='' && c.dataset.active!==s) ok=false;
+    c.style.display = ok ? '' : 'none';
+    if(ok) shown++;
+  });
+  document.getElementById('muCount').textContent = shown;
+}
+
+function openEdit(btn){
+  const card=btn.closest('.ucard');
+  const u=JSON.parse(card.dataset.json);
+  document.getElementById('e_id').value=u.id;
+  document.getElementById('e_full_name').value=u.full_name||'';
+  document.getElementById('e_username').value=u.username||'';
+  document.getElementById('e_email').value=u.email||'';
+  document.getElementById('e_mobile').value=u.mobile||'';
+  document.getElementById('e_employee_id').value=u.employee_id||'';
+  document.getElementById('e_department').value=u.department||'';
+  document.getElementById('e_designation').value=u.designation||'';
+  document.getElementById('e_user_type').value=u.user_type||'';
+  document.getElementById('e_access_level').value=(u.access_level!=null?String(u.access_level):'');
+  document.getElementById('e_is_active').checked=(u.is_active==1);
+  document.getElementById('editAva').textContent=initials(u.full_name||u.username);
+  document.getElementById('editSub').textContent='@'+(u.username||'');
+  document.getElementById('editBg').classList.add('show');
+}
+function closeEdit(){document.getElementById('editBg').classList.remove('show');}
+
+async function saveEdit(){
+  const btn=document.getElementById('saveBtn');
+  const id=document.getElementById('e_id').value;
+  const uname=document.getElementById('e_username').value.trim();
+  const fname=document.getElementById('e_full_name').value.trim();
+  if(!fname){toast('Full name is required','err');return;}
+  if(!uname){toast('Username is required','err');return;}
+  const body={
+    username:uname, full_name:fname,
+    email:document.getElementById('e_email').value.trim(),
+    mobile:document.getElementById('e_mobile').value.trim(),
+    employee_id:document.getElementById('e_employee_id').value.trim(),
+    department:document.getElementById('e_department').value,
+    designation:document.getElementById('e_designation').value,
+    role:document.getElementById('e_role').value,
+    user_type:document.getElementById('e_user_type').value,
+    access_level:parseInt(document.getElementById('e_access_level').value||'1',10),
+    is_active:document.getElementById('e_is_active').checked?1:0
+  };
+  btn.disabled=true;
+  try{
+    const res=await fetch('/api/users/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();
+    if(res.ok && d.success){toast(d.message||'Saved','ok'); setTimeout(()=>location.reload(),700);}
+    else{toast(d.message||'Could not save','err'); btn.disabled=false;}
+  }catch(e){toast('Network error','err'); btn.disabled=false;}
+}
+
+async function toggleUser(id,to){
+  try{
+    const res=await fetch('/api/users/'+id+'/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:to})});
+    const d=await res.json();
+    if(res.ok && d.success){toast(to?'Enabled':'Disabled','ok'); setTimeout(()=>location.reload(),600);}
+    else{toast(d.message||'Could not update','err');}
+  }catch(e){toast('Network error','err');}
+}
+
+async function unlockUser(id, uname){
+  if(!confirm('Unlock '+uname+'?\n\nThe user will be able to log in again. The auto-lock timer resets after their next successful login.')) return;
+  try{
+    const res = await fetch('/api/admin/users/'+id+'/unlock', {method:'POST'});
+    const d = await res.json();
+    if(res.ok && d.status==='ok'){toast(d.message||'Unlocked','ok'); setTimeout(()=>location.reload(), 700);}
+    else{toast(d.message||'Could not unlock','err');}
+  }catch(e){toast('Network error','err');}
+}
+
+async function toggleSingleLogin(el){
+  const wanted = el.checked;
+  const stateLbl = document.getElementById('singleLoginState');
+  // Optimistic UI
+  stateLbl.textContent = wanted ? 'ON' : 'OFF';
+  stateLbl.classList.toggle('on', wanted);
+  // Confirm before turning ON — it can sign people out immediately on next login
+  if (wanted && !confirm('Turn ON one-login-per-user?\n\nWhen any user logs in from a new device, their existing session on other devices will be signed out. Applies to all users (including admins).\n\nProceed?')) {
+    el.checked = false;
+    stateLbl.textContent = 'OFF'; stateLbl.classList.remove('on');
+    return;
+  }
+  try {
+    const res = await fetch('/api/admin/single-session-toggle', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({enabled: wanted})
+    });
+    const d = await res.json();
+    if (res.ok && d.status === 'ok') {
+      toast(d.message || (wanted?'Enabled':'Disabled'), 'ok');
+    } else {
+      toast(d.message || 'Could not update', 'err');
+      el.checked = !wanted;
+      stateLbl.textContent = (!wanted) ? 'ON' : 'OFF';
+      stateLbl.classList.toggle('on', !wanted);
+    }
+  } catch (e) {
+    toast('Network error', 'err');
+    el.checked = !wanted;
+    stateLbl.textContent = (!wanted) ? 'ON' : 'OFF';
+    stateLbl.classList.toggle('on', !wanted);
+  }
+}
+
+function openReset(id,uname){
+  document.getElementById('r_id').value=id;
+  document.getElementById('r_pwd').value='';
+  document.getElementById('resetSub').textContent='@'+uname;
+  document.getElementById('resetBg').classList.add('show');
+}
+function closeReset(){document.getElementById('resetBg').classList.remove('show');}
+function genReset(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let s='';for(let i=0;i<12;i++)s+=c[Math.floor(Math.random()*c.length)];document.getElementById('r_pwd').value=s;}
+async function doReset(){
+  const btn=document.getElementById('resetBtn');
+  const id=document.getElementById('r_id').value;
+  const pwd=document.getElementById('r_pwd').value;
+  if(pwd.length<4){toast('Password must be at least 4 characters','err');return;}
+  btn.disabled=true;
+  try{
+    const res=await fetch('/api/users/'+id+'/reset_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({new_password:pwd})});
+    const d=await res.json();
+    if(res.ok && d.success){toast('Password reset','ok'); closeReset();}
+    else{toast(d.message||'Could not reset','err');}
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;
+}
+
+function openLookup(kind){
+  currentKind=kind; const m=LOOKUP_META[kind];
+  document.getElementById('lookupTitle').textContent=m.title;
+  document.getElementById('lk_input').value='';
+  document.getElementById('lk_input').placeholder=m.hasLevel?'Label (e.g. 3 - Advanced)':'Add new…';
+  const lvl=document.getElementById('lk_level'); lvl.style.display=m.hasLevel?'block':'none'; lvl.value='';
+  document.getElementById('lookupBg').classList.add('show'); loadLookup();
+}
+function closeLookup(){document.getElementById('lookupBg').classList.remove('show'); currentKind=null;}
+async function loadLookup(){
+  const list=document.getElementById('lk_list'); list.innerHTML='<li style="text-align:center;color:var(--mu-subtle);padding:14px;">Loading…</li>';
+  try{
+    const res=await fetch('/users/lookup/'+currentKind); const d=await res.json();
+    if(d.status!=='ok'){list.innerHTML='<li style="text-align:center;padding:14px;">'+(d.message||'Error')+'</li>';return;}
+    if(!d.items.length){list.innerHTML='<li style="text-align:center;color:var(--mu-subtle);padding:14px;">No entries yet.</li>';return;}
+    const m=LOOKUP_META[currentKind];
+    list.innerHTML=d.items.map(it=>{
+      const label=m.hasLevel?it.label:it.value;
+      const isAdmin=(currentKind==='user_type'&&(it.value||'').toLowerCase()==='admin');
+      return `<li class="mu-li ${it.is_active?'':'inactive'}" data-id="${it.id}">
+        <span class="nm">${label}${isAdmin?' <span class="lock">protected</span>':''}</span>
+        ${isAdmin?'':`<button class="mu-ic" title="Rename" onclick="renameLookup(${it.id},this)"><i class="fa-solid fa-pen"></i></button>`}
+        ${isAdmin?'':`<button class="mu-ic" title="${it.is_active?'Disable':'Enable'}" onclick="toggleLookup(${it.id},${it.is_active?0:1})"><i class="fa-solid fa-${it.is_active?'eye':'eye-slash'}"></i></button>`}
+        ${isAdmin?'':`<button class="mu-ic del" title="Delete" onclick="deleteLookup(${it.id})"><i class="fa-solid fa-trash"></i></button>`}
+      </li>`;
+    }).join('');
+  }catch(e){list.innerHTML='<li style="text-align:center;padding:14px;">Network error.</li>';}
+}
+async function addLookup(){
+  const m=LOOKUP_META[currentKind]; const val=document.getElementById('lk_input').value.trim();
+  if(!val){toast('Enter a value','err');return;}
+  let body;
+  if(m.hasLevel){const lvl=document.getElementById('lk_level').value; if(lvl===''){toast('Enter a level number','err');return;} body={label:val,level_int:parseInt(lvl,10)};}
+  else body={value:val};
+  try{
+    const res=await fetch('/users/lookup/'+currentKind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();
+    if(res.ok && d.status==='ok'){document.getElementById('lk_input').value=''; document.getElementById('lk_level').value=''; toast('Added','ok'); loadLookup(); refreshSelect();}
+    else toast(d.message||'Could not add','err');
+  }catch(e){toast('Network error','err');}
+}
+function renameLookup(id,btn){
+  const li=btn.closest('.mu-li'); const span=li.querySelector('.nm'); const old=span.textContent.trim();
+  const m=LOOKUP_META[currentKind];
+  span.innerHTML=`<input type="text" value="${old.replace(/"/g,'&quot;')}">`;
+  const inp=span.querySelector('input'); inp.focus(); inp.select();
+  const save=async()=>{
+    const nv=inp.value.trim(); if(!nv||nv===old){loadLookup();return;}
+    try{
+      const res=await fetch('/users/lookup/'+currentKind+'/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(m.hasLevel?{label:nv}:{value:nv})});
+      const d=await res.json();
+      toast((res.ok&&d.status==='ok')?'Renamed':(d.message||'Could not rename'),(res.ok&&d.status==='ok')?'ok':'err');
+    }catch(e){toast('Network error','err');}
+    loadLookup(); refreshSelect();
+  };
+  inp.addEventListener('blur',save);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+}
+async function toggleLookup(id,to){
+  try{const res=await fetch('/users/lookup/'+currentKind+'/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:to})}); const d=await res.json(); toast((res.ok&&d.status==='ok')?(to?'Enabled':'Disabled'):(d.message||'Error'),(res.ok&&d.status==='ok')?'ok':'err');}catch(e){toast('Network error','err');}
+  loadLookup(); refreshSelect();
+}
+async function deleteLookup(id){
+  if(!confirm('Delete this entry?'))return;
+  try{const res=await fetch('/users/lookup/'+currentKind+'/'+id,{method:'DELETE'}); const d=await res.json(); toast((res.ok&&d.status==='ok')?'Deleted':(d.message||'Could not delete'),(res.ok&&d.status==='ok')?'ok':'err');}catch(e){toast('Network error','err');}
+  loadLookup(); refreshSelect();
+}
+async function refreshSelect(){
+  const m=LOOKUP_META[currentKind]; const sel=document.getElementById(m.selId); const prev=sel.value;
+  try{
+    const res=await fetch('/users/lookup/'+currentKind); const d=await res.json(); if(d.status!=='ok')return;
+    let html='<option value="">-- Select --</option>';
+    d.items.filter(it=>it.is_active).forEach(it=>{ html += m.hasLevel?`<option value="${it.level_int}">${it.label}</option>`:`<option value="${it.value}">${it.value}</option>`; });
+    sel.innerHTML=html; sel.value=prev;
+  }catch(e){}
+}
+</script>
+<script src="{{ url_for('static', filename='js/hcp-modals.js') }}"></script>
+</body>
+</html>

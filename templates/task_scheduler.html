@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCP — Task Scheduler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#f8fafc; --surface:#fff; --surface2:#f1f5f9; --border-color:var(--border,#e2e8f0);
+            --brand:#0d9488; --brand-dim:rgba(13,148,136,0.1); --text:#0f172a;
+            --text-dim:#64748b; --text-muted:#94a3b8;
+            --red:#ef4444; --amber:#f59e0b; --green:#22c55e; --blue:#3b82f6;
+            --shadow:0 4px 20px rgba(0,0,0,0.06);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+        .topbar-brand{font-size:12px;font-weight:800;color:var(--brand);letter-spacing:2px}
+        .topbar-sep{width:1px;height:22px;background:var(--border)}
+        .topbar-title{font-size:15px;font-weight:700}
+        .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+        .role-pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700}
+        .role-pill.admin{background:rgba(13,148,136,0.12);color:#0d9488;border:1px solid rgba(13,148,136,0.3)}
+        .role-pill.dept_head{background:rgba(99,102,241,0.12);color:#6366f1;border:1px solid rgba(99,102,241,0.3)}
+        .role-pill.user{background:rgba(100,116,139,0.12);color:var(--text-muted,#64748b);border:1px solid rgba(100,116,139,0.3)}
+        .user-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px 5px 8px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+        .user-chip-avatar{width:26px;height:26px;background:var(--brand-dim);color:var(--brand);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+        .back-link{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:0.15s}
+        .back-link:hover{border-color:var(--brand);color:var(--brand)}
+        .page-layout{display:grid;grid-template-columns:240px 1fr;height:calc(100vh - 58px)}
+        .dept-sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:16px 0}
+        .sidebar-label{padding:0 18px 10px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;display:flex;align-items:center}
+        .scope-badge{margin-left:auto;font-size:9px;font-weight:700;color:#6366f1;background:rgba(99,102,241,0.08);padding:2px 7px;border-radius:10px}
+        .dept-item{padding:11px 18px;cursor:pointer;display:flex;align-items:center;gap:12px;border-left:3px solid transparent;transition:0.15s}
+        .dept-item:hover{background:var(--surface2)}
+        .dept-item.active{border-left-color:var(--brand);background:var(--brand-dim)}
+        .dept-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+        .dept-info{flex:1;min-width:0}
+        .dept-info-name{font-size:12px;font-weight:700}
+        .dept-info-sub{font-size:10px;color:var(--text-muted);margin-top:1px}
+        .overdue-badge{background:#fee2e2;color:#ef4444;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800;display:none;flex-shrink:0}
+        .overdue-badge.show{display:inline-block}
+        .main-content{overflow-y:auto;padding:24px 28px 48px}
+        .toolbar{display:flex;align-items:flex-start;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+        .toolbar-left{flex:1}
+        .toolbar-title{font-size:18px;font-weight:800}
+        .toolbar-sub{font-size:12px;color:var(--text-dim);margin-top:4px;display:flex;align-items:center;gap:8px}
+        .access-tag{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
+        .access-tag.full{background:rgba(13,148,136,0.12);color:#0d9488}
+        .access-tag.own{background:rgba(99,102,241,0.12);color:#6366f1}
+        .access-tag.view{background:rgba(100,116,139,0.12);color:var(--text-muted,#64748b)}
+        .btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer;transition:0.15s;display:inline-flex;align-items:center;gap:8px;border:none}
+        .btn-primary{background:var(--brand);color:white}
+        .btn-primary:hover{background:#0f766e;transform:translateY(-1px);box-shadow:0 4px 14px rgba(13,148,136,0.3)}
+        .btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--text-dim)}
+        .btn-outline:hover{border-color:var(--brand);color:var(--brand)}
+        .btn-sm{padding:6px 13px;font-size:11px;border-radius:6px}
+        .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+        .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+        .stat-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+        .stat-value{font-size:28px;font-weight:800;margin-top:4px;line-height:1}
+        .stat-sub{font-size:11px;color:var(--text-dim);margin-top:5px}
+        .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+        .filter-bar input,.filter-bar select{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-family:'Sora',sans-serif;color:var(--text);outline:none;transition:0.15s}
+        .filter-bar input:focus,.filter-bar select:focus{border-color:var(--brand)}
+        .filter-bar input[type="text"]{min-width:210px}
+        .kanban-view{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+        .kanban-col{background:var(--surface2);border-radius:12px;padding:14px;min-height:200px}
+        .kanban-col-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:12px;font-weight:700}
+        .kanban-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+        .kanban-count{margin-left:auto;background:var(--border);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--text-dim)}
+        .kanban-empty{padding:24px 16px;text-align:center;font-size:12px;color:var(--text-muted);border:1.5px dashed var(--border);border-radius:8px}
+        .task-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:0.15s;position:relative;overflow:hidden}
+        .task-card:hover{box-shadow:0 6px 20px rgba(0,0,0,0.08);transform:translateY(-1px);border-color:var(--text,#cbd5e1)}
+        .task-card.view-only{cursor:default}
+        .task-card.view-only:hover{transform:none;box-shadow:none;border-color:var(--border)}
+        .task-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+        .task-card.priority-critical::before{background:#ef4444}
+        .task-card.priority-high::before{background:#f97316}
+        .task-card.priority-medium::before{background:#f59e0b}
+        .task-card.priority-low::before{background:#22c55e}
+        .task-card.overdue{border-color:#fca5a5;background:#fff8f8}
+        .view-only-label{font-size:9px;font-weight:700;color:var(--text-muted);background:var(--surface2);padding:1px 7px;border-radius:4px;display:inline-block;margin-bottom:6px}
+        .task-title{font-size:13px;font-weight:700;margin-bottom:5px;line-height:1.4}
+        .task-desc{font-size:11px;color:var(--text-dim);margin-bottom:10px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .task-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+        .task-tag{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap}
+        .tag-critical{background:#fee2e2;color:#b91c1c} .tag-high{background:#ffedd5;color:#c2410c}
+        .tag-medium{background:#fef3c7;color:#92400e}   .tag-low{background:#dcfce7;color:#166534}
+        .tag-overdue{background:#fee2e2;color:#b91c1c}  .tag-due{background:var(--surface3,#f1f5f9);color:var(--text-muted,#64748b);font-family:monospace;font-size:10px}
+        .tag-assign{background:#ede9fe;color:#5b21b6}   .tag-recur{background:#e0f2fe;color:#0369a1}
+        .task-actions{display:flex;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+        .task-action-btn{font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);font-family:'Sora',sans-serif;transition:0.15s}
+        .task-action-btn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-dim)}
+        .task-action-btn.done-btn{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+        .task-action-btn.done-btn:hover{background:#22c55e;color:white;border-color:#22c55e}
+        .task-action-btn.reopen-btn{background:#fef3c7;color:#92400e;border-color:#fde68a}
+        .task-action-btn.reopen-btn:hover{background:#f59e0b;color:white;border-color:#f59e0b}
+        .task-action-btn.del-btn:hover{border-color:var(--red);color:var(--red);background:#fee2e2}
+        .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.45);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(3px)}
+        .modal-overlay.open{display:flex}
+        .modal{background:var(--surface);border-radius:16px;padding:28px;width:540px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.18);animation:slideUp 0.22s ease}
+        @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+        .modal-title{font-size:16px;font-weight:800;display:flex;align-items:center;gap:10px}
+        .modal-close{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:22px;line-height:1;padding:2px 6px;border-radius:4px}
+        .modal-close:hover{color:var(--red);background:#fee2e2}
+        .readonly-notice{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+        .form-group{margin-bottom:16px}
+        .form-group label{font-size:10px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.6px}
+        .form-group input,.form-group select,.form-group textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--text);outline:none;transition:0.15s}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--brand);background:white}
+        .form-group input:disabled,.form-group select:disabled,.form-group textarea:disabled{opacity:0.5;cursor:not-allowed}
+        .form-group textarea{resize:vertical;min-height:80px}
+        .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+        .toast{position:fixed;bottom:24px;right:24px;background:var(--surface,#1e293b);color:white;border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:999;transform:translateY(80px);transition:transform 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.2);max-width:340px}
+        .toast.show{transform:translateY(0)} .toast.success{background:#14532d} .toast.error{background:#7f1d1d} .toast.warn{background:#78350f}
+        ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    
+/* ══ HCP MULTI-THEME ══════════════════════════════════════════════════════ */
+[data-theme="light"]{--hcp-bg:linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)}
+[data-theme="dark"]  {--hcp-bg:linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)}
+[data-theme="ocean"] {--hcp-bg:linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)}
+[data-theme="rose"]  {--hcp-bg:linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)}
+[data-theme="slate"] {--hcp-bg:linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)}
+
+/* Settings overlay */
+#hcp-settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  backdrop-filter:blur(8px);z-index:99998;justify-content:center;align-items:flex-start;padding-top:80px}
+#hcp-settings-overlay.open{display:flex}
+#hcp-settings-panel{background:var(--card-bg,#ffffff);border-radius:20px;width:420px;max-width:95vw;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);border:1px solid rgba(0,0,0,.08);
+  animation:hcpScaleIn .2s cubic-bezier(.4,0,.2,1);overflow:hidden}
+[data-theme="dark"] #hcp-settings-panel,
+[data-theme="ocean"] #hcp-settings-panel,
+[data-theme="slate"] #hcp-settings-panel{background:var(--surface,#1e293b);border-color:rgba(255,255,255,.1)}
+@keyframes hcpScaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.hcp-settings-head{display:flex;justify-content:space-between;align-items:center;
+  padding:18px 22px;border-bottom:1px solid rgba(0,0,0,.08)}
+[data-theme="dark"] .hcp-settings-head,
+[data-theme="ocean"] .hcp-settings-head,
+[data-theme="slate"] .hcp-settings-head{border-color:rgba(255,255,255,.08)}
+.hcp-settings-head h3{font-size:14px;font-weight:800;margin:0;
+  font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-bright,#0f172a)}
+[data-theme="dark"] .hcp-settings-head h3,
+[data-theme="ocean"] .hcp-settings-head h3,
+[data-theme="slate"] .hcp-settings-head h3{color:#f1f5f9}
+.hcp-settings-close{cursor:pointer;font-size:20px;color:var(--muted,#94a3b8);
+  background:none;border:none;line-height:1;padding:0}
+.hcp-settings-body{padding:20px 22px}
+.hcp-settings-lbl{font-size:9px;font-weight:800;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted,#94a3b8);margin-bottom:12px;
+  font-family:'Plus Jakarta Sans',sans-serif}
+.hcp-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px}
+.hcp-swatch{border-radius:12px;padding:10px 8px;cursor:pointer;
+  border:2px solid transparent;transition:all .18s;text-align:center}
+.hcp-swatch:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.hcp-swatch.active{border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.2)}
+.hcp-swatch-preview{width:100%;height:30px;border-radius:7px;margin-bottom:6px}
+.hcp-swatch-name{font-size:11px;font-weight:700;color:var(--text-main,#1e293b);
+  font-family:'Plus Jakarta Sans',sans-serif}
+[data-theme="dark"] .hcp-swatch-name,
+[data-theme="ocean"] .hcp-swatch-name,
+[data-theme="slate"] .hcp-swatch-name{color:var(--text-bright,#e2e8f0)}
+.hcp-swatch-tag{font-size:9px;color:var(--muted,#94a3b8);margin-top:2px}
+.hcp-swatch .hcp-active-dot{display:none;width:8px;height:8px;border-radius:50%;
+  background:#0d9488;margin:4px auto 0}
+.hcp-swatch.active .hcp-active-dot{display:block}
+@keyframes hcpFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Settings button */
+.hcp-settings-btn{width:34px;height:34px;border-radius:9px;
+  border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.6);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  font-size:15px;transition:all .2s;backdrop-filter:blur(8px);vertical-align:middle}
+.hcp-settings-btn:hover{transform:rotate(45deg);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+[data-theme="dark"] .hcp-settings-btn,
+[data-theme="ocean"] .hcp-settings-btn,
+[data-theme="slate"] .hcp-settings-btn{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.07)}
+/* ══ END HCP MULTI-THEME ═══════════════════════════════════════════════════ */
+
+</style>
+<link rel="stylesheet" href="/static/hcp_theme.css">
+</head>
+<body>
+{% set page_title = "Task Scheduler" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Tasks", "url": "#"}, {"label": "Scheduler", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="page-layout">
+    <div class="dept-sidebar">
+        <div class="sidebar-label">
+            Departments
+            {% if sched_role != 'admin' %}<span class="scope-badge">🔒 Own Dept</span>{% endif %}
+        </div>
+        <div id="deptList"></div>
+    </div>
+    <div class="main-content">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="toolbar-title" id="activeDeptTitle">All Departments</div>
+                <div class="toolbar-sub">
+                    <span id="activeDeptSub"></span>
+                    <span class="access-tag" id="accessTag"></span>
+                </div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="toggleView()">
+                <i id="viewIcon" class="fas fa-columns"></i> <span id="viewLabel">Kanban View</span>
+            </button>
+            {% if sched_role in ['admin','dept_head'] %}
+            <button class="btn btn-primary" onclick="openAddModal()">
+                <i class="fas fa-plus"></i> New Task
+            </button>
+            {% endif %}
+        </div>
+        <div class="stats-row" id="statsRow"></div>
+        <div class="filter-bar">
+            <input type="text" id="taskSearch" placeholder="🔍 Search tasks…" oninput="renderTasks()">
+            <select id="filterPriority" onchange="renderTasks()">
+                <option value="">All Priorities</option>
+                <option value="Critical">🔴 Critical</option>
+                <option value="High">🟠 High</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Low">🟢 Low</option>
+            </select>
+            <select id="filterStatus" onchange="renderTasks()">
+                <option value="">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Done">Done</option>
+            </select>
+            <select id="filterAssignee" onchange="renderTasks()"><option value="">All Assignees</option></select>
+        </div>
+        <div id="taskView"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="taskModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">New Task</div>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="readonly-notice" id="readonlyNotice" style="display:none;">
+            <i class="fas fa-eye"></i> <span id="readonlyMsg"></span>
+        </div>
+        <div class="form-group">
+            <label>Task Title <span style="color:var(--red)">*</span></label>
+            <input type="text" id="f-title" placeholder="e.g., Submit monthly purchase report">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="f-desc" placeholder="Add more details…"></textarea>
+        </div>
+        <div class="form-row-2">
+            <div class="form-group">
+                <label>Department <span style="color:var(--red)">*</span></label>
+                <select id="f-dept"></select>
+            </div>
+            <div class="form-group">
+                <label>Assign To</label>
+                <select id="f-assign"><option value="">Unassigned</option></select>
+            </div>
+        </div>
+        <div class="form-row-2">
+            <div class="form-group">
+                <label>Priority</label>
+                <select id="f-priority">
+                    <option value="Low">🟢 Low</option>
+                    <option value="Medium" selected>🟡 Medium</option>
+                    <option value="High">🟠 High</option>
+                    <option value="Critical">🔴 Critical</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Due Date</label>
+                <input type="date" id="f-due">
+            </div>
+        </div>
+        <div class="form-row-2">
+            <div class="form-group">
+                <label>Status</label>
+                <select id="f-status">
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Done">Done</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Recurrence</label>
+                <select id="f-recur">
+                    <option value="None">None</option>
+                    <option value="Daily">🔁 Daily</option>
+                    <option value="Weekly">🔁 Weekly</option>
+                    <option value="Monthly">🔁 Monthly</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="saveTaskBtn" onclick="saveTask()"><i class="fas fa-check"></i> Save Task</button>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── Session data injected by Flask ────────────────────────── */
+const currentUser = {
+    id:   {{ session.get('user_id', 0) }},
+    name: "{{ user_name | e }}",
+    type: "{{ sched_role }}",
+    dept: "{{ user_dept | e }}"
+};
+
+/* ── Tasks seeded from DB via Flask ────────────────────────── */
+let tasks = {{ tasks | tojson }};
+tasks = tasks.map(t => ({
+    id:       t.id,
+    dept:     t.department || '',
+    title:    t.title || '',
+    desc:     t.description || '',
+    priority: t.priority || 'Medium',
+    status:   t.status || 'Pending',
+    due:      t.due_date || '',
+    assignee: t.assigned_to || '',
+    recur:    t.recurrence || 'None',
+    created:  (t.created_at || '').substring(0, 10),
+}));
+
+const DEPARTMENTS = [
+    {id:'all',        name:'All Departments', icon:'fas fa-layer-group',   color:'#64748b', bg:'#f1f5f9'},
+    {id:'Purchase',   name:'Purchase',         icon:'fas fa-shopping-cart', color:'#f59e0b', bg:'#fffbeb'},
+    {id:'RD',         name:'R&D',              icon:'fas fa-flask',         color:'#8b5cf6', bg:'#f5f3ff'},
+    {id:'QC',         name:'Quality Control',  icon:'fas fa-microscope',    color:'#06b6d4', bg:'#ecfeff'},
+    {id:'Production', name:'Production',       icon:'fas fa-industry',      color:'#22c55e', bg:'#f0fdf4'},
+    {id:'Stores',     name:'Stores',            icon:'fas fa-warehouse',     color:'#3b82f6', bg:'#eff6ff'},
+    {id:'HR',         name:'HR',               icon:'fas fa-users',         color:'#ec4899', bg:'#fdf2f8'},
+    {id:'Accounts',   name:'Accounts',          icon:'fas fa-calculator',    color:'#f97316', bg:'#fff7ed'},
+    {id:'IT',         name:'IT',               icon:'fas fa-server',        color:'#0d9488', bg:'#f0fdfa'},
+    {id:'Admin',      name:'Administration',   icon:'fas fa-building',      color:'#6366f1', bg:'#eef2ff'},
+];
+
+let editingTaskId = null;
+let activeDept    = currentUser.type === 'admin' ? 'all' : (currentUser.dept || 'all');
+let viewMode      = 'kanban';
+const today       = new Date().toISOString().split('T')[0];
+
+/* ── Permissions ───────────────────────────────────────────── */
+function canManage(dept) {
+    if (currentUser.type === 'admin') return true;
+    if (currentUser.type === 'dept_head' && dept === currentUser.dept) return true;
+    return false;
+}
+function getAccessibleTasks() {
+    if (currentUser.type === 'admin') return tasks;
+    return tasks.filter(t => t.dept === currentUser.dept);
+}
+function getVisibleDepts() {
+    if (currentUser.type === 'admin') return DEPARTMENTS;
+    return DEPARTMENTS.filter(d => d.id === 'all' || d.id === currentUser.dept);
+}
+
+/* ── Init ──────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => selectDept(activeDept));
+
+/* ── Sidebar ───────────────────────────────────────────────── */
+function renderDeptList() {
+    document.getElementById('deptList').innerHTML = getVisibleDepts().map(d => {
+        const dt = d.id === 'all' ? getAccessibleTasks() : tasks.filter(t => t.dept === d.id);
+        const ov = dt.filter(t => t.due < today && t.status !== 'Done').length;
+        return `<div class="dept-item ${activeDept === d.id ? 'active' : ''}" onclick="selectDept('${d.id}')">
+            <div class="dept-icon" style="background:${d.bg};color:${d.color};"><i class="${d.icon}"></i></div>
+            <div class="dept-info">
+                <div class="dept-info-name">${d.name}</div>
+                <div class="dept-info-sub">${dt.length} task${dt.length !== 1 ? 's' : ''}</div>
+            </div>
+            <span class="overdue-badge ${ov > 0 ? 'show' : ''}">${ov}</span>
+        </div>`;
+    }).join('');
+}
+
+function selectDept(deptId) {
+    if (deptId !== 'all' && currentUser.type !== 'admin' && deptId !== currentUser.dept) {
+        showToast('No access to this department', 'error'); return;
+    }
+    activeDept = deptId;
+    const d = DEPARTMENTS.find(x => x.id === deptId);
+    document.getElementById('activeDeptTitle').textContent = d?.name || deptId;
+
+    let sub = '', tagText = '', tagClass = '';
+    if (currentUser.type === 'admin')     { sub = deptId === 'all' ? 'All departments — full control' : `Managing ${d?.name}`; tagText = 'Full Access'; tagClass = 'full'; }
+    else if (currentUser.type === 'dept_head') { sub = `Your department — ${d?.name || 'All'}`; tagText = 'Dept Admin'; tagClass = 'own'; }
+    else                                   { sub = `Viewing ${d?.name || 'your'} tasks (read-only)`;  tagText = 'View Only';   tagClass = 'view'; }
+    document.getElementById('activeDeptSub').textContent = sub;
+    const tag = document.getElementById('accessTag');
+    tag.textContent = tagText; tag.className = `access-tag ${tagClass}`;
+
+    renderDeptList(); renderStats(); renderTasks(); populateFilters();
+}
+
+/* ── Stats ─────────────────────────────────────────────────── */
+function renderStats() {
+    const base    = activeDept === 'all' ? getAccessibleTasks() : tasks.filter(t => t.dept === activeDept);
+    const total   = base.length;
+    const pending = base.filter(t => t.status === 'Pending').length;
+    const inProg  = base.filter(t => t.status === 'In Progress').length;
+    const done    = base.filter(t => t.status === 'Done').length;
+    const overdue = base.filter(t => t.due < today && t.status !== 'Done').length;
+    const pct     = total ? Math.round(done / total * 100) : 0;
+    document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-value">${total}</div><div class="stat-sub">${inProg} in progress</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--amber)">${pending}</div><div class="stat-sub">Awaiting action</div></div>
+    <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--green)">${done}</div><div class="stat-sub">${pct}% completion</div></div>
+    <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--red)">${overdue}</div><div class="stat-sub">Past due date</div></div>`;
+}
+
+/* ── Filter + Render ───────────────────────────────────────── */
+function getFiltered() {
+    const s = document.getElementById('taskSearch').value.toLowerCase();
+    const p = document.getElementById('filterPriority').value;
+    const st= document.getElementById('filterStatus').value;
+    const a = document.getElementById('filterAssignee').value;
+    let base = activeDept === 'all' ? getAccessibleTasks() : tasks.filter(t => t.dept === activeDept);
+    return base.filter(t => {
+        if (s  && !t.title.toLowerCase().includes(s) && !(t.desc||'').toLowerCase().includes(s)) return false;
+        if (p  && t.priority !== p)  return false;
+        if (st && t.status   !== st) return false;
+        if (a  && t.assignee !== a)  return false;
+        return true;
+    });
+}
+function renderTasks() {
+    const f = getFiltered();
+    document.getElementById('taskView').innerHTML = viewMode === 'kanban' ? renderKanban(f) : renderList(f);
+}
+function renderKanban(f) {
+    return `<div class="kanban-view">${[
+        {key:'Pending',label:'Pending',color:'#f59e0b'},
+        {key:'In Progress',label:'In Progress',color:'#3b82f6'},
+        {key:'Done',label:'Done',color:'#22c55e'}
+    ].map(col => {
+        const ct = f.filter(t => t.status === col.key);
+        return `<div class="kanban-col">
+            <div class="kanban-col-header"><div class="kanban-dot" style="background:${col.color}"></div>${col.label}<span class="kanban-count">${ct.length}</span></div>
+            ${ct.length ? ct.map(t => taskCard(t)).join('') : `<div class="kanban-empty">No ${col.label.toLowerCase()} tasks</div>`}
+        </div>`;
+    }).join('')}</div>`;
+}
+function renderList(f) {
+    if (!f.length) return `<div style="text-align:center;padding:48px;color:var(--text-muted);font-size:14px">No tasks match filters</div>`;
+    return `<div style="display:flex;flex-direction:column;gap:10px">${f.map(t => taskCard(t, true)).join('')}</div>`;
+}
+function taskCard(t, wide = false) {
+    const isOD  = t.due < today && t.status !== 'Done';
+    const canEd = canManage(t.dept);
+    const dd    = DEPARTMENTS.find(d => d.id === t.dept);
+    const fn    = canEd ? `openEditModal(${t.id})` : `viewTaskModal(${t.id})`;
+    return `<div class="task-card priority-${t.priority.toLowerCase()} ${isOD?'overdue':''} ${!canEd?'view-only':''}" onclick="${fn}">
+        ${!canEd ? '<div class="view-only-label">👁 View Only</div>' : ''}
+        <div class="task-title">${t.title}</div>
+        <div class="task-desc">${t.desc || '—'}</div>
+        <div class="task-meta">
+            <span class="task-tag tag-${t.priority.toLowerCase()}">${t.priority}</span>
+            ${isOD ? '<span class="task-tag tag-overdue">⚠ Overdue</span>' : ''}
+            <span class="task-tag tag-due">📅 ${t.due}</span>
+            ${t.assignee ? `<span class="task-tag tag-assign">👤 ${t.assignee.split(' ')[0]}</span>` : ''}
+            ${t.recur !== 'None' ? `<span class="task-tag tag-recur">🔁 ${t.recur}</span>` : ''}
+            ${wide && activeDept === 'all' ? `<span class="task-tag" style="background:${dd?.bg||'#f1f5f9'};color:${dd?.color||'#64748b'}">${t.dept}</span>` : ''}
+        </div>
+        ${canEd ? `<div class="task-actions" onclick="event.stopPropagation()">
+            ${t.status !== 'Done'
+                ? `<button class="task-action-btn done-btn" onclick="markDone(${t.id})">✓ Mark Done</button>`
+                : `<button class="task-action-btn reopen-btn" onclick="markPending(${t.id})">↩ Reopen</button>`}
+            <button class="task-action-btn" onclick="openEditModal(${t.id})">✏ Edit</button>
+            <button class="task-action-btn del-btn" onclick="deleteTask(${t.id})">🗑 Delete</button>
+        </div>` : ''}
+    </div>`;
+}
+
+function toggleView() {
+    viewMode = viewMode === 'kanban' ? 'list' : 'kanban';
+    document.getElementById('viewIcon').className = viewMode === 'kanban' ? 'fas fa-columns' : 'fas fa-list';
+    document.getElementById('viewLabel').textContent = viewMode === 'kanban' ? 'Kanban View' : 'List View';
+    renderTasks();
+}
+
+/* ── Modal ─────────────────────────────────────────────────── */
+function openAddModal() {
+    editingTaskId = null;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:var(--brand)"></i> New Task';
+    clearFields(); document.getElementById('f-due').value = today;
+    document.getElementById('readonlyNotice').style.display = 'none';
+    document.getElementById('saveTaskBtn').style.display = '';
+    populateModalDept(null); setReadonly(false);
+    document.getElementById('taskModal').classList.add('open');
+}
+function openEditModal(taskId) {
+    const t = tasks.find(x => x.id === taskId); if (!t) return;
+    if (!canManage(t.dept)) { viewTaskModal(taskId); return; }
+    editingTaskId = taskId;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-pen" style="color:var(--brand)"></i> Edit Task';
+    fillFields(t);
+    document.getElementById('readonlyNotice').style.display = 'none';
+    document.getElementById('saveTaskBtn').style.display = '';
+    populateModalDept(t.dept);
+    document.getElementById('f-dept').disabled = currentUser.type === 'dept_head';
+    setReadonly(false);
+    document.getElementById('taskModal').classList.add('open');
+}
+function viewTaskModal(taskId) {
+    const t = tasks.find(x => x.id === taskId); if (!t) return;
+    editingTaskId = null;
+    const dd = DEPARTMENTS.find(d => d.id === t.dept);
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-eye" style="color:var(--text-dim)"></i> Task Details';
+    document.getElementById('readonlyNotice').style.display = 'flex';
+    document.getElementById('readonlyMsg').textContent =
+        currentUser.type === 'user'
+            ? `View only — contact your department head to make changes.`
+            : `This task belongs to ${dd?.name || t.dept}.`;
+    fillFields(t); populateModalDept(t.dept); setReadonly(true);
+    document.getElementById('saveTaskBtn').style.display = 'none';
+    document.getElementById('taskModal').classList.add('open');
+}
+function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
+function clearFields() {
+    ['f-title','f-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-priority').value = 'Medium';
+    document.getElementById('f-status').value   = 'Pending';
+    document.getElementById('f-recur').value    = 'None';
+    document.getElementById('f-assign').value   = '';
+}
+function fillFields(t) {
+    document.getElementById('f-title').value    = t.title;
+    document.getElementById('f-desc').value     = t.desc;
+    document.getElementById('f-priority').value = t.priority;
+    document.getElementById('f-status').value   = t.status;
+    document.getElementById('f-due').value      = t.due;
+    document.getElementById('f-recur').value    = t.recur;
+    document.getElementById('f-assign').value   = t.assignee || '';
+}
+function setReadonly(ro) {
+    ['f-title','f-desc','f-priority','f-status','f-due','f-recur','f-assign','f-dept']
+        .forEach(id => { document.getElementById(id).disabled = ro; });
+}
+function populateModalDept(sel) {
+    const opts = currentUser.type === 'admin'
+        ? DEPARTMENTS.filter(d => d.id !== 'all')
+        : DEPARTMENTS.filter(d => d.id === currentUser.dept);
+    document.getElementById('f-dept').innerHTML = opts.map(d =>
+        `<option value="${d.id}" ${d.id === (sel || (activeDept !== 'all' ? activeDept : opts[0]?.id)) ? 'selected' : ''}>${d.name}</option>`
+    ).join('');
+}
+
+/* ── Save Task (API) ───────────────────────────────────────── */
+async function saveTask() {
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) { showToast('Please enter a task title', 'error'); return; }
+    const deptVal = document.getElementById('f-dept').value;
+    if (currentUser.type === 'dept_head' && deptVal !== currentUser.dept) {
+        showToast('You can only manage your own department', 'error'); return;
+    }
+    const payload = {
+        id:          editingTaskId || null,
+        title,
+        description: document.getElementById('f-desc').value.trim(),
+        department:  deptVal,
+        priority:    document.getElementById('f-priority').value,
+        status:      document.getElementById('f-status').value,
+        due_date:    document.getElementById('f-due').value,
+        assigned_to: document.getElementById('f-assign').value,
+        recurrence:  document.getElementById('f-recur').value,
+    };
+    try {
+        const res  = await fetch('/api/task_scheduler/save', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+        const data = await res.json();
+        if (data.status !== 'success') { showToast(data.message || 'Save failed', 'error'); return; }
+        const norm = { id: data.id || editingTaskId, dept: payload.department, title: payload.title, desc: payload.description,
+                       priority: payload.priority, status: payload.status, due: payload.due_date,
+                       assignee: payload.assigned_to, recur: payload.recurrence, created: today };
+        if (editingTaskId) {
+            const idx = tasks.findIndex(t => t.id === editingTaskId);
+            if (idx !== -1) tasks[idx] = norm;
+            showToast('Task updated ✓', 'success');
+        } else {
+            tasks.unshift(norm);
+            showToast('Task created ✓', 'success');
+        }
+        closeModal(); refresh();
+    } catch(e) { showToast('Network error', 'error'); }
+}
+
+/* ── Quick Actions (API) ───────────────────────────────────── */
+async function markDone(id)    { await changeStatus(id, 'Done'); }
+async function markPending(id) { await changeStatus(id, 'Pending'); }
+async function changeStatus(taskId, newStatus) {
+    const t = tasks.find(x => x.id === taskId);
+    if (!t || !canManage(t.dept)) { showToast('Permission denied', 'error'); return; }
+    try {
+        const res = await fetch('/api/task_scheduler/status', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:taskId, status:newStatus})});
+        const d = await res.json();
+        if (d.status !== 'success') { showToast(d.message, 'error'); return; }
+        t.status = newStatus; refresh();
+        showToast(newStatus === 'Done' ? `"${t.title.substring(0,38)}" marked done ✓` : `"${t.title.substring(0,38)}" reopened`, newStatus === 'Done' ? 'success' : 'warn');
+    } catch(e) { showToast('Network error', 'error'); }
+}
+async function deleteTask(taskId) {
+    const t = tasks.find(x => x.id === taskId); if (!t) return;
+    if (!canManage(t.dept)) { showToast('Permission denied', 'error'); return; }
+    if (!confirm(`Delete "${t.title}"?\nThis cannot be undone.`)) return;
+    try {
+        const res = await fetch('/api/task_scheduler/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:taskId})});
+        const d = await res.json();
+        if (d.status !== 'success') { showToast(d.message, 'error'); return; }
+        tasks = tasks.filter(x => x.id !== taskId); refresh();
+        showToast('Task deleted', 'error');
+    } catch(e) { showToast('Network error', 'error'); }
+}
+
+function refresh() { renderDeptList(); renderStats(); renderTasks(); populateFilters(); }
+
+function populateFilters() {
+    const base  = activeDept === 'all' ? getAccessibleTasks() : tasks.filter(t => t.dept === activeDept);
+    const names = [...new Set(base.map(t => t.assignee).filter(Boolean))].sort();
+    const sel   = document.getElementById('filterAssignee');
+    const cur   = sel.value;
+    sel.innerHTML = `<option value="">All Assignees</option>` + names.map(n => `<option value="${n}" ${n===cur?'selected':''}>${n}</option>`).join('');
+    const allNames = [...new Set(tasks.map(t => t.assignee).filter(Boolean))].sort();
+    document.getElementById('f-assign').innerHTML = `<option value="">Unassigned</option>` + allNames.map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+function showToast(msg, type = 'success') {
+    const icons = {success:'✅', error:'❌', warn:'⚠️'};
+    const t = document.getElementById('toast');
+    t.innerHTML = `${icons[type]||''} ${msg}`; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3200);
+}
+document.getElementById('taskModal').addEventListener('click', e => { if (e.target === document.getElementById('taskModal')) closeModal(); });
+</script>
+<script>
+/* ── HCP Universal Theme Engine ── */
+const HCP_THEMES = {
+  light: {'--bg':'linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)','--bg-main':'#f0fdf8','--bg-white':'#ffffff','--bg-topbar':'#ffffff','--hcp-bg':'linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 55%,#fefce8 100%)','--surface':'#ffffff','--surface-solid':'#ffffff','--surface2':'rgba(255,255,255,0.65)','--surface3':'#f1f5f9','--card':'#ffffff','--card-bg':'#ffffff','--sidebar':'#f8f9fb','--bg-sidebar':'#2c3e50','--border':'rgba(0,0,0,0.08)','--border2':'rgba(0,0,0,0.12)','--glass-border':'rgba(255,255,255,0.88)','--text':'#1e293b','--text-bright':'#0f172a','--text-primary':'#0f172a','--text-dim':'#64748b','--text-muted':'#94a3b8','--muted':'#94a3b8','--muted2':'#64748b','--brand':'#0d9488','--brand-dim':'#0f766e','--brand-dark':'#0f766e','--brand-glow':'rgba(13,148,136,0.14)','--accent':'#06b6d4','--accent2':'#6366f1','--primary':'#0d9488','--primary-hover':'#0f766e','--primary-light':'#f0fdfa','--topbar-bg':'rgba(255,255,255,0.88)','--sidebar-bg':'rgba(255,255,255,0.72)','--input-bg':'rgba(255,255,255,0.72)','--input-border':'rgba(0,0,0,0.1)','--table-head-bg':'rgba(248,250,252,0.9)','--table-row-hover':'rgba(13,148,136,0.04)','--shadow':'0 4px 20px rgba(0,0,0,0.06)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.06)','--topbar-shadow':'0 1px 0 #d1d9e6','--success':'#059669','--success-light':'#ecfdf5','--danger':'#ef4444','--warn':'#f59e0b','--info':'#06b6d4','--s0':'#f8fafc','--s1':'#f1f5f9','--s2':'#e2e8f0','--s3':'#cbd5e1','--s4':'#94a3b8','--s5':'#64748b','--t0':'#0f172a','--t1':'#1e293b','--t2':'#475569','--t3':'#94a3b8','--ac':'#0d9488','--ac-d':'#0f766e','--ac-g':'rgba(13,148,136,0.16)','--ac-s':'rgba(13,148,136,0.07)','--l0':'rgba(0,0,0,0.03)','--l1':'rgba(0,0,0,0.06)','--l2':'rgba(0,0,0,0.1)','--l3':'rgba(0,0,0,0.16)','--rd':'#ef4444','--am':'#f59e0b','--gr':'#10b981','--pu':'#8b5cf6','--accent-color':'#0d9488','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#f1f5f9','--text-main':'#1e293b','--text-secondary':'#64748b','--text-nav':'#bdc3c7','--topbar':'rgba(255,255,255,0.88)','--header':'#f8fafc','--row-hover':'rgba(13,148,136,0.04)','--scrollbar-track':'#f1f5f9','--scrollbar-thumb':'rgba(0,0,0,0.12)','--bg-input':'#ffffff','--bg-input-ro':'#f8fafc','--bg-modal':'#ffffff','--bg-stat-card':'#ffffff','--bg-table-head':'#f8fafc','--bg-chart-card':'#ffffff','--bg-actionbar':'#f1f5f9','--bg-sidebar-hover':'#34495e','--border-card':'rgba(0,0,0,0.08)','--border-light':'rgba(0,0,0,0.05)','--border-main':'#e2e8f0','--border-focus':'#93c5fd','--shadow-card':'0 2px 8px rgba(0,0,0,0.06)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.05)','--shadow-md':'0 4px 12px rgba(0,0,0,0.08)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.12)','--error-bg':'#fef2f2','--error-text':'#dc2626','--error-border':'#fecaca','--warn-bg':'#fffbeb','--warn-text':'#d97706','--warn-border':'#fde68a','--success-bg':'#f0fdf4','--success-text':'#059669','--success-border':'#a7f3d0','--input-focus':'#f0fdfa','--purple':'#7c3aed','--purple-light':'#f5f3ff','--danger-light':'#fef2f2','--warning':'#d97706','--warning-light':'#fffbeb','--green':'#10b981','--green-dim':'rgba(16,185,129,0.1)','--green-glow':'rgba(16,185,129,0.2)','--red':'#ef4444','--red-dim':'rgba(239,68,68,0.1)','--amber':'#f59e0b','--orange':'#f97316','--yellow':'#eab308','--blue':'#3b82f6','--radius':'12px','--badge-bg':'#f1f5f9','--brand-glow2':'rgba(13,148,136,0.07)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.06)','--sh-m':'0 4px 16px rgba(0,0,0,0.08)','--sh-l':'0 8px 32px rgba(0,0,0,0.12)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(239,68,68,0.15)','--rd-g':'rgba(239,68,68,0.08)','--gr-b':'rgba(16,185,129,0.15)','--gr-g':'rgba(16,185,129,0.08)','--bl':'#3b82f6','--bl-b':'rgba(59,130,246,0.15)','--pu-g':'rgba(139,92,246,0.08)','--pu-s':'rgba(139,92,246,0.15)','--wa':'#f59e0b','--wa-d':'#d97706','--fb':'#f8fafc','--fd':'#0f172a','--fm':'#1e293b'},
+  dark:  {'--bg':'linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)','--bg-main':'#0f172a','--bg-white':'#1e293b','--bg-topbar':'rgba(12,17,23,0.92)','--hcp-bg':'linear-gradient(135deg,#0c1117 0%,#0f1923 55%,#111420 100%)','--surface':'rgba(22,28,40,0.85)','--surface-solid':'#161c28','--surface2':'rgba(22,28,40,0.65)','--surface3':'#1e2a3a','--card':'#1e293b','--card-bg':'#1e293b','--sidebar':'#1e293b','--bg-sidebar':'#1a2035','--border':'rgba(255,255,255,0.08)','--border2':'rgba(255,255,255,0.12)','--glass-border':'rgba(255,255,255,0.07)','--text':'#cbd5e1','--text-bright':'#f1f5f9','--text-primary':'#f1f5f9','--text-dim':'#94a3b8','--text-muted':'#475569','--muted':'#475569','--muted2':'#64748b','--brand':'#14b8a6','--brand-dim':'#0d9488','--brand-dark':'#0d9488','--brand-glow':'rgba(20,184,166,0.18)','--accent':'#22d3ee','--accent2':'#818cf8','--primary':'#14b8a6','--primary-hover':'#0d9488','--primary-light':'rgba(20,184,166,0.12)','--topbar-bg':'rgba(12,17,23,0.92)','--sidebar-bg':'rgba(16,20,32,0.92)','--input-bg':'rgba(255,255,255,0.05)','--input-border':'rgba(255,255,255,0.1)','--table-head-bg':'rgba(255,255,255,0.03)','--table-row-hover':'rgba(20,184,166,0.05)','--shadow':'0 4px 20px rgba(0,0,0,0.4)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.3)','--topbar-shadow':'0 1px 0 rgba(255,255,255,0.05)','--success':'#10b981','--success-light':'rgba(16,185,129,0.12)','--danger':'#f43f5e','--warn':'#f59e0b','--info':'#22d3ee','--s0':'#090e1a','--s1':'#0f1724','--s2':'#162030','--s3':'#1c2a3f','--s4':'#223349','--s5':'#293d55','--t0':'#f0f6ff','--t1':'#c8d8ee','--t2':'#8099b8','--t3':'#4a6080','--ac':'#00d4b4','--ac-d':'#00ae94','--ac-g':'rgba(0,212,180,0.16)','--ac-s':'rgba(0,212,180,0.07)','--l0':'rgba(255,255,255,0.04)','--l1':'rgba(255,255,255,0.08)','--l2':'rgba(255,255,255,0.14)','--l3':'rgba(255,255,255,0.22)','--rd':'#f43f5e','--am':'#fbbf24','--gr':'#34d399','--pu':'#a78bfa','--accent-color':'#14b8a6','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#0f172a','--text-main':'#cbd5e1','--text-secondary':'#94a3b8','--text-nav':'#475569','--topbar':'rgba(12,17,23,0.92)','--header':'rgba(255,255,255,0.03)','--row-hover':'rgba(20,184,166,0.05)','--scrollbar-track':'#0f172a','--scrollbar-thumb':'rgba(255,255,255,0.1)','--bg-input':'rgba(255,255,255,0.05)','--bg-input-ro':'rgba(255,255,255,0.03)','--bg-modal':'#1e293b','--bg-stat-card':'#1e293b','--bg-table-head':'rgba(255,255,255,0.03)','--bg-chart-card':'#1e293b','--bg-actionbar':'#0f172a','--bg-sidebar-hover':'rgba(255,255,255,0.07)','--border-card':'rgba(255,255,255,0.08)','--border-light':'rgba(255,255,255,0.04)','--border-main':'rgba(255,255,255,0.08)','--border-focus':'#0d9488','--shadow-card':'0 2px 8px rgba(0,0,0,0.3)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.3)','--shadow-md':'0 4px 12px rgba(0,0,0,0.35)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.45)','--error-bg':'rgba(239,68,68,0.12)','--error-text':'#f87171','--error-border':'rgba(239,68,68,0.25)','--warn-bg':'rgba(245,158,11,0.12)','--warn-text':'#fbbf24','--warn-border':'rgba(245,158,11,0.25)','--success-bg':'rgba(16,185,129,0.12)','--success-text':'#34d399','--success-border':'rgba(16,185,129,0.25)','--input-focus':'rgba(20,184,166,0.12)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.12)','--danger-light':'rgba(244,63,94,0.12)','--warning':'#fbbf24','--warning-light':'rgba(245,158,11,0.12)','--green':'#34d399','--green-dim':'rgba(52,211,153,0.1)','--green-glow':'rgba(52,211,153,0.2)','--red':'#f43f5e','--red-dim':'rgba(244,63,94,0.1)','--amber':'#fbbf24','--orange':'#fb923c','--yellow':'#fbbf24','--blue':'#60a5fa','--radius':'12px','--badge-bg':'rgba(255,255,255,0.07)','--brand-glow2':'rgba(20,184,166,0.09)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.3)','--sh-m':'0 4px 16px rgba(0,0,0,0.35)','--sh-l':'0 8px 32px rgba(0,0,0,0.45)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(244,63,94,0.15)','--rd-g':'rgba(244,63,94,0.08)','--gr-b':'rgba(52,211,153,0.15)','--gr-g':'rgba(52,211,153,0.08)','--bl':'#60a5fa','--bl-b':'rgba(96,165,250,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#fbbf24','--wa-d':'#f59e0b','--fb':'#0f172a','--fd':'#f1f5f9','--fm':'#e2e8f0'},
+  ocean: {'--bg':'linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)','--bg-main':'#082844','--bg-white':'#0c2d4e','--bg-topbar':'rgba(8,24,50,0.94)','--hcp-bg':'linear-gradient(135deg,#0ea5e9 0%,#0284c7 40%,#0369a1 100%)','--surface':'rgba(14,42,71,0.82)','--surface-solid':'#0c2d4e','--surface2':'rgba(14,42,71,0.6)','--surface3':'#0f3460','--card':'#0c2d4e','--card-bg':'#0c2d4e','--sidebar':'#071e38','--bg-sidebar':'#051828','--border':'rgba(56,189,248,0.12)','--border2':'rgba(56,189,248,0.2)','--glass-border':'rgba(56,189,248,0.18)','--text':'#bae6fd','--text-bright':'#e0f2fe','--text-primary':'#e0f2fe','--text-dim':'#7dd3fc','--text-muted':'#4a7ea8','--muted':'#4a7ea8','--muted2':'#5b8db8','--brand':'#38bdf8','--brand-dim':'#0ea5e9','--brand-dark':'#0ea5e9','--brand-glow':'rgba(56,189,248,0.22)','--accent':'#67e8f9','--accent2':'#a78bfa','--primary':'#38bdf8','--primary-hover':'#0ea5e9','--primary-light':'rgba(56,189,248,0.12)','--topbar-bg':'rgba(8,24,50,0.94)','--sidebar-bg':'rgba(8,28,55,0.92)','--input-bg':'rgba(255,255,255,0.06)','--input-border':'rgba(56,189,248,0.2)','--table-head-bg':'rgba(255,255,255,0.04)','--table-row-hover':'rgba(56,189,248,0.06)','--shadow':'0 4px 20px rgba(0,0,0,0.5)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.4)','--topbar-shadow':'0 1px 0 rgba(56,189,248,0.1)','--success':'#34d399','--success-light':'rgba(52,211,153,0.15)','--danger':'#f87171','--warn':'#fbbf24','--info':'#67e8f9','--s0':'#051828','--s1':'#082035','--s2':'#0a2d4a','--s3':'#0d3a5e','--s4':'#104872','--s5':'#145686','--t0':'#e0f2fe','--t1':'#bae6fd','--t2':'#7dd3fc','--t3':'#38bdf8','--ac':'#38bdf8','--ac-d':'#0ea5e9','--ac-g':'rgba(56,189,248,0.16)','--ac-s':'rgba(56,189,248,0.07)','--l0':'rgba(56,189,248,0.04)','--l1':'rgba(56,189,248,0.08)','--l2':'rgba(56,189,248,0.14)','--l3':'rgba(56,189,248,0.22)','--rd':'#f87171','--am':'#fbbf24','--gr':'#34d399','--pu':'#a78bfa','--accent-color':'#38bdf8','--db-color':'#a78bfa','--zip-color':'#34d399','--bg-body':'#082844','--text-main':'#bae6fd','--text-secondary':'#7dd3fc','--text-nav':'#4a7ea8','--topbar':'rgba(8,24,50,0.94)','--header':'rgba(56,189,248,0.05)','--row-hover':'rgba(56,189,248,0.06)','--scrollbar-track':'#082844','--scrollbar-thumb':'rgba(56,189,248,0.15)','--bg-input':'rgba(255,255,255,0.06)','--bg-input-ro':'rgba(255,255,255,0.03)','--bg-modal':'#0c2d4e','--bg-stat-card':'#0c2d4e','--bg-table-head':'rgba(56,189,248,0.05)','--bg-chart-card':'#0c2d4e','--bg-actionbar':'#051828','--bg-sidebar-hover':'rgba(56,189,248,0.1)','--border-card':'rgba(56,189,248,0.12)','--border-light':'rgba(56,189,248,0.06)','--border-main':'rgba(56,189,248,0.15)','--border-focus':'#38bdf8','--shadow-card':'0 2px 8px rgba(0,0,0,0.4)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.4)','--shadow-md':'0 4px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.55)','--error-bg':'rgba(248,113,113,0.15)','--error-text':'#fca5a5','--error-border':'rgba(248,113,113,0.3)','--warn-bg':'rgba(251,191,36,0.15)','--warn-text':'#fde68a','--warn-border':'rgba(251,191,36,0.3)','--success-bg':'rgba(52,211,153,0.15)','--success-text':'#6ee7b7','--success-border':'rgba(52,211,153,0.3)','--input-focus':'rgba(56,189,248,0.15)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.15)','--danger-light':'rgba(248,113,113,0.15)','--warning':'#fbbf24','--warning-light':'rgba(251,191,36,0.15)','--green':'#34d399','--green-dim':'rgba(52,211,153,0.1)','--green-glow':'rgba(52,211,153,0.2)','--red':'#f87171','--red-dim':'rgba(248,113,113,0.1)','--amber':'#fbbf24','--orange':'#fb923c','--yellow':'#fde68a','--blue':'#67e8f9','--radius':'12px','--badge-bg':'rgba(56,189,248,0.1)','--brand-glow2':'rgba(56,189,248,0.1)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.4)','--sh-m':'0 4px 16px rgba(0,0,0,0.45)','--sh-l':'0 8px 32px rgba(0,0,0,0.55)','--am-b':'rgba(251,191,36,0.15)','--am-g':'rgba(251,191,36,0.08)','--rd-b':'rgba(248,113,113,0.15)','--rd-g':'rgba(248,113,113,0.08)','--gr-b':'rgba(52,211,153,0.15)','--gr-g':'rgba(52,211,153,0.08)','--bl':'#67e8f9','--bl-b':'rgba(103,232,249,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#fbbf24','--wa-d':'#f59e0b','--fb':'#051828','--fd':'#e0f2fe','--fm':'#bae6fd'},
+  rose:  {'--bg':'linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)','--bg-main':'#fdf2f8','--bg-white':'#ffffff','--bg-topbar':'#ffffff','--hcp-bg':'linear-gradient(135deg,#fff1f2 0%,#fce7f3 55%,#fdf4ff 100%)','--surface':'rgba(255,255,255,0.85)','--surface-solid':'#ffffff','--surface2':'rgba(255,255,255,0.65)','--surface3':'#fdf2f8','--card':'#ffffff','--card-bg':'#ffffff','--sidebar':'#fff5f7','--bg-sidebar':'#9d174d','--border':'rgba(225,29,72,0.1)','--border2':'rgba(225,29,72,0.18)','--glass-border':'rgba(255,255,255,0.9)','--text':'#4a0520','--text-bright':'#1e0433','--text-primary':'#1e0433','--text-dim':'#9d174d','--text-muted':'#c084fc','--muted':'#c084fc','--muted2':'#a855f7','--brand':'#e11d48','--brand-dim':'#be123c','--brand-dark':'#be123c','--brand-glow':'rgba(225,29,72,0.14)','--accent':'#d946ef','--accent2':'#a855f7','--primary':'#e11d48','--primary-hover':'#be123c','--primary-light':'#fff1f2','--topbar-bg':'rgba(255,255,255,0.9)','--sidebar-bg':'rgba(255,255,255,0.76)','--input-bg':'rgba(255,255,255,0.75)','--input-border':'rgba(225,29,72,0.15)','--table-head-bg':'rgba(255,241,242,0.9)','--table-row-hover':'rgba(225,29,72,0.04)','--shadow':'0 4px 20px rgba(225,29,72,0.08)','--shadow-sm':'0 2px 8px rgba(225,29,72,0.06)','--topbar-shadow':'0 1px 0 #fecdd3','--success':'#059669','--success-light':'#ecfdf5','--danger':'#e11d48','--warn':'#d97706','--info':'#d946ef','--s0':'#fff5f7','--s1':'#ffe4e6','--s2':'#fecdd3','--s3':'#fda4af','--s4':'#fb7185','--s5':'#f43f5e','--t0':'#1e0433','--t1':'#4a0520','--t2':'#9d174d','--t3':'#be123c','--ac':'#e11d48','--ac-d':'#be123c','--ac-g':'rgba(225,29,72,0.16)','--ac-s':'rgba(225,29,72,0.07)','--l0':'rgba(225,29,72,0.03)','--l1':'rgba(225,29,72,0.07)','--l2':'rgba(225,29,72,0.12)','--l3':'rgba(225,29,72,0.2)','--rd':'#e11d48','--am':'#d97706','--gr':'#059669','--pu':'#a855f7','--accent-color':'#e11d48','--db-color':'#f472b6','--zip-color':'#34d399','--bg-body':'#fdf2f8','--text-main':'#4a0520','--text-secondary':'#9d174d','--text-nav':'#be185d','--topbar':'rgba(255,255,255,0.9)','--header':'#fff5f7','--row-hover':'rgba(225,29,72,0.04)','--scrollbar-track':'#fdf2f8','--scrollbar-thumb':'rgba(225,29,72,0.1)','--bg-input':'#ffffff','--bg-input-ro':'#fff5f7','--bg-modal':'#ffffff','--bg-stat-card':'#ffffff','--bg-table-head':'#fff5f7','--bg-chart-card':'#ffffff','--bg-actionbar':'#fff1f2','--bg-sidebar-hover':'#be185d','--border-card':'rgba(225,29,72,0.1)','--border-light':'rgba(225,29,72,0.06)','--border-main':'#fecdd3','--border-focus':'#e11d48','--shadow-card':'0 2px 8px rgba(225,29,72,0.06)','--shadow-topbar':'0 2px 4px rgba(225,29,72,0.05)','--shadow-md':'0 4px 12px rgba(225,29,72,0.1)','--shadow-lg':'0 10px 30px rgba(225,29,72,0.15)','--error-bg':'#fff1f2','--error-text':'#be123c','--error-border':'#fecdd3','--warn-bg':'#fffbeb','--warn-text':'#d97706','--warn-border':'#fde68a','--success-bg':'#f0fdf4','--success-text':'#059669','--success-border':'#a7f3d0','--input-focus':'#fff1f2','--purple':'#a855f7','--purple-light':'#fdf4ff','--danger-light':'#fff1f2','--warning':'#d97706','--warning-light':'#fffbeb','--green':'#059669','--green-dim':'rgba(5,150,105,0.1)','--green-glow':'rgba(5,150,105,0.2)','--red':'#e11d48','--red-dim':'rgba(225,29,72,0.1)','--amber':'#d97706','--orange':'#ea580c','--yellow':'#d97706','--blue':'#2563eb','--radius':'12px','--badge-bg':'#fff1f2','--brand-glow2':'rgba(225,29,72,0.07)','--restore-color':'#d946ef','--copy-color':'#d97706','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(225,29,72,0.06)','--sh-m':'0 4px 16px rgba(225,29,72,0.1)','--sh-l':'0 8px 32px rgba(225,29,72,0.15)','--am-b':'rgba(217,119,6,0.15)','--am-g':'rgba(217,119,6,0.08)','--rd-b':'rgba(225,29,72,0.15)','--rd-g':'rgba(225,29,72,0.08)','--gr-b':'rgba(5,150,105,0.15)','--gr-g':'rgba(5,150,105,0.08)','--bl':'#2563eb','--bl-b':'rgba(37,99,235,0.15)','--pu-g':'rgba(168,85,247,0.08)','--pu-s':'rgba(168,85,247,0.15)','--wa':'#d97706','--wa-d':'#b45309','--fb':'#fff5f7','--fd':'#1e0433','--fm':'#4a0520'},
+  slate: {'--bg':'linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)','--bg-main':'#0f172a','--bg-white':'#1e293b','--bg-topbar':'rgba(15,23,42,0.97)','--hcp-bg':'linear-gradient(135deg,#1e293b 0%,#0f172a 55%,#1e293b 100%)','--surface':'rgba(30,41,59,0.9)','--surface-solid':'#1e293b','--surface2':'rgba(30,41,59,0.7)','--surface3':'#263548','--card':'#1e293b','--card-bg':'#1e293b','--sidebar':'#0f172a','--bg-sidebar':'#0f172a','--border':'rgba(148,163,184,0.1)','--border2':'rgba(148,163,184,0.18)','--glass-border':'rgba(148,163,184,0.1)','--text':'#94a3b8','--text-bright':'#e2e8f0','--text-primary':'#e2e8f0','--text-dim':'#64748b','--text-muted':'#475569','--muted':'#475569','--muted2':'#64748b','--brand':'#94a3b8','--brand-dim':'#64748b','--brand-dark':'#64748b','--brand-glow':'rgba(148,163,184,0.15)','--accent':'#e2e8f0','--accent2':'#cbd5e1','--primary':'#94a3b8','--primary-hover':'#64748b','--primary-light':'rgba(148,163,184,0.1)','--topbar-bg':'rgba(15,23,42,0.97)','--sidebar-bg':'rgba(15,23,42,0.95)','--input-bg':'rgba(255,255,255,0.04)','--input-border':'rgba(148,163,184,0.12)','--table-head-bg':'rgba(255,255,255,0.03)','--table-row-hover':'rgba(148,163,184,0.05)','--shadow':'0 4px 20px rgba(0,0,0,0.5)','--shadow-sm':'0 2px 8px rgba(0,0,0,0.4)','--topbar-shadow':'0 1px 0 rgba(255,255,255,0.04)','--success':'#22c55e','--success-light':'rgba(34,197,94,0.12)','--danger':'#ef4444','--warn':'#f59e0b','--info':'#94a3b8','--s0':'#0f172a','--s1':'#1e293b','--s2':'#263548','--s3':'#2e3f57','--s4':'#384f6b','--s5':'#425f7f','--t0':'#f1f5f9','--t1':'#e2e8f0','--t2':'#94a3b8','--t3':'#64748b','--ac':'#94a3b8','--ac-d':'#64748b','--ac-g':'rgba(148,163,184,0.15)','--ac-s':'rgba(148,163,184,0.07)','--l0':'rgba(255,255,255,0.03)','--l1':'rgba(255,255,255,0.06)','--l2':'rgba(255,255,255,0.1)','--l3':'rgba(255,255,255,0.16)','--rd':'#ef4444','--am':'#f59e0b','--gr':'#22c55e','--pu':'#a78bfa','--accent-color':'#94a3b8','--db-color':'#818cf8','--zip-color':'#34d399','--bg-body':'#0f172a','--text-main':'#94a3b8','--text-secondary':'#64748b','--text-nav':'#475569','--topbar':'rgba(15,23,42,0.97)','--header':'rgba(255,255,255,0.03)','--row-hover':'rgba(148,163,184,0.05)','--scrollbar-track':'#0f172a','--scrollbar-thumb':'rgba(148,163,184,0.12)','--bg-input':'rgba(255,255,255,0.04)','--bg-input-ro':'rgba(255,255,255,0.02)','--bg-modal':'#1e293b','--bg-stat-card':'#1e293b','--bg-table-head':'rgba(255,255,255,0.03)','--bg-chart-card':'#1e293b','--bg-actionbar':'#0f172a','--bg-sidebar-hover':'rgba(148,163,184,0.08)','--border-card':'rgba(148,163,184,0.1)','--border-light':'rgba(148,163,184,0.06)','--border-main':'rgba(148,163,184,0.15)','--border-focus':'#94a3b8','--shadow-card':'0 2px 8px rgba(0,0,0,0.4)','--shadow-topbar':'0 2px 4px rgba(0,0,0,0.3)','--shadow-md':'0 4px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 10px 30px rgba(0,0,0,0.55)','--error-bg':'rgba(239,68,68,0.12)','--error-text':'#fca5a5','--error-border':'rgba(239,68,68,0.2)','--warn-bg':'rgba(245,158,11,0.12)','--warn-text':'#fde68a','--warn-border':'rgba(245,158,11,0.2)','--success-bg':'rgba(34,197,94,0.12)','--success-text':'#86efac','--success-border':'rgba(34,197,94,0.2)','--input-focus':'rgba(148,163,184,0.12)','--purple':'#a78bfa','--purple-light':'rgba(167,139,250,0.12)','--danger-light':'rgba(239,68,68,0.12)','--warning':'#f59e0b','--warning-light':'rgba(245,158,11,0.12)','--green':'#22c55e','--green-dim':'rgba(34,197,94,0.1)','--green-glow':'rgba(34,197,94,0.2)','--red':'#ef4444','--red-dim':'rgba(239,68,68,0.1)','--amber':'#f59e0b','--orange':'#fb923c','--yellow':'#eab308','--blue':'#60a5fa','--radius':'12px','--badge-bg':'rgba(255,255,255,0.06)','--brand-glow2':'rgba(148,163,184,0.07)','--restore-color':'#f472b6','--copy-color':'#fbbf24','--transition':'all 0.2s ease','--th':'56px','--r4':'4px','--r8':'8px','--r12':'12px','--r16':'16px','--sh-s':'0 2px 8px rgba(0,0,0,0.4)','--sh-m':'0 4px 16px rgba(0,0,0,0.45)','--sh-l':'0 8px 32px rgba(0,0,0,0.55)','--am-b':'rgba(245,158,11,0.15)','--am-g':'rgba(245,158,11,0.08)','--rd-b':'rgba(239,68,68,0.15)','--rd-g':'rgba(239,68,68,0.08)','--gr-b':'rgba(34,197,94,0.15)','--gr-g':'rgba(34,197,94,0.08)','--bl':'#60a5fa','--bl-b':'rgba(96,165,250,0.15)','--pu-g':'rgba(167,139,250,0.08)','--pu-s':'rgba(167,139,250,0.15)','--wa':'#f59e0b','--wa-d':'#d97706','--fb':'#0f172a','--fd':'#f1f5f9','--fm':'#e2e8f0'}
+};
+function hcpApplyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('hcp_theme',t);
+  const vars=HCP_THEMES[t]||HCP_THEMES.light;
+  const css=':root{'+Object.entries(vars).map(([k,v])=>k+':'+v).join(';')+'}';
+  let el=document.getElementById('hcp-theme-vars');
+  if(!el){el=document.createElement('style');el.id='hcp-theme-vars';document.head.appendChild(el);}
+  el.textContent=css;
+  // Toggle :root.light class for pages using class-based theming (production_initiater etc.)
+  if(t==='light' || t==='rose'){
+    document.documentElement.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+  }
+  // Force body background
+  document.body.style.background='';
+  document.documentElement.style.background='';
+  document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));
+  const ICONS={light:'🌙',dark:'☀️',ocean:'🌊',rose:'🌸',slate:'◻️'};
+  const icon=document.getElementById('hcp-theme-icon')||document.getElementById('theme-icon')||document.querySelector('.theme-icon');
+  if(icon){icon.style.animation='none';void icon.offsetWidth;icon.style.animation='';icon.textContent=ICONS[t]||'🌙';}
+  const msg=document.getElementById('hcp-applied-msg');
+  if(msg){msg.style.display='block';clearTimeout(window._hcpMsgTimer);window._hcpMsgTimer=setTimeout(()=>msg.style.display='none',2000);}
+}
+window.hcpApplyTheme=hcpApplyTheme;
+window.hcpOpenSettings=function(){
+  document.getElementById('hcp-settings-overlay').classList.add('open');
+  const t=localStorage.getItem('hcp_theme')||'light';
+  document.querySelectorAll('.hcp-swatch').forEach(s=>s.classList.toggle('active',s.dataset.t===t));
+  const msg=document.getElementById('hcp-applied-msg');if(msg)msg.style.display='none';
+};
+window.hcpCloseSettings=function(){document.getElementById('hcp-settings-overlay').classList.remove('open');};
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')hcpCloseSettings();
+  if((e.ctrlKey||e.metaKey)&&e.key===','){e.preventDefault();hcpOpenSettings();}
+});
+hcpApplyTheme(localStorage.getItem('hcp_theme')||'light');
+/* ── END HCP Universal Theme Engine ── */
+</script>
+<!-- HCP Multi-Theme Settings -->
+<div id="hcp-settings-overlay" onclick="if(event.target===this)hcpCloseSettings()">
+  <div id="hcp-settings-panel">
+    <div class="hcp-settings-head">
+      <h3>⚙️ Appearance</h3>
+      <button class="hcp-settings-close" onclick="hcpCloseSettings()">✕</button>
+    </div>
+    <div class="hcp-settings-body">
+      <div class="hcp-settings-lbl">🎨 Theme — click a swatch to apply instantly</div>
+      <div class="hcp-theme-grid">
+        <div class="hcp-swatch" data-t="light" onclick="hcpApplyTheme('light')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#e0f2fe,#f0fdf4,#fefce8)"></div><div class="hcp-swatch-name">Light</div><div class="hcp-swatch-tag">Default</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="dark" onclick="hcpApplyTheme('dark')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0c1117,#0f1923,#111420)"></div><div class="hcp-swatch-name">Dark</div><div class="hcp-swatch-tag">Easy on eyes</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="ocean" onclick="hcpApplyTheme('ocean')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#0ea5e9,#0284c7,#0369a1)"></div><div class="hcp-swatch-name">Ocean</div><div class="hcp-swatch-tag">Deep blue</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="rose" onclick="hcpApplyTheme('rose')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#fff1f2,#fce7f3,#fdf4ff)"></div><div class="hcp-swatch-name">Rose</div><div class="hcp-swatch-tag">Soft &amp; vibrant</div><div class="hcp-active-dot"></div></div>
+        <div class="hcp-swatch" data-t="slate" onclick="hcpApplyTheme('slate')"><div class="hcp-swatch-preview" style="background:linear-gradient(135deg,#1e293b,#0f172a,#1e293b)"></div><div class="hcp-swatch-name">Slate</div><div class="hcp-swatch-tag">Mono minimal</div><div class="hcp-active-dot"></div></div>
+      </div>
+      <div id="hcp-applied-msg" style="display:none;text-align:center;font-size:11px;font-weight:700;color:#0d9488;margin-top:10px;">✓ Theme applied</div>
+      <div style="margin-top:16px;text-align:right"><button onclick="hcpCloseSettings()" style="padding:9px 24px;border-radius:9px;border:none;background:#0d9488;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Done ✓</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

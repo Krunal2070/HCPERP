@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Machine Entry — HCP Portal</title>
+<link rel="stylesheet" href="static/hcp_theme.css">
+<link rel="stylesheet" href="static/responsive.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app-shell">
+
+<!-- TOPBAR -->
+{% set page_title = "Machine Entry" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Machine Entry", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="body-area">
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Main</div>
+    <a class="nav-btn " href="index.html"><span class="nav-icon">🏠</span>Dashboard</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Production</div>
+    <a class="nav-btn " href="production_department.html"><span class="nav-icon">🏭</span>Department</a>
+    <a class="nav-btn " href="production_initiater.html"><span class="nav-icon">▶️</span>Initiater</a>
+    <a class="nav-btn active-nav" href="machine_entry.html"><span class="nav-icon">⚙️</span>Machine Entry</a>
+    <a class="nav-btn " href="planning_dashboard.html"><span class="nav-icon">📅</span>Planning</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Quality</div>
+    <a class="nav-btn " href="qc_dashboard.html"><span class="nav-icon">📊</span>QC Dashboard</a>
+    <a class="nav-btn " href="qc_sampling.html"><span class="nav-icon">🔬</span>QC Sampling</a>
+    <a class="nav-btn " href="rd_sampling.html"><span class="nav-icon">🧪</span>RD Sampling</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Procurement</div>
+    <a class="nav-btn " href="procurement.html"><span class="nav-icon">🛒</span>Procurement</a>
+    <a class="nav-btn " href="cms.html"><span class="nav-icon">📦</span>CMS</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Canteen</div>
+    <a class="nav-btn " href="canteen.html"><span class="nav-icon">🍽️</span>Canteen</a>
+    <a class="nav-btn " href="lunch_coupons.html"><span class="nav-icon">🎫</span>Lunch Coupons</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">HR & Tasks</div>
+    <a class="nav-btn " href="task_scheduler.html"><span class="nav-icon">📋</span>Task Scheduler</a>
+    <a class="nav-btn " href="task_reminders.html"><span class="nav-icon">🔔</span>Reminders</a>
+    <a class="nav-btn " href="trs_view.html"><span class="nav-icon">⏱️</span>TRS</a>
+    <a class="nav-btn " href="cash_management.html"><span class="nav-icon">💰</span>Cash Mgmt</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Admin</div>
+    <a class="nav-btn " href="manage_users.html"><span class="nav-icon">👥</span>Users</a>
+    <a class="nav-btn " href="create_user.html"><span class="nav-icon">➕</span>Create User</a>
+    <a class="nav-btn " href="access_control.html"><span class="nav-icon">🔑</span>Access Control</a>
+    <a class="nav-btn " href="backup_dashboard.html"><span class="nav-icon">💾</span>Backup</a>
+    <div class="nav-divider"></div>
+    <a class="nav-btn" href="login.html"><span class="nav-icon">🚪</span>Logout</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-title">⚙️ Machine Entry</div>
+    <div class="page-sub">Log machine production data</div>
+  </div>
+  <div class="page-header-actions">
+    <button class="btn btn-primary" onclick="openModal('machineModal')">➕ Add Entry</button>
+  </div>
+</div>
+
+<div class="stats-grid">
+<div class="stat-card">
+  <div class="stat-icon-row">
+    <span class="stat-label">Machines Active</span>
+    <span class="stat-icon">⚙️</span>
+  </div>
+  <div class="stat-value">8</div>
+  <div class="flex items-center gap-2">
+    <span class="stat-sub">Running now</span>
+    <span class="stat-badge badge-green">Live</span>
+  </div>
+</div>
+<div class="stat-card">
+  <div class="stat-icon-row">
+    <span class="stat-label">Today's Entries</span>
+    <span class="stat-icon">📝</span>
+  </div>
+  <div class="stat-value">34</div>
+  <div class="flex items-center gap-2">
+    <span class="stat-sub">Logged</span>
+    <span class="stat-badge badge-blue">Today</span>
+  </div>
+</div>
+<div class="stat-card">
+  <div class="stat-icon-row">
+    <span class="stat-label">Idle</span>
+    <span class="stat-icon">⏸️</span>
+  </div>
+  <div class="stat-value">2</div>
+  <div class="flex items-center gap-2">
+    <span class="stat-sub">Machines</span>
+    <span class="stat-badge badge-amber">Idle</span>
+  </div>
+</div>
+<div class="stat-card">
+  <div class="stat-icon-row">
+    <span class="stat-label">Downtime</span>
+    <span class="stat-icon">🔧</span>
+  </div>
+  <div class="stat-value">0.5h</div>
+  <div class="flex items-center gap-2">
+    <span class="stat-sub">Today</span>
+    <span class="stat-badge badge-red">Low</span>
+  </div>
+</div></div>
+
+
+<div class="card">
+  <div class="card-head">
+    <div class="card-title">⚙️ Machine Log</div>
+    <div class="card-actions"></div>
+  </div>
+  <div class="filter-bar" id="filterBar">
+    <div class="input-group" style="flex:1;max-width:260px">
+      <span class="input-icon">🔍</span>
+      <input id="searchInput" placeholder="Search…">
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="machineTable">
+      <thead>
+        <tr><th>Entry ID</th><th>Machine</th><th>Dept</th><th>Operator</th><th>Shift</th><th>Qty</th><th>Downtime</th><th>Status</th><th>Actions</th></tr>
+        <tr class='th-filter'><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th><th><input placeholder='Filter…'></th></tr>
+      </thead>
+      <tbody><tr><td>#1001</td><td>Sample A1</td><td>Sample B1</td><td>Sample C1</td><td>Sample D1</td><td>Sample E1</td><td>Sample F1</td><td><span class="badge badge-approved">Approved</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1002</td><td>Sample A2</td><td>Sample B2</td><td>Sample C2</td><td>Sample D2</td><td>Sample E2</td><td>Sample F2</td><td><span class="badge badge-progress">In Progress</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1003</td><td>Sample A3</td><td>Sample B3</td><td>Sample C3</td><td>Sample D3</td><td>Sample E3</td><td>Sample F3</td><td><span class="badge badge-rejected">Rejected</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1004</td><td>Sample A4</td><td>Sample B4</td><td>Sample C4</td><td>Sample D4</td><td>Sample E4</td><td>Sample F4</td><td><span class="badge badge-closed">Closed</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1005</td><td>Sample A5</td><td>Sample B5</td><td>Sample C5</td><td>Sample D5</td><td>Sample E5</td><td>Sample F5</td><td><span class="badge badge-pending">Pending</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1006</td><td>Sample A6</td><td>Sample B6</td><td>Sample C6</td><td>Sample D6</td><td>Sample E6</td><td>Sample F6</td><td><span class="badge badge-approved">Approved</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1007</td><td>Sample A7</td><td>Sample B7</td><td>Sample C7</td><td>Sample D7</td><td>Sample E7</td><td>Sample F7</td><td><span class="badge badge-progress">In Progress</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1008</td><td>Sample A8</td><td>Sample B8</td><td>Sample C8</td><td>Sample D8</td><td>Sample E8</td><td>Sample F8</td><td><span class="badge badge-rejected">Rejected</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1009</td><td>Sample A9</td><td>Sample B9</td><td>Sample C9</td><td>Sample D9</td><td>Sample E9</td><td>Sample F9</td><td><span class="badge badge-closed">Closed</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1010</td><td>Sample A10</td><td>Sample B10</td><td>Sample C10</td><td>Sample D10</td><td>Sample E10</td><td>Sample F10</td><td><span class="badge badge-pending">Pending</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1011</td><td>Sample A11</td><td>Sample B11</td><td>Sample C11</td><td>Sample D11</td><td>Sample E11</td><td>Sample F11</td><td><span class="badge badge-approved">Approved</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1012</td><td>Sample A12</td><td>Sample B12</td><td>Sample C12</td><td>Sample D12</td><td>Sample E12</td><td>Sample F12</td><td><span class="badge badge-progress">In Progress</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1013</td><td>Sample A13</td><td>Sample B13</td><td>Sample C13</td><td>Sample D13</td><td>Sample E13</td><td>Sample F13</td><td><span class="badge badge-rejected">Rejected</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1014</td><td>Sample A14</td><td>Sample B14</td><td>Sample C14</td><td>Sample D14</td><td>Sample E14</td><td>Sample F14</td><td><span class="badge badge-closed">Closed</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1015</td><td>Sample A15</td><td>Sample B15</td><td>Sample C15</td><td>Sample D15</td><td>Sample E15</td><td>Sample F15</td><td><span class="badge badge-pending">Pending</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1016</td><td>Sample A16</td><td>Sample B16</td><td>Sample C16</td><td>Sample D16</td><td>Sample E16</td><td>Sample F16</td><td><span class="badge badge-approved">Approved</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1017</td><td>Sample A17</td><td>Sample B17</td><td>Sample C17</td><td>Sample D17</td><td>Sample E17</td><td>Sample F17</td><td><span class="badge badge-progress">In Progress</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr><tr><td>#1018</td><td>Sample A18</td><td>Sample B18</td><td>Sample C18</td><td>Sample D18</td><td>Sample E18</td><td>Sample F18</td><td><span class="badge badge-rejected">Rejected</span></td><td><div class="tbl-actions">
+                  <button class="btn btn-sm btn-ghost btn-icon" title="View">👁️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Edit">✏️</button>
+                  <button class="btn btn-sm btn-ghost btn-icon" title="Delete">🗑️</button>
+                </div></td></tr></tbody>
+    </table>
+  </div>
+  
+<div class="pagination-bar">
+  <span class="page-info text-sm"></span>
+  <div class="page-btns"></div>
+</div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initTableSearch('searchInput', 'machineTable');
+    initColumnFilters('machineTable');
+    initPagination('machineTable', 15);
+  });
+</script>
+
+
+<div class="modal-overlay" id="machineModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">⚙️ Machine Entry</span>
+      <button class="modal-close" data-close-modal="machineModal">✕</button>
+    </div>
+    <div class="modal-body"><div class="form-grid"><div class="form-group"><label>Machine ID</label><input placeholder='e.g. M-001'></div><div class="form-group"><label>Machine Name</label><input placeholder='Machine name'></div><div class="form-group"><label>Department</label><select><option>Dept A</option><option>Dept B</option><option>Packing</option></select></div><div class="form-group"><label>Operator</label><input placeholder='Operator name'></div><div class="form-group"><label>Shift</label><select><option>Morning</option><option>Afternoon</option><option>Night</option></select></div><div class="form-group"><label>Production Qty</label><input type='number' placeholder='0'></div><div class="form-group"><label>Downtime (min)</label><input type='number' placeholder='0'></div><div class="form-group full"><label>Remarks</label><textarea placeholder='Downtime reason, issues…'></textarea></div></div></div>
+    <div class="modal-foot"><button class="btn btn-secondary" data-close-modal="machineModal">Cancel</button><button class="btn btn-primary" onclick="showToast('Saved successfully','success');closeModal('machineModal')">💾 Save</button></div>
+  </div>
+</div>
+</main>
+</div>
+</div>
+<div id="toastContainer" class="toast-container"></div>
+<script src="static/portal.js"></script>
+</body>
+</html>

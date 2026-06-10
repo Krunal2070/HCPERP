@@ -1,0 +1,44 @@
+/* ═══ RESPONSIVE — MOBILE & TABLET ≤768px ═══ */
+        @media (max-width: 768px) {
+            :root {
+                --sw: 280px;
+                --topbar-h: 56px;
+                --bottom-nav-h: 62px;
+            }
+            /* Sidebar overlay shadow on mobile */
+            body.sb-open .sidebar { box-shadow: 6px 0 40px rgba(0,0,0,.2); z-index: 400; }
+            /* Main full width always on mobile */
+            body.sb-open .main    { margin-left: 0; }
+            body.sb-open .topbar  { left: 0; }
+            /* Main bottom padding for nav */
+            .main { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); }
+            /* Show bottom nav */
+            .bottom-nav { display: flex; }
+            .tb-date { display: none; }
+            .tb-sep { display: none; }
+            .tb-bread { display: none; }
+            .content { padding: 12px; }
+            .page-hdr h1 { font-size: 1.1rem; }
+            /* Notif positions */
+            #notif-container { bottom: calc(var(--bottom-nav-h) + 10px); right: 10px; }
+            #celContainer { top: 68px; right: 8px; max-width: 88vw; }
+            #bellPanel { width: calc(100vw - 20px); right: 10px; }
+            /* Bigger sidebar items on mobile */
+            .sb-brand { padding: 0 1.25rem; height: 62px; }
+            .sb-logo { width: 40px; height: 40px; }
+            .nav-a { padding: 12px 14px; font-size: 14px; }
+            .nav-ic { font-size: 17px; width: 26px; }
+            /* Bigger touch targets */
+            .tb-btn { padding: 9px 12px; font-size: 16px; }
+            .btn-primary { border-radius: 10px; padding: 10px 20px; font-size: 14px; }
+        }
+
+        @media (max-width: 480px) {
+            .content { padding: 10px; }
+        }
+
+        /* Tablet-only tweaks */
+        @media (min-width: 540px) and (max-width: 768px) {
+            .tb-date { display: inline-block; }
+            .content { padding: 14px; }
+        }

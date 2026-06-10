@@ -1,0 +1,128 @@
+/* ════════════════════════════════════════════════════════════════════════
+   common-sidebar.css  —  ONE unified sidebar design for every module.
+
+   All item-level rules are scoped under `.csb` so they OVERRIDE any older
+   per-page sidebar CSS (e.g. sidebar.css .nav-a / .nav-ic) that may also be
+   loaded on the page. Load this AFTER the page's other stylesheets.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.csb{
+  --csb-w: 256px; --csb-bg:#ffffff; --csb-border:#eceef3; --csb-text:#2b3242;
+  --csb-muted:#9aa3b2; --csb-hover:#f5f7fb; --csb-active-bg:#eef2ff; --csb-active-tx:#4f46e5;
+  --csb-kbd-bg:#f1f3f8; --csb-radius:11px; --csb-red:#ef4444;
+  /* Skin only — DO NOT set width/position/transform/display here. Layout,
+     fixed positioning, the hamburger toggle and the resize handle all come
+     from the page's existing `.sidebar` class, which the <nav> still carries. */
+  background: var(--csb-bg) !important;
+  border-right: 1px solid var(--csb-border) !important;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Brand */
+.csb .csb-brand{ display:flex; align-items:center; gap:11px; padding:15px 16px; border-bottom:1px solid var(--csb-border); flex-shrink:0; }
+.csb .csb-logo{ width:36px; height:36px; border-radius:10px; flex-shrink:0; display:grid; place-items:center; color:#fff; font-weight:800; font-size:15px; background:linear-gradient(135deg,#4f46e5,#7c3aed); box-shadow:0 3px 8px rgba(79,70,229,.28); }
+.csb .csb-name{ font-size:14.5px; font-weight:800; color:var(--csb-text); line-height:1.15; letter-spacing:-.01em; }
+.csb .csb-name em{ color:#4f46e5; font-style:normal; }
+.csb .csb-tag{ font-size:10px; font-weight:700; color:var(--csb-muted); text-transform:uppercase; letter-spacing:.08em; }
+
+/* Search */
+.csb .csb-search{ position:relative; padding:10px 12px 4px; flex-shrink:0; }
+.csb .csb-search svg{ position:absolute; left:22px; top:50%; transform:translateY(-30%); color:var(--csb-muted); pointer-events:none; }
+.csb .csb-search input{ width:100%; padding:9px 12px 9px 34px; font-size:12.5px; font-family:inherit; border:1px solid var(--csb-border); border-radius:10px; background:#fbfcfe; color:var(--csb-text); outline:none; transition:border-color .15s, box-shadow .15s; }
+.csb .csb-search input:focus{ border-color:#c7d2fe; box-shadow:0 0 0 3px rgba(79,70,229,.12); background:#fff; }
+
+/* Scroll area */
+.csb .csb-nav{ flex:1; overflow-y:auto; padding:8px 10px 14px; scrollbar-width:thin; scrollbar-color:#dfe3ea transparent; }
+.csb .csb-nav::-webkit-scrollbar{ width:6px; }
+.csb .csb-nav::-webkit-scrollbar-thumb{ background:#e2e6ee; border-radius:6px; }
+
+/* Section label */
+.csb .csb-sec{ font-size:10.5px !important; font-weight:800 !important; color:var(--csb-muted) !important; text-transform:uppercase !important; letter-spacing:.09em !important; padding:16px 10px 7px !important; margin:0 !important; background:none !important; }
+.csb .csb-nav > .csb-sec:first-child{ padding-top:6px !important; }
+
+/* Item — high specificity so it beats sidebar.css .nav-a */
+.csb a.csb-item, .csb .csb-item{
+  display:flex !important; align-items:center !important; gap:11px !important;
+  padding:8px 10px !important; border-radius:var(--csb-radius) !important;
+  color:var(--csb-text) !important; font-size:13.5px !important; font-weight:500 !important;
+  text-decoration:none !important; cursor:pointer; margin-bottom:2px !important;
+  transition:background .14s, color .14s; position:relative; border:0 !important;
+}
+.csb a.csb-item:hover, .csb .csb-item:hover{ background:var(--csb-hover) !important; }
+.csb a.csb-item.active, .csb .csb-item.active{ background:var(--csb-active-bg) !important; color:var(--csb-active-tx) !important; font-weight:700 !important; }
+.csb .csb-item.active::before{ display:none !important; }   /* kill old sidebar.css left bar */
+
+/* Colored icon chip — colour from per-item --ic */
+.csb .csb-ic{
+  width:31px !important; height:31px !important; border-radius:9px !important; flex-shrink:0;
+  display:grid !important; place-items:center !important; padding:0 !important;
+  color:var(--ic,#4f46e5) !important;
+  background:color-mix(in srgb, var(--ic,#4f46e5) 13%, #fff) !important;
+  font-size:14px !important;
+}
+.csb .csb-ic svg{ width:16px !important; height:16px !important; }
+.csb .csb-ic i{ font-size:14px; }
+
+.csb .csb-txt{ flex:1 !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Keyboard hint pill */
+.csb .csb-kbd{ margin-left:auto !important; font-size:10px !important; font-weight:600 !important; color:var(--csb-muted) !important; background:var(--csb-kbd-bg) !important; padding:2px 8px !important; border-radius:6px !important; font-family:'JetBrains Mono', ui-monospace, monospace !important; letter-spacing:.3px; flex-shrink:0; }
+
+/* Count badge + ADMIN tag */
+.csb .csb-badge{ margin-left:auto !important; font-size:10px !important; font-weight:800 !important; color:#fff !important; background:var(--csb-red) !important; padding:2px 8px !important; border-radius:100px !important; flex-shrink:0; }
+.csb .csb-tagpill{ margin-left:auto; font-size:8.5px; font-weight:800; letter-spacing:.05em; color:var(--csb-red); background:color-mix(in srgb, var(--csb-red) 12%, #fff); padding:2px 7px; border-radius:6px; flex-shrink:0; text-transform:uppercase; }
+
+/* Footer */
+.csb .csb-foot{ padding:10px; border-top:1px solid var(--csb-border); flex-shrink:0; }
+.csb .csb-user{ display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:10px; background:#f7f8fb; }
+.csb .csb-av{ width:30px; height:30px; border-radius:50%; display:grid; place-items:center; color:#fff; font-weight:800; font-size:12px; background:linear-gradient(135deg,#4f46e5,#7c3aed); flex-shrink:0; }
+.csb .csb-uname{ font-size:12.5px; font-weight:700; color:var(--csb-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.csb .csb-urole{ font-size:10.5px; color:var(--csb-muted); font-weight:500; }
+.csb .csb-logout{ margin-left:auto; font-size:11.5px; font-weight:600; color:var(--csb-muted); text-decoration:none; border:1px solid var(--csb-border); border-radius:7px; padding:4px 9px; transition:.15s; flex-shrink:0; }
+.csb .csb-logout:hover{ color:var(--csb-red); border-color:var(--csb-red); }
+
+[data-theme="dark"] .csb{ --csb-bg:#141a26; --csb-border:#222b3a; --csb-text:#e7ebf3; --csb-muted:#7c8aa3; --csb-hover:#1c2433; --csb-active-bg:#1e2746; --csb-active-tx:#a5b4fc; --csb-kbd-bg:#1c2433; }
+
+/* Collapsible submenu group */
+.csb .csb-group{ margin-bottom:2px; }
+.csb .csb-group-head .csb-arrow{ margin-left:auto; font-size:10px; color:var(--csb-muted); transition:transform .2s ease; flex-shrink:0; }
+.csb .csb-group-head.open .csb-arrow{ transform:rotate(90deg); }
+.csb .csb-sub{ overflow:hidden; max-height:0; transition:max-height .25s ease; padding-left:14px; }
+.csb .csb-sub.open{ max-height:400px; }
+.csb .csb-sub .csb-item{ font-size:13px !important; padding:7px 10px !important; }
+.csb .csb-sub .csb-ic{ width:26px !important; height:26px !important; }
+.csb .csb-sub .csb-ic svg{ width:14px !important; height:14px !important; }
+
+/* QC dashboard: its card is only 212px wide so long labels like
+   "In Process Material" got truncated. Widen + allow wrap. */
+.csb.qc-sidebar{ width:248px !important; }
+.csb.qc-sidebar .csb-txt{ white-space:normal !important; line-height:1.18; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   ACTION-DRAWER PATTERN MATCH  (added to unify sidebar look system-wide)
+   Brings the common sidebar's icon-chip + hover behaviour in line with the
+   production action-drawer (.as-btn): bordered icon box that fills with its
+   accent colour on hover/active, and a subtle slide on the row.
+   To revert: delete everything below this banner.
+   ════════════════════════════════════════════════════════════════════════ */
+.csb .csb-ic{
+  border:1px solid color-mix(in srgb, var(--ic,#4f46e5) 28%, #fff) !important;
+  transition:background .15s, color .15s, border-color .15s !important;
+}
+.csb a.csb-item, .csb .csb-item{
+  border:1px solid transparent !important;
+  transition:background .14s, color .14s, transform .14s, border-color .14s !important;
+}
+.csb a.csb-item:hover, .csb .csb-item:hover{
+  transform:translateX(2px);
+  border-color:var(--csb-border) !important;
+}
+.csb a.csb-item:active, .csb .csb-item:active{ transform:translateX(2px) scale(.985); }
+/* icon box fills with its accent colour on hover and when active */
+.csb a.csb-item:hover .csb-ic, .csb .csb-item:hover .csb-ic,
+.csb a.csb-item.active .csb-ic, .csb .csb-item.active .csb-ic{
+  background:var(--ic,#4f46e5) !important;
+  color:#fff !important;
+  border-color:var(--ic,#4f46e5) !important;
+}

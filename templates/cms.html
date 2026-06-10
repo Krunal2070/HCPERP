@@ -1,0 +1,3295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cash Management — HCP Wellness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --accent:   #6366F1;
+  --accent-l: rgba(99,102,241,.12);
+  --green:    #10B981;
+  --green-l:  rgba(16,185,129,.12);
+  --red:      #EF4444;
+  --red-l:    rgba(239,68,68,.12);
+  --amber:    #F59E0B;
+  --amber-l:  rgba(245,158,11,.12);
+  --blue:     #3B82F6;
+  --blue-l:   rgba(59,130,246,.12);
+  --f:        'Inter', sans-serif;
+  --m:        'JetBrains Mono', monospace;
+  --r:        8px;
+  --r2:       12px;
+  --trans:    all .15s ease;
+}
+[data-t=dark] {
+  --bg:     #0A0C12;
+  --s1:     #0F1119;
+  --s2:     #141824;
+  --s3:     #1A2030;
+  --s4:     #212738;
+  --b1:     #1E2535;
+  --b2:     #2A3348;
+  --tx:     #E2E8F8;
+  --tx2:    #8892AA;
+  --tx3:    #4A5268;
+  --card:   #111520;
+  --inp:    #141824;
+}
+[data-t=light] {
+  --bg:     #F0F2FA;
+  --s1:     #FFFFFF;
+  --s2:     #F7F8FC;
+  --s3:     #EEF0F8;
+  --s4:     #E5E8F2;
+  --b1:     #DDE2EE;
+  --b2:     #CDD3E8;
+  --tx:     #111828;
+  --tx2:    #4A5268;
+  --tx3:    #9BA3BE;
+  --card:   #FFFFFF;
+  --inp:    #F0F2FA;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--f);background:var(--bg);color:var(--tx);font-size:13.5px;line-height:1.5}
+body{display:flex;overflow:hidden}
+a{color:var(--accent)}
+button{cursor:pointer;font-family:var(--f)}
+input,select,textarea{font-family:var(--f)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+
+/* SIDEBAR */
+nav{width:218px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.nav-logo{padding:16px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--b1)}
+.nav-icon{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0}
+.nav-brand{font-size:13px;font-weight:600;line-height:1.25}
+.nav-sub{font-size:10px;color:var(--tx3);letter-spacing:.3px}
+.back-link{margin:10px 10px 4px;display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:var(--r);border:1px solid var(--b1);color:var(--tx2);font-size:12px;background:none;width:calc(100% - 20px);transition:var(--trans)}
+.back-link:hover{background:var(--s3);color:var(--tx);border-color:var(--b2)}
+.nav-group{padding:12px 10px 4px;font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;font-family:var(--m)}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;margin:1px 8px;border-radius:var(--r);border:none;background:transparent;color:var(--tx2);font-size:13px;width:calc(100% - 16px);text-align:left;transition:var(--trans);position:relative}
+.ni i{width:15px;text-align:center;font-size:12px;flex-shrink:0}
+.ni:hover{background:var(--s3);color:var(--tx)}
+.ni.on{background:var(--accent-l);color:var(--accent);font-weight:500}
+.ni.on::after{content:'';position:absolute;left:0;top:25%;bottom:25%;width:2px;background:var(--accent);border-radius:0 2px 2px 0}
+.ni-badge{margin-left:auto;font-size:10px;font-family:var(--m);background:var(--amber);color:#000;padding:1px 5px;border-radius:10px;font-weight:600}
+.nav-quick{padding:8px 10px;border-top:1px solid var(--b1);margin-top:auto;display:flex;flex-direction:column;gap:5px}
+.qbtn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);border:1px solid var(--b1);background:none;color:var(--tx2);font-size:12px;font-weight:500;width:100%;transition:var(--trans)}
+.qbtn:hover{border-color:var(--b2);background:var(--s3);color:var(--tx)}
+.qbtn .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.qbtn .kk{margin-left:auto;font-size:10px;font-family:var(--m);color:var(--tx3);background:var(--s3);border:1px solid var(--b1);padding:1px 5px;border-radius:4px}
+.ni .kk{margin-left:auto;font-size:9px;font-family:var(--m);color:var(--tx3);background:var(--s3);border:1px solid var(--b1);padding:1px 5px;border-radius:4px}
+.shortcut-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.sc-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--b1)}
+.sc-row:nth-child(odd){border-right:1px solid var(--b1)}
+.sc-row:last-child,.sc-row:nth-last-child(2):nth-child(odd){border-bottom:none}
+.sc-key{display:inline-flex;align-items:center;justify-content:center;min-width:60px;padding:3px 8px;border-radius:5px;background:var(--s3);border:1px solid var(--b2);font-family:var(--m);font-size:11px;font-weight:600;color:var(--tx);flex-shrink:0}
+.sc-desc{font-size:12px;color:var(--tx2)}
+.sc-section{padding:8px 12px;font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.7px;font-family:var(--m);background:var(--s2);border-bottom:1px solid var(--b1);grid-column:1/-1}
+.nav-foot{padding:8px 10px;border-top:1px solid var(--b1);display:flex;gap:5px}
+.nfbtn{flex:1;padding:7px;border-radius:var(--r);border:1px solid var(--b1);background:none;color:var(--tx3);font-size:12px;display:flex;align-items:center;justify-content:center;transition:var(--trans)}
+.nfbtn:hover{background:var(--s3);color:var(--tx);border-color:var(--b2)}
+
+/* MAIN */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;background:var(--s1);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:14px;font-weight:600;flex:1}
+.topbar-date{font-size:11px;font-family:var(--m);color:var(--tx3)}
+.dr-wrap{display:flex;align-items:center;gap:6px}
+.dr-wrap label{font-size:11px;color:var(--tx3)}
+.dr-wrap input{font-size:12px;font-family:var(--m);padding:5px 9px;background:var(--inp);border:1px solid var(--b1);color:var(--tx);border-radius:6px;width:130px}
+.dr-wrap input:focus{outline:none;border-color:var(--accent)}
+
+/* VIEWS */
+.view{display:none;flex-direction:column;flex:1;overflow:hidden}
+.view.on{display:flex}
+.vbody{flex:1;overflow-y:auto;padding:18px 20px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);border:1px solid var(--b2);background:var(--s3);color:var(--tx);font-size:12px;font-weight:500;cursor:pointer;transition:var(--trans)}
+.btn:hover{background:var(--s4);border-color:var(--b2)}
+.btn-sm{padding:5px 10px;font-size:11.5px}
+.btn-icon{padding:5px 8px}
+.btn-p{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-p:hover{background:#4F52E0;border-color:#4F52E0;color:#fff}
+.btn-g{background:var(--green-l);border-color:var(--green);color:var(--green)}
+.btn-g:hover{background:var(--green);color:#fff}
+.btn-r{background:var(--red-l);border-color:var(--red);color:var(--red)}
+.btn-r:hover{background:var(--red);color:#fff}
+.btn-a{background:var(--amber-l);border-color:var(--amber);color:var(--amber)}
+.btn-a:hover{background:var(--amber);color:#000}
+
+/* STAT CARDS */
+.stat-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+.sc{background:var(--card);border:1px solid var(--b1);border-radius:var(--r2);padding:14px 16px;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.sc.ci::before{background:var(--accent)}
+.sc.cg::before{background:var(--green)}
+.sc.cr::before{background:var(--red)}
+.sc.ca::before{background:var(--amber)}
+.sc.cb::before{background:var(--blue)}
+.sc-lbl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.7px;font-family:var(--m);margin-bottom:5px}
+.sc-val{font-size:20px;font-weight:700;font-family:var(--m);line-height:1}
+.sc-sub{font-size:11px;color:var(--tx2);margin-top:4px}
+.sc-ico{position:absolute;right:12px;bottom:10px;font-size:22px;opacity:.07}
+.sc[onclick]{transition:var(--trans)}
+.sc[onclick]:hover{transform:translateY(-2px);border-color:var(--b2);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+
+/* TABLES */
+.tw{background:var(--card);border:1px solid var(--b1);border-radius:var(--r2);overflow:hidden}
+.ttb{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--b1);background:var(--s2)}
+.ttb-title{font-size:13px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--s2);padding:7px 12px;font-size:10.5px;font-weight:600;color:var(--tx3);text-align:left;border-bottom:1px solid var(--b1);white-space:nowrap;font-family:var(--m);text-transform:uppercase;letter-spacing:.4px}
+tbody tr{border-bottom:1px solid var(--b1);transition:var(--trans)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--s2)}
+tbody td{padding:9px 12px;vertical-align:middle}
+.tr{text-align:right}
+.mono{font-family:var(--m)}
+.tx2{color:var(--tx2)}
+.tx3{color:var(--tx3)}
+.c-g{color:var(--green)}
+.c-r{color:var(--red)}
+.c-a{color:var(--amber)}
+.c-i{color:var(--accent)}
+.c-b{color:var(--blue)}
+.fw6{font-weight:600}
+.fs11{font-size:11px}
+
+/* BADGES */
+.bg{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:600;font-family:var(--m)}
+.bg-pv{background:var(--red-l);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.bg-rv{background:var(--green-l);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+.bg-jv{background:var(--accent-l);color:var(--accent);border:1px solid rgba(99,102,241,.25)}
+.bg-adv{background:var(--amber-l);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
+.bg-set{background:var(--green-l);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.bg-par{background:rgba(251,146,60,.1);color:#FB923C;border:1px solid rgba(251,146,60,.25)}
+.bg-post{background:var(--blue-l);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.bg-dft{background:var(--s3);color:var(--tx3);border:1px solid var(--b1)}
+.bg-can{background:var(--red-l);color:var(--red);text-decoration:line-through}
+.bg-in{background:var(--green-l);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+.bg-out{background:var(--red-l);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+
+/* FILTERS */
+.fbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.fbar input,.fbar select{background:var(--inp);border:1px solid var(--b1);color:var(--tx);border-radius:var(--r);padding:6px 10px;font-size:12px;font-family:var(--f)}
+.fbar input:focus,.fbar select:focus{outline:none;border-color:var(--accent)}
+.fbar select option{background:var(--s2)}
+
+/* FORMS */
+.fg{display:grid;gap:10px}
+.fg2{grid-template-columns:1fr 1fr}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.fc{display:flex;flex-direction:column;gap:4px}
+.fc.sp{grid-column:1/-1}
+label{font-size:11px;font-weight:600;color:var(--tx2);letter-spacing:.2px}
+.rq{color:var(--red)}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  background:var(--inp);border:1px solid var(--b2);color:var(--tx);
+  border-radius:var(--r);padding:7px 10px;font-size:13px;width:100%;transition:var(--trans)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+select option{background:var(--s2)}
+textarea{resize:vertical;min-height:56px}
+.hint{font-size:11px;color:var(--tx3);margin-top:3px}
+.fsect{font-size:10.5px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.7px;font-family:var(--m);padding:10px 0 6px;border-top:1px solid var(--b1);margin-top:2px}
+
+/* MODALS */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.ov.on{display:flex}
+.md{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r2);width:700px;max-width:96vw;max-height:93vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.45)}
+.md-lg{width:920px}
+.md-sm{width:440px}
+.mh{padding:15px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--s1);z-index:1}
+.mh h3{font-size:14px;font-weight:600;flex:1}
+.mb{padding:20px}
+.mf{padding:12px 20px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:flex-end;gap:7px;position:sticky;bottom:0;background:var(--s1)}
+
+/* VOUCHER LINES */
+.vlines{border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin-top:6px}
+.vl-hd{display:grid;grid-template-columns:2.5fr 1.5fr 80px 110px 120px 32px;background:var(--s2);padding:6px 10px;font-size:10px;font-weight:700;color:var(--tx3);font-family:var(--m);text-transform:uppercase;letter-spacing:.4px}
+.vl-row{display:grid;grid-template-columns:2.5fr 1.5fr 80px 110px 120px 32px;border-top:1px solid var(--b1);padding:5px 7px;align-items:center;gap:2px}
+.vl-row input,.vl-row select{padding:5px 7px;font-size:12.5px}
+.vl-ft{background:var(--s2);padding:7px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--b1)}
+.vl-tot{margin-left:auto;font-size:14px;font-weight:700;font-family:var(--m)}
+.vl-del{background:none;border:none;color:var(--tx3);padding:4px 6px;border-radius:5px;font-size:12px;transition:var(--trans)}
+.vl-del:hover{color:var(--red);background:var(--red-l)}
+
+/* ADVANCE LINK BOX */
+.adv-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:12px 14px;margin-top:10px}
+.adv-box-hd{font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.6px;font-family:var(--m);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.adv-bal-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;background:var(--amber-l);border:1px solid rgba(245,158,11,.3);color:var(--amber);font-size:11px;font-family:var(--m);font-weight:600;margin-top:4px}
+
+/* SUMMARY */
+.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.sum-c{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 14px;text-align:center}
+.sum-v{font-size:15px;font-weight:700;font-family:var(--m)}
+.sum-l{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--m);margin-top:2px}
+
+/* CHARTS */
+.chart-wrap{position:relative;height:200px;margin:10px 0}
+
+/* EMPTY */
+.empty{text-align:center;padding:36px 20px;color:var(--tx3)}
+.empty i{font-size:28px;margin-bottom:8px;opacity:.35;display:block}
+.empty p{font-size:13px}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:5px}
+.ti{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);padding:9px 14px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.25);animation:tIn .18s ease;display:flex;align-items:center;gap:7px;min-width:180px}
+.ti.ok{border-left:3px solid var(--green)}
+.ti.error{border-left:3px solid var(--red)}
+.ti.warn{border-left:3px solid var(--amber)}
+@keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CHART BAR (pure CSS mini bars for category report) */
+.bar-track{background:var(--s3);border-radius:4px;height:8px;overflow:hidden;margin-top:4px}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+[data-t=ocean]{--accent:#38BDF8;--accent-l:rgba(56,189,248,.12);--bg:#040C14;--s1:#071624;--s2:#0A1E30;--s3:#0D2740;--s4:#10304E;--b1:#133558;--b2:#1A446E;--tx:#C8E8F8;--tx2:#6FA8CC;--tx3:#355575;--card:#081A2C;--inp:#0A1E30;}
+[data-t=forest]{--accent:#22C55E;--accent-l:rgba(34,197,94,.12);--bg:#060D08;--s1:#0A1A0D;--s2:#0F2414;--s3:#142E18;--s4:#1A3B20;--b1:#1B3A22;--b2:#245030;--tx:#D4F4DC;--tx2:#7AB885;--tx3:#3D6B45;--card:#0C1F10;--inp:#0F2414;}
+[data-t=rose]{--accent:#F43F5E;--accent-l:rgba(244,63,94,.12);--bg:#0F0810;--s1:#1A0E1C;--s2:#22122A;--s3:#2A1835;--s4:#331F42;--b1:#3D2050;--b2:#4F2A68;--tx:#F5D0FE;--tx2:#C084FC;--tx3:#7E22CE;--card:#190C20;--inp:#22122A;}
+[data-t=parchment]{--accent:#B45309;--accent-l:rgba(180,83,9,.12);--bg:#FDF6E3;--s1:#FFFCF0;--s2:#FEF9E8;--s3:#FDF3D2;--s4:#FAEDC0;--b1:#E8D9A0;--b2:#D4C070;--tx:#2D1A00;--tx2:#6B4C1A;--tx3:#A87C3A;--card:#FFFDF5;--inp:#FDF6E3;}
+[data-t=slate]{--accent:#6366F1;--accent-l:rgba(99,102,241,.12);--bg:#F1F5F9;--s1:#FFFFFF;--s2:#F8FAFC;--s3:#F1F5F9;--s4:#E2E8F0;--b1:#CBD5E1;--b2:#94A3B8;--tx:#0F172A;--tx2:#475569;--tx3:#94A3B8;--card:#FFFFFF;--inp:#F1F5F9;}
+.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px}
+.theme-swatch{border:2px solid var(--b1);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;transition:var(--trans);background:var(--s2)}
+.theme-swatch:hover{border-color:var(--accent);transform:translateY(-2px)}
+.theme-swatch.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-l)}
+.theme-dot{width:32px;height:32px;border-radius:50%;margin:0 auto 8px}
+.theme-name{font-size:12px;font-weight:600;color:var(--tx)}
+.theme-desc{font-size:10px;color:var(--tx3);margin-top:2px}
+
+/* ── RESET / DANGER ZONE ── */
+.btn-danger-hard{background:rgba(220,38,38,.15);border:1px solid #DC2626;color:#DC2626;font-weight:600}
+.btn-danger-hard:hover{background:#DC2626;color:#fff}
+.reset-step{display:none;flex-direction:column;align-items:center;gap:16px;padding:10px 0}
+.reset-step.active{display:flex}
+.reset-confirm-box{border:2px solid #DC2626;border-radius:10px;padding:18px 22px;background:rgba(220,38,38,.06);width:100%;text-align:center}
+.reset-icon{font-size:48px;color:#DC2626;margin-bottom:6px}
+.reset-title{font-size:18px;font-weight:700;color:#DC2626;margin-bottom:4px}
+.reset-body{font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:12px}
+.reset-input{border:2px solid #DC2626;background:var(--inp);color:var(--tx);border-radius:8px;padding:10px 14px;font-size:15px;font-weight:700;text-align:center;letter-spacing:2px;width:100%;max-width:280px}
+.reset-input:focus{outline:none;box-shadow:0 0 0 3px rgba(220,38,38,.2)}
+.countdown-ring{position:relative;width:120px;height:120px;margin:10px auto}
+.countdown-ring svg{transform:rotate(-90deg)}
+.countdown-ring .ring-bg{fill:none;stroke:var(--b2);stroke-width:8}
+.countdown-ring .ring-fg{fill:none;stroke:#DC2626;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .9s linear;stroke-dasharray:314;stroke-dashoffset:0}
+.countdown-ring .ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;font-family:var(--m);color:#DC2626}
+.reset-progress{width:100%;background:var(--b1);border-radius:4px;height:6px;overflow:hidden}
+.reset-progress-bar{height:100%;background:#DC2626;border-radius:4px;transition:width 1s linear}
+
+.btn-wa{background:rgba(37,211,102,.12);border:1px solid #25D366;color:#25D366}
+.btn-wa:hover{background:#25D366;color:#fff}
+.btn-xl{background:rgba(0,168,91,.1);border:1px solid #00A85B;color:#00A85B}
+.btn-xl:hover{background:#00A85B;color:#fff}
+.pv-wrap{background:#fff;color:#111;border-radius:8px;padding:24px 28px;font-family:'Inter',sans-serif;font-size:13px;line-height:1.6;max-height:70vh;overflow-y:auto}
+.pv-wrap table{width:100%;border-collapse:collapse;margin-top:10px}
+.pv-wrap th{background:#f0f0f0;padding:7px 10px;text-align:left;font-size:11px;font-weight:700;border:1px solid #ddd;text-transform:uppercase;letter-spacing:.4px}
+.pv-wrap td{padding:7px 10px;border:1px solid #eee;font-size:12.5px}
+.pv-wrap .tr{text-align:right}
+@media print{
+  body{overflow:visible!important;height:auto!important}
+  nav,.topbar,.ov,#toast,.nav-foot,.nav-quick,.vl-del{display:none!important}
+  .view.on{display:block!important;overflow:visible!important}
+  .vbody{overflow:visible!important;padding:6px!important}
+  main{overflow:visible!important}
+  #print-area{display:block!important}
+}
+#print-area{display:none}
+
+/* ═══════════════════════════════════════════════════════
+   HCP PORTAL — RESPONSIVE (mobile + tablet + desktop)
+   Injected automatically — do not edit manually
+   Breakpoints: 900px tablet | 600px mobile
+═══════════════════════════════════════════════════════ */
+
+/* ── Topbar tweaks ── */
+.topbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px !important;
+}
+.topbar-title h1 { white-space: nowrap; }
+
+/* ── Main content max-width on large screens ── */
+.main { width: 100%; box-sizing: border-box; }
+
+/* ── Tables: horizontal scroll on small screens ── */
+.table-wrap, .tbl-wrap, .table-container, .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+/* Wrap any bare table that isn't already wrapped */
+table { min-width: 500px; }
+
+/* ── Modals: full-width on mobile ── */
+.modal-box, .fp-box, .modal-content, .modal-panel {
+    width: 95% !important;
+    max-width: 560px !important;
+}
+
+/* ── Forms: stack columns on narrow screens ── */
+.form-grid, .form-row-grid, .grid-2col, .two-col-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+/* ════════════════════════════════════
+   TABLET  ≤ 900px
+════════════════════════════════════ */
+@media (max-width: 900px) {
+    /* Topbar: hide less important items */
+    .topbar-back span,
+    .topbar-title p,
+    .user-role, .topbar-user-role { display: none; }
+
+    .topbar { padding: 0 12px !important; height: 52px !important; }
+    .topbar-title h1 { font-size: .88rem !important; }
+
+    /* Main padding */
+    .main { padding: 16px 14px !important; }
+
+    /* KPI grid: 2 columns */
+    .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+
+    /* Stat/summary cards: 2 columns */
+    .stat-grid, .stats-grid, .summary-grid,
+    .kpi-row, .cards-row {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    /* Filter bar: wrap */
+    .filter-bar, .toolbar, .table-toolbar, .action-bar {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+
+    /* Pagination: smaller */
+    .pagination-bar, .page-bar { flex-wrap: wrap; gap: 6px; }
+}
+
+/* ════════════════════════════════════
+   MOBILE  ≤ 600px
+════════════════════════════════════ */
+@media (max-width: 600px) {
+    /* Prevent iOS input zoom */
+    input, select, textarea { font-size: 16px !important; }
+
+    /* Body */
+    body { font-size: 14px; }
+
+    /* Topbar */
+    .topbar {
+        padding: 0 10px !important;
+        height: 50px !important;
+        gap: 6px !important;
+    }
+    .topbar-back { padding: 5px 8px !important; font-size: .75rem !important; }
+    .topbar-logo, .logo-mark { width: 30px !important; height: 30px !important; font-size: .78rem !important; }
+    .logo-text, .logo-sub, .logo-name,
+    .topbar-title { display: none !important; }
+    .user-name, .topbar-user-name { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge-prod, .badge-live, .badge-view,
+    .badge-trial, .badge-regular { display: none !important; }
+    #live-clock { display: none !important; }
+
+    /* Main */
+    .main { padding: 10px !important; }
+
+    /* KPI grid: 1 column */
+    .kpi-grid { grid-template-columns: 1fr !important; }
+
+    /* Stat cards: 2 columns */
+    .stat-grid, .stats-grid, .summary-grid,
+    .kpi-row, .cards-row {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    /* Section titles */
+    .section-label, .section-title, .card-title {
+        font-size: .82rem !important;
+    }
+
+    /* Filter bar: full width inputs */
+    .filter-bar input, .filter-bar select,
+    .toolbar input, .toolbar select {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Table: smaller text */
+    table { font-size: .78rem !important; }
+    th, td { padding: 7px 8px !important; }
+
+    /* Modals: slide up from bottom */
+    .modal-bg { align-items: flex-end !important; padding: 0 !important; }
+    .modal-box, .fp-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 18px 18px 0 0 !important;
+        max-height: 92vh !important;
+    }
+
+    /* Buttons: full-width stacking in modal footer */
+    .modal-foot { flex-direction: column !important; }
+    .modal-foot button, .modal-foot a { width: 100% !important; justify-content: center !important; }
+
+    /* Forms: single column */
+    .form-grid, .form-row-grid, .grid-2col, .two-col-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Page header: stack */
+    .page-header, .section-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    /* Action buttons row: wrap */
+    .action-btns, .btn-row, .header-actions, .top-actions {
+        flex-wrap: wrap !important;
+        width: 100% !important;
+    }
+
+    /* Tab bars: scrollable */
+    .tab-bar, .tabs, .nav-tabs {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        flex-wrap: nowrap !important;
+    }
+
+    /* Greeting section */
+    .greeting-hi { font-size: 1.1rem !important; }
+    .greeting-sub { font-size: .78rem !important; }
+
+    /* Quick stats */
+    .quick-stats { flex-direction: column !important; gap: 8px !important; }
+    .quick-stat { width: 100% !important; }
+
+    /* Chips/badges in tables: smaller */
+    .chip, .status-chip, .badge {
+        font-size: .65rem !important;
+        padding: 2px 6px !important;
+    }
+
+    /* Logout button text */
+    .logout-btn, .btn-logout { font-size: .75rem !important; padding: 5px 10px !important; }
+
+    /* Settings panel */
+    #hcp-settings-panel { width: 100% !important; max-width: 100% !important; border-radius: 18px 18px 0 0 !important; }
+    #hcp-settings-overlay { align-items: flex-end !important; }
+
+    /* User chip: compact */
+    .user-chip, .topbar-user-chip { padding: 4px 8px 4px 4px !important; }
+
+    /* Theme btn */
+    .theme-btn, .hcp-settings-btn, .theme-toggle { width: 30px !important; height: 30px !important; }
+
+    /* Hide non-essential topbar items */
+    .topbar-right > *:not(.theme-btn):not(.hcp-settings-btn):not(.theme-toggle):not(.user-chip):not(.topbar-user):not(.btn-logout):not(.logout-btn):not(.topbar-user-chip) {
+        display: none !important;
+    }
+}
+
+/* ════════════════════════════════════
+   VERY SMALL  ≤ 380px
+════════════════════════════════════ */
+@media (max-width: 380px) {
+    .stat-grid, .stats-grid, .summary-grid,
+    .kpi-row, .cards-row {
+        grid-template-columns: 1fr !important;
+    }
+    .topbar { gap: 4px !important; }
+}
+</style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body data-t="dark">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-icon">₹</div>
+    <div>
+      <div class="nav-brand">Cash Manager</div>
+      <div class="nav-sub">HCP Wellness Pvt Ltd</div>
+    </div>
+  </div>
+
+  <button class="back-link" onclick="window.location='/'">
+    <i class="fa fa-chevron-left" style="font-size:10px"></i> Back to Portal
+  </button>
+
+  <div class="nav-group">Main</div>
+  <button class="ni on" onclick="show('dashboard')" data-v="dashboard">
+    <i class="fa fa-chart-pie"></i> Dashboard <span class="kk">1</span>
+  </button>
+
+  <div class="nav-group">Vouchers</div>
+  <button class="ni" onclick="show('vouchers')" data-v="vouchers">
+    <i class="fa fa-receipt"></i> All Vouchers <span class="kk">2</span>
+  </button>
+
+  <div class="nav-group">Transactions</div>
+  <button class="ni" onclick="show('income')" data-v="income">
+    <i class="fa fa-arrow-down-to-line" style="color:var(--green)"></i> Income <span class="kk">3</span>
+  </button>
+  <button class="ni" onclick="show('expenses')" data-v="expenses">
+    <i class="fa fa-arrow-up-from-line" style="color:var(--red)"></i> Expenses <span class="kk">4</span>
+  </button>
+  <button class="ni" onclick="show('advances')" data-v="advances">
+    <i class="fa fa-user-clock" style="color:var(--amber)"></i> Advances <span class="kk">5</span>
+  </button>
+
+  <div class="nav-group">Masters</div>
+  <button class="ni" onclick="show('ledgers')" data-v="ledgers">
+    <i class="fa fa-book-open"></i> Ledger Accounts <span class="kk">6</span>
+  </button>
+
+  <div class="nav-group">Reports</div>
+  <button class="ni" onclick="show('rpt-ledger')" data-v="rpt-ledger">
+    <i class="fa fa-table-list"></i> Ledger Report <span class="kk">7</span>
+  </button>
+  <button class="ni" onclick="show('rpt-daily')" data-v="rpt-daily">
+    <i class="fa fa-calendar-day"></i> Daily Report <span class="kk">8</span>
+  </button>
+  <button class="ni" onclick="show('rpt-cat')" data-v="rpt-cat">
+    <i class="fa fa-tags"></i> Category Report <span class="kk">9</span>
+  </button>
+
+  <div class="nav-quick">
+    <button class="qbtn" onclick="openVM('PV')">
+      <span class="dot" style="background:var(--red)"></span> Payment Voucher <span class="kk">P</span>
+    </button>
+    <button class="qbtn" onclick="openVM('RV')">
+      <span class="dot" style="background:var(--green)"></span> Receipt Voucher <span class="kk">R</span>
+    </button>
+    <button class="qbtn" onclick="openVM('EV')">
+      <span class="dot" style="background:var(--amber)"></span> Expense Voucher <span class="kk">E</span>
+    </button>
+    <button class="qbtn" onclick="openVM('JV')">
+      <span class="dot" style="background:var(--accent)"></span> Journal Voucher <span class="kk">J</span>
+    </button>
+  </div>
+
+  <div class="nav-foot">
+    <button class="nfbtn" onclick="openLM()" title="New Ledger  [N]"><i class="fa fa-plus"></i></button>
+    <button class="nfbtn" onclick="openShortcutsHelp()" title="Keyboard Shortcuts  [?]" style="font-weight:700;font-size:14px">?</button>
+    <button class="nfbtn" onclick="openThemePicker()" title="Change Theme" id="theme-btn"><i class="fa fa-palette"></i></button>
+    <button class="nfbtn" onclick="window.print()" title="Print Page"><i class="fa fa-print"></i></button>
+    <button class="nfbtn btn-wa" onclick="openWAReportPicker()" title="WhatsApp Report"><i class="fa fa-brands fa-whatsapp"></i></button>
+    {% if role == 'admin' %}
+    <button class="nfbtn btn-danger-hard" onclick="startReset()" title="Reset Application" id="reset-nav-btn" style="border-color:#DC2626;color:#DC2626"><i class="fa fa-skull-crossbones"></i></button>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main>
+
+<!-- TOPBAR (shared) -->
+{% set page_title = "Cash Management" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "CMS", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<!-- ─── DASHBOARD ─── -->
+<div id="view-dashboard" class="view on">
+  <div class="vbody">
+    <div class="stat-row">
+      <div class="sc" style="border-top:3px solid var(--green);background:linear-gradient(135deg,var(--card) 60%,rgba(16,185,129,.06));cursor:pointer" onclick="show('rpt-ledger')" title="View Ledger Report">
+        <div class="sc-lbl" style="color:var(--green)">Actual Cash in Hand</div>
+        <div class="sc-val c-g" id="db-actual-cash" style="font-size:22px">—</div>
+        <div class="sc-sub" id="db-actual-formula" style="font-size:10px;color:var(--tx3);margin-top:5px;font-family:var(--m)">OB + Income − Expenses − Advances</div>
+        <i class="fa fa-wallet sc-ico" style="opacity:.12;color:var(--green)"></i>
+      </div>
+      <div class="sc cg" style="cursor:pointer" onclick="openOBModal()" title="Click to set Opening Balance">
+        <div class="sc-lbl">Cash Ledger Balance</div><div class="sc-val c-g" id="db-cash">—</div>
+        <div class="sc-sub">Click to set Opening Balance</div><i class="fa fa-coins sc-ico"></i>
+      </div>
+      <div class="sc cg" style="cursor:pointer" onclick="show('income')" title="View Income">
+        <div class="sc-lbl">Income</div><div class="sc-val c-g" id="db-inc">—</div>
+        <div class="sc-sub">↗ Click to view receipts</div><i class="fa fa-arrow-trend-up sc-ico"></i>
+      </div>
+      <div class="sc cr" style="cursor:pointer" onclick="show('expenses')" title="View Expenses">
+        <div class="sc-lbl">Expenses</div><div class="sc-val c-r" id="db-exp">—</div>
+        <div class="sc-sub">↗ Click to view expenses</div><i class="fa fa-arrow-trend-down sc-ico"></i>
+      </div>
+      <div class="sc ca" style="cursor:pointer" onclick="show('advances')" title="View Advances">
+        <div class="sc-lbl">Advances Given</div><div class="sc-val c-a" id="db-adv-given">—</div>
+        <div class="sc-sub">↗ Click to view advances</div><i class="fa fa-hand-holding-dollar sc-ico"></i>
+      </div>
+      <div class="sc ci" style="cursor:pointer" onclick="show('advances')" title="View Outstanding Advances">
+        <div class="sc-lbl">Advances Outstanding</div><div class="sc-val c-i" id="db-adv-out">—</div>
+        <div class="sc-sub">↗ Employees owe us</div><i class="fa fa-user-clock sc-ico"></i>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <!-- Income breakdown -->
+      <div class="tw">
+        <div class="ttb"><span class="ttb-title">Income Sources</span><button class="btn btn-sm btn-g" style="margin-left:auto" onclick="openVM('RV')"><i class="fa fa-plus"></i> Receipt</button></div>
+        <div style="padding:12px 16px" id="db-inc-breakdown">
+          <div class="empty"><i class="fa fa-chart-bar"></i><p>No income this period</p></div>
+        </div>
+      </div>
+      <!-- Expense breakdown -->
+      <div class="tw">
+        <div class="ttb">
+          <span class="ttb-title">Expense Categories</span>
+          <span style="font-size:11px;color:var(--tx3);margin-left:6px">(from bill settlements)</span>
+          <button class="btn btn-sm btn-a" style="margin-left:auto" onclick="openVM('EV','bill')"><i class="fa fa-file-invoice"></i> Submit Bills</button>
+        </div>
+        <div style="padding:12px 16px" id="db-exp-breakdown">
+          <div class="empty"><i class="fa fa-chart-bar"></i><p>No expenses this period</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advances Summary -->
+    <div class="tw" style="margin-bottom:14px">
+      <div class="ttb">
+        <span class="ttb-title">Employee Advance Summary</span>
+        <span style="font-size:11px;color:var(--tx3);margin-left:6px">— Advance ≠ Expense. Bills submitted reduce the advance.</span>
+        <button class="btn btn-sm" style="margin-left:auto" onclick="show('advances')">View All →</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Employee</th><th class="tr">Outstanding Advance</th>
+        </tr></thead><tbody id="db-adv-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Running Cashbook -->
+    <div class="tw">
+      <div class="ttb">
+        <span class="ttb-title">Cashbook</span>
+        {% if role == 'admin' %}
+        <button class="btn btn-sm btn-a" onclick="openOBModal()" style="margin-left:8px"><i class="fa fa-vault"></i> Set Opening Balance</button>
+        {% endif %}
+        <input type="text" placeholder="Search…" style="width:160px;padding:5px 9px;font-size:12px;margin-left:auto" id="cb-q" oninput="filterCashbook()">
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Date</th><th>Voucher #</th><th>Type</th><th>Description</th>
+          <th class="tr">Income</th><th class="tr">Expense</th><th class="tr">Balance</th><th></th>
+        </tr></thead><tbody id="db-cb-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ALL VOUCHERS ─── -->
+<div id="view-vouchers" class="view">
+  <div class="vbody">
+    <div class="tw">
+      <div class="ttb" style="flex-wrap:wrap;gap:8px">
+        <span class="ttb-title">All Vouchers</span>
+        <div class="fbar" style="margin-left:auto;flex-wrap:wrap">
+          <select id="vl-type" onchange="loadVouchers()" style="width:120px">
+            <option value="">All Types</option>
+            <option value="PV">Payment (PV)</option>
+            <option value="RV">Receipt (RV)</option>
+            <option value="EV">Expense (EV)</option>
+            <option value="JV">Journal (JV)</option>
+          </select>
+          <button class="btn btn-sm" onclick="clearVF()" title="Clear filter" style="padding:5px 9px;color:var(--tx3)">
+            <i class="fa fa-filter-circle-xmark"></i> Clear
+          </button>
+          <div style="width:1px;height:20px;background:var(--b1);margin:0 2px"></div>
+          <button class="btn btn-sm btn-xl" onclick="exportCashbookExcel()" title="Export as Excel — Petty Cash Register format">
+            <i class="fa fa-file-excel"></i> Export Excel
+          </button>
+          <button class="btn btn-sm btn-wa" onclick="waReport('dashboard')" title="Share on WhatsApp">
+            <i class="fa fa-brands fa-whatsapp"></i>
+          </button>
+          <div style="width:1px;height:20px;background:var(--b1);margin:0 2px"></div>
+          <button class="btn btn-sm btn-p" onclick="openVM('PV')">
+            <i class="fa fa-plus"></i> New
+          </button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Date</th><th>Voucher #</th><th>Type</th><th>Narration</th>
+          <th class="tr">Amount</th><th>Status</th><th></th>
+        </tr></thead><tbody id="vl-tbody"></tbody></table>
+      </div>
+      <div id="vl-pages" style="padding:9px 14px;display:flex;gap:6px;align-items:center;border-top:1px solid var(--b1)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── INCOME ─── -->
+<div id="view-income" class="view">
+  <div class="vbody">
+    <div class="sum-row" id="inc-sum" style="display:none">
+      <div class="sum-c"><div class="sum-v c-g" id="inc-total">—</div><div class="sum-l">Total Income</div></div>
+      <div class="sum-c"><div class="sum-v" id="inc-count">—</div><div class="sum-l">Transactions</div></div>
+      <div class="sum-c"><div class="sum-v c-a" id="inc-avg">—</div><div class="sum-l">Average Receipt</div></div>
+      <div class="sum-c"><div class="sum-v c-i" id="inc-src">—</div><div class="sum-l">Sources</div></div>
+    </div>
+    <div class="tw">
+      <div class="ttb">
+        <span class="ttb-title">Income — Receipt Vouchers</span>
+        <div class="fbar" style="margin-left:auto">
+          <select id="inc-src-f" onchange="loadIncome()" style="width:150px"><option value="">All Sources</option></select>
+          <button class="btn btn-sm btn-g" onclick="openVM('RV')"><i class="fa fa-plus"></i> Receipt Voucher</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Date</th><th>Voucher #</th><th>Source / Ledger</th><th>Narration</th>
+          <th class="tr">Amount</th><th>Status</th><th></th>
+        </tr></thead><tbody id="inc-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── EXPENSES ─── -->
+<div id="view-expenses" class="view">
+  <div class="vbody">
+    <div class="sum-row" id="exp-sum" style="display:none">
+      <div class="sum-c"><div class="sum-v c-r" id="exp-total">—</div><div class="sum-l">Total Expenses</div></div>
+      <div class="sum-c"><div class="sum-v" id="exp-count">—</div><div class="sum-l">Vouchers</div></div>
+      <div class="sum-c"><div class="sum-v c-a" id="exp-adv-set">—</div><div class="sum-l">Settled via Advances</div></div>
+      <div class="sum-c"><div class="sum-v c-g" id="exp-direct">—</div><div class="sum-l">Direct Payments</div></div>
+    </div>
+    <div class="tw">
+      <div class="ttb">
+        <span class="ttb-title">Expenses — Payment Vouchers</span>
+        <div class="fbar" style="margin-left:auto">
+          <select id="exp-cat-f" onchange="loadExpenses()" style="width:160px"><option value="">All Categories</option></select>
+          <button class="btn btn-sm btn-r" onclick="openVM('PV')"><i class="fa fa-plus"></i> Payment Voucher</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Date</th><th>Voucher #</th><th>Category</th><th>Narration</th><th>Advance Link</th>
+          <th class="tr">Amount</th><th>Status</th><th></th>
+        </tr></thead><tbody id="exp-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ADVANCES ─── -->
+<div id="view-advances" class="view">
+  <div class="vbody">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="sc ca" style="flex:1;min-width:140px"><div class="sc-lbl">Total Given</div><div class="sc-val c-a" id="adv-given">—</div></div>
+      <div class="sc cg" style="flex:1;min-width:140px"><div class="sc-lbl">Settled (Vouchers)</div><div class="sc-val c-g" id="adv-set-v">—</div></div>
+      <div class="sc cg" style="flex:1;min-width:140px"><div class="sc-lbl">Cash Repaid</div><div class="sc-val c-g" id="adv-repaid">—</div></div>
+      <div class="sc cr" style="flex:1;min-width:140px"><div class="sc-lbl">Outstanding</div><div class="sc-val c-r" id="adv-out">—</div></div>
+    </div>
+
+    <div class="tw" style="margin-bottom:14px">
+      <div class="ttb">
+        <span class="ttb-title">Outstanding by Employee</span>
+        <div style="margin-left:auto;display:flex;gap:7px">
+          <button class="btn btn-sm btn-xl" onclick="exportRptExcel('advances')"><i class="fa fa-file-excel"></i> Excel</button>
+          <button class="btn btn-sm btn-wa" onclick="waReport('dashboard')"><i class="fa fa-brands fa-whatsapp"></i> WhatsApp</button>
+          <button class="btn btn-sm btn-a" onclick="openVM('PV','advance')"><i class="fa fa-plus"></i> Give Advance</button>
+          <button class="btn btn-sm btn-amber" onclick="openVM('EV','bill')"><i class="fa fa-file-invoice"></i> Submit Bills / Settle Advance</button>
+          <button class="btn btn-sm btn-g" onclick="openVM('RV','repay')"><i class="fa fa-rotate-left"></i> Cash Repayment</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Employee</th><th class="tr">Advance Given</th><th class="tr">Settled (Bills)</th>
+          <th class="tr">Cash Repaid</th><th class="tr">Outstanding</th><th></th>
+        </tr></thead><tbody id="adv-sum-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <div class="tw">
+      <div class="ttb">
+        <span class="ttb-title">All Advance Transactions</span>
+        <select id="adv-emp-f" onchange="loadAdvTxns()" style="width:180px;margin-left:auto">
+          <option value="">All Employees</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Date</th><th>Voucher #</th><th>Employee</th><th>Type</th><th>Description</th>
+          <th class="tr">Dr</th><th class="tr">Cr</th><th class="tr">Balance</th><th></th>
+        </tr></thead><tbody id="adv-txn-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── LEDGER REPORT ─── -->
+<div id="view-rpt-ledger" class="view">
+  <div class="vbody">
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end">
+      <div class="fc" style="min-width:220px">
+        <label>Ledger Account</label>
+        <select id="lr-led" onchange="loadLedgerRpt()"><option value="">— Select —</option></select>
+      </div>
+      <div class="fc"><label>From</label><input type="date" id="lr-from" onchange="loadLedgerRpt()"></div>
+      <div class="fc"><label>To</label><input type="date" id="lr-to" onchange="loadLedgerRpt()"></div>
+      <button class="btn btn-p btn-sm" onclick="loadLedgerRpt()"><i class="fa fa-search"></i> Load</button>
+      <button class="btn btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Print</button>
+      <button class="btn btn-sm btn-xl" onclick="exportRptExcel('ledger')"><i class="fa fa-file-excel"></i> Excel</button>
+      <button class="btn btn-sm btn-wa" onclick="waReport('ledger')"><i class="fa fa-brands fa-whatsapp"></i> WhatsApp</button>
+    </div>
+    <div class="sum-row" id="lr-stats" style="display:none">
+      <div class="sum-c"><div class="sum-v c-i" id="lr-ob">—</div><div class="sum-l">Opening Balance</div></div>
+      <div class="sum-c"><div class="sum-v c-g" id="lr-dr">—</div><div class="sum-l">Total Dr</div></div>
+      <div class="sum-c"><div class="sum-v c-r" id="lr-cr">—</div><div class="sum-l">Total Cr</div></div>
+      <div class="sum-c"><div class="sum-v c-a" id="lr-cl">—</div><div class="sum-l">Closing Balance</div></div>
+    </div>
+    <div class="tw" id="lr-card" style="display:none">
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Date</th><th>Voucher #</th><th>Type</th><th>Against</th><th>Narration</th>
+          <th class="tr">Dr</th><th class="tr">Cr</th><th class="tr">Balance</th>
+        </tr></thead><tbody id="lr-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── DAILY REPORT ─── -->
+<div id="view-rpt-daily" class="view">
+  <div class="vbody">
+    <div style="display:flex;gap:10px;margin-bottom:14px;align-items:flex-end">
+      <div class="fc"><label>Date</label><input type="date" id="dr-date"></div>
+      <button class="btn btn-p btn-sm" onclick="loadDailyRpt()"><i class="fa fa-search"></i> Load</button>
+      <button class="btn btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Print</button>
+      <button class="btn btn-sm btn-xl" onclick="exportRptExcel('daily')"><i class="fa fa-file-excel"></i> Excel</button>
+      <button class="btn btn-sm btn-wa" onclick="waReport('daily')"><i class="fa fa-brands fa-whatsapp"></i> WhatsApp</button>
+    </div>
+    <div class="sum-row" id="dr-stats" style="display:none">
+      <div class="sum-c"><div class="sum-v c-g" id="dr-rec">—</div><div class="sum-l">Receipts</div></div>
+      <div class="sum-c"><div class="sum-v c-r" id="dr-pay">—</div><div class="sum-l">Payments</div></div>
+      <div class="sum-c"><div class="sum-v c-a" id="dr-net">—</div><div class="sum-l">Net Cash Flow</div></div>
+      <div class="sum-c"><div class="sum-v c-i" id="dr-cih">—</div><div class="sum-l">Cash in Hand</div></div>
+    </div>
+    <div class="tw" id="dr-card" style="display:none">
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Voucher #</th><th>Type</th><th>Ledger</th><th>Narration</th>
+          <th class="tr">Dr</th><th class="tr">Cr</th>
+        </tr></thead><tbody id="dr-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CATEGORY REPORT ─── -->
+<div id="view-rpt-cat" class="view">
+  <div class="vbody">
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end">
+      <div class="fc"><label>From</label><input type="date" id="cr-from"></div>
+      <div class="fc"><label>To</label><input type="date" id="cr-to"></div>
+      <div class="fc">
+        <label>Nature</label>
+        <select id="cr-nat" style="width:120px"><option value="expense">Expenses</option><option value="income">Income</option></select>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="loadCatRpt()"><i class="fa fa-search"></i> Load</button>
+      <button class="btn btn-sm btn-xl" onclick="exportRptExcel('category')"><i class="fa fa-file-excel"></i> Excel</button>
+      <button class="btn btn-sm btn-wa" onclick="waReport('category')"><i class="fa fa-brands fa-whatsapp"></i> WhatsApp</button>
+    </div>
+    <div class="tw" id="cr-wrap" style="display:none">
+      <div style="overflow-x:auto">
+        <table><thead><tr>
+          <th>Category</th><th class="tr">Txns</th><th class="tr">Amount</th><th>Share</th>
+        </tr></thead><tbody id="cr-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── LEDGER ACCOUNTS ─── -->
+<div id="view-ledgers" class="view">
+  <div class="vbody">
+
+    <!-- Summary cards -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="ldg-stats">
+      <div class="sc ci"><div class="sc-lbl">Total Ledgers</div><div class="sc-val c-i" id="ldg-count">—</div><i class="fa fa-book sc-ico"></i></div>
+      <div class="sc cg"><div class="sc-lbl">Employees</div><div class="sc-val c-g" id="ldg-emp-count">—</div><i class="fa fa-users sc-ico"></i></div>
+      <div class="sc ca"><div class="sc-lbl">Expense Heads</div><div class="sc-val c-a" id="ldg-exp-count">—</div><i class="fa fa-tags sc-ico"></i></div>
+      <div class="sc cb"><div class="sc-lbl">Income Heads</div><div class="sc-val c-b" id="ldg-inc-count">—</div><i class="fa fa-arrow-trend-up sc-ico"></i></div>
+    </div>
+
+    <div class="tw">
+      <div class="ttb">
+        <span class="ttb-title">All Ledger Accounts</span>
+        <div class="fbar" style="margin-left:auto">
+          <input type="text" id="ldg-search" placeholder="Search name…" style="width:180px" oninput="filterLedgersView()">
+          <select id="ldg-type-f" onchange="filterLedgersView()" style="width:145px">
+            <option value="">All Types</option>
+            <option value="cash">Cash / Bank</option>
+            <option value="employee">Employee</option>
+            <option value="expense_head">Expense Head</option>
+            <option value="income_head">Income Head</option>
+            <option value="scrap_vendor">Scrap Vendor</option>
+            <option value="customer">Customer</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="ldg-grp-f" onchange="filterLedgersView()" style="width:160px">
+            <option value="">All Groups</option>
+          </select>
+          <button class="btn btn-sm" onclick="clearLedgerFilters()"><i class="fa fa-times"></i></button>
+          <button class="btn btn-sm btn-p" onclick="openLM()"><i class="fa fa-plus"></i> New Ledger</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Group</th>
+            <th>Phone</th>
+            <th class="tr">Opening Bal</th>
+            <th class="tr">Current Balance</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody id="ldg-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ldg-footer" style="padding:8px 14px;font-size:11px;color:var(--tx3);border-top:1px solid var(--b1)"></div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<!-- ═══════════════ VOUCHER MODAL ═══════════════ -->
+<div class="ov" id="vm-ov">
+<div class="md md-lg">
+  <div class="mh">
+    <span class="bg" id="vm-type-badge">PV</span>
+    <h3 id="vm-modal-title">Payment Voucher</h3>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+      <span class="mono tx3 fs11" id="vm-voucher-no">[Auto]</span>
+    </div>
+    <button class="btn btn-sm btn-icon" onclick="closeM('vm-ov')" style="margin-left:8px"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="mb">
+    <input type="hidden" id="vm-id">
+    <input type="hidden" id="vm-vtype">
+
+    <div class="fg fg2" style="margin-bottom:12px">
+      <div class="fc"><label>Date <span class="rq">*</span></label><input type="date" id="vm-date"></div>
+      <div class="fc"><label>Narration</label><input type="text" id="vm-narration" placeholder="Brief description"></div>
+    </div>
+
+    <!-- ADVANCE LINK (PV only) -->
+    <div id="vm-adv-wrap" style="display:none">
+      <div class="adv-box">
+        <div class="adv-box-hd"><i class="fa fa-link" style="font-size:11px"></i> Link to Employee Advance</div>
+        <p style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.5">
+          Select the employee who submitted these bills. The expense will be recorded and their advance balance will reduce automatically. No cash moves — this only settles the advance.
+        </p>
+        <div class="fg fg2">
+          <div class="fc">
+            <label>Employee (advance holder)</label>
+            <select id="vm-adv-emp" onchange="onAdvEmpChange()">
+              <option value="">— No advance link —</option>
+            </select>
+            <div id="vm-adv-bal" style="display:none"></div>
+          </div>
+          <div class="fc">
+            <label>Settlement Amount <span style="color:var(--tx3);font-weight:400">(leave 0 = auto)</span></label>
+            <input type="number" id="vm-settle-amt" min="0" step="0.01" placeholder="0.00">
+            <div class="hint">0 = settle full voucher amount against this advance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fsect">Voucher Lines</div>
+
+    <div class="vlines">
+      <div class="vl-hd">
+        <span>Ledger / Account</span><span>Description</span><span>Dr/Cr</span>
+        <span style="text-align:right">Amount</span><span>Against Voucher</span><span></span>
+      </div>
+      <div id="vm-lines"></div>
+      <div class="vl-ft">
+        <button class="btn btn-sm" onclick="addLine()"><i class="fa fa-plus"></i> Line</button>
+        <div class="vl-tot">₹<span id="vm-total">0.00</span></div>
+      </div>
+    </div>
+
+    <div class="fc" style="margin-top:10px">
+      <label>Notes</label>
+      <textarea id="vm-notes" rows="2" placeholder="Internal notes (optional)"></textarea>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-sm btn-r" id="vm-del-btn" onclick="delVoucher()" style="display:none;margin-right:auto"><i class="fa fa-trash"></i> Delete</button>
+    <button class="btn btn-sm btn-wa" id="vm-wa-btn" onclick="waVoucher()" style="display:none"><i class="fa fa-brands fa-whatsapp"></i> WhatsApp</button>
+    <button class="btn btn-sm" id="vm-print-btn" onclick="printVoucherModal()" style="display:none"><i class="fa fa-print"></i> Print</button>
+    <button class="btn" onclick="closeM('vm-ov')">Cancel</button>
+    <button class="btn btn-sm" onclick="saveVoucher('draft')"><i class="fa fa-floppy-disk"></i> Draft</button>
+    <button class="btn btn-p" onclick="saveVoucher('posted')"><i class="fa fa-check"></i> Post Voucher</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ LEDGER MODAL ═══════════════ -->
+<div class="ov" id="lm-ov">
+<div class="md md-sm">
+  <div class="mh">
+    <h3 id="lm-title">New Ledger</h3>
+    <button class="btn btn-sm btn-icon" onclick="closeM('lm-ov')" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="mb">
+    <input type="hidden" id="lm-id">
+    <div class="fg" style="gap:10px">
+      <div class="fc"><label>Name <span class="rq">*</span></label><input type="text" id="lm-name" placeholder="e.g. Raju Kumar"></div>
+      <div class="fg fg2">
+        <div class="fc">
+          <label>Group <span class="rq">*</span></label>
+          <div style="display:flex;gap:5px">
+            <select id="lm-group" style="flex:1"></select>
+            <button class="btn btn-sm btn-icon" onclick="openGM()" title="Create new group" style="flex-shrink:0;padding:6px 9px"><i class="fa fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="fc">
+          <label>Type</label>
+          <select id="lm-type">
+            <option value="other">Other</option>
+            <option value="cash">Cash / Bank</option>
+            <option value="employee">Employee</option>
+            <option value="scrap_vendor">Scrap Vendor</option>
+            <option value="customer">Customer</option>
+            <option value="income_head">Income Head</option>
+            <option value="expense_head">Expense Head</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg fg2">
+        <div class="fc">
+          <label>Opening Balance</label>
+          <input type="number" id="lm-ob" value="0" min="0" step="0.01" oninput="onOBChange()">
+          <div class="hint" id="lm-ob-hint" style="display:none;color:var(--amber)">
+            <i class="fa fa-triangle-exclamation"></i> Changing opening balance will affect all ledger totals
+          </div>
+        </div>
+        <div class="fc"><label>Dr / Cr</label>
+          <select id="lm-ob-dr"><option value="dr">Dr (Asset / Advance)</option><option value="cr">Cr (Liability)</option></select>
+        </div>
+      </div>
+      <div class="fc"><label>Phone</label><input type="text" id="lm-phone" placeholder="Optional"></div>
+      <div class="fc"><label>Notes</label><textarea id="lm-notes" rows="2" placeholder="Optional"></textarea></div>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-sm btn-r" id="lm-del-btn" onclick="delLedger()" style="display:none;margin-right:auto"><i class="fa fa-trash"></i></button>
+    <button class="btn" onclick="closeM('lm-ov')">Cancel</button>
+    <button class="btn btn-p" onclick="saveLedger()"><i class="fa fa-save"></i> Save</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ GROUP MODAL ═══ -->
+<div class="ov" id="gm-ov">
+<div class="md" style="width:400px">
+  <div class="mh">
+    <h3>Ledger Groups</h3>
+    <button class="btn btn-sm btn-icon" onclick="closeM('gm-ov')" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="mb" style="padding:16px">
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.7px;font-family:var(--m);margin-bottom:8px">Existing Groups</div>
+      <div id="gm-list" style="display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto"></div>
+    </div>
+    <div style="border-top:1px solid var(--b1);padding-top:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.7px;font-family:var(--m);margin-bottom:8px">Add New Group</div>
+      <div class="fg fg2" style="gap:8px">
+        <div class="fc"><label>Name <span class="rq">*</span></label><input type="text" id="gm-name" placeholder="e.g. Vehicle Expenses"></div>
+        <div class="fc"><label>Nature <span class="rq">*</span></label>
+          <select id="gm-nature">
+            <option value="asset">Asset</option>
+            <option value="liability">Liability</option>
+            <option value="income">Income</option>
+            <option value="expense" selected>Expense</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn" onclick="closeM('gm-ov')">Close</button>
+    <button class="btn btn-p" onclick="saveGroup()"><i class="fa fa-plus"></i> Add Group</button>
+  </div>
+</div>
+</div>
+
+
+<!-- ═══ THEME PICKER MODAL ═══ -->
+<div class="ov" id="theme-ov">
+<div class="md md-sm">
+  <div class="mh">
+    <h3><i class="fa fa-palette" style="margin-right:8px;color:var(--accent)"></i>Choose Theme</h3>
+    <button class="btn btn-sm btn-icon" onclick="closeM('theme-ov')" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="theme-grid">
+    <div class="theme-swatch" onclick="setTheme('dark')" id="sw-dark">
+      <div class="theme-dot" style="background:linear-gradient(135deg,#0A0C12,#6366F1)"></div>
+      <div class="theme-name">Midnight</div>
+      <div class="theme-desc">Dark Indigo</div>
+    </div>
+    <div class="theme-swatch" onclick="setTheme('light')" id="sw-light">
+      <div class="theme-dot" style="background:linear-gradient(135deg,#F0F2FA,#6366F1)"></div>
+      <div class="theme-name">Clean Light</div>
+      <div class="theme-desc">White & Indigo</div>
+    </div>
+    <div class="theme-swatch" onclick="setTheme('ocean')" id="sw-ocean">
+      <div class="theme-dot" style="background:linear-gradient(135deg,#040C14,#38BDF8)"></div>
+      <div class="theme-name">Ocean</div>
+      <div class="theme-desc">Dark Blue</div>
+    </div>
+    <div class="theme-swatch" onclick="setTheme('forest')" id="sw-forest">
+      <div class="theme-dot" style="background:linear-gradient(135deg,#060D08,#22C55E)"></div>
+      <div class="theme-name">Forest</div>
+      <div class="theme-desc">Dark Green</div>
+    </div>
+    <div class="theme-swatch" onclick="setTheme('rose')" id="sw-rose">
+      <div class="theme-dot" style="background:linear-gradient(135deg,#0F0810,#F43F5E)"></div>
+      <div class="theme-name">Rose</div>
+      <div class="theme-desc">Dark Rose</div>
+    </div>
+    <div class="theme-swatch" onclick="setTheme('parchment')" id="sw-parchment">
+      <div class="theme-dot" style="background:linear-gradient(135deg,#FDF6E3,#B45309)"></div>
+      <div class="theme-name">Parchment</div>
+      <div class="theme-desc">Warm Light</div>
+    </div>
+    <div class="theme-swatch" onclick="setTheme('slate')" id="sw-slate">
+      <div class="theme-dot" style="background:linear-gradient(135deg,#F1F5F9,#6366F1)"></div>
+      <div class="theme-name">Slate</div>
+      <div class="theme-desc">Cool Light</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ PRINT VOUCHER MODAL ═══ -->
+<div class="ov" id="pv-ov">
+<div class="md md-lg">
+  <div class="mh">
+    <h3><i class="fa fa-print" style="margin-right:8px;color:var(--accent)"></i>Print Voucher</h3>
+    <button class="btn btn-sm btn-icon" onclick="closeM('pv-ov')" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="mb" style="padding:16px">
+    <div id="pv-content" class="pv-wrap"></div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-sm btn-wa" onclick="waPrintVoucher()"><i class="fa fa-brands fa-whatsapp"></i> WhatsApp</button>
+    <button class="btn" onclick="closeM('pv-ov')">Close</button>
+    <button class="btn btn-p" onclick="doPrint()"><i class="fa fa-print"></i> Print Now</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ WHATSAPP MODAL ═══ -->
+<div class="ov" id="wa-ov">
+<div class="md md-sm">
+  <div class="mh">
+    <h3 style="color:#25D366"><i class="fa fa-brands fa-whatsapp" style="margin-right:8px"></i>Send on WhatsApp</h3>
+    <button class="btn btn-sm btn-icon" onclick="closeM('wa-ov')" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="mb">
+    <div class="fc" style="margin-bottom:12px">
+      <label>Phone Number (with country code)</label>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="wa-phone" placeholder="+919876543210" style="flex:1">
+        <select id="wa-saved-contacts" onchange="if(this.value)document.getElementById('wa-phone').value=this.value" style="width:160px">
+          <option value="">Saved contacts...</option>
+        </select>
+      </div>
+      <div class="hint">Leave blank to open WhatsApp Web without pre-filled number</div>
+    </div>
+    <div class="fc" style="margin-bottom:12px">
+      <label>Message Preview</label>
+      <textarea id="wa-msg" rows="8" style="font-size:12px;font-family:var(--m)"></textarea>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm" onclick="copyWAMsg()"><i class="fa fa-copy"></i> Copy</button>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn" onclick="closeM('wa-ov')">Cancel</button>
+    <button class="btn btn-wa btn-sm" onclick="sendWA()"><i class="fa fa-brands fa-whatsapp"></i> Open WhatsApp</button>
+  </div>
+</div>
+</div>
+
+<!-- hidden print area -->
+<div id="print-area" style="display:none"></div>
+
+
+<!-- ═══ RESET APPLICATION MODAL ═══ -->
+<div class="ov" id="reset-ov" style="z-index:2000">
+<div class="md md-sm" style="max-width:480px">
+  <div class="mh" style="border-bottom:2px solid #DC2626">
+    <i class="fa fa-skull-crossbones" style="color:#DC2626;font-size:18px;margin-right:10px"></i>
+    <h3 style="color:#DC2626">Reset Application</h3>
+    <button class="btn btn-sm btn-icon" onclick="cancelReset()" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="mb" style="padding:20px">
+
+    <!-- STEP 1: First confirmation -->
+    <div class="reset-step active" id="rst-step-1">
+      <div class="reset-confirm-box">
+        <div class="reset-icon"><i class="fa fa-triangle-exclamation"></i></div>
+        <div class="reset-title">WARNING — This cannot be undone</div>
+        <div class="reset-body">
+          This will <strong>permanently delete ALL data</strong> including:<br>
+          Vouchers • Ledgers • Income • Expenses • Advances<br>
+          Employee records • All transactions<br><br>
+          <strong>Are you absolutely sure you want to reset?</strong>
+        </div>
+        <button class="btn btn-danger-hard" style="width:100%;padding:11px" onclick="goResetStep(2)">
+          <i class="fa fa-exclamation-triangle"></i> Yes, I want to reset
+        </button>
+      </div>
+      <button class="btn" style="width:100%" onclick="cancelReset()">Cancel — Keep my data safe</button>
+    </div>
+
+    <!-- STEP 2: Type confirmation -->
+    <div class="reset-step" id="rst-step-2">
+      <div class="reset-confirm-box">
+        <div class="reset-icon"><i class="fa fa-keyboard"></i></div>
+        <div class="reset-title">Confirmation Required</div>
+        <div class="reset-body">
+          To confirm, type <strong style="color:#DC2626;letter-spacing:2px">RESET ALL</strong> in the box below.<br>
+          This is your second confirmation.
+        </div>
+        <input type="text" class="reset-input" id="rst-confirm-input" placeholder="Type: RESET ALL"
+               oninput="checkResetInput()" autocomplete="off" spellcheck="false">
+        <div style="margin-top:10px;font-size:12px;color:var(--tx3)" id="rst-input-hint">Type exactly as shown above</div>
+      </div>
+      <div style="display:flex;gap:8px;width:100%">
+        <button class="btn" style="flex:1" onclick="goResetStep(1)"><i class="fa fa-arrow-left"></i> Back</button>
+        <button class="btn btn-danger-hard" id="rst-step2-next" style="flex:1;opacity:.4;pointer-events:none" onclick="goResetStep(3)">
+          <i class="fa fa-arrow-right"></i> Confirm
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Final countdown -->
+    <div class="reset-step" id="rst-step-3">
+      <div class="reset-confirm-box">
+        <div class="reset-icon"><i class="fa fa-hourglass-half"></i></div>
+        <div class="reset-title" style="margin-bottom:8px">Final Warning — Last Chance</div>
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:16px">
+          Reset will begin when the timer reaches zero.<br>
+          <strong>Click ABORT to cancel immediately.</strong>
+        </div>
+
+        <div class="countdown-ring">
+          <svg viewBox="0 0 100 100" width="120" height="120">
+            <circle class="ring-bg" cx="50" cy="50" r="42"/>
+            <circle class="ring-fg" id="rst-ring" cx="50" cy="50" r="42"/>
+          </svg>
+          <div class="ring-num" id="rst-timer-num">30</div>
+        </div>
+
+        <div style="font-size:12px;color:var(--tx3);margin:8px 0 14px">seconds remaining</div>
+
+        <div class="reset-progress">
+          <div class="reset-progress-bar" id="rst-progress" style="width:100%"></div>
+        </div>
+      </div>
+
+      <button class="btn" style="width:100%;background:var(--green-l);border-color:var(--green);color:var(--green);font-weight:700;font-size:14px;padding:12px" onclick="abortReset()" id="rst-abort-btn">
+        <i class="fa fa-hand"></i> ABORT — Keep My Data
+      </button>
+      <div style="font-size:11px;color:var(--tx3);text-align:center">
+        You can abort until the timer reaches 0
+      </div>
+    </div>
+
+    <!-- STEP 4: Resetting -->
+    <div class="reset-step" id="rst-step-4">
+      <div style="text-align:center;padding:20px 0">
+        <i class="fa fa-spinner fa-spin" style="font-size:40px;color:#DC2626;margin-bottom:16px;display:block"></i>
+        <div style="font-size:16px;font-weight:700;color:#DC2626;margin-bottom:8px">Resetting Application...</div>
+        <div style="font-size:13px;color:var(--tx2)" id="rst-progress-msg">Deleting vouchers...</div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Done -->
+    <div class="reset-step" id="rst-step-5">
+      <div style="text-align:center;padding:20px 0">
+        <i class="fa fa-check-circle" style="font-size:48px;color:var(--green);margin-bottom:16px;display:block"></i>
+        <div style="font-size:16px;font-weight:700;color:var(--green);margin-bottom:8px">Reset Complete</div>
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:20px">All data has been cleared. The application is now fresh.</div>
+        <button class="btn btn-p" style="width:100%" onclick="location.reload()">
+          <i class="fa fa-refresh"></i> Reload Application
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+
+<!-- ═══ SHORTCUTS HELP MODAL ═══ -->
+<div class="ov" id="shortcuts-ov">
+<div class="md" style="width:600px">
+  <div class="mh">
+    <i class="fa fa-keyboard" style="color:var(--accent);margin-right:10px;font-size:16px"></i>
+    <h3>Keyboard Shortcuts</h3>
+    <button class="btn btn-sm btn-icon" onclick="closeM('shortcuts-ov')" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div style="overflow-y:auto;max-height:70vh">
+    <div class="shortcut-grid">
+
+      <div class="sc-section">Navigation — press key alone</div>
+
+      <div class="sc-row"><span class="sc-key">1</span><span class="sc-desc">Dashboard</span></div>
+      <div class="sc-row"><span class="sc-key">2</span><span class="sc-desc">All Vouchers</span></div>
+      <div class="sc-row"><span class="sc-key">3</span><span class="sc-desc">Income</span></div>
+      <div class="sc-row"><span class="sc-key">4</span><span class="sc-desc">Expenses</span></div>
+      <div class="sc-row"><span class="sc-key">5</span><span class="sc-desc">Employee Advances</span></div>
+      <div class="sc-row"><span class="sc-key">6</span><span class="sc-desc">Ledger Accounts</span></div>
+      <div class="sc-row"><span class="sc-key">7</span><span class="sc-desc">Ledger Report</span></div>
+      <div class="sc-row"><span class="sc-key">8</span><span class="sc-desc">Daily Report</span></div>
+      <div class="sc-row"><span class="sc-key">9</span><span class="sc-desc">Category Report</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Close modal / dialog</span></div>
+
+      <div class="sc-section">Create Vouchers — press key alone</div>
+
+      <div class="sc-row"><span class="sc-key">P</span><span class="sc-desc">New Payment Voucher (PV)</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">New Receipt Voucher (RV)</span></div>
+      <div class="sc-row"><span class="sc-key">E</span><span class="sc-desc">New Expense Voucher (EV)</span></div>
+      <div class="sc-row"><span class="sc-key">J</span><span class="sc-desc">New Journal Voucher (JV)</span></div>
+      <div class="sc-row"><span class="sc-key">N</span><span class="sc-desc">New Ledger Account</span></div>
+      <div class="sc-row"><span class="sc-key">T</span><span class="sc-desc">Open Theme Picker</span></div>
+
+      <div class="sc-section">Inside Voucher Modal — Alt combos</div>
+
+      <div class="sc-row"><span class="sc-key">Alt+S</span><span class="sc-desc">Save &amp; Post voucher</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+D</span><span class="sc-desc">Delete voucher</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+N</span><span class="sc-desc">New Ledger (any time)</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Close voucher modal</span></div>
+
+      <div class="sc-section">Navigation — Alt combos (work from anywhere)</div>
+
+      <div class="sc-row"><span class="sc-key">Alt+1</span><span class="sc-desc">Go to Dashboard</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+2</span><span class="sc-desc">Go to All Vouchers</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+3</span><span class="sc-desc">Go to Income</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+4</span><span class="sc-desc">Go to Expenses</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+5</span><span class="sc-desc">Go to Advances</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+6</span><span class="sc-desc">Go to Ledger Accounts</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+7</span><span class="sc-desc">Go to Ledger Report</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+8</span><span class="sc-desc">Go to Daily Report</span></div>
+      <div class="sc-row"><span class="sc-key">Alt+9</span><span class="sc-desc">Go to Category Report</span></div>
+
+      <div class="sc-section">Utilities</div>
+
+      <div class="sc-row"><span class="sc-key">/</span><span class="sc-desc">Focus search field</span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">Show this help</span></div>
+
+    </div>
+  </div>
+  <div class="mf">
+    <span style="font-size:11px;color:var(--tx3)">Shortcuts are disabled when typing in input fields</span>
+    <button class="btn btn-p btn-sm" onclick="closeM('shortcuts-ov')" style="margin-left:auto">Got it</button>
+  </div>
+</div>
+</div>
+
+
+<!-- ═══ OPENING BALANCE MODAL (Admin) ═══ -->
+<div class="ov" id="ob-ov">
+<div class="md md-sm" style="width:460px">
+  <div class="mh">
+    <i class="fa fa-vault" style="color:var(--accent);margin-right:10px;font-size:16px"></i>
+    <h3>Set Opening Balance</h3>
+    <button class="btn btn-sm btn-icon" onclick="closeM('ob-ov')" style="margin-left:auto"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="mb">
+    <!-- Current info box -->
+    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 16px;margin-bottom:16px" id="ob-current-info">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;font-family:var(--m);text-transform:uppercase;letter-spacing:.5px">Current Cash Ledger</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span id="ob-ledger-name" style="font-weight:600;font-size:14px">—</span>
+        <span id="ob-current-bal" style="font-family:var(--m);font-weight:700;font-size:16px;color:var(--green)">—</span>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px">Current Opening Balance: <span id="ob-current-ob" style="font-family:var(--m);color:var(--accent)">—</span></div>
+    </div>
+
+    <div class="fg" style="gap:12px">
+      <input type="hidden" id="ob-ledger-id">
+      <div class="fc">
+        <label>New Opening Balance <span class="rq">*</span></label>
+        <input type="number" id="ob-amount" min="0" step="0.01" placeholder="e.g. 50000">
+        <div class="hint">This is the starting cash balance before any transactions</div>
+      </div>
+      <div class="fc">
+        <label>Dr / Cr</label>
+        <select id="ob-dr-cr">
+          <option value="dr">Dr — Cash Asset (money you have)</option>
+          <option value="cr">Cr — Liability (money you owe)</option>
+        </select>
+      </div>
+      <div class="fc">
+        <label>Reason / Note</label>
+        <input type="text" id="ob-reason" placeholder="e.g. Opening balance as of 1 Apr 2025">
+      </div>
+    </div>
+
+    <!-- Warning -->
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:var(--r);padding:10px 14px;margin-top:14px">
+      <div style="font-size:11px;color:var(--amber);font-weight:600;margin-bottom:4px"><i class="fa fa-triangle-exclamation"></i> Important</div>
+      <div style="font-size:12px;color:var(--tx2);line-height:1.5">
+        Changing the opening balance will affect the <strong>Actual Cash in Hand</strong> calculation and all ledger reports.
+        This action is logged with your name and timestamp.
+      </div>
+    </div>
+
+    <!-- Reset section -->
+    <div style="border-top:1px solid var(--b1);margin-top:16px;padding-top:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-family:var(--m)">Reset to Zero</div>
+      <button class="btn btn-sm btn-r" onclick="resetOB()" style="width:100%">
+        <i class="fa fa-rotate-left"></i> Reset Opening Balance to ₹0
+      </button>
+      <div class="hint" style="margin-top:6px">Use this to clear the opening balance and start fresh</div>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn" onclick="closeM('ob-ov')">Cancel</button>
+    <button class="btn btn-p" onclick="saveOB()"><i class="fa fa-save"></i> Save Opening Balance</button>
+  </div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// GLOBALS
+// ═══════════════════════════════════════════
+let ledgers  = [];
+let groups   = [];
+let dbData   = null;
+let vPage    = 1;
+
+const todayStr = () => new Date().toISOString().slice(0,10);
+const monthStart = () => new Date().toISOString().slice(0,7) + '-01';
+
+const R = n => '₹' + parseFloat(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const N = n => parseFloat(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// Date formatter — always DD/MMM/YYYY e.g. 24/Mar/2026
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d) {
+  if (!d) return '—';
+  // Handles YYYY-MM-DD string or Date object
+  const dt = (typeof d === 'string') ? new Date(d + (d.length === 10 ? 'T00:00:00' : '')) : d;
+  if (isNaN(dt)) return d;
+  const dd  = String(dt.getDate()).padStart(2,'0');
+  const mmm = MONTHS[dt.getMonth()];
+  const yyyy = dt.getFullYear();
+  return `${dd}/${mmm}/${yyyy}`;
+}
+
+function toast(msg, t='ok') {
+  const d = document.createElement('div');
+  d.className = `ti ${t}`;
+  const ic = {ok:'fa-circle-check c-g',error:'fa-circle-xmark c-r',warn:'fa-triangle-exclamation c-a'};
+  d.innerHTML = `<i class="fa ${ic[t]||ic.ok}" style="font-size:14px"></i> ${msg}`;
+  document.getElementById('toast').appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+
+async function api(url, opts={}) {
+  try {
+    const r = await fetch(url, {headers:{'Content-Type':'application/json'}, ...opts});
+    if (!r.ok) { toast(`HTTP ${r.status}`, 'error'); return null; }
+    return await r.json();
+  } catch(e) { toast('Network error','error'); return null; }
+}
+const GET  = u => api(u);
+const POST = (u,b) => api(u,{method:'POST',body:JSON.stringify(b)});
+
+// ═══════════════════════════════════════════
+// THEME & ROUTING
+// ═══════════════════════════════════════════
+// toggleTheme replaced by setTheme() in THEMES section below
+
+const viewTitles = {
+  dashboard:'Dashboard', vouchers:'All Vouchers', income:'Income', ledgers:'Ledger Accounts',
+  expenses:'Expenses', advances:'Employee Advances',
+  'rpt-ledger':'Ledger Report', 'rpt-daily':'Daily Report', 'rpt-cat':'Category Report'
+};
+
+function show(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('.ni[data-v]').forEach(x => x.classList.remove('on'));
+  document.getElementById(`view-${v}`)?.classList.add('on');
+  document.querySelector(`.ni[data-v="${v}"]`)?.classList.add('on');
+  document.getElementById('topbar-title').textContent = viewTitles[v] || v;
+  // Sync date range inputs to view-specific fields
+  const from = document.getElementById('g-from').value;
+  const to   = document.getElementById('g-to').value;
+
+  const loaders = {
+    dashboard:    loadDashboard,
+    vouchers:     loadVouchers,
+    income:       loadIncome,
+    expenses:     loadExpenses,
+    advances:     loadAdvances,
+    ledgers:      loadLedgersView,
+    'rpt-ledger': () => { populateLedgerSel('lr-led'); syncLRDates(); },
+    'rpt-daily':  () => { document.getElementById('dr-date').value = todayStr(); },
+    'rpt-cat':    () => { document.getElementById('cr-from').value = from; document.getElementById('cr-to').value = to; },
+  };
+  loaders[v]?.();
+}
+
+function onDateChange() {
+  const v = document.querySelector('.view.on')?.id?.replace('view-','');
+  if (v) show(v);
+}
+
+function openM(id)  { document.getElementById(id).classList.add('on'); }
+function closeM(id) { document.getElementById(id).classList.remove('on'); }
+// ── KEYBOARD SHORTCUTS ──
+// ? or F1  → show shortcuts help
+// Esc      → close modal
+// Alt+1..9 → navigate views
+// P        → Payment Voucher
+// R        → Receipt Voucher
+// E        → Expense Voucher
+// J        → Journal Voucher
+// N        → New Ledger
+// /        → focus search (if any)
+// T        → cycle theme
+// Alt+S    → save current voucher (if open)
+// Alt+D    → delete current voucher (if open)
+
+// View navigation map: key → view name
+const _NAV_KEYS = {
+  '1':'dashboard','2':'vouchers','3':'income',
+  '4':'expenses', '5':'advances','6':'ledgers',
+  '7':'rpt-ledger','8':'rpt-daily','9':'rpt-cat'
+};
+
+document.addEventListener('keydown', e => {
+  const tag      = e.target.tagName;
+  const inField  = ['INPUT','TEXTAREA','SELECT'].includes(tag) || e.target.isContentEditable;
+  const modalOpen = !!document.querySelector('.ov.on');
+  const k        = e.key;
+
+  // ── Escape: always close any open modal ──────────────────────────
+  if (k === 'Escape') {
+    document.querySelectorAll('.ov.on').forEach(m => m.classList.remove('on'));
+    return;
+  }
+
+  // ── Alt combos: work everywhere ──────────────────────────────────
+  if (e.altKey && !e.ctrlKey && !e.metaKey) {
+    // Alt+1..9 — navigate (even if in a field)
+    if (_NAV_KEYS[k] && !modalOpen) {
+      e.preventDefault();
+      show(_NAV_KEYS[k]);
+      return;
+    }
+    // Alt+S — post voucher (voucher modal open)
+    if ((k==='s'||k==='S') && document.getElementById('vm-ov')?.classList.contains('on')) {
+      e.preventDefault(); saveVoucher('posted'); return;
+    }
+    // Alt+D — delete voucher
+    if ((k==='d'||k==='D') && document.getElementById('vm-ov')?.classList.contains('on')) {
+      e.preventDefault(); delVoucher(); return;
+    }
+    // Alt+N — new ledger from anywhere
+    if (k==='n'||k==='N') { e.preventDefault(); openLM(); return; }
+    return;
+  }
+
+  // ── Everything below: skip if in a text field or modal is open ───
+  if (inField || modalOpen || e.ctrlKey || e.metaKey) return;
+
+  // ── Numeric keys 1-9: navigate views ─────────────────────────────
+  // Use e.code (e.g. 'Digit1') so it works regardless of keyboard layout
+  // Also check e.key as fallback
+  const digit = e.code?.startsWith('Digit') ? e.code.replace('Digit','') : (e.key >= '1' && e.key <= '9' ? e.key : null);
+  if (digit && _NAV_KEYS[digit]) {
+    e.preventDefault();
+    show(_NAV_KEYS[digit]);
+    return;
+  }
+
+  // ── Letter shortcuts ─────────────────────────────────────────────
+  const kl = k.toLowerCase();
+  if (kl === 'p') { openVM('PV'); return; }
+  if (kl === 'r') { openVM('RV'); return; }
+  if (kl === 'e') { openVM('EV'); return; }
+  if (kl === 'j') { openVM('JV'); return; }
+  if (kl === 'n') { openLM();     return; }
+  if (kl === 't') { openThemePicker(); return; }
+
+  // ── / — focus search ─────────────────────────────────────────────
+  if (k === '/') {
+    e.preventDefault();
+    for (const id of ['ldg-search','cb-q','lr-led']) {
+      const el = document.getElementById(id);
+      if (el && el.offsetParent !== null) { el.focus(); el.select?.(); break; }
+    }
+    return;
+  }
+
+  // ── ? or F1 — show shortcuts help ───────────────────────────────
+  if (k === '?' || k === 'F1') {
+    e.preventDefault();
+    openShortcutsHelp();
+    return;
+  }
+});
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+async function init() {
+  document.getElementById('g-from').value        = monthStart();
+  document.getElementById('g-to').value          = todayStr();
+  document.getElementById('topbar-today').textContent = (()=>{const n=new Date();const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];return days[n.getDay()]+' '+fmtDate(n);})();
+
+  await loadCache();
+  loadDashboard();
+}
+
+async function loadCache() {
+  const [lds, grps] = await Promise.all([GET('/api/cms/ledgers'), GET('/api/cms/ledger_groups')]);
+  if (lds)  ledgers = lds;
+  if (grps) groups  = grps;
+  buildGroupSel('lm-group');
+  buildAdvEmpSels();
+  buildIncSrcFilter();
+  buildExpCatFilter();
+  buildAdvEmpFilter();
+}
+
+function buildGroupSel(id) {
+  const s = document.getElementById(id);
+  if (!s) return;
+  s.innerHTML = '<option value="">— Group —</option>';
+  groups.forEach(g => s.innerHTML += `<option value="${g.id}">${g.name} (${g.nature})</option>`);
+}
+
+function populateLedgerSel(id) {
+  const s = document.getElementById(id);
+  if (!s) return;
+  const v = s.value;
+  s.innerHTML = '<option value="">— Select Ledger —</option>';
+  ledgers.forEach(l => s.innerHTML += `<option value="${l.id}" ${l.id==v?'selected':''}>${l.name} [${l.ledger_type||''}]</option>`);
+}
+
+function buildAdvEmpSels() {
+  const emps = ledgers.filter(l => l.ledger_type === 'employee');
+  ['vm-adv-emp','adv-emp-f'].forEach(id => {
+    const s = document.getElementById(id);
+    if (!s) return;
+    const cur = s.value;
+    const blank = id === 'adv-emp-f' ? '<option value="">All Employees</option>' : '<option value="">— No advance link —</option>';
+    s.innerHTML = blank;
+    emps.forEach(e => s.innerHTML += `<option value="${e.id}" ${e.id==cur?'selected':''}>${e.name}</option>`);
+  });
+}
+
+function buildIncSrcFilter() {
+  const incLedgers = ledgers.filter(l => l.ledger_type === 'income_head' || (l.group_name||'').toLowerCase().includes('income'));
+  const s = document.getElementById('inc-src-f');
+  if (!s) return;
+  s.innerHTML = '<option value="">All Sources</option>';
+  incLedgers.forEach(l => s.innerHTML += `<option value="${l.id}">${l.name}</option>`);
+}
+
+function buildExpCatFilter() {
+  const expLedgers = ledgers.filter(l => l.ledger_type === 'expense_head' || (l.group_name||'').toLowerCase().includes('expense'));
+  const s = document.getElementById('exp-cat-f');
+  if (!s) return;
+  s.innerHTML = '<option value="">All Categories</option>';
+  expLedgers.forEach(l => s.innerHTML += `<option value="${l.id}">${l.name}</option>`);
+}
+
+function buildAdvEmpFilter() {
+  const emps = ledgers.filter(l => l.ledger_type === 'employee');
+  const s = document.getElementById('adv-emp-f');
+  if (!s) return;
+  s.innerHTML = '<option value="">All Employees</option>';
+  emps.forEach(e => s.innerHTML += `<option value="${e.id}">${e.name}</option>`);
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════
+async function loadDashboard() {
+  const from = document.getElementById('g-from').value;
+  const to   = document.getElementById('g-to').value;
+  const data = await GET(`/api/cms/v3/dashboard?from=${from}&to=${to}`);
+  if (!data) return;
+  dbData = data;
+
+  document.getElementById('db-cash').textContent      = R(data.cash_in_hand);
+  document.getElementById('db-inc').textContent       = R(data.total_income);
+  document.getElementById('db-exp').textContent       = R(data.total_expense);
+  document.getElementById('db-adv-given').textContent = R(data.advances_given_period);
+  document.getElementById('db-adv-out').textContent   = R(data.advances_outstanding);
+
+  // Actual Cash = Opening Balance + Income − Expenses − Advance Outstanding
+  const _ob   = parseFloat(data.opening_balance||0);
+  const _inc  = parseFloat(data.total_income||0);
+  const _exp  = parseFloat(data.total_expense||0);
+  const _adv  = parseFloat(data.advances_outstanding||0);
+  const _actualCash = _ob + _inc - _exp - _adv;
+
+  const _actualEl = document.getElementById('db-actual-cash');
+  _actualEl.textContent = R(Math.abs(_actualCash));
+  _actualEl.className   = 'sc-val ' + (_actualCash >= 0 ? 'c-g' : 'c-r');
+  _actualEl.style.fontSize = '22px';
+
+  // Show live formula breakdown
+  const _fmlEl = document.getElementById('db-actual-formula');
+  if (_fmlEl) {
+    const _sign = _actualCash >= 0 ? '' : '− ';
+    _fmlEl.innerHTML =
+      '<span style="color:var(--tx3)">OB</span> ' + R(_ob) +
+      ' <span style="color:var(--green)">+ Inc</span> ' + R(_inc) +
+      ' <span style="color:var(--red)">− Exp</span> ' + R(_exp) +
+      ' <span style="color:var(--amber)">− Adv</span> ' + R(_adv);
+  }
+
+  renderBreakdown('db-inc-breakdown', data.income_by_source || [], 'var(--green)');
+  renderBreakdown('db-exp-breakdown', data.expense_by_category || [], 'var(--red)');
+  renderAdvSum(data.advance_summary || []);
+  renderCashbook(data.transactions || []);
+}
+
+function renderBreakdown(elId, rows, color, totalKey) {
+  const el = document.getElementById(elId);
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty" style="padding:16px"><i class="fa fa-chart-bar"></i><p>No data</p></div>`;
+    return;
+  }
+  const total = rows.reduce((s,r) => s + parseFloat(r.amount||r.total||0), 0);
+  el.innerHTML = rows.slice(0,6).map(r => {
+    const amt = parseFloat(r.amount||r.total||0);
+    const pct = total > 0 ? (amt/total*100).toFixed(1) : 0;
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:12px;color:var(--tx)">${r.category||r.ledger_name||r.name||'Other'}</span>
+        <span style="font-size:12px;font-family:var(--m);font-weight:600;color:var(--tx)">${R(amt)}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div style="font-size:10px;color:var(--tx3);font-family:var(--m);margin-top:2px">${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAdvSum(rows) {
+  const tbody = document.getElementById('db-adv-tbody');
+  tbody.innerHTML = '';
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="2"><div class="empty" style="padding:16px"><i class="fa fa-smile"></i><p>No outstanding advances</p></div></td></tr>`;
+    return;
+  }
+  rows.forEach(r => {
+    const out = parseFloat(r.outstanding||r.balance||0);
+    tbody.innerHTML += `<tr>
+      <td class="fw6">${r.name}</td>
+      <td class="tr mono fw6 c-a">${R(out)}</td>
+    </tr>`;
+  });
+}
+
+function renderCashbook(rows) {
+  const tbody = document.getElementById('db-cb-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><i class="fa fa-inbox"></i><p>No transactions</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const vt  = r.voucher_type || '';
+    const isIn  = vt === 'RV';
+    const isOut = vt === 'PV';
+    const isEV  = vt === 'EV';
+    const badgeCls = {RV:'bg-rv', PV:'bg-pv', EV:'bg-adv', JV:'bg-jv'}[vt] || 'bg-dft';
+    const label    = {RV:'Receipt', PV:'Payment', EV:'Expense', JV:'Journal'}[vt] || vt;
+    const bal = r.running_balance;
+    return `<tr ondblclick="openVE(${r.id})">
+      <td class="mono tx3 fs11">${fmtDate(r.date)}</td>
+      <td class="mono c-i fs11">${r.voucher_no||''}</td>
+      <td><span class="bg ${badgeCls}">${label}</span></td>
+      <td class="tx2 fs11">${r.narration||''}</td>
+      <td class="tr mono c-g fs11">${isIn  ? R(r.total_amount) : ''}</td>
+      <td class="tr mono c-r fs11">${isOut ? R(r.total_amount) : ''}</td>
+      <td class="tr mono c-a fw6 fs11">${isEV ? '<span class="tx3" style="font-size:10px">no cash</span>' : (bal!==undefined ? R(bal) : '')}</td>
+      <td><button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openVE(${r.id})"><i class="fa fa-eye"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterCashbook() {
+  if (!dbData) return;
+  const q = document.getElementById('cb-q').value.toLowerCase();
+  const rows = (dbData.transactions||[]).filter(r =>
+    (r.category||'').toLowerCase().includes(q) ||
+    (r.description||'').toLowerCase().includes(q) ||
+    (r.voucher_no||'').toLowerCase().includes(q)
+  );
+  renderCashbook(rows);
+}
+
+// ═══════════════════════════════════════════
+// VOUCHERS LIST
+// ═══════════════════════════════════════════
+async function loadVouchers() {
+  const from  = document.getElementById('g-from').value;
+  const to    = document.getElementById('g-to').value;
+  const vtype = document.getElementById('vl-type').value;
+  const data  = await GET(`/api/cms/vouchers?from=${from}&to=${to}&type=${vtype}&page=${vPage}&per_page=25`);
+  if (!data) return;
+
+  const tbody = document.getElementById('vl-tbody');
+  if (!data.vouchers?.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><i class="fa fa-receipt"></i><p>No vouchers found</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.vouchers.map(v => {
+    const tb = `<span class="bg bg-${(v.voucher_type||'').toLowerCase()}">${v.voucher_type}</span>`;
+    const sb = `<span class="bg bg-${v.status||'post'}">${v.status||'posted'}</span>`;
+    return `<tr ondblclick="openVE(${v.id})">
+      <td class="mono tx3 fs11">${fmtDate(v.date)}</td>
+      <td class="mono c-i fw6">${v.voucher_no}</td>
+      <td>${tb}</td>
+      <td class="tx2">${v.narration||''}</td>
+      <td class="tr mono fw6">${R(v.total_amount)}</td>
+      <td>${sb}</td>
+      <td>
+        <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openVE(${v.id})"><i class="fa fa-pen"></i></button>
+        <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();printV(${v.id})"><i class="fa fa-print"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function clearVF() {
+  document.getElementById('vl-type').value = '';
+  vPage = 1; loadVouchers();
+}
+
+// ═══════════════════════════════════════════
+// INCOME
+// ═══════════════════════════════════════════
+async function loadIncome() {
+  const from = document.getElementById('g-from').value;
+  const to   = document.getElementById('g-to').value;
+  const src  = document.getElementById('inc-src-f').value;
+  const data = await GET(`/api/cms/vouchers?from=${from}&to=${to}&type=RV&ledger_id=${src}&per_page=100`);
+  if (!data) return;
+
+  const rows = data.vouchers || [];
+  const total = rows.reduce((s,r) => s + parseFloat(r.total_amount||0), 0);
+  document.getElementById('inc-sum').style.display = 'grid';
+  document.getElementById('inc-total').textContent = R(total);
+  document.getElementById('inc-count').textContent = rows.length;
+  document.getElementById('inc-avg').textContent   = rows.length ? R(total/rows.length) : R(0);
+  const srcSet = new Set(rows.map(r => r.narration||'').filter(Boolean));
+  document.getElementById('inc-src').textContent   = srcSet.size;
+
+  const tbody = document.getElementById('inc-tbody');
+  tbody.innerHTML = rows.length ? rows.map(v => `<tr ondblclick="openVE(${v.id})">
+    <td class="mono tx3 fs11">${fmtDate(v.date)}</td>
+    <td class="mono c-i">${v.voucher_no}</td>
+    <td class="fw6">${v.income_ledger||v.against_ledger||'—'}</td>
+    <td class="tx2">${v.narration||''}</td>
+    <td class="tr mono c-g fw6">${R(v.total_amount)}</td>
+    <td><span class="bg bg-${v.status||'post'}">${v.status||'posted'}</span></td>
+    <td><button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openVE(${v.id})"><i class="fa fa-pen"></i></button></td>
+  </tr>`).join('') : `<tr><td colspan="7"><div class="empty"><i class="fa fa-arrow-down"></i><p>No income records</p></div></td></tr>`;
+}
+
+// ═══════════════════════════════════════════
+// EXPENSES
+// ═══════════════════════════════════════════
+async function loadExpenses() {
+  const from = document.getElementById('g-from').value;
+  const to   = document.getElementById('g-to').value;
+  const cat  = document.getElementById('exp-cat-f').value;
+  // Expenses come from EV (Expense Vouchers = bill settlements) only
+  const data = await GET(`/api/cms/vouchers?from=${from}&to=${to}&type=EV&ledger_id=${cat}&per_page=100`);
+  if (!data) return;
+
+  const rows  = data.vouchers || [];
+  const total = rows.reduce((s,r) => s + parseFloat(r.total_amount||0), 0);
+  document.getElementById('exp-sum').style.display = 'grid';
+  document.getElementById('exp-total').textContent   = R(total);
+  document.getElementById('exp-count').textContent   = rows.length;
+  document.getElementById('exp-adv-set').textContent = R(total); // all EV is settled via advance
+  document.getElementById('exp-direct').textContent  = R(0);
+
+  const tbody = document.getElementById('exp-tbody');
+  tbody.innerHTML = rows.length ? rows.map(v => {
+    // Find employee (Cr line) and expense (Dr line)
+    const empLine  = (v.lines||[]).find(l => l.dr_cr==='cr' && l.ledger_type==='employee');
+    const expLine  = (v.lines||[]).find(l => l.dr_cr==='dr' && l.ledger_type==='expense_head');
+    const empName  = empLine ? empLine.ledger_name : '—';
+    const expCat   = expLine ? expLine.ledger_name : '—';
+    return `<tr ondblclick="openVE(${v.id})">
+      <td class="mono tx3 fs11">${fmtDate(v.date)}</td>
+      <td class="mono c-i">${v.voucher_no}</td>
+      <td class="fw6">${expCat}</td>
+      <td class="tx2">${v.narration||''}</td>
+      <td><span class="bg bg-adv"><i class="fa fa-link" style="font-size:9px"></i> ${empName}</span></td>
+      <td class="tr mono c-r fw6">${R(v.total_amount)}</td>
+      <td><span class="bg bg-${v.status||'post'}">${v.status||'posted'}</span></td>
+      <td><button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openVE(${v.id})"><i class="fa fa-pen"></i></button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8"><div class="empty"><i class="fa fa-receipt"></i><p>No expense vouchers — submit bills via the Expense Voucher (EV)</p></div></td></tr>`;
+}
+
+// ═══════════════════════════════════════════
+// ADVANCES
+// ═══════════════════════════════════════════
+async function loadAdvances() {
+  const data = await GET('/api/cms/report/advances');
+  if (!data) return;
+
+  const rows = data.employees || [];
+  const totGiven  = rows.reduce((s,r) => s + parseFloat(r.total_given||0), 0);
+  const totBills  = rows.reduce((s,r) => s + parseFloat(r.settled_by_bills||0), 0);
+  const totRepaid = rows.reduce((s,r) => s + parseFloat(r.cash_repaid||0), 0);
+  const totOut    = rows.reduce((s,r) => s + parseFloat(r.outstanding||0), 0);
+
+  document.getElementById('adv-given').textContent  = R(totGiven);
+  document.getElementById('adv-set-v').textContent  = R(totBills);
+  document.getElementById('adv-repaid').textContent = R(totRepaid);
+  document.getElementById('adv-out').textContent    = R(totOut);
+
+  const tbody = document.getElementById('adv-sum-tbody');
+  tbody.innerHTML = rows.length ? rows.map(r => {
+    const out = parseFloat(r.outstanding||0);
+    return `<tr>
+      <td class="fw6">${r.name}</td>
+      <td class="tr mono c-a">${R(r.total_given||0)}</td>
+      <td class="tr mono tx2" title="Bills submitted (EV vouchers)">${R(r.settled_by_bills||0)}</td>
+      <td class="tr mono c-g">${R(r.cash_repaid||0)}</td>
+      <td class="tr mono fw6 ${out>0?'c-a':out<0?'c-r':'tx2'}">${R(out)}</td>
+      <td><button class="btn btn-sm btn-icon" onclick="openLedgerRptFor(${r.ledger_id})" title="View Ledger"><i class="fa fa-file-lines"></i></button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="6"><div class="empty"><i class="fa fa-smile"></i><p>No advances</p></div></td></tr>`;
+
+  loadAdvTxns();
+}
+
+async function loadAdvTxns() {
+  const empId = document.getElementById('adv-emp-f').value;
+  const tbody = document.getElementById('adv-txn-tbody');
+
+  if (empId) {
+    const from = document.getElementById('g-from').value;
+    const to   = document.getElementById('g-to').value;
+    const lr   = await GET(`/api/cms/ledgers/${empId}/report?from=${from}&to=${to}`);
+    if (!lr?.entries?.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><i class="fa fa-inbox"></i><p>No transactions</p></div></td></tr>`;
+      return;
+    }
+    const empName = lr.ledger?.name || '';
+    tbody.innerHTML = lr.entries.map(e => {
+      const bal = e.running_balance;
+      const tb = `<span class="bg bg-${(e.voucher_type||'').toLowerCase()}">${e.voucher_type||''}</span>`;
+      return `<tr ondblclick="openVE(${e.voucher_id||e.id})">
+        <td class="mono tx3 fs11">${fmtDate(e.date)}</td>
+        <td class="mono c-i">${e.voucher_no||''}</td>
+        <td>${empName}</td>
+        <td>${tb}</td>
+        <td class="tx2 fs11">${e.description||e.narration||''}</td>
+        <td class="tr mono c-g">${e.dr_cr==='dr'?R(e.amount):''}</td>
+        <td class="tr mono c-r">${e.dr_cr==='cr'?R(e.amount):''}</td>
+        <td class="tr mono c-a fw6">${R(Math.abs(bal))} ${bal>=0?'Dr':'Cr'}</td>
+        <td><button class="btn btn-sm btn-icon" onclick="openVE(${e.voucher_id||e.id})"><i class="fa fa-eye"></i></button></td>
+      </tr>`;
+    }).join('');
+  } else {
+    const from = document.getElementById('g-from').value;
+    const to   = document.getElementById('g-to').value;
+    const data = await GET(`/api/cms/vouchers?from=${from}&to=${to}&per_page=50`);
+    if (!data?.vouchers?.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><i class="fa fa-inbox"></i><p>No transactions</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.vouchers.map(v => {
+      const tb = `<span class="bg bg-${(v.voucher_type||'').toLowerCase()}">${v.voucher_type}</span>`;
+      return `<tr ondblclick="openVE(${v.id})">
+        <td class="mono tx3 fs11">${fmtDate(v.date)}</td>
+        <td class="mono c-i">${v.voucher_no}</td>
+        <td class="tx2">—</td>
+        <td>${tb}</td>
+        <td class="tx2">${v.narration||''}</td>
+        <td class="tr mono c-g"></td><td class="tr mono c-r">${R(v.total_amount)}</td>
+        <td class="tr mono c-a">—</td>
+        <td><button class="btn btn-sm btn-icon" onclick="openVE(${v.id})"><i class="fa fa-eye"></i></button></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function openLedgerRptFor(lid) {
+  populateLedgerSel('lr-led');
+  document.getElementById('lr-led').value = lid;
+  const from = document.getElementById('g-from').value;
+  const to   = document.getElementById('g-to').value;
+  document.getElementById('lr-from').value = from;
+  document.getElementById('lr-to').value   = to;
+  show('rpt-ledger');
+  loadLedgerRpt();
+}
+
+// ═══════════════════════════════════════════
+// VOUCHER MODAL
+// ═══════════════════════════════════════════
+function openVM(vtype, mode='') {
+  const titles = {PV:'Payment Voucher', RV:'Receipt Voucher', JV:'Journal Voucher', EV:'Expense Voucher (Bill Settlement)'};
+  const bClass = {PV:'bg-pv', RV:'bg-rv', JV:'bg-jv', EV:'bg-adv'};
+  document.getElementById('vm-id').value    = '';
+  document.getElementById('vm-vtype').value = vtype;
+  document.getElementById('vm-modal-title').textContent = titles[vtype] || vtype;
+  const badge = document.getElementById('vm-type-badge');
+  badge.className = `bg ${bClass[vtype]||''}`;
+  badge.textContent = vtype;
+  document.getElementById('vm-date').value  = todayStr();
+  document.getElementById('vm-narration').value =
+    mode==='advance' ? 'Advance Given to Employee' :
+    mode==='bill'    ? 'Bills Submitted Against Advance' :
+    mode==='repay'   ? 'Advance Cash Repayment' : '';
+  document.getElementById('vm-notes').value = '';
+  document.getElementById('vm-voucher-no').textContent = '[Auto]';
+  document.getElementById('vm-del-btn').style.display  = 'none';
+  document.getElementById('vm-lines').innerHTML = '';
+  document.getElementById('vm-total').textContent = '0.00';
+
+  // Advance-link section: show ONLY for EV (bill settlement against advance)
+  document.getElementById('vm-adv-wrap').style.display = vtype === 'EV' ? 'block' : 'none';
+  document.getElementById('vm-adv-emp').value = '';
+  document.getElementById('vm-adv-bal').style.display = 'none';
+  document.getElementById('vm-settle-amt').value = '';
+  buildAdvEmpSels();
+
+  if (vtype === 'PV') {
+    if (mode === 'advance') {
+      // Give advance: Employee Dr (he owes us), Cash Cr (cash goes out)
+      addLine({dr_cr:'dr', hint:'employee'});
+      addLine({dr_cr:'cr', hint:'cash'});
+    } else {
+      // Normal payment: Expense Dr, Cash Cr
+      addLine({dr_cr:'dr', hint:'expense'});
+      addLine({dr_cr:'cr', hint:'cash'});
+    }
+  } else if (vtype === 'RV') {
+    // Cash in: Cash Dr
+    addLine({dr_cr:'dr', hint:'cash'});
+    // Credit: income ledger (or employee if repayment)
+    addLine({dr_cr:'cr', hint: mode==='repay' ? 'employee' : 'income'});
+  } else if (vtype === 'EV') {
+    // Bill settlement: Expense Dr (actual expense), Employee Cr (reduces advance)
+    addLine({dr_cr:'dr', hint:'expense'});
+    addLine({dr_cr:'cr', hint:'employee'});
+  } else {
+    addLine({dr_cr:'dr'});
+    addLine({dr_cr:'cr'});
+  }
+  openM('vm-ov');
+}
+
+async function openVE(vid) {
+  const v = await GET(`/api/cms/vouchers/${vid}`);
+  if (!v) return;
+  const vtype = v.voucher_type;
+  const titles = {PV:'Payment Voucher', RV:'Receipt Voucher', JV:'Journal Voucher', EV:'Expense Voucher (Bill Settlement)'};
+  const bClass = {PV:'bg-pv', RV:'bg-rv', JV:'bg-jv', EV:'bg-adv'};
+
+  document.getElementById('vm-id').value       = v.id;
+  document.getElementById('vm-vtype').value    = vtype;
+  document.getElementById('vm-modal-title').textContent = titles[vtype];
+  const badge = document.getElementById('vm-type-badge');
+  badge.className = `bg ${bClass[vtype]||''}`;
+  badge.textContent = vtype;
+  document.getElementById('vm-date').value     = v.date;
+  document.getElementById('vm-narration').value = v.narration||'';
+  document.getElementById('vm-notes').value    = v.notes||'';
+  document.getElementById('vm-voucher-no').textContent = v.voucher_no||'';
+  document.getElementById('vm-del-btn').style.display = 'inline-flex';
+  document.getElementById('vm-lines').innerHTML = '';
+
+  document.getElementById('vm-adv-wrap').style.display = vtype === 'EV' ? 'block' : 'none';
+  buildAdvEmpSels();
+  document.getElementById('vm-adv-emp').value = v.advance_emp_id||'';
+  document.getElementById('vm-settle-amt').value = v.settle_amount||'';
+  if (v.advance_emp_id) loadAdvBal(v.advance_emp_id);
+
+  (v.lines||[]).forEach(l => addLine(l));
+  updateTotal();
+  _showVoucherActions();
+  openM('vm-ov');
+}
+
+function addLine(data={}) {
+  const row = document.createElement('div');
+  row.className = 'vl-row';
+  let opts = '<option value="">— Ledger —</option>';
+  ledgers.forEach(l => {
+    opts += `<option value="${l.id}" ${l.id==data.ledger_id?'selected':''}>${l.name}</option>`;
+  });
+  row.innerHTML = `
+    <select class="vl-led" onchange="onVLedChange(this)">${opts}</select>
+    <input type="text" class="vl-desc" placeholder="Description" value="${data.description||''}">
+    <select class="vl-dc">
+      <option value="dr" ${data.dr_cr==='dr'?'selected':''}>Dr</option>
+      <option value="cr" ${data.dr_cr==='cr'?'selected':''}>Cr</option>
+    </select>
+    <input type="number" class="vl-amt" placeholder="0.00" step="0.01" min="0" value="${data.amount||''}" style="text-align:right" oninput="updateTotal()">
+    <select class="vl-against"><option value="">—</option></select>
+    <button class="vl-del" onclick="this.closest('.vl-row').remove();updateTotal()"><i class="fa fa-xmark"></i></button>
+  `;
+  document.getElementById('vm-lines').appendChild(row);
+  if (data.ledger_id && data.against_voucher_id) {
+    loadAgainstOpts(row.querySelector('.vl-led'), row.querySelector('.vl-against'), data.against_voucher_id);
+  }
+}
+
+async function onVLedChange(sel) {
+  const row = sel.closest('.vl-row');
+  const againstSel = row.querySelector('.vl-against');
+  const led = ledgers.find(l => l.id == sel.value);
+  if (led?.ledger_type === 'employee') {
+    await loadAgainstOpts(sel, againstSel);
+  } else {
+    againstSel.innerHTML = '<option value="">—</option>';
+  }
+  updateTotal();
+}
+
+async function loadAgainstOpts(ledSel, againstSel, selectedId=null) {
+  if (!ledSel.value) return;
+  const data = await GET(`/api/cms/ledgers/${ledSel.value}/advances`);
+  againstSel.innerHTML = '<option value="">— No advance link —</option>';
+  (data?.advances||[]).forEach(a => {
+    againstSel.innerHTML += `<option value="${a.voucher_id}" ${a.voucher_id==selectedId?'selected':''}>${a.voucher_no} (${R(a.pending)} pending)</option>`;
+  });
+}
+
+function updateTotal() {
+  let t = 0;
+  document.querySelectorAll('#vm-lines .vl-amt').forEach(i => { if (+i.value > 0) t += +i.value; });
+  document.getElementById('vm-total').textContent = N(t);
+}
+
+async function onAdvEmpChange() {
+  const lid = document.getElementById('vm-adv-emp').value;
+  const el  = document.getElementById('vm-adv-bal');
+  if (!lid) { el.style.display = 'none'; return; }
+  loadAdvBal(lid);
+}
+
+async function loadAdvBal(lid) {
+  const el = document.getElementById('vm-adv-bal');
+  const lr = await GET(`/api/cms/ledgers/${lid}/report`);
+  if (lr?.closing_balance !== undefined) {
+    const bal = parseFloat(lr.closing_balance);
+    el.innerHTML = `<div class="adv-bal-pill"><i class="fa fa-wallet" style="font-size:11px"></i> Outstanding: ${R(bal)} Dr</div>`;
+    el.style.display = 'block';
+  }
+}
+
+async function saveVoucher(status='posted') {
+  const id    = document.getElementById('vm-id').value;
+  const vtype = document.getElementById('vm-vtype').value;
+  const date  = document.getElementById('vm-date').value;
+  if (!date) { toast('Date required', 'warn'); return; }
+
+  const lines = [];
+  document.querySelectorAll('#vm-lines .vl-row').forEach(row => {
+    const lid = row.querySelector('.vl-led').value;
+    const amt = parseFloat(row.querySelector('.vl-amt').value||0);
+    if (!lid || amt <= 0) return;
+    lines.push({
+      ledger_id:          parseInt(lid),
+      dr_cr:              row.querySelector('.vl-dc').value,
+      amount:             amt,
+      description:        row.querySelector('.vl-desc').value,
+      against_voucher_id: row.querySelector('.vl-against').value || null,
+    });
+  });
+  if (!lines.length) { toast('Add at least one voucher line', 'warn'); return; }
+
+  const payload = {
+    id:             id ? parseInt(id) : null,
+    voucher_type:   vtype,
+    date, status,
+    narration:      document.getElementById('vm-narration').value,
+    notes:          document.getElementById('vm-notes').value,
+    lines,
+    advance_emp_id: document.getElementById('vm-adv-emp')?.value || null,
+    settle_amount:  parseFloat(document.getElementById('vm-settle-amt')?.value||0),
+    created_by:     '',
+  };
+
+  const r = await POST('/api/cms/vouchers/save', payload);
+  if (r?.status === 'ok') {
+    toast(`${vtype} ${status==='posted'?'posted':'saved'}! ${r.voucher_no||''}`);
+    _showVoucherActions();
+    if (status === 'posted') { closeM('vm-ov'); } else { document.getElementById('vm-id').value = r.id; document.getElementById('vm-voucher-no').textContent = r.voucher_no||''; _showVoucherActions(); return; }
+    const cur = document.querySelector('.view.on')?.id?.replace('view-','');
+    if (cur) show(cur);
+  } else toast(r?.message || 'Save failed', 'error');
+}
+
+async function delVoucher() {
+  const id = document.getElementById('vm-id').value;
+  if (!id || !confirm('Delete this voucher?')) return;
+  const r = await POST('/api/cms/vouchers/delete', {id: parseInt(id)});
+  if (r?.status === 'ok') { toast('Deleted'); closeM('vm-ov'); const cur = document.querySelector('.view.on')?.id?.replace('view-',''); if(cur) show(cur); }
+  else toast(r?.message||'Error','error');
+}
+
+function printV(vid) { openPrintVoucher(vid); }
+
+// ═══════════════════════════════════════════
+// LEDGER MODAL
+// ═══════════════════════════════════════════
+function openLM(lid=null) {
+  document.getElementById('lm-id').value      = '';
+  document.getElementById('lm-name').value    = '';
+  document.getElementById('lm-ob').value      = '0';
+  document.getElementById('lm-ob-dr').value   = 'dr';
+  document.getElementById('lm-phone').value   = '';
+  document.getElementById('lm-notes').value   = '';
+  document.getElementById('lm-del-btn').style.display = 'none';
+  document.getElementById('lm-title').textContent = 'New Ledger Account';
+  if(document.getElementById('lm-ob-hint')) document.getElementById('lm-ob-hint').style.display='none';
+  buildGroupSel('lm-group');
+  if (lid) {
+    const l = ledgers.find(x => x.id == lid);
+    if (l) {
+      document.getElementById('lm-id').value      = l.id;
+      document.getElementById('lm-name').value    = l.name;
+      document.getElementById('lm-group').value   = l.ledger_group_id;
+      document.getElementById('lm-type').value    = l.ledger_type||'other';
+      document.getElementById('lm-ob').value      = l.opening_balance||0;
+      document.getElementById('lm-ob-dr').value   = l.ob_type||'dr';
+      document.getElementById('lm-phone').value   = l.phone||'';
+      document.getElementById('lm-notes').value   = l.notes||'';
+      document.getElementById('lm-del-btn').style.display = 'inline-flex';
+      document.getElementById('lm-title').textContent = `Edit — ${l.name}`;
+    }
+  }
+  openM('lm-ov');
+}
+
+async function saveLedger() {
+  const p = {
+    id:              document.getElementById('lm-id').value||null,
+    name:            document.getElementById('lm-name').value.trim(),
+    ledger_group_id: document.getElementById('lm-group').value,
+    ledger_type:     document.getElementById('lm-type').value,
+    opening_balance: document.getElementById('lm-ob').value||0,
+    ob_type:         document.getElementById('lm-ob-dr').value,
+    phone:           document.getElementById('lm-phone').value,
+    notes:           document.getElementById('lm-notes').value,
+  };
+  if (!p.name) { toast('Name required','warn'); return; }
+  if (!p.ledger_group_id) { toast('Select a group','warn'); return; }
+  const r = await POST('/api/cms/ledgers/save', p);
+  if (r?.status === 'ok') { toast('Ledger saved!'); closeM('lm-ov'); loadCache(); }
+  else toast(r?.message||'Error','error');
+}
+
+async function delLedger() {
+  const id = document.getElementById('lm-id').value;
+  if (!id || !confirm('Delete ledger?')) return;
+  const r = await POST('/api/cms/ledgers/delete', {id: parseInt(id)});
+  if (r?.status === 'ok') { toast('Ledger deleted'); closeM('lm-ov'); loadCache(); }
+  else toast(r?.message||'Error','error');
+}
+
+// ═══════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════
+function syncLRDates() {
+  const from = document.getElementById('g-from').value;
+  const to   = document.getElementById('g-to').value;
+  document.getElementById('lr-from').value = from;
+  document.getElementById('lr-to').value   = to;
+}
+
+async function loadLedgerRpt() {
+  const lid  = document.getElementById('lr-led').value;
+  const from = document.getElementById('lr-from').value;
+  const to   = document.getElementById('lr-to').value;
+  if (!lid) return;
+  const data = await GET(`/api/cms/ledgers/${lid}/report?from=${from}&to=${to}`);
+  if (!data?.ledger) return;
+
+  document.getElementById('lr-stats').style.display = 'grid';
+  document.getElementById('lr-card').style.display  = 'block';
+  document.getElementById('lr-ob').textContent = R(data.opening_balance);
+  document.getElementById('lr-dr').textContent = R(data.total_dr);
+  document.getElementById('lr-cr').textContent = R(data.total_cr);
+  document.getElementById('lr-cl').textContent = R(Math.abs(data.closing_balance)) + (data.closing_balance>=0?' Dr':' Cr');
+
+  const tbody = document.getElementById('lr-tbody');
+  tbody.innerHTML = `<tr style="background:var(--s2)">
+    <td colspan="5" class="fw6 tx2">Opening Balance</td>
+    <td class="tr mono">${data.opening_balance>=0?R(data.opening_balance):''}</td>
+    <td class="tr mono">${data.opening_balance<0?R(Math.abs(data.opening_balance)):''}</td>
+    <td class="tr mono c-a fw6">${R(Math.abs(data.opening_balance))} ${data.opening_balance>=0?'Dr':'Cr'}</td>
+  </tr>`;
+  if (!data.entries?.length) { tbody.innerHTML += `<tr><td colspan="8"><div class="empty"><i class="fa fa-inbox"></i><p>No entries</p></div></td></tr>`; return; }
+  data.entries.forEach(e => {
+    const bal = e.running_balance;
+    const tb = `<span class="bg bg-${(e.voucher_type||'').toLowerCase()}">${e.voucher_type||''}</span>`;
+    tbody.innerHTML += `<tr ondblclick="openVE(${e.voucher_id||e.id})">
+      <td class="mono tx3 fs11">${fmtDate(e.date)}</td>
+      <td class="mono c-i">${e.voucher_no||''}</td>
+      <td>${tb}</td>
+      <td class="tx2">${e.against_ledger||''}</td>
+      <td class="tx2 fs11">${e.description||e.narration||''}</td>
+      <td class="tr mono c-g">${e.dr_cr==='dr'?R(e.amount):''}</td>
+      <td class="tr mono c-r">${e.dr_cr==='cr'?R(e.amount):''}</td>
+      <td class="tr mono c-a fw6">${R(Math.abs(bal))} ${bal>=0?'Dr':'Cr'}</td>
+    </tr>`;
+  });
+  tbody.innerHTML += `<tr style="background:var(--s2);font-weight:600">
+    <td colspan="5">Closing Balance</td>
+    <td class="tr mono c-g">${R(data.total_dr)}</td>
+    <td class="tr mono c-r">${R(data.total_cr)}</td>
+    <td class="tr mono c-a">${R(Math.abs(data.closing_balance))} ${data.closing_balance>=0?'Dr':'Cr'}</td>
+  </tr>`;
+}
+
+async function loadDailyRpt() {
+  const dt   = document.getElementById('dr-date').value;
+  const data = await GET(`/api/cms/v3/report/daily?date=${dt}`);
+  if (!data) return;
+  document.getElementById('dr-stats').style.display = 'grid';
+  document.getElementById('dr-card').style.display  = 'block';
+  document.getElementById('dr-rec').textContent  = R(data.summary?.receipts||0);
+  document.getElementById('dr-pay').textContent  = R(data.summary?.payments||0);
+  document.getElementById('dr-net').textContent  = R(data.summary?.net||0);
+  document.getElementById('dr-cih').textContent  = R(data.summary?.cash_in_hand||0);
+  const tbody = document.getElementById('dr-tbody');
+  tbody.innerHTML = '';
+  if (!data.entries?.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><i class="fa fa-inbox"></i><p>No transactions today</p></div></td></tr>`; return; }
+  data.entries.forEach(e => {
+    const tb = `<span class="bg bg-${(e.voucher_type||'').toLowerCase()}">${e.voucher_type||''}</span>`;
+    tbody.innerHTML += `<tr>
+      <td class="mono c-i">${e.voucher_no||''}</td><td>${tb}</td>
+      <td>${e.ledger_name||''}</td>
+      <td class="tx2">${e.narration||e.description||''}</td>
+      <td class="tr mono c-g">${e.dr_cr==='dr'?R(e.amount):''}</td>
+      <td class="tr mono c-r">${e.dr_cr==='cr'?R(e.amount):''}</td>
+    </tr>`;
+  });
+}
+
+async function loadCatRpt() {
+  const from = document.getElementById('cr-from').value;
+  const to   = document.getElementById('cr-to').value;
+  const nat  = document.getElementById('cr-nat').value;
+  const data = await GET(`/api/cms/v3/report/category?from=${from}&to=${to}&nature=${nat}`);
+  if (!data) return;
+  document.getElementById('cr-wrap').style.display = 'block';
+  const rows  = data.categories || data || [];
+  const total = rows.reduce((s,r) => s + parseFloat(r.amount||r.total||0), 0);
+  const tbody = document.getElementById('cr-tbody');
+  tbody.innerHTML = rows.map(r => {
+    const amt = parseFloat(r.amount||r.total||0);
+    const pct = total > 0 ? (amt/total*100).toFixed(1) : '0.0';
+    const barW = total > 0 ? (amt/total*100).toFixed(1) : 0;
+    const col  = nat === 'income' ? 'var(--green)' : 'var(--red)';
+    return `<tr>
+      <td>
+        <div class="fw6">${r.category||r.ledger_name||r.name||'—'}</div>
+        <div class="bar-track" style="width:160px;margin-top:4px"><div class="bar-fill" style="width:${barW}%;background:${col}"></div></div>
+      </td>
+      <td class="tr mono tx2">${r.count||r.txn_count||'—'}</td>
+      <td class="tr mono fw6 ${nat==='income'?'c-g':'c-r'}">${R(amt)}</td>
+      <td class="tr mono tx3">${pct}%</td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML += `<tr style="background:var(--s2);font-weight:700">
+    <td>Total</td><td></td>
+    <td class="tr mono ${nat==='income'?'c-g':'c-r'}">${R(total)}</td>
+    <td class="tr mono tx3">100%</td>
+  </tr>`;
+}
+
+// ═══════════════════════════════════════════
+// GROUPS
+// ═══════════════════════════════════════════
+const natureColor = {asset:'c-b',liability:'c-r',income:'c-g',expense:'c-a'};
+const natureBg    = {asset:'bg-post',liability:'bg-out',income:'bg-rv',expense:'bg-pv'};
+
+function openGM() {
+  renderGroupList();
+  document.getElementById('gm-name').value = '';
+  document.getElementById('gm-nature').value = 'expense';
+  openM('gm-ov');
+}
+
+function renderGroupList() {
+  const el = document.getElementById('gm-list');
+  if (!groups.length) { el.innerHTML = `<div class="tx3 fs11" style="padding:6px">No groups yet</div>`; return; }
+  el.innerHTML = groups.map(g => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r);background:var(--s2);border:1px solid var(--b1)">
+      <span class="fw6" style="flex:1;font-size:13px">${g.name}</span>
+      <span class="bg ${natureBg[g.nature]||'bg-dft'}" style="font-size:9.5px">${g.nature}</span>
+      ${!g.is_system ? `<button class="btn btn-sm btn-icon btn-r" style="padding:3px 6px" onclick="delGroup(${g.id})" title="Delete"><i class="fa fa-trash" style="font-size:10px"></i></button>` : '<span class="tx3 fs11" style="padding:0 4px">system</span>'}
+    </div>
+  `).join('');
+}
+
+async function saveGroup() {
+  const name   = document.getElementById('gm-name').value.trim();
+  const nature = document.getElementById('gm-nature').value;
+  if (!name) { toast('Name required', 'warn'); return; }
+  const r = await POST('/api/cms/ledger_groups/save', {name, nature});
+  if (r?.status === 'ok') {
+    toast('Group added!');
+    document.getElementById('gm-name').value = '';
+    await loadCache();
+    renderGroupList();
+    buildGroupSel('lm-group');
+  } else toast(r?.message || 'Error', 'error');
+}
+
+async function delGroup(id) {
+  if (!confirm('Delete this group? Only works if no ledgers are assigned to it.')) return;
+  const r = await POST('/api/cms/ledger_groups/delete', {id});
+  if (r?.status === 'ok') {
+    toast('Group deleted');
+    await loadCache();
+    renderGroupList();
+    buildGroupSel('lm-group');
+  } else toast(r?.message || 'Cannot delete — ledgers are using this group', 'error');
+}
+
+
+// ═══════════════════════════════════════════
+// THEMES
+// ═══════════════════════════════════════════
+const THEMES = ['dark','light','ocean','forest','rose','parchment','slate'];
+const THEME_NAMES = {dark:'Midnight',light:'Clean Light',ocean:'Ocean',forest:'Forest',rose:'Rose',parchment:'Parchment',slate:'Slate'};
+
+function setTheme(t) {
+  document.body.setAttribute('data-t', t);
+  localStorage.setItem('cms_theme', t);
+  THEMES.forEach(th => {
+    const sw = document.getElementById(`sw-${th}`);
+    if (sw) sw.classList.toggle('active', th === t);
+  });
+  closeM('theme-ov');
+  toast(`Theme: ${THEME_NAMES[t]}`, 'ok');
+}
+
+function openThemePicker() {
+  const cur = document.body.getAttribute('data-t') || 'dark';
+  THEMES.forEach(th => {
+    const sw = document.getElementById(`sw-${th}`);
+    if (sw) sw.classList.toggle('active', th === cur);
+  });
+  openM('theme-ov');
+}
+
+function toggleTheme() {
+  // Keep old keyboard shortcut toggling dark/light
+  const cur = document.body.getAttribute('data-t');
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+// Load saved theme on start
+(function() {
+  const saved = localStorage.getItem('cms_theme');
+  if (saved && THEMES.includes(saved)) document.body.setAttribute('data-t', saved);
+})();
+
+
+// ═══════════════════════════════════════════
+// PRINT VOUCHER
+// ═══════════════════════════════════════════
+let _currentVoucher = null;
+
+function printVoucherModal() {
+  const id = document.getElementById('vm-id').value;
+  if (!id) { toast('Save the voucher first', 'warn'); return; }
+  openPrintVoucher(parseInt(id));
+}
+
+async function openPrintVoucher(vid) {
+  const v = await GET(`/api/cms/vouchers/${vid}`);
+  if (!v) return;
+  _currentVoucher = v;
+  document.getElementById('pv-content').innerHTML = buildVoucherHTML(v);
+  openM('pv-ov');
+}
+
+function buildVoucherHTML(v) {
+  const typeLabel = {PV:'Payment Voucher',RV:'Receipt Voucher',JV:'Journal Voucher',EV:'Expense Voucher'}[v.voucher_type] || v.voucher_type;
+  const drLines = (v.lines||[]).filter(l => l.dr_cr==='dr');
+  const crLines = (v.lines||[]).filter(l => l.dr_cr==='cr');
+  const total   = parseFloat(v.total_amount||0);
+
+  let rows = '';
+  (v.lines||[]).forEach(l => {
+    rows += `<tr>
+      <td>${l.ledger_name||''}</td>
+      <td>${l.description||'—'}</td>
+      <td style="text-align:center;font-weight:600">${l.dr_cr==='dr'?'Dr':'Cr'}</td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace">${l.dr_cr==='dr'?'₹'+parseFloat(l.amount).toLocaleString('en-IN',{minimumFractionDigits:2}):''}</td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace">${l.dr_cr==='cr'?'₹'+parseFloat(l.amount).toLocaleString('en-IN',{minimumFractionDigits:2}):''}</td>
+    </tr>`;
+  });
+
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:14px">
+    <div>
+      <div style="font-size:18px;font-weight:700;color:#111">HCP Wellness Pvt Ltd</div>
+      <div style="font-size:11px;color:#666;margin-top:3px">Cash Management System</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#1a1a1a">${v.voucher_no}</div>
+      <div style="font-size:12px;color:#555;margin-top:2px">${typeLabel}</div>
+      <div style="font-size:12px;color:#555">Date: ${v.date}</div>
+    </div>
+  </div>
+  <div style="margin-bottom:12px">
+    <strong>Narration:</strong> ${v.narration||'—'}
+  </div>
+  <table>
+    <thead><tr>
+      <th>Ledger / Account</th><th>Description</th><th style="text-align:center">Dr/Cr</th>
+      <th style="text-align:right">Debit (Dr)</th><th style="text-align:right">Credit (Cr)</th>
+    </tr></thead>
+    <tbody>
+      ${rows}
+      <tr style="background:#f5f5f5;font-weight:700">
+        <td colspan="3">Total</td>
+        <td style="text-align:right;font-family:'JetBrains Mono',monospace">₹${drLines.reduce((s,l)=>s+parseFloat(l.amount),0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+        <td style="text-align:right;font-family:'JetBrains Mono',monospace">₹${crLines.reduce((s,l)=>s+parseFloat(l.amount),0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      </tr>
+    </tbody>
+  </table>
+  ${v.notes ? `<div style="margin-top:12px;font-size:12px;color:#555"><strong>Notes:</strong> ${v.notes}</div>` : ''}
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:36px">
+    <div style="border-top:1px solid #555;padding-top:6px;text-align:center;font-size:11px;color:#555">Prepared By</div>
+    <div style="border-top:1px solid #555;padding-top:6px;text-align:center;font-size:11px;color:#555">Checked By</div>
+    <div style="border-top:1px solid #555;padding-top:6px;text-align:center;font-size:11px;color:#555">Authorised By</div>
+  </div>`;
+}
+
+function doPrint() {
+  const content = document.getElementById('pv-content').innerHTML;
+  const pa = document.getElementById('print-area');
+  pa.innerHTML = `<div style="font-family:'Inter',sans-serif;padding:20px;color:#111;background:#fff">${content}</div>`;
+  pa.style.display = 'block';
+  closeM('pv-ov');
+  setTimeout(() => { window.print(); pa.style.display='none'; pa.innerHTML=''; }, 300);
+}
+
+// Show print/WA buttons after voucher is saved
+function _showVoucherActions() {
+  const vid = document.getElementById('vm-id').value;
+  if (vid) {
+    document.getElementById('vm-print-btn').style.display = 'inline-flex';
+    document.getElementById('vm-wa-btn').style.display    = 'inline-flex';
+  }
+}
+
+
+// ═══════════════════════════════════════════
+// WHATSAPP
+// ═══════════════════════════════════════════
+let _waMsg = '';
+
+function openWA(msg) {
+  _waMsg = msg;
+  document.getElementById('wa-msg').value = msg;
+  // populate saved contacts from employee ledgers
+  const sel = document.getElementById('wa-saved-contacts');
+  sel.innerHTML = '<option value="">Saved contacts...</option>';
+  ledgers.filter(l => l.phone).forEach(l => {
+    sel.innerHTML += `<option value="${l.phone}">${l.name} (${l.phone})</option>`;
+  });
+  openM('wa-ov');
+}
+
+function sendWA() {
+  const phone = document.getElementById('wa-phone').value.replace(/\s+/g,'');
+  const msg   = encodeURIComponent(document.getElementById('wa-msg').value);
+  const url   = phone
+    ? `https://wa.me/${phone.replace('+','')}?text=${msg}`
+    : `https://web.whatsapp.com/send?text=${msg}`;
+  window.open(url, '_blank');
+}
+
+function copyWAMsg() {
+  navigator.clipboard.writeText(document.getElementById('wa-msg').value)
+    .then(() => toast('Copied to clipboard!'))
+    .catch(() => toast('Copy failed','error'));
+}
+
+// Voucher → WhatsApp
+function waVoucher() {
+  const id = document.getElementById('vm-id').value;
+  if (!id) { toast('Save voucher first','warn'); return; }
+  buildVoucherWAMsg(parseInt(id));
+}
+
+async function buildVoucherWAMsg(vid) {
+  const v = vid === 'current' ? _currentVoucher : await GET(`/api/cms/vouchers/${vid}`);
+  if (!v) return;
+  const typeLabel = {PV:'Payment Voucher',RV:'Receipt Voucher',JV:'Journal Voucher',EV:'Expense Voucher'}[v.voucher_type]||v.voucher_type;
+  let lines = '';
+  (v.lines||[]).forEach(l => {
+    lines += `\n  ${l.dr_cr==='dr'?'Dr':'Cr'}: ${l.ledger_name} — ₹${parseFloat(l.amount).toLocaleString('en-IN',{minimumFractionDigits:2})}`;
+  });
+  const msg = `*HCP Wellness — ${typeLabel}*\n` +
+    `Voucher No: *${v.voucher_no}*\n` +
+    `Date: ${v.date}\n` +
+    `Amount: *₹${parseFloat(v.total_amount).toLocaleString('en-IN',{minimumFractionDigits:2})}*\n` +
+    `Narration: ${v.narration||'—'}\n` +
+    `\n*Entries:*${lines}\n` +
+    (v.notes ? `\nNotes: ${v.notes}` : '');
+  openWA(msg);
+}
+
+function waPrintVoucher() {
+  if (_currentVoucher) buildVoucherWAMsg('current');
+}
+
+// Report → WhatsApp
+function waReport(type) {
+  let msg = '';
+  const from = document.getElementById('g-from')?.value || '';
+  const to   = document.getElementById('g-to')?.value   || '';
+
+  if (type === 'ledger') {
+    const name  = document.getElementById('lr-led')?.options[document.getElementById('lr-led').selectedIndex]?.text || 'Ledger';
+    const ob    = document.getElementById('lr-ob')?.textContent  || '—';
+    const dr    = document.getElementById('lr-dr')?.textContent  || '—';
+    const cr    = document.getElementById('lr-cr')?.textContent  || '—';
+    const cl    = document.getElementById('lr-cl')?.textContent  || '—';
+    msg = `*HCP Wellness — Ledger Report*\n${name}\nPeriod: ${from} to ${to}\n\nOpening Balance: ${ob}\nTotal Dr: ${dr}\nTotal Cr: ${cr}\nClosing Balance: *${cl}*`;
+    // Add top entries
+    const rows = document.querySelectorAll('#lr-tbody tr');
+    let entries = '';
+    let count = 0;
+    rows.forEach(r => {
+      if (count >= 5) return;
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 7 && cells[0].textContent.trim()) {
+        entries += `\n  ${cells[0].textContent} | ${cells[1].textContent} | Dr:${cells[5].textContent} Cr:${cells[6].textContent}`;
+        count++;
+      }
+    });
+    if (entries) msg += `\n\n*Recent Entries:*${entries}${rows.length > 5 ? '\n  ...(more)' : ''}`;
+
+  } else if (type === 'daily') {
+    const dt   = document.getElementById('dr-date')?.value || '';
+    const rec  = document.getElementById('dr-rec')?.textContent  || '—';
+    const pay  = document.getElementById('dr-pay')?.textContent  || '—';
+    const net  = document.getElementById('dr-net')?.textContent  || '—';
+    const cih  = document.getElementById('dr-cih')?.textContent  || '—';
+    msg = `*HCP Wellness — Daily Report*\nDate: ${dt}\n\nReceipts: ${rec}\nPayments: ${pay}\nNet Cash Flow: *${net}*\nCash in Hand: *${cih}*`;
+    const rows = document.querySelectorAll('#dr-tbody tr');
+    let entries = '';
+    rows.forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 5) entries += `\n  ${cells[0].textContent} | ${cells[2].textContent} | ${cells[4].textContent||cells[5].textContent}`;
+    });
+    if (entries) msg += `\n\n*Transactions:*${entries}`;
+
+  } else if (type === 'category') {
+    const nat = document.getElementById('cr-nat')?.value === 'income' ? 'Income' : 'Expense';
+    msg = `*HCP Wellness — ${nat} Category Report*\nPeriod: ${from} to ${to}\n`;
+    const rows = document.querySelectorAll('#cr-tbody tr');
+    rows.forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 3) msg += `\n  ${cells[0].querySelector('.fw6')?.textContent||cells[0].textContent} — ${cells[2].textContent} (${cells[3]?.textContent||''})`;
+    });
+
+  } else if (type === 'dashboard') {
+    const cash = document.getElementById('db-cash')?.textContent || '—';
+    const inc  = document.getElementById('db-inc')?.textContent  || '—';
+    const exp  = document.getElementById('db-exp')?.textContent  || '—';
+    const advo = document.getElementById('db-adv-out')?.textContent || '—';
+    msg = `*HCP Wellness — Cash Dashboard*\nPeriod: ${from} to ${to}\n\n💰 Cash in Hand: *${cash}*\n📈 Income: ${inc}\n📉 Expenses: ${exp}\n⏳ Advances Outstanding: ${advo}`;
+  }
+
+  if (msg) openWA(msg);
+  else toast('Load the report first','warn');
+}
+
+// WA from report buttons in view headers
+function openWAReportPicker() {
+  const cur = document.querySelector('.view.on')?.id?.replace('view-','') || 'dashboard';
+  waReport(cur === 'rpt-ledger' ? 'ledger' : cur === 'rpt-daily' ? 'daily' : cur === 'rpt-cat' ? 'category' : 'dashboard');
+}
+
+
+// ═══════════════════════════════════════════
+// EXCEL EXPORT
+// ═══════════════════════════════════════════
+function exportRptExcel(type) {
+  let headers = [], rows = [], filename = 'report';
+
+  if (type === 'ledger') {
+    const sel  = document.getElementById('lr-led');
+    const name = sel?.options[sel.selectedIndex]?.text || 'Ledger';
+    filename   = `Ledger_${name.split('[')[0].trim()}_${document.getElementById('lr-from')?.value||''}_${document.getElementById('lr-to')?.value||''}`;
+    headers    = ['Date','Voucher #','Type','Description','Dr','Cr','Balance'];
+    document.querySelectorAll('#lr-tbody tr').forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 7) rows.push([...cells].map(c => c.textContent.trim()));
+    });
+
+  } else if (type === 'daily') {
+    filename = `Daily_Report_${document.getElementById('dr-date')?.value||''}`;
+    headers  = ['Voucher #','Type','Ledger','Narration','Dr','Cr'];
+    document.querySelectorAll('#dr-tbody tr').forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 5) rows.push([...cells].map(c => c.textContent.trim()));
+    });
+
+  } else if (type === 'category') {
+    const nat = document.getElementById('cr-nat')?.value || 'expense';
+    filename  = `Category_${nat}_${document.getElementById('cr-from')?.value||''}_${document.getElementById('cr-to')?.value||''}`;
+    headers   = ['Category','Transactions','Amount','Share'];
+    document.querySelectorAll('#cr-tbody tr').forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 4) rows.push([cells[0].querySelector('.fw6')?.textContent||cells[0].textContent, cells[1].textContent, cells[2].textContent, cells[3].textContent].map(s=>s.trim()));
+    });
+
+  } else if (type === 'advances') {
+    filename = `Advances_${new Date().toISOString().slice(0,10)}`;
+    headers  = ['Employee','Advance Given','Settled (Bills)','Cash Repaid','Outstanding'];
+    document.querySelectorAll('#adv-sum-tbody tr').forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 5) rows.push([...cells].slice(0,5).map(c=>c.textContent.trim()));
+    });
+
+  } else if (type === 'vouchers') {
+    filename = `Vouchers_${document.getElementById('g-from')?.value||''}_${document.getElementById('g-to')?.value||''}`;
+    headers  = ['Date','Voucher #','Type','Narration','Amount','Status'];
+    document.querySelectorAll('#vl-tbody tr').forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 6) rows.push([...cells].slice(0,6).map(c=>c.textContent.trim()));
+    });
+  }
+
+  if (!rows.length) { toast('Load the report first then export','warn'); return; }
+  downloadCSV(headers, rows, filename);
+  toast(`${filename}.csv downloaded!`);
+}
+
+function downloadCSV(headers, rows, filename) {
+  const esc = v => `"${(v||'').toString().replace(/"/g,'""')}"`;
+  const csv = [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename.replace(/[^a-zA-Z0-9_\-]/g,'_') + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+
+// ═══════════════════════════════════════════
+// LEDGER MANAGEMENT VIEW
+// ═══════════════════════════════════════════
+let _allLedgerRows = [];
+
+async function loadLedgersView() {
+  // Populate group filter
+  const grpSel = document.getElementById('ldg-grp-f');
+  if (grpSel) {
+    grpSel.innerHTML = '<option value="">All Groups</option>';
+    groups.forEach(g => grpSel.innerHTML += `<option value="${g.id}">${g.name}</option>`);
+  }
+
+  // Refresh ledgers from server
+  const data = await GET('/api/cms/ledgers');
+  if (!data) return;
+  ledgers = data;
+  _allLedgerRows = data;
+
+  // Stats
+  document.getElementById('ldg-count').textContent     = data.length;
+  document.getElementById('ldg-emp-count').textContent = data.filter(l => l.ledger_type === 'employee').length;
+  document.getElementById('ldg-exp-count').textContent = data.filter(l => l.ledger_type === 'expense_head').length;
+  document.getElementById('ldg-inc-count').textContent = data.filter(l => l.ledger_type === 'income_head').length;
+
+  renderLedgersTable(data);
+}
+
+function renderLedgersTable(rows) {
+  const tbody = document.getElementById('ldg-tbody');
+  const footer = document.getElementById('ldg-footer');
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><i class="fa fa-book-open"></i><p>No ledgers found</p></div></td></tr>`;
+    if (footer) footer.textContent = '';
+    return;
+  }
+
+  const typeBadge = {
+    cash:        ['bg-rv',   'Cash/Bank'],
+    bank:        ['bg-rv',   'Bank'],
+    employee:    ['bg-adv',  'Employee'],
+    expense_head:['bg-pv',   'Expense Head'],
+    income_head: ['bg-set',  'Income Head'],
+    scrap_vendor:['bg-jv',   'Scrap Vendor'],
+    customer:    ['bg-post', 'Customer'],
+    other:       ['bg-dft',  'Other'],
+  };
+
+  tbody.innerHTML = rows.map(l => {
+    const bal = parseFloat(l.balance || 0);
+    const ob  = parseFloat(l.opening_balance || 0);
+    const [badgeCls, badgeLbl] = typeBadge[l.ledger_type] || ['bg-dft', l.ledger_type || 'Other'];
+    const balCls = bal > 0 ? 'c-g' : bal < 0 ? 'c-r' : 'tx3';
+    const balStr = bal === 0 ? '—' : R(Math.abs(bal)) + (bal > 0 ? ' Dr' : ' Cr');
+
+    return `<tr>
+      <td>
+        <div class="fw6">${l.name}</div>
+        ${l.notes ? `<div class="fs11 tx3" style="margin-top:2px">${l.notes}</div>` : ''}
+      </td>
+      <td><span class="bg ${badgeCls}">${badgeLbl}</span></td>
+      <td class="tx2 fs11">${l.group_name || '—'}</td>
+      <td class="mono tx3 fs11">${l.phone || '—'}</td>
+      <td class="tr mono tx2">${ob > 0 ? R(ob) + (l.ob_type === 'cr' ? ' Cr' : ' Dr') : '—'}</td>
+      <td class="tr mono fw6 ${balCls}">${balStr}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-icon" title="Edit Ledger" onclick="openLM(${l.id})">
+          <i class="fa fa-pen"></i>
+        </button>
+        <button class="btn btn-sm btn-icon" title="View Ledger Report" onclick="openLedgerRptFor(${l.id})">
+          <i class="fa fa-chart-line"></i>
+        </button>
+        <button class="btn btn-sm btn-icon btn-wa" title="WhatsApp" onclick="waLedger(${l.id})" style="${l.phone ? '' : 'opacity:.4'}">
+          <i class="fa fa-brands fa-whatsapp"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  if (footer) footer.textContent = `Showing ${rows.length} of ${_allLedgerRows.length} ledgers`;
+}
+
+function filterLedgersView() {
+  const q    = (document.getElementById('ldg-search')?.value || '').toLowerCase();
+  const type = document.getElementById('ldg-type-f')?.value || '';
+  const grp  = document.getElementById('ldg-grp-f')?.value  || '';
+
+  let rows = _allLedgerRows;
+  if (q)    rows = rows.filter(l => l.name.toLowerCase().includes(q) || (l.notes||'').toLowerCase().includes(q));
+  if (type) rows = rows.filter(l => l.ledger_type === type);
+  if (grp)  rows = rows.filter(l => String(l.ledger_group_id) === grp);
+  renderLedgersTable(rows);
+}
+
+function clearLedgerFilters() {
+  document.getElementById('ldg-search').value  = '';
+  document.getElementById('ldg-type-f').value  = '';
+  document.getElementById('ldg-grp-f').value   = '';
+  renderLedgersTable(_allLedgerRows);
+}
+
+async function waLedger(lid) {
+  const l = ledgers.find(x => x.id == lid);
+  if (!l) return;
+  const bal = parseFloat(l.balance || 0);
+  const msg = `*HCP Wellness — Ledger Update*\n\n` +
+    `Ledger: *${l.name}*\n` +
+    `Type: ${l.ledger_type || 'other'}\n` +
+    `Current Balance: *${R(Math.abs(bal))} ${bal >= 0 ? 'Dr' : 'Cr'}*\n` +
+    `Opening Balance: ${R(l.opening_balance || 0)} ${l.ob_type === 'cr' ? 'Cr' : 'Dr'}`;
+
+  document.getElementById('wa-phone').value = l.phone || '';
+  openWA(msg);
+}
+
+// After saveLedger, refresh the ledgers view if it's open
+const _origSaveLedger = saveLedger;
+saveLedger = async function() {
+  await _origSaveLedger();
+  // If ledgers view is open, reload it
+  if (document.getElementById('view-ledgers')?.classList.contains('on')) {
+    loadLedgersView();
+  }
+};
+
+
+function onOBChange() {
+  const lid = document.getElementById('lm-id').value;
+  const hint = document.getElementById('lm-ob-hint');
+  if (lid && hint) hint.style.display = 'block'; // only warn on edit
+}
+
+
+// ═══════════════════════════════════════════
+// RESET APPLICATION (Admin only)
+// ═══════════════════════════════════════════
+let _resetTimer     = null;
+let _resetCountdown = 30;
+let _resetAborted   = false;
+
+function startReset() {
+  // Only admins (Jinja passes role to a meta tag OR we check a global)
+  _resetAborted   = false;
+  _resetCountdown = 30;
+  goResetStep(1);
+  openM('reset-ov');
+}
+
+function cancelReset() {
+  abortReset();
+  closeM('reset-ov');
+}
+
+function goResetStep(n) {
+  document.querySelectorAll('.reset-step').forEach(s => s.classList.remove('active'));
+  const step = document.getElementById(`rst-step-${n}`);
+  if (step) step.classList.add('active');
+
+  if (n === 2) {
+    // Clear input
+    const inp = document.getElementById('rst-confirm-input');
+    if (inp) { inp.value = ''; }
+    const btn = document.getElementById('rst-step2-next');
+    if (btn) { btn.style.opacity = '.4'; btn.style.pointerEvents = 'none'; }
+    const hint = document.getElementById('rst-input-hint');
+    if (hint) { hint.textContent = 'Type exactly as shown above'; hint.style.color = 'var(--tx3)'; }
+    setTimeout(() => document.getElementById('rst-confirm-input')?.focus(), 100);
+  }
+
+  if (n === 3) {
+    _resetAborted   = false;
+    _resetCountdown = 30;
+    updateCountdownUI(30);
+    // Start countdown
+    _resetTimer = setInterval(() => {
+      if (_resetAborted) { clearInterval(_resetTimer); return; }
+      _resetCountdown--;
+      updateCountdownUI(_resetCountdown);
+      if (_resetCountdown <= 0) {
+        clearInterval(_resetTimer);
+        if (!_resetAborted) executeReset();
+      }
+    }, 1000);
+  }
+}
+
+function checkResetInput() {
+  const val  = document.getElementById('rst-confirm-input').value.trim().toUpperCase();
+  const btn  = document.getElementById('rst-step2-next');
+  const hint = document.getElementById('rst-input-hint');
+  if (val === 'RESET ALL') {
+    btn.style.opacity       = '1';
+    btn.style.pointerEvents = 'auto';
+    hint.textContent        = '✓ Confirmed — click Next to proceed';
+    hint.style.color        = 'var(--green)';
+  } else {
+    btn.style.opacity       = '.4';
+    btn.style.pointerEvents = 'none';
+    hint.textContent        = 'Type exactly: RESET ALL';
+    hint.style.color        = 'var(--tx3)';
+  }
+}
+
+function updateCountdownUI(sec) {
+  const numEl  = document.getElementById('rst-timer-num');
+  const ring   = document.getElementById('rst-ring');
+  const prog   = document.getElementById('rst-progress');
+  const btn    = document.getElementById('rst-abort-btn');
+
+  if (numEl) numEl.textContent = sec;
+
+  // Ring: circumference = 2π×42 ≈ 263.9, dasharray set to 314 in HTML
+  const total  = 30;
+  const circumference = 2 * Math.PI * 42;   // ≈ 263.9
+  const offset = circumference - (sec / total) * circumference;
+  if (ring) {
+    ring.style.strokeDasharray  = circumference;
+    ring.style.strokeDashoffset = offset;
+  }
+
+  if (prog) prog.style.width = `${(sec / total) * 100}%`;
+
+  // Colour shifts red as time runs out
+  const urgentColor = sec <= 10 ? '#FF0000' : sec <= 20 ? '#FF6B00' : '#DC2626';
+  if (numEl)  numEl.style.color   = urgentColor;
+  if (ring)   ring.style.stroke   = urgentColor;
+  if (prog)   prog.style.background = urgentColor;
+  if (btn && sec <= 10) {
+    btn.style.animation = 'pulse 0.6s ease infinite alternate';
+    if (!document.getElementById('pulse-style')) {
+      const s = document.createElement('style');
+      s.id = 'pulse-style';
+      s.textContent = '@keyframes pulse{from{box-shadow:0 0 0 0 rgba(16,185,129,.6)}to{box-shadow:0 0 0 8px rgba(16,185,129,0)}}';
+      document.head.appendChild(s);
+    }
+  }
+}
+
+function abortReset() {
+  _resetAborted = true;
+  if (_resetTimer) { clearInterval(_resetTimer); _resetTimer = null; }
+  closeM('reset-ov');
+  // Reset all steps back to 1 for next time
+  setTimeout(() => {
+    document.querySelectorAll('.reset-step').forEach(s => s.classList.remove('active'));
+    const s1 = document.getElementById('rst-step-1');
+    if (s1) s1.classList.add('active');
+  }, 400);
+  toast('✅ Reset aborted — all data is safe', 'ok');
+}
+
+async function executeReset() {
+  if (_resetAborted) return;
+  goResetStep(4);
+
+  const steps = [
+    'Deleting voucher lines...',
+    'Deleting vouchers...',
+    'Clearing ledger balances...',
+    'Deleting ledgers...',
+    'Clearing reminders...',
+    'Finalising...',
+  ];
+
+  const msgEl = document.getElementById('rst-progress-msg');
+  for (const s of steps) {
+    if (msgEl) msgEl.textContent = s;
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  try {
+    const r = await POST('/api/cms/admin/reset', { confirm: 'RESET ALL CONFIRMED' });
+    if (r?.status === 'ok') {
+      goResetStep(5);
+    } else {
+      closeM('reset-ov');
+      toast(r?.message || 'Reset failed — contact admin', 'error');
+    }
+  } catch(e) {
+    closeM('reset-ov');
+    toast('Reset failed: ' + e.message, 'error');
+  }
+}
+
+
+
+// ═══════════════════════════════════════════
+// OPENING BALANCE
+// ═══════════════════════════════════════════
+async function openOBModal() {
+  // Find cash ledger
+  const cashLedger = ledgers.find(l => l.ledger_type === 'cash');
+  if (!cashLedger) {
+    toast('No Cash ledger found. Create one first.', 'warn');
+    return;
+  }
+
+  document.getElementById('ob-ledger-id').value  = cashLedger.id;
+  document.getElementById('ob-ledger-name').textContent =
+    cashLedger.name || 'Cash in Hand';
+  document.getElementById('ob-current-ob').textContent  =
+    R(cashLedger.opening_balance||0) + ' ' + (cashLedger.ob_type === 'cr' ? 'Cr' : 'Dr');
+  document.getElementById('ob-current-bal').textContent =
+    R(Math.abs(cashLedger.balance||0)) + ' ' + (parseFloat(cashLedger.balance||0) >= 0 ? 'Dr' : 'Cr');
+  document.getElementById('ob-amount').value  = cashLedger.opening_balance || 0;
+  document.getElementById('ob-dr-cr').value   = cashLedger.ob_type || 'dr';
+  document.getElementById('ob-reason').value  = '';
+
+  openM('ob-ov');
+}
+
+async function saveOB() {
+  const lid    = document.getElementById('ob-ledger-id').value;
+  const amount = parseFloat(document.getElementById('ob-amount').value || 0);
+  const drCr   = document.getElementById('ob-dr-cr').value;
+  const reason = document.getElementById('ob-reason').value;
+
+  if (!lid) { toast('No ledger selected', 'warn'); return; }
+
+  // Update via ledger save — same endpoint
+  const ledger = ledgers.find(l => l.id == lid);
+  if (!ledger) { toast('Ledger not found', 'error'); return; }
+
+  const payload = {
+    id:              parseInt(lid),
+    name:            ledger.name,
+    ledger_group_id: ledger.ledger_group_id,
+    ledger_type:     ledger.ledger_type,
+    phone:           ledger.phone || '',
+    opening_balance: amount,
+    ob_type:         drCr,
+    notes:           reason ? `OB updated: ${reason}` : (ledger.notes || ''),
+  };
+
+  const r = await POST('/api/cms/ledgers/save', payload);
+  if (r?.status === 'ok') {
+    toast(`Opening balance set to ${R(amount)} ${drCr.toUpperCase()}`, 'ok');
+    closeM('ob-ov');
+    // Refresh ledger cache and dashboard
+    await loadCache();
+    loadDashboard();
+  } else {
+    toast(r?.message || 'Save failed', 'error');
+  }
+}
+
+async function resetOB() {
+  if (!confirm('Reset opening balance to ₹0? This cannot be undone.')) return;
+  const lid = document.getElementById('ob-ledger-id').value;
+  const ledger = ledgers.find(l => l.id == lid);
+  if (!ledger) return;
+
+  const r = await POST('/api/cms/ledgers/save', {
+    id:              parseInt(lid),
+    name:            ledger.name,
+    ledger_group_id: ledger.ledger_group_id,
+    ledger_type:     ledger.ledger_type,
+    phone:           ledger.phone || '',
+    opening_balance: 0,
+    ob_type:         'dr',
+    notes:           'OB reset to 0',
+  });
+
+  if (r?.status === 'ok') {
+    toast('Opening balance reset to ₹0', 'ok');
+    closeM('ob-ov');
+    await loadCache();
+    loadDashboard();
+  } else {
+    toast(r?.message || 'Reset failed', 'error');
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PETTY CASH REGISTER — EXCEL EXPORT (matches existing register format)
+// ═══════════════════════════════════════════════════════════════════
+async function exportCashbookExcel() {
+  const from  = document.getElementById('g-from')?.value || '';
+  const to    = document.getElementById('g-to')?.value   || '';
+  const vtype = document.getElementById('vl-type')?.value || '';
+
+  if (typeof XLSX === 'undefined') {
+    toast('Excel library not loaded — refresh the page', 'error');
+    return;
+  }
+
+  toast('Preparing Excel...', 'ok');
+
+  const data = await GET(
+    `/api/cms/export/cashbook?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&type=${encodeURIComponent(vtype)}`
+  );
+
+  if (!data) { toast('Server error — check console', 'error'); return; }
+
+  const fD = d => {
+    if (!d) return '';
+    const p = String(d).split('-');
+    return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : String(d);
+  };
+  const n2 = v => { const n = parseFloat(v||0); return n === 0 ? '' : n; };
+
+  // ── Sheet 1: Cash Register (Income + Expenses with running balance) ──
+  const s1 = [['Date','Vch No.','Particular','Credit (Income)','Debit (Expense)','Balance','Date Wise Expense']];
+  (data.cash_rows || []).forEach(r => {
+    s1.push([
+      fD(r.date), r.voucher_no||'', r.particular||'',
+      n2(r.credit), n2(r.debit),
+      parseFloat(r.balance||0),
+      n2(r.date_expense),
+    ]);
+  });
+
+  // ── Sheet 2: Expenses (all debit rows with full particulars) ──────────
+  const s2 = [['Date','Vch No.','Particular','Amount','Date Wise Expense']];
+  (data.expense_rows || []).forEach(r => {
+    s2.push([
+      fD(r.date), r.voucher_no||'', r.particular||'',
+      parseFloat(r.amount||0),
+      n2(r.date_expense),
+    ]);
+  });
+
+  // ── Sheet 3: Advances ────────────────────────────────────────────────
+  const s3 = [['Date','Vch No.','Employee','Particular','Type','Advance Given','Settled (Bills)','Cash Repaid']];
+  (data.advance_rows || []).forEach(r => {
+    s3.push([
+      fD(r.date), r.voucher_no||'', r.employee||'', r.particular||'', r.type||'',
+      n2(r.given), n2(r.settled), n2(r.repaid),
+    ]);
+  });
+
+  // ── Build workbook ───────────────────────────────────────────────────
+  const wb = XLSX.utils.book_new();
+
+  const ws1 = XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols'] = [{wch:14},{wch:20},{wch:65},{wch:16},{wch:16},{wch:16},{wch:18}];
+  ws1['!sheetViews'] = [{state:'frozen',ySplit:1,xSplit:0,topLeftCell:'A2'}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Cash Register');
+
+  const ws2 = XLSX.utils.aoa_to_sheet(s2);
+  ws2['!cols'] = [{wch:14},{wch:20},{wch:70},{wch:16},{wch:18}];
+  ws2['!sheetViews'] = [{state:'frozen',ySplit:1,xSplit:0,topLeftCell:'A2'}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Expenses');
+
+  const ws3 = XLSX.utils.aoa_to_sheet(s3);
+  ws3['!cols'] = [{wch:14},{wch:20},{wch:22},{wch:50},{wch:16},{wch:16},{wch:16},{wch:14}];
+  ws3['!sheetViews'] = [{state:'frozen',ySplit:1,xSplit:0,topLeftCell:'A2'}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Advances');
+
+  const fname = `HCP_CMS_${from||'all'}_to_${to||'all'}.xlsx`;
+  XLSX.writeFile(wb, fname);
+
+  const msg = `✅ ${fname} — Cash:${(data.cash_rows||[]).length} Exp:${(data.expense_rows||[]).length} Adv:${(data.advance_rows||[]).length} rows`;
+  toast(msg, 'ok');
+}
+
+
+// ═══════════════════════════════════════════
+// SHORTCUTS HELP
+// ═══════════════════════════════════════════
+function openShortcutsHelp() {
+  openM('shortcuts-ov');
+}
+
+// ═══════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

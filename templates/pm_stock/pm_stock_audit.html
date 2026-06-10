@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physical Stock Check — PM Stock</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<!-- NotebookLM theme + animations (applies only when data-theme="light") -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcp-notebooklm.css') }}">
+<!-- NotebookLM eye-catching effects (lightweight, GPU-only, opt-in) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcp-notebooklm-effects.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Early theme init: read user's chosen theme before paint to avoid flash -->
+<script>
+(function(){
+  var valid=['light','dark','midnight','ocean','sage'];
+  var t=localStorage.getItem('hcp_theme')||'light';
+  if(valid.indexOf(t)===-1) t='light';
+  document.documentElement.setAttribute('data-theme',t);
+})();
+</script>
+<style>
+  body{font-family:'Inter', system-ui, -apple-system, sans-serif; margin:0; background:var(--hsurf2,#f8fafc); color:var(--htxtb,#111);}
+  .wrap{max-width:1280px; margin:0 auto; padding:18px 22px;}
+  .pagehdr{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;}
+  .pagehdr h1{margin:0; font-size:20px; font-weight:800; letter-spacing:-.2px;}
+  .pagehdr .sub{font-size:11px; color:var(--hmuted,#9ca3af); margin-top:2px}
+  .back-link{font-size:12px; color:#6366f1; text-decoration:none; font-weight:600;}
+  .back-link:hover{text-decoration:underline;}
+
+  /* Tabs */
+  .tabs{display:flex; gap:4px; margin-bottom:18px; border-bottom:1.5px solid var(--hbdr,rgba(0,0,0,.08));}
+  .tab{padding:9px 16px; font-size:12.5px; font-weight:700; color:var(--hmuted2,#6b7280); cursor:pointer; border-bottom:2.5px solid transparent; margin-bottom:-1.5px; user-select:none;}
+  .tab.active{color:#4f46e5; border-bottom-color:#4f46e5;}
+  .tab:hover:not(.active){color:var(--htxtb,#111);}
+  .tab .count{display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:16px; padding:0 5px; margin-left:5px; border-radius:8px; background:rgba(99,102,241,.12); color:#4f46e5; font-size:10px; font-weight:800;}
+
+  /* Cards / panels */
+  .card{background:var(--hsurf,#fff); border:1.5px solid var(--hbdr,rgba(0,0,0,.08)); border-radius:11px; padding:16px 18px; margin-bottom:14px;}
+  .card h3{margin:0 0 12px 0; font-size:13px; font-weight:800; letter-spacing:.2px;}
+  .card .hint{font-size:11px; color:var(--hmuted,#9ca3af); margin-top:-4px; margin-bottom:12px;}
+
+  /* Form bits */
+  .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .row.row-3{grid-template-columns:1fr 1fr 1fr;}
+  label.lbl{font-size:10px; font-weight:800; color:var(--hmuted2,#6b7280); text-transform:uppercase; letter-spacing:.45px; display:block; margin-bottom:4px;}
+  select, input[type="text"], textarea{width:100%; background:#fff; border:1.5px solid rgba(0,0,0,.13); border-radius:7px; padding:8px 11px; font-size:12.5px; font-family:inherit; color:var(--htxtb,#111); outline:none; box-sizing:border-box;}
+  select:focus, input:focus, textarea:focus{border-color:#6366f1;}
+  textarea{resize:vertical; min-height:50px;}
+
+  .btn{padding:8px 14px; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; font-family:inherit;}
+  .btn-primary{background:#4f46e5; color:#fff;}
+  .btn-primary:hover{background:#4338ca;}
+  .btn-primary:disabled{opacity:.5; cursor:not-allowed;}
+  .btn-outline{background:transparent; color:var(--htxtb,#111); border:1.5px solid rgba(0,0,0,.15);}
+  .btn-outline:hover{background:rgba(0,0,0,.04);}
+  .btn-success{background:#16a34a; color:#fff;}
+  .btn-danger{background:#dc2626; color:#fff;}
+  .btn-warning{background:#d97706; color:#fff;}
+  .btn-sm{padding:5px 10px; font-size:11px;}
+
+  /* Scan input */
+  .scan-card{background:linear-gradient(135deg, rgba(79,70,229,.07), rgba(79,70,229,.02)); border:1.5px solid rgba(79,70,229,.3);}
+  .scan-row{display:flex; align-items:center; gap:14px;}
+  .scan-row .icon{font-size:28px;}
+  .scan-row input{font-family:monospace; font-weight:700; font-size:14px; border-color:rgba(79,70,229,.4);}
+  .scan-feedback{font-size:11.5px; min-height:14px; margin-top:8px; padding-left:42px;}
+  .scan-feedback.ok{color:#16a34a;}
+  .scan-feedback.warn{color:#d97706;}
+  .scan-feedback.err{color:#dc2626;}
+
+  /* Variance table */
+  table.vt{width:100%; border-collapse:collapse;}
+  table.vt th, table.vt td{padding:8px 11px; text-align:left; font-size:12px; border-bottom:1px solid var(--hbdr,rgba(0,0,0,.06));}
+  table.vt th{background:rgba(79,70,229,.06); font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; color:var(--hmuted2,#6b7280);}
+  table.vt td.num{text-align:right; font-variant-numeric:tabular-nums; font-weight:600;}
+  table.vt td.delta-pos{color:#16a34a; font-weight:700;}
+  table.vt td.delta-neg{color:#dc2626; font-weight:700;}
+  table.vt td.delta-zero{color:var(--hmuted,#9ca3af);}
+  table.vt tr.match-ok td{color:var(--hmuted2,#6b7280);}
+  /* Product cell: name + code + type all on ONE LINE. Previously the
+     code/type were below the name with display:block / inline-block +
+     margin-top, which made the row 3 lines tall and wasted space. Now
+     they sit inline with margin-left for spacing, and the cell uses
+     white-space:nowrap so even long product names don't wrap. The
+     widened modal (1400px) gives enough room. */
+  table.vt td.product-cell{white-space:nowrap; max-width:560px; overflow:hidden; text-overflow:ellipsis;}
+  table.vt .pname{font-weight:600; color:var(--htxtb,#111);}
+  table.vt .pcode{font-family:monospace; font-size:10px; color:var(--hmuted,#9ca3af); margin-left:8px;}
+  table.vt .pmtype{font-size:9.5px; color:var(--hmuted,#9ca3af); padding:1px 5px; border-radius:3px; background:rgba(0,0,0,.04); display:inline-block; margin-left:6px;}
+
+  /* Chip / badge */
+  .chip{display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:11px; font-size:10.5px; font-weight:800; letter-spacing:.3px; text-transform:uppercase;}
+  .chip-open{background:rgba(59,130,246,.12); color:#2563eb;}
+  .chip-pending{background:rgba(245,158,11,.13); color:#d97706;}
+  .chip-settled{background:rgba(22,163,74,.13); color:#16a34a;}
+  .chip-rejected{background:rgba(107,114,128,.13); color:#6b7280;}
+
+  /* Stat tiles */
+  .stats{display:grid; grid-template-columns:repeat(4, 1fr); gap:11px; margin-bottom:14px;}
+  .stat{padding:10px 13px; background:#fff; border:1.5px solid var(--hbdr,rgba(0,0,0,.07)); border-radius:8px;}
+  .stat .lbl-sm{font-size:9.5px; color:var(--hmuted2,#6b7280); font-weight:800; text-transform:uppercase; letter-spacing:.45px;}
+  .stat .val{font-size:20px; font-weight:800; color:var(--htxtb,#111); margin-top:2px; font-variant-numeric:tabular-nums;}
+  .stat .sub{font-size:10.5px; color:var(--hmuted,#9ca3af); margin-top:1px;}
+  .stat.miss .val{color:#dc2626;}
+  .stat.extra .val{color:#d97706;}
+
+  /* List rows for sessions */
+  .session-row{display:grid; grid-template-columns:120px 1fr 120px 140px 130px; align-items:center; gap:12px; padding:11px 14px; border:1.5px solid var(--hbdr,rgba(0,0,0,.07)); border-radius:8px; margin-bottom:6px; background:#fff; cursor:pointer; transition:box-shadow .15s, border-color .15s;}
+  .session-row:hover{box-shadow:0 2px 12px rgba(0,0,0,.06); border-color:rgba(79,70,229,.3);}
+  .session-row .sno{font-family:monospace; font-weight:700; font-size:12px; color:#4f46e5;}
+  .session-row .meta{font-size:11px; color:var(--hmuted2,#6b7280);}
+  .session-row .meta .who{font-weight:600; color:var(--htxtb,#111);}
+
+  /* Picker chips */
+  .pchip{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; background:rgba(79,70,229,.08); border:1px solid rgba(79,70,229,.22); border-radius:14px; font-size:11px; font-weight:600; color:#4f46e5; margin:2px;}
+  .pchip .x{cursor:pointer; opacity:.5;} .pchip .x:hover{opacity:1;}
+  .picker-results{max-height:220px; overflow:auto; border:1px solid rgba(0,0,0,.08); border-radius:7px; margin-top:6px; background:#fff;}
+  .picker-result{padding:6px 11px; font-size:12px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,.04);}
+  .picker-result:hover{background:rgba(79,70,229,.06);}
+  .picker-result .pname{font-weight:600;}
+  .picker-result .pmeta{font-size:10px; color:var(--hmuted,#9ca3af); margin-top:1px;}
+
+  /* Hidden helper */
+  .hidden{display:none !important;}
+
+  /* Toast */
+  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:9px 16px; border-radius:8px; font-size:12px; font-weight:700; z-index:9999; box-shadow:0 6px 24px rgba(0,0,0,.18); animation:tslide .25s ease-out;}
+  .toast.ok{background:#16a34a; color:#fff;}
+  .toast.err{background:#dc2626; color:#fff;}
+  .toast.warn{background:#d97706; color:#fff;}
+  @keyframes tslide{from{transform:translateX(-50%) translateY(8px); opacity:0;} to{transform:translateX(-50%) translateY(0); opacity:1;}}
+
+  /* Modal */
+  .modal-overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(4px); z-index:1500; justify-content:center; align-items:flex-start; padding-top:50px;}
+  .modal-overlay.open{display:flex;}
+  /* Wider cap so the per-product variance table fits product names + 5
+     numeric columns + brand chip on one line. Use viewport-aware cap:
+     96vw on narrower screens, up to 1400px on desktop. Width set with
+     !important because the portal's hcptheme.css or hcp-notebooklm.css
+     can carry its own .modal rule whose specificity (e.g.
+     ".modal-overlay .modal") could shadow ours — !important forces ours
+     to win regardless of selector specificity.
+     #session-modal targets ONLY this audit-page modal so we don't
+     accidentally widen other modals on the page.  */
+  .modal{background:#fff; border-radius:12px; width:min(96vw, 1400px); max-height:88vh; overflow:auto; box-shadow:0 16px 48px rgba(0,0,0,.22);}
+  #session-modal .modal{ width: min(96vw, 1400px) !important; max-width: none !important; }
+  .modal-hdr{padding:14px 22px; border-bottom:1px solid rgba(0,0,0,.08); display:flex; align-items:center; justify-content:space-between;}
+  .modal-hdr h3{margin:0; font-size:14px; font-weight:800;}
+  .modal-close{background:rgba(0,0,0,.05); border:none; border-radius:6px; padding:4px 10px; font-size:14px; cursor:pointer;}
+  .modal-body{padding:16px 22px;}
+  .modal-ftr{padding:11px 22px; border-top:1px solid rgba(0,0,0,.08); display:flex; gap:8px; justify-content:flex-end; background:#fafbfc;}
+
+  /* ═══════════════════════════════════════════════════════════════
+     NotebookLM color harmonization — swap hardcoded indigo for the
+     global Google-blue accent so this page matches the rest of the
+     portal. Only active on light theme; other themes ignored.
+     ═══════════════════════════════════════════════════════════════ */
+  [data-theme="light"] .back-link{color:#1A73E8;}
+  [data-theme="light"] .tab.active{color:#1A73E8; border-bottom-color:#1A73E8;}
+  [data-theme="light"] .tab .count{background:rgba(26,115,232,.12); color:#1A73E8;}
+  [data-theme="light"] select:focus,
+  [data-theme="light"] input:focus,
+  [data-theme="light"] textarea:focus{border-color:#1A73E8;}
+
+  /* Primary action button — pill-shaped NotebookLM blue */
+  [data-theme="light"] .btn-primary{background:#1A73E8; border-radius:9999px; padding:9px 18px; transition:background .2s, transform .2s, box-shadow .2s;}
+  [data-theme="light"] .btn-primary:hover{background:#1765CC; transform:translateY(-1px); box-shadow:0 6px 14px rgba(26,115,232,.25);}
+  [data-theme="light"] .btn-primary:active{transform:translateY(0);}
+
+  /* Outline / success / danger / warning buttons — pill-shaped, lift on hover */
+  [data-theme="light"] .btn{border-radius:9999px; transition:background .2s, transform .2s, box-shadow .2s, border-color .2s, color .2s;}
+  [data-theme="light"] .btn:hover{transform:translateY(-1px);}
+  [data-theme="light"] .btn:active{transform:translateY(0);}
+  [data-theme="light"] .btn-outline:hover{border-color:#1A73E8; color:#1A73E8; background:transparent;}
+
+  /* Scan card — keep the inviting tint but use blue accent */
+  [data-theme="light"] .scan-card{background:linear-gradient(135deg, rgba(26,115,232,.07), rgba(26,115,232,.02)); border-color:rgba(26,115,232,.3);}
+  [data-theme="light"] .scan-row input{border-color:rgba(26,115,232,.4);}
+
+  /* Variance table header */
+  [data-theme="light"] table.vt th{background:rgba(26,115,232,.06);}
+
+  /* Session row hover */
+  [data-theme="light"] .session-row{transition:box-shadow .2s, border-color .2s, transform .2s;}
+  [data-theme="light"] .session-row:hover{border-color:rgba(26,115,232,.3); transform:translateY(-1px);}
+  [data-theme="light"] .session-row .sno{color:#1A73E8;}
+
+  /* Picker chips */
+  [data-theme="light"] .pchip{background:rgba(26,115,232,.08); border-color:rgba(26,115,232,.22); color:#1A73E8;}
+  [data-theme="light"] .picker-result:hover{background:rgba(26,115,232,.06);}
+
+  /* Cards — soft entrance + softer borders */
+  [data-theme="light"] .card{border-radius:16px; border-color:rgba(0,0,0,.07); animation:nbFadeUp .5s cubic-bezier(.22,1,.36,1) both;}
+
+  /* Stat tiles — stagger entrance + hover lift */
+  [data-theme="light"] .stats .stat{border-radius:12px; border-color:rgba(0,0,0,.07); transition:transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s, border-color .22s; animation:nbFadeUp .5s cubic-bezier(.22,1,.36,1) both;}
+  [data-theme="light"] .stats .stat:nth-child(1){animation-delay:0s}
+  [data-theme="light"] .stats .stat:nth-child(2){animation-delay:.06s}
+  [data-theme="light"] .stats .stat:nth-child(3){animation-delay:.12s}
+  [data-theme="light"] .stats .stat:nth-child(4){animation-delay:.18s}
+  [data-theme="light"] .stats .stat:hover{transform:translateY(-3px); box-shadow:0 8px 22px rgba(0,0,0,.07); border-color:#1A73E8;}
+
+  /* Tabs row — fade in */
+  [data-theme="light"] .tabs{animation:nbFadeUp .4s cubic-bezier(.22,1,.36,1) both;}
+  [data-theme="light"] .tab{transition:color .2s, border-color .2s;}
+
+  /* Page header — slide down on load */
+  [data-theme="light"] .pagehdr{animation:nbSlideDown .5s cubic-bezier(.22,1,.36,1) both;}
+
+  /* Modal — bouncy spring entrance (overrides the basic display:flex animation) */
+  [data-theme="light"] .modal-overlay.open .modal{animation:nbPanelBounce .5s cubic-bezier(.34,1.56,.64,1) both;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="pagehdr">
+    <div>
+      <h1>📋 Physical Stock Check</h1>
+      <div class="sub">Scan boxes, compare with system stock, settle the variance.</div>
+    </div>
+    <a href="/pm_stock" class="back-link">← Back to PM Stock</a>
+  </div>
+
+  <!-- Embed role into a hidden span so the JS can read it without a fetch -->
+  <span id="user-role" data-role="{{ role or '' }}" class="hidden"></span>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="new"     onclick="audSetTab('new')">➕ New Session</div>
+    <div class="tab"        data-tab="open"    onclick="audSetTab('open')">🟦 Open <span class="count" id="cnt-open">·</span></div>
+    <div class="tab"        data-tab="pending" onclick="audSetTab('pending')">🟠 Pending Settlement <span class="count" id="cnt-pending">·</span></div>
+    <div class="tab"        data-tab="history" onclick="audSetTab('history')">📜 History</div>
+  </div>
+
+  <!-- ── NEW SESSION TAB ────────────────────────────────────────── -->
+  <div id="tab-new" class="tabpanel">
+    <div class="card">
+      <h3>Start a New Audit Session</h3>
+      <div class="hint">Pick a location and the specific products you want to physically verify. You'll then scan boxes at that location.</div>
+      <div class="row">
+        <div>
+          <label class="lbl">Location</label>
+          <select id="new-godown" onchange="audOnGodownChange()">
+            <option value="">— Loading… —</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Session Note (optional)</label>
+          <input type="text" id="new-note" placeholder="e.g. End of month spot check — Plix bottles">
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label class="lbl">Products to Verify</label>
+        <input type="text" id="prod-search" placeholder="Search products by name or code…" oninput="audProductSearchDebounced()">
+        <div id="picker-results" class="picker-results hidden"></div>
+        <div id="picker-selected" style="margin-top:8px; min-height:24px; padding:6px; background:rgba(0,0,0,.02); border-radius:6px;"></div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:12px">
+        <button class="btn btn-primary" id="btn-start-session" onclick="audStartSession()" disabled>
+          <i class="fas fa-play"></i> Start Session & Begin Scanning
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OPEN TAB / PENDING TAB / HISTORY TAB ─────────────────── -->
+  <div id="tab-open"    class="tabpanel hidden"><div id="list-open">Loading…</div></div>
+  <div id="tab-pending" class="tabpanel hidden"><div id="list-pending">Loading…</div></div>
+  <div id="tab-history" class="tabpanel hidden"><div id="list-history">Loading…</div></div>
+
+  <!-- ── SESSION DETAIL MODAL ────────────────────────────────────── -->
+  <div class="modal-overlay" id="session-modal">
+    <div class="modal">
+      <div class="modal-hdr">
+        <h3 id="sm-title">Session …</h3>
+        <button class="modal-close" onclick="audCloseModal()">✕</button>
+      </div>
+      <div class="modal-body" id="sm-body">Loading…</div>
+      <div class="modal-ftr" id="sm-ftr"></div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='pm_stock/pm_stock_audit.js') }}?v=2"></script>
+
+<!-- NotebookLM interactive animations (click ripple, 3D tilt, scroll reveal) -->
+<script src="{{ url_for('static', filename='js/hcp-notebooklm.js') }}" defer></script>
+</body>
+</html>

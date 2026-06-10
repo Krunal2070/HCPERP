@@ -1,0 +1,215 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   pm_theme.css — RM Inventory theme, replicated EXACTLY from pm_stock.html
+   HCP Wellness · NotebookLM palette (cream + Google-blue) + purple-gradient
+   3D buttons + Inter / JetBrains Mono fonts.
+   ───────────────────────────────────────────────────────────────────────
+   Loaded LAST in the inventory page <head> so it overrides the page's older
+   blue/flat tokens. Every card, table, badge and inline style that reads from
+   --brand / --card / --border / --text etc. picks up the pm look with no
+   per-element rewrites — same approach pm_stock uses.
+   =================================================================== */
+
+:root[data-theme="light"]{
+  /* ── NotebookLM base palette (from pm_stock.html) ── */
+  --bg:        #FAF9F5;   /* cream page background */
+  --white:     #FFFFFF;
+  --text:      #1F1F1F;
+  --text2:     #5F6368;
+  --text3:     #80868B;
+  --text4:     #B0B4B8;
+  --blue:      #1A73E8;
+  --blue-dk:   #1765CC;
+  --blue-lt:   #E8F0FE;
+  --green:     #137333;  --green-lt: #E6F4EA;
+  --red:       #C5221F;  --red-lt:   #FCE8E6;
+  --amber:     #B06000;  --amber-lt: #FEF7E0;
+  --purple:    #8127CF;
+
+  /* ── Purple-gradient primary (the pm hero button) ── */
+  --nb-primary:        #4648D4;
+  --nb-primary-hover:  #383AC0;
+  --nb-surface:        #F8F9FA;
+  --nb-surface-2:      #F1F3F4;
+  --nb-border-strong:  rgba(70,72,212,.14);
+  --nb-text-muted:     #444746;
+
+  /* ── Aliases the inventory page reads from ── */
+  --brand:     var(--blue);
+  --brand-dim: rgba(26,115,232,.15);
+  --card:      var(--white);
+  --surface:   var(--white);
+  --surface2:  var(--bg);
+  --border:    var(--nb-border-strong);
+  --border2:   var(--nb-border-strong);
+  --muted:     var(--text3);
+  --muted2:    var(--text2);
+  --teal:      var(--blue);
+
+  /* fonts (already loaded by the page) */
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* radius + shadow */
+  --radius-sm: 8px;  --radius-md: 10px;  --radius-lg: 14px;  --radius-xl: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.10);
+}
+
+:root[data-theme="light"] body{ font-family:var(--font-body); background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   3D BUTTON SYSTEM — copied verbatim from pm_stock.html
+   ══════════════════════════════════════════════════════════════════════ */
+.btn{
+  padding:8px 17px; border-radius:10px; font-size:12px; font-weight:700;
+  font-family:var(--font-body); cursor:pointer; display:inline-flex;
+  align-items:center; gap:7px; border:none; letter-spacing:.2px;
+  position:relative;
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1),
+             box-shadow .2s ease, filter .2s ease, background-position .5s ease;
+}
+.btn:active{ transform:translateY(1px) scale(.985); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+
+/* Primary — hero purple gradient, full 3D depth */
+.btn-primary{
+  background:linear-gradient(180deg, var(--nb-primary) 0%, var(--nb-primary-hover) 100%);
+  background-size:100% 100%; color:#fff; border:none;
+  box-shadow:
+    0 4px 12px rgba(70,72,212,.32),
+    0 2px 4px rgba(129,39,207,.20),
+    inset 0 1px 0 rgba(255,255,255,.30),
+    inset 0 -2px 4px rgba(0,0,0,.18);
+  text-shadow:0 1px 1px rgba(0,0,0,.18);
+}
+.btn-primary:hover{
+  transform:translateY(-2px); filter:brightness(1.06) saturate(1.05);
+  box-shadow:
+    0 9px 22px rgba(70,72,212,.40),
+    0 3px 8px rgba(129,39,207,.26),
+    inset 0 1px 0 rgba(255,255,255,.40),
+    inset 0 -2px 5px rgba(0,0,0,.18);
+}
+.btn-primary:active{
+  box-shadow:
+    0 2px 6px rgba(70,72,212,.30),
+    inset 0 2px 5px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.10);
+  filter:brightness(.98);
+}
+
+/* Outline / default — soft raised white chip */
+.btn:not(.btn-primary):not(.btn-success):not(.btn-danger){
+  background:linear-gradient(180deg,#ffffff 0%, #f4f5f9 100%);
+  border:1px solid var(--nb-border-strong);
+  color:var(--nb-text-muted);
+  box-shadow:0 2px 5px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.btn:not(.btn-primary):not(.btn-success):not(.btn-danger):hover{
+  transform:translateY(-2px);
+  border-color:var(--nb-primary);
+  color:var(--nb-primary);
+  box-shadow:0 7px 16px rgba(70,72,212,.16), inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+/* Danger — raised red gradient */
+.btn-danger{
+  background:linear-gradient(180deg,#fee2e2 0%, #fecaca 100%);
+  border:1px solid rgba(220,38,38,.30); color:#b91c1c;
+  box-shadow:0 2px 5px rgba(220,38,38,.14), inset 0 1px 0 rgba(255,255,255,.7);
+}
+.btn-danger:hover{
+  transform:translateY(-2px);
+  background:linear-gradient(180deg,#ef4444 0%, #dc2626 100%);
+  color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.2);
+  box-shadow:0 8px 18px rgba(220,38,38,.34), inset 0 1px 0 rgba(255,255,255,.3),
+             inset 0 -2px 4px rgba(0,0,0,.18);
+}
+
+/* Success — raised green gradient */
+.btn-success{
+  background:linear-gradient(180deg,#16a34a 0%, #15803d 100%);
+  color:#fff; border:none;
+  box-shadow:0 4px 12px rgba(22,163,74,.30), inset 0 1px 0 rgba(255,255,255,.30),
+             inset 0 -2px 4px rgba(0,0,0,.16);
+  text-shadow:0 1px 1px rgba(0,0,0,.18);
+}
+.btn-success:hover{
+  transform:translateY(-2px); filter:brightness(1.06);
+  box-shadow:0 9px 22px rgba(22,163,74,.38), inset 0 1px 0 rgba(255,255,255,.4),
+             inset 0 -2px 5px rgba(0,0,0,.16);
+}
+
+.btn-sm{ padding:6px 13px; font-size:11px; border-radius:8px; }
+
+/* Department buttons → pm gradient when active (RM uses the blue/brand) */
+.dept-btn.active{
+  background:linear-gradient(180deg, var(--nb-primary) 0%, var(--nb-primary-hover) 100%);
+  border-color:var(--nb-primary); color:#fff;
+  box-shadow:0 4px 12px rgba(70,72,212,.30), inset 0 1px 0 rgba(255,255,255,.3);
+}
+
+/* Monospace numerics, like pm */
+.td-num, .mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   GRID HEADER BARS — match PM Stock (NotebookLM)
+   ────────────────────────────────────────────────────────────────────────
+   PM Stock replaced the old solid-blue table header bar with a soft
+   top→bottom grey gradient, 10px uppercase muted labels, wide letter-
+   spacing and an indigo-tinted bottom border. Apply that to every grid on
+   the inventory page. Uses the same !important strategy PM uses so the
+   look wins over hcptheme.css's blue header bar regardless of load order.
+
+   Sticky positioning on .inv-table headers is preserved (headers stay
+   visible while the body scrolls).
+   ════════════════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .inv-table thead tr,
+:root[data-theme="light"] .inv-wrap table thead tr,
+:root[data-theme="light"] .modal table thead tr,
+:root[data-theme="light"] .modal-overlay table thead tr{
+  background:linear-gradient(to bottom,
+    var(--nb-surface, #f8f9fa) 0%,
+    var(--nb-surface-2, #f1f3f4) 100%) !important;
+  border-bottom:1px solid var(--nb-border-strong, rgba(70,72,212,.14)) !important;
+}
+
+:root[data-theme="light"] .inv-table thead th,
+:root[data-theme="light"] .inv-wrap table thead th:not([style*="background"]),
+:root[data-theme="light"] .modal table thead th:not([style*="background"]),
+:root[data-theme="light"] .modal-overlay table thead th:not([style*="background"]){
+  background:transparent !important;          /* gradient comes from the tr */
+  color:var(--nb-text-muted, #444746) !important;
+  font-family:var(--font-body, 'Inter', system-ui, sans-serif) !important;
+  font-size:10px !important;
+  font-weight:700 !important;
+  text-transform:uppercase !important;
+  letter-spacing:.12em !important;
+  padding:13px 16px !important;
+  border-right:none !important;
+  border-bottom:none !important;              /* the tr carries the border */
+  white-space:nowrap;
+}
+
+/* Keep inventory grid headers sticky (the gradient lives on the tr, but the
+   sticky paint surface must be on the th — repeat the gradient there for the
+   sticky layer so it doesn't go transparent over scrolled body rows). */
+:root[data-theme="light"] .inv-table thead th{
+  position:sticky; top:0; z-index:5;
+  background:linear-gradient(to bottom,
+    var(--nb-surface, #f8f9fa) 0%,
+    var(--nb-surface-2, #f1f3f4) 100%) !important;
+  box-shadow:0 1px 0 var(--nb-border-strong, rgba(70,72,212,.14)) !important;
+}
+:root[data-theme="light"] .inv-table thead th.num,
+:root[data-theme="light"] .inv-table thead th[style*="right"]{ text-align:right; }
+
+/* Department bar: lift onto the cream surface with the soft card style so it
+   reads as part of the PM look (matches PM's section-card chrome). */
+:root[data-theme="light"] .dept-bar{
+  background:var(--white, #fff) !important;
+  border:1px solid var(--nb-border-strong, rgba(70,72,212,.14)) !important;
+  box-shadow:0 1px 3px rgba(0,0,0,.06) !important;
+}

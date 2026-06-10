@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRS Register — HCP Inventory</title>
+
+<!-- Inventory module theme: same font stack, same hcptheme.css, same data-theme handling -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script>
+(function(){
+  // Match the inventory module's theme-key preference order so a user
+  // who has set their theme on /inventory_mgmt arrives here on the same
+  // light/dark choice.
+  const t = localStorage.getItem('hcp_inventory_mgmt_theme')
+         || localStorage.getItem('hcp_theme')
+         || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   TRS REGISTER — page-scoped styles
+   Most of the chrome (topbar, body, buttons) comes from hcptheme.css —
+   this block only adds page-specific layout (KPIs, filter bar, grid)
+   and uses the NotebookLM card vocabulary the inventory module pioneered
+   so the two pages feel like the same product.
+   ═══════════════════════════════════════════════════════════════════════ */
+.trsreg-wrap{
+  padding:16px 20px; max-width:1800px; width:100%; margin:0 auto;
+  box-sizing:border-box;
+}
+
+/* ── KPI ribbon: NotebookLM 3D cards (lifted from inv-stat-card) ────── */
+.trsreg-kpis{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+  gap:12px;
+  margin-bottom:14px;
+}
+.trsreg-kpi{
+  /* NotebookLM tokens — exact copy from inventory module's inv-stat-card
+     so the visual language is shared across the two pages. */
+  --nb-ind:#4648d4; --nb-suc:#137333; --nb-mut:#5f6368;
+  --nb-amb:#f57c00; --nb-cyn:#00838f;
+  --nb-red:#c5221f; --nb-txt:#1f1f1f; --nb-sub:#80868b;
+  --tint:rgba(70,72,212,.18);
+  --accent:var(--nb-ind);
+  --card-bg-1:#ffffff; --card-bg-2:#eef0ff;
+  position:relative; overflow:hidden;
+  background:linear-gradient(150deg, var(--card-bg-1) 0%, var(--card-bg-2) 100%);
+  border:1px solid #e3e3e0;
+  border-radius:16px;
+  padding:14px 16px;
+  cursor:pointer;
+  box-shadow:0 1px 2px rgba(16,24,40,.05), 0 6px 16px rgba(16,24,40,.07);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),
+             box-shadow .25s ease, border-color .22s;
+  animation:trsreg-card-in .35s ease both;
+}
+/* Stagger entrance animation, one beat per card. */
+.trsreg-kpis > .trsreg-kpi:nth-child(1){ animation-delay:0s; }
+.trsreg-kpis > .trsreg-kpi:nth-child(2){ animation-delay:.05s; }
+.trsreg-kpis > .trsreg-kpi:nth-child(3){ animation-delay:.10s; }
+.trsreg-kpis > .trsreg-kpi:nth-child(4){ animation-delay:.15s; }
+.trsreg-kpis > .trsreg-kpi:nth-child(5){ animation-delay:.20s; }
+@keyframes trsreg-card-in{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.trsreg-kpi:hover{
+  transform:translateY(-4px) scale(1.01);
+  box-shadow:0 2px 4px rgba(16,24,40,.06), 0 16px 32px rgba(16,24,40,.12);
+  border-color:var(--accent);
+}
+.trsreg-kpi:active{ transform:translateY(0) scale(.99); }
+/* Corner gradient blob (NotebookLM "swatch" cue). */
+.trsreg-kpi::before{
+  content:""; position:absolute; top:0; left:0;
+  width:60px; height:60px;
+  background:radial-gradient(circle at 0 0, var(--tint), transparent 70%);
+  opacity:.6; pointer-events:none; transition:opacity .25s;
+}
+.trsreg-kpi:hover::before{ opacity:1; }
+/* Left-edge accent bar (slides in on hover/active). */
+.trsreg-kpi::after{
+  content:""; position:absolute; left:0; top:14px; bottom:14px;
+  width:3px; border-radius:0 2px 2px 0;
+  background:var(--accent);
+  transform:scaleY(0); transform-origin:center;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.trsreg-kpi:hover::after, .trsreg-kpi.active::after{ transform:scaleY(1); }
+.trsreg-kpi.active{ box-shadow:0 0 0 2px var(--tint), 0 4px 12px rgba(0,0,0,.04); }
+
+.trsreg-kpi-label{
+  font-size:10.5px; font-weight:600; color:var(--nb-mut);
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;
+  display:flex; align-items:center; gap:6px;
+}
+.trsreg-kpi-label i{ font-size:11px; color:var(--accent); }
+.trsreg-kpi-value{
+  font-size:26px; font-weight:700; color:var(--nb-txt); line-height:1;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  transition:color .22s;
+  animation:trsreg-count-up .6s ease-out both; animation-delay:.25s;
+}
+.trsreg-kpi:hover .trsreg-kpi-value{ color:var(--accent); }
+@keyframes trsreg-count-up{ from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+.trsreg-kpi-sub{ font-size:10.5px; color:var(--nb-sub); margin-top:6px; font-weight:500; }
+
+/* Per-status tints — one tile per status splits the palette like the
+   inventory module's stat-card variants. */
+.trsreg-kpi.total   { --tint:rgba(70,72,212,.18); --accent:var(--nb-ind);  --card-bg-2:#eef0ff; }
+.trsreg-kpi.pending { --tint:rgba(245,124,0,.20); --accent:var(--nb-amb);  --card-bg-2:#fff2db; }
+.trsreg-kpi.approved{ --tint:rgba(19,115,51,.18); --accent:var(--nb-suc);  --card-bg-2:#e6f6ec; }
+.trsreg-kpi.rejected{ --tint:rgba(197,34,31,.18); --accent:var(--nb-red);  --card-bg-2:#fde7e7; }
+.trsreg-kpi.review  { --tint:rgba(0,131,143,.18); --accent:var(--nb-cyn);  --card-bg-2:#e3f6fb; }
+
+/* ── Filter bar ─────────────────────────────────────────────────────── */
+.trsreg-filter-bar{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  background:var(--card,#fff);
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:12px;
+  padding:10px 12px; margin-bottom:12px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.trsreg-filter-bar input,
+.trsreg-filter-bar select{
+  padding:6px 9px; border:1px solid var(--border,#e5e7eb); border-radius:8px;
+  background:#fff; font-size:12px; font-family:inherit; color:var(--text,#0f172a);
+}
+.trsreg-filter-bar input:focus,
+.trsreg-filter-bar select:focus{
+  border-color:#4648d4; outline:none;
+  box-shadow:0 0 0 3px rgba(70,72,212,.15);
+}
+.trsreg-btn-clear{
+  margin-left:auto; padding:6px 12px;
+  background:#f1f5f9; border:1px solid var(--border,#e5e7eb);
+  border-radius:8px; cursor:pointer; font-size:11.5px; font-weight:600;
+  color:#64748b;
+}
+.trsreg-btn-clear:hover{ background:#e2e8f0; color:#1e293b; }
+
+/* ── Grid wrapper ───────────────────────────────────────────────────── */
+.trsreg-grid-wrap{
+  background:var(--card,#fff);
+  border:1px solid var(--border,#e5e7eb);
+  border-radius:12px;
+  box-shadow:0 1px 3px rgba(15,23,42,.05);
+  overflow:hidden;
+}
+.trsreg-grid-head{
+  padding:12px 16px; border-bottom:1px solid var(--border,#e5e7eb);
+  display:flex; align-items:center; gap:10px;
+  background:#fafbfc;
+}
+.trsreg-grid-head .ttl{
+  font-size:13px; font-weight:700; color:var(--text,#0f172a);
+}
+.trsreg-grid-head .cnt{ font-size:11px; color:#64748b; }
+.trsreg-grid-head .hint{
+  font-size:10.5px; color:#64748b; font-style:italic;
+  margin-left:6px;
+}
+.trsreg-grid-head .hint i{ margin-right:3px; }
+.trsreg-grid-head .actions{ margin-left:auto; display:flex; gap:6px; }
+.trsreg-grid-head .actions button{
+  padding:5px 12px; font-size:11.5px; font-weight:600;
+  background:#fff; border:1px solid var(--border,#e5e7eb);
+  border-radius:8px; cursor:pointer; color:var(--text,#0f172a);
+  transition:all .12s;
+}
+.trsreg-grid-head .actions button:hover{
+  background:#f1f5f9; border-color:#cbd5e1;
+}
+
+table.trsreg{ width:100%; border-collapse:collapse; font-size:12px; }
+table.trsreg thead th{
+  background:#fff; padding:9px 10px; text-align:left;
+  font-weight:700; font-size:10.5px; letter-spacing:.4px;
+  text-transform:uppercase; color:#64748b;
+  border-bottom:1px solid var(--border,#e5e7eb);
+  position:sticky; top:0; z-index:1;
+}
+table.trsreg tbody td{
+  padding:9px 10px; border-bottom:1px solid #f1f5f9;
+  vertical-align:middle; color:#1e293b;
+}
+table.trsreg tbody tr{ cursor:pointer; transition:background .1s; }
+table.trsreg tbody tr:hover{ background:#f8fafc; }
+table.trsreg .num{
+  font-family:'JetBrains Mono',monospace; font-weight:700; color:#0e7490;
+}
+table.trsreg .right{ text-align:right; font-variant-numeric:tabular-nums; }
+table.trsreg .center{ text-align:center; }
+table.trsreg .muted{ color:#94a3b8; }
+
+.trsreg-badge{
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 8px; border-radius:999px;
+  font-size:10.5px; font-weight:700; letter-spacing:.3px;
+  white-space:nowrap;
+}
+.trsreg-badge.pending  { background:rgba(245,158,11,.12); color:#b45309; }
+.trsreg-badge.approved { background:rgba(5,150,105,.10); color:#059669; }
+.trsreg-badge.rejected { background:rgba(220,38,38,.10); color:#dc2626; }
+.trsreg-badge.review   { background:rgba(2,132,199,.10); color:#0284c7; }
+.lock-badge{
+  display:inline-flex; align-items:center; gap:3px;
+  margin-left:6px; padding:2px 6px; border-radius:999px;
+  background:rgba(100,116,139,.12); color:#64748b;
+  font-size:9.5px; font-weight:700;
+}
+
+.trsreg-empty{
+  padding:48px 16px; text-align:center; color:#94a3b8;
+}
+.trsreg-empty i{ font-size:32px; opacity:.4; }
+.trsreg-empty .msg{ margin-top:10px; font-size:13px; }
+
+/* Pagination */
+.trsreg-pg{
+  padding:10px 16px; display:flex; align-items:center; gap:8px;
+  border-top:1px solid var(--border,#e5e7eb); background:#fafbfc;
+}
+.trsreg-pg .info{ font-size:11.5px; color:#64748b; margin-right:auto; }
+.trsreg-pg button{
+  padding:4px 10px; border:1px solid var(--border,#e5e7eb); background:#fff;
+  border-radius:6px; font-size:11.5px; cursor:pointer; min-width:30px;
+  font-family:inherit; color:#1e293b;
+}
+.trsreg-pg button:hover:not(:disabled){ background:#f1f5f9; }
+.trsreg-pg button:disabled{ opacity:.45; cursor:not-allowed; }
+.trsreg-pg button.active{
+  background:#4648d4; color:#fff; border-color:#4648d4;
+}
+.trsreg-pg select{
+  padding:4px 8px; border:1px solid var(--border,#e5e7eb); border-radius:6px;
+  font-size:11.5px; background:#fff; font-family:inherit;
+}
+
+/* ── Detail modal ───────────────────────────────────────────────────── */
+.trsreg-mo{
+  position:fixed; inset:0; background:rgba(15,23,42,.5);
+  display:none; align-items:center; justify-content:center;
+  z-index:1000; padding:20px; backdrop-filter:blur(2px);
+}
+.trsreg-mo.open{ display:flex; }
+.trsreg-mbox{
+  background:#fff; border-radius:14px;
+  width:min(880px, 100%); max-height:92vh;
+  overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:0 20px 60px rgba(15,23,42,.30);
+  border:1px solid var(--border,#e5e7eb);
+}
+.trsreg-mhead{
+  padding:14px 18px; border-bottom:1px solid var(--border,#e5e7eb);
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,#4648d4 0%,#5e60e0 55%,#7c3aed 100%);
+  color:#fff;
+}
+.trsreg-mhead h3{
+  margin:0; font-size:15px; font-weight:700; letter-spacing:-.01em;
+  display:flex; align-items:center; gap:8px;
+}
+.trsreg-mhead .num{
+  font-family:'JetBrains Mono',monospace; font-weight:700;
+  background:rgba(255,255,255,.18); padding:3px 9px; border-radius:6px;
+}
+.trsreg-mclose{
+  margin-left:auto; background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.24); color:#fff;
+  width:30px; height:30px; border-radius:8px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:14px; transition:all .14s;
+}
+.trsreg-mclose:hover{
+  background:linear-gradient(180deg,#fb7185 0%,#f43f5e 100%);
+  border-color:rgba(255,255,255,.4);
+}
+.trsreg-mbody{ padding:18px; overflow:auto; flex:1; }
+
+.trsreg-kv-grid{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:12px 18px;
+  margin-bottom:14px;
+}
+.trsreg-kv{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.trsreg-kv .k{
+  font-size:9.5px; font-weight:700; color:#94a3b8;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.trsreg-kv .v{
+  font-size:13px; font-weight:600; color:#1e293b;
+  word-break:break-word; line-height:1.3;
+}
+.trsreg-kv .v.mono{ font-family:'JetBrains Mono',monospace; color:#0e7490; }
+
+.trsreg-section{
+  border-top:1px solid #f1f5f9; padding-top:12px; margin-top:12px;
+}
+.trsreg-section h4{
+  margin:0 0 8px; font-size:11px; font-weight:800;
+  color:#64748b; text-transform:uppercase; letter-spacing:.6px;
+}
+.trsreg-remarks{
+  background:#f8fafc; border-left:3px solid #4648d4;
+  padding:8px 12px; border-radius:0 8px 8px 0;
+  font-size:12.5px; color:#1e293b; line-height:1.5;
+  white-space:pre-wrap;
+}
+.trsreg-params-table{
+  width:100%; border-collapse:collapse; font-size:11.5px;
+  margin-top:6px;
+}
+.trsreg-params-table th, .trsreg-params-table td{
+  border:1px solid #e5e7eb; padding:6px 8px; text-align:left;
+}
+.trsreg-params-table th{
+  background:#f8fafc; font-weight:700; font-size:10.5px;
+  color:#64748b; text-transform:uppercase; letter-spacing:.4px;
+}
+.trsreg-params-table .pass{ color:#059669; font-weight:700; }
+.trsreg-params-table .fail{ color:#dc2626; font-weight:700; }
+.trsreg-params-table .center{ text-align:center; }
+
+.trsreg-mfoot{
+  padding:12px 18px; border-top:1px solid var(--border,#e5e7eb);
+  display:flex; gap:10px; justify-content:flex-end;
+  background:linear-gradient(180deg,#f8fafc 0%, #f1f5f9 100%);
+}
+.trsreg-mfoot button{
+  padding:9px 18px; font-size:12px; font-weight:700;
+  border-radius:10px; cursor:pointer; font-family:inherit;
+  border:1px solid transparent;
+  transition:all .15s cubic-bezier(.34,1.56,.64,1);
+}
+.trsreg-mfoot .btn-primary{
+  background:linear-gradient(180deg,#5e60e0 0%,#4648d4 55%,#3a3cb8 100%);
+  color:#fff; border-color:rgba(255,255,255,.08);
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset,
+             0 -1px 0 rgba(0,0,0,.24) inset,
+             0 6px 14px rgba(70,72,212,.30);
+}
+.trsreg-mfoot .btn-primary:hover:not(:disabled){
+  transform:translateY(-1px); filter:brightness(1.06);
+}
+.trsreg-mfoot .btn-primary:disabled{
+  filter:grayscale(.4) brightness(.7); cursor:not-allowed;
+  box-shadow:0 1px 3px rgba(0,0,0,.2); transform:none;
+}
+.trsreg-mfoot .btn-ghost{
+  background:linear-gradient(180deg,#ffffff 0%,#f3f4f6 55%,#e5e7eb 100%);
+  color:#374151;
+  border:1px solid #cbd5e1;
+  font-weight:600;
+  letter-spacing:.1px;
+  display:inline-flex; align-items:center; gap:6px;
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,
+             0 -1px 0 rgba(15,23,42,.04) inset,
+             0 2px 6px rgba(15,23,42,.08),
+             0 1px 2px rgba(15,23,42,.05);
+}
+.trsreg-mfoot .btn-ghost:hover{
+  background:linear-gradient(180deg,#f9fafb 0%,#e5e7eb 55%,#cbd5e1 100%);
+  color:#0f172a;
+  border-color:#94a3b8;
+  transform:translateY(-1px);
+  box-shadow:0 1px 0 rgba(255,255,255,.95) inset,
+             0 -1px 0 rgba(15,23,42,.06) inset,
+             0 6px 14px rgba(15,23,42,.12),
+             0 2px 4px rgba(15,23,42,.06);
+}
+.trsreg-mfoot .btn-ghost:active{
+  transform:translateY(0);
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset,
+             0 1px 3px rgba(15,23,42,.10);
+}
+
+/* Dark theme variant — pick up hcptheme tokens. */
+[data-theme="dark"] .trsreg-grid-wrap,
+[data-theme="dark"] .trsreg-filter-bar{
+  background:var(--card,#1c2128); border-color:var(--border,#2d3748);
+}
+[data-theme="dark"] .trsreg-grid-head{ background:#1a1f25; }
+[data-theme="dark"] table.trsreg thead th{ background:#1a1f25; color:#94a3b8; }
+[data-theme="dark"] table.trsreg tbody td{ color:#e5e7eb; }
+[data-theme="dark"] table.trsreg tbody tr:hover{ background:rgba(255,255,255,.04); }
+[data-theme="dark"] .trsreg-pg{ background:#1a1f25; }
+[data-theme="dark"] .trsreg-pg button{ background:#21262d; color:#e5e7eb; border-color:#2d3748; }
+[data-theme="dark"] .trsreg-mbox{ background:#1c2128; border-color:#2d3748; }
+[data-theme="dark"] .trsreg-mbody{ background:#1c2128; }
+[data-theme="dark"] .trsreg-kv .v{ color:#e5e7eb; }
+[data-theme="dark"] .trsreg-remarks{ background:#0f1419; color:#e5e7eb; }
+[data-theme="dark"] .trsreg-params-table th{ background:#1a1f25; color:#94a3b8; }
+[data-theme="dark"] .trsreg-params-table td{ color:#e5e7eb; border-color:#2d3748; }
+[data-theme="dark"] .trsreg-params-table th{ border-color:#2d3748; }
+[data-theme="dark"] .trsreg-mfoot{ background:#1a1f25; }
+</style>
+</head>
+<body>
+
+{% set page_title = "TRS Register" %}
+{% set breadcrumb = [{"label": "Home", "url": "/"}, {"label": "Inventory", "url": "#"}, {"label": "TRS Register", "url": "#"}] %}
+{% set brand = {"name": "HCP Wellness", "sub": "LAN Portal", "mark": "H"} %}
+{% set portal_url = "/" %}
+{% include 'partials/_header.html' %}
+
+
+<div class="trsreg-wrap">
+
+  <!-- KPI ribbon (NotebookLM 3D cards) -->
+  <div class="trsreg-kpis">
+    <div class="trsreg-kpi total"    id="kpi-all"      onclick="trsRegFilter('All', this)">
+      <div class="trsreg-kpi-label"><i class="fa fa-flask"></i> Total TRS</div>
+      <div class="trsreg-kpi-value" id="cnt-all">—</div>
+      <div class="trsreg-kpi-sub">All generated slips</div>
+    </div>
+    <div class="trsreg-kpi pending"  id="kpi-pending"  onclick="trsRegFilter('Pending', this)">
+      <div class="trsreg-kpi-label"><i class="fa fa-hourglass-half"></i> Pending</div>
+      <div class="trsreg-kpi-value" id="cnt-pending">—</div>
+      <div class="trsreg-kpi-sub">Awaiting QC decision</div>
+    </div>
+    <div class="trsreg-kpi approved" id="kpi-approved" onclick="trsRegFilter('Approved', this)">
+      <div class="trsreg-kpi-label"><i class="fa fa-circle-check"></i> Approved</div>
+      <div class="trsreg-kpi-value" id="cnt-approved">—</div>
+      <div class="trsreg-kpi-sub">Cleared by QC</div>
+    </div>
+    <div class="trsreg-kpi rejected" id="kpi-rejected" onclick="trsRegFilter('Rejected', this)">
+      <div class="trsreg-kpi-label"><i class="fa fa-circle-xmark"></i> Rejected</div>
+      <div class="trsreg-kpi-value" id="cnt-rejected">—</div>
+      <div class="trsreg-kpi-sub">Rejected by QC</div>
+    </div>
+    <div class="trsreg-kpi review"   id="kpi-review"   onclick="trsRegFilter('Under Review', this)">
+      <div class="trsreg-kpi-label"><i class="fa fa-magnifying-glass"></i> Under Review</div>
+      <div class="trsreg-kpi-value" id="cnt-review">—</div>
+      <div class="trsreg-kpi-sub">QC re-check pending</div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="trsreg-filter-bar">
+    <input type="text" id="f-search"
+      placeholder="🔍  TRS / GRN / Item / Batch / Supplier…"
+      style="width:280px" oninput="renderRegister()">
+    <input type="date" id="f-from"   title="Generated from" oninput="renderRegister()">
+    <input type="date" id="f-to"     title="Generated to"   oninput="renderRegister()">
+    <select id="f-newold" onchange="renderRegister()">
+      <option value="">All material (NEW/OLD)</option>
+      <option value="NEW">NEW only</option>
+      <option value="OLD">OLD only</option>
+    </select>
+    <button class="trsreg-btn-clear" onclick="clearFilters()">
+      <i class="fa fa-xmark"></i> Clear
+    </button>
+  </div>
+
+  <!-- Grid -->
+  <div class="trsreg-grid-wrap">
+    <div class="trsreg-grid-head">
+      <div class="ttl">Generated TRS slips</div>
+      <div class="cnt" id="head-count">—</div>
+      <div class="hint"><i class="fa fa-circle-info"></i> Double-click any row to see details</div>
+      <div class="actions">
+        <button onclick="loadRegister(true)"><i class="fa fa-rotate"></i> Refresh</button>
+      </div>
+    </div>
+    <div style="max-height:calc(100vh - 380px); overflow:auto">
+      <table class="trsreg">
+        <thead>
+          <tr>
+            <th style="width:42px">#</th>
+            <th style="width:150px">TRS No</th>
+            <th style="width:100px">TRS Date</th>
+            <th style="width:140px">GRN No</th>
+            <th>Item Name</th>
+            <th>Batch No</th>
+            <th class="right" style="width:80px">No of Pkg</th>
+            <th class="right" style="width:110px">Total Qty</th>
+            <th class="right" style="width:100px">Sample Qty</th>
+            <th>Last Supplier</th>
+            <th>New Supplier</th>
+            <th class="center" style="width:140px">Status</th>
+            <th style="width:160px">Approval Date (IST)</th>
+            <th style="width:120px">Approved By</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="reg-body">
+          <tr><td colspan="15" class="trsreg-empty">
+            <i class="fa fa-spinner fa-spin"></i>
+            <div class="msg">Loading TRS register…</div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="trsreg-pg">
+      <span class="info" id="pg-info">—</span>
+      <div id="pg-btns"></div>
+      <select id="pg-size" onchange="pgSize=+this.value;pgPage=1;renderRegister()">
+        <option value="25">25 / page</option>
+        <option value="50" selected>50 / page</option>
+        <option value="100">100 / page</option>
+        <option value="9999">All</option>
+      </select>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ DETAIL MODAL ═══════════════════ -->
+<div class="trsreg-mo" id="trsreg-modal" onclick="if(event.target===this)closeRegDetail()">
+  <div class="trsreg-mbox">
+    <div class="trsreg-mhead">
+      <i class="fa fa-flask"></i>
+      <h3>TRS Detail · <span class="num" id="md-num">—</span></h3>
+      <button class="trsreg-mclose" onclick="closeRegDetail()" title="Close">
+        <i class="fa fa-xmark"></i>
+      </button>
+    </div>
+    <div class="trsreg-mbody" id="md-body">
+      <!-- Populated by openRegDetail -->
+    </div>
+    <div class="trsreg-mfoot">
+      <button class="btn-ghost" onclick="closeRegDetail()"><i class="fa fa-xmark"></i> Close</button>
+      <button class="btn-primary" id="md-print-btn" onclick="printApprovalReport()">
+        <i class="fa fa-print"></i> Print Approval Report
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let rows = [];
+let statusFilter = 'All';
+let pgPage = 1, pgSize = 50;
+let _currentDetail = null;   // the TRS row whose modal is currently open
+
+function esc(s){
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, m =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function fmtDate(s){
+  if(!s) return '—';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+  if(!m) return s;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+function fmtDt(s){
+  if(!s) return '—';
+  const m = /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/.exec(String(s));
+  if(!m) return s;
+  return `${m[3]}-${m[2]}-${m[1]} ${m[4]}:${m[5]}`;
+}
+function fmtNum(n){
+  if(n == null || n === '') return '—';
+  const f = parseFloat(n);
+  if(!isFinite(f)) return String(n);
+  return f.toFixed(3).replace(/\.?0+$/, '');
+}
+function statusBadge(s){
+  const m = {
+    'Pending':      ['pending',  '⏳'],
+    'Approved':     ['approved', '✅'],
+    'Rejected':     ['rejected', '❌'],
+    'Under Review': ['review',   '🔍'],
+  };
+  const v = m[s] || m.Pending;
+  return `<span class="trsreg-badge ${v[0]}">${v[1]} ${esc(s||'Pending')}</span>`;
+}
+
+async function loadRegister(showToast){
+  try{
+    const res = await fetch('/api/inventory_mgmt/trs/register_list');
+    const d = await res.json();
+    if(d.status !== 'ok') throw new Error(d.message || 'Failed');
+    rows = d.trs || [];
+    updateCounts();
+    renderRegister();
+    if(showToast) console.log('✓ Loaded ' + rows.length + ' TRS rows');
+  }catch(e){
+    document.getElementById('reg-body').innerHTML =
+      `<tr><td colspan="15" class="trsreg-empty">
+        <i class="fa fa-circle-exclamation" style="color:#dc2626"></i>
+        <div class="msg">${esc(e.message)}</div>
+      </td></tr>`;
+  }
+}
+
+function updateCounts(){
+  const c = {All: rows.length, Pending:0, Approved:0, Rejected:0, 'Under Review':0};
+  rows.forEach(r=>{
+    const s = r.approval_status || 'Pending';
+    if(c[s] !== undefined) c[s]++;
+  });
+  document.getElementById('cnt-all').textContent      = c.All;
+  document.getElementById('cnt-pending').textContent  = c.Pending;
+  document.getElementById('cnt-approved').textContent = c.Approved;
+  document.getElementById('cnt-rejected').textContent = c.Rejected;
+  document.getElementById('cnt-review').textContent   = c['Under Review'];
+}
+
+function trsRegFilter(s, el){
+  statusFilter = s;
+  document.querySelectorAll('.trsreg-kpi').forEach(k=>k.classList.remove('active'));
+  el?.classList.add('active');
+  pgPage = 1;
+  renderRegister();
+}
+
+function clearFilters(){
+  document.getElementById('f-search').value = '';
+  document.getElementById('f-from').value   = '';
+  document.getElementById('f-to').value     = '';
+  document.getElementById('f-newold').value = '';
+  trsRegFilter('All', document.getElementById('kpi-all'));
+}
+
+function renderRegister(){
+  const q     = (document.getElementById('f-search').value || '').toLowerCase();
+  const from  = document.getElementById('f-from').value || '';
+  const to    = document.getElementById('f-to').value   || '';
+  const nold  = document.getElementById('f-newold').value || '';
+
+  const filtered = rows.filter(r=>{
+    if(statusFilter !== 'All' && (r.approval_status || 'Pending') !== statusFilter) return false;
+    if(nold && (r.new_or_old || '') !== nold) return false;
+    if(q){
+      const bag = [r.trs_num, r.grn_num, r.material, r.batch_num,
+                   r.supplier_name, r.manufacturer, r.approved_by]
+        .filter(Boolean).join(' ').toLowerCase();
+      if(!bag.includes(q)) return false;
+    }
+    if(from || to){
+      const dt = (r.generated_at || '').slice(0,10);
+      if(from && dt < from) return false;
+      if(to   && dt > to)   return false;
+    }
+    return true;
+  });
+
+  document.getElementById('head-count').textContent =
+    filtered.length + ' of ' + rows.length + ' slips';
+
+  if(!filtered.length){
+    document.getElementById('reg-body').innerHTML =
+      `<tr><td colspan="15" class="trsreg-empty">
+        <i class="fa fa-inbox"></i>
+        <div class="msg">No TRS slips match your filters</div>
+      </td></tr>`;
+    document.getElementById('pg-info').textContent = '—';
+    document.getElementById('pg-btns').innerHTML = '';
+    return;
+  }
+
+  const start = (pgPage-1) * pgSize;
+  const slice = filtered.slice(start, start + pgSize);
+  const tb = document.getElementById('reg-body');
+  tb.innerHTML = slice.map((r, i) => {
+    const sr   = start + i + 1;
+    const st   = r.approval_status || 'Pending';
+    const lock = r.is_locked
+      ? '<span class="lock-badge" title="Decision locked (24h elapsed)"><i class="fa fa-lock"></i> Locked</span>'
+      : '';
+    // dblclick → open detail modal. Single click does nothing (the row
+    // is a single visual unit, not selectable). We attach via the row's
+    // ondblclick attribute and reference the row's TRS id; we look the
+    // row up from the local cache by id so the data is always fresh.
+    return `<tr ondblclick="openRegDetail(${r.id})">
+      <td class="muted">${sr}</td>
+      <td><span class="num">${esc(r.trs_num||'')}</span></td>
+      <td>${fmtDate((r.generated_at||'').slice(0,10))}</td>
+      <td>${esc(r.grn_num||'—')}</td>
+      <td>${esc(r.material||'')}</td>
+      <td>${esc(r.batch_num||'—')}</td>
+      <td class="right">${r.packages || 0}</td>
+      <td class="right">${fmtNum(r.total_qty)} ${esc(r.uom||'KG')}</td>
+      <td class="right">${fmtNum(r.sample_qty)}</td>
+      <td>${esc(r.previous_supplier || r.supplier_name || '—')}</td>
+      <td>${r.new_supplier ? esc(r.new_supplier) : '—'}</td>
+      <td class="center">${statusBadge(st)}${lock}</td>
+      <td>${fmtDt(r.approval_dt)}</td>
+      <td>${esc(r.approved_by||'—')}</td>
+      <td>${esc(r.approval_remarks||'')}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const total = filtered.length;
+  const pages = Math.max(1, Math.ceil(total / pgSize));
+  document.getElementById('pg-info').textContent =
+    `${start + 1}–${Math.min(start + pgSize, total)} of ${total}`;
+  let bh = '';
+  bh += `<button onclick="pgPage=1;renderRegister()" ${pgPage===1?'disabled':''}>«</button>`;
+  bh += `<button onclick="pgPage=Math.max(1,pgPage-1);renderRegister()" ${pgPage===1?'disabled':''}>‹</button>`;
+  const span = 3;
+  let lo = Math.max(1, pgPage - span), hi = Math.min(pages, pgPage + span);
+  if(lo > 1) bh += '<span style="padding:0 6px;color:#94a3b8">…</span>';
+  for(let p = lo; p <= hi; p++){
+    bh += `<button class="${p===pgPage?'active':''}" onclick="pgPage=${p};renderRegister()">${p}</button>`;
+  }
+  if(hi < pages) bh += '<span style="padding:0 6px;color:#94a3b8">…</span>';
+  bh += `<button onclick="pgPage=Math.min(${pages},pgPage+1);renderRegister()" ${pgPage===pages?'disabled':''}>›</button>`;
+  bh += `<button onclick="pgPage=${pages};renderRegister()" ${pgPage===pages?'disabled':''}>»</button>`;
+  document.getElementById('pg-btns').innerHTML = bh;
+}
+
+/* ═══════════════════ DETAIL MODAL ═══════════════════════════════════════
+   Double-clicking a row opens this modal. Inside we surface the same
+   fields the QC dashboard shows in its TRS Detail panel, plus a Print
+   Approval Report button that re-renders the COA generated by the QC
+   person at decision time. ─────────────────────────────────────────── */
+function openRegDetail(trsId){
+  const r = rows.find(x => x.id === trsId);
+  if(!r){ console.warn('TRS row not in cache:', trsId); return; }
+  _currentDetail = r;
+
+  // Populate the head TRS number
+  document.getElementById('md-num').textContent = r.trs_num || '—';
+
+  // Body — key/value grid, then remarks, then per-parameter table if any
+  const v = (x) => (x == null || x === '') ? '—' : String(x);
+  const checked = Array.isArray(r.checked_params) ? r.checked_params : [];
+  // Failed parameters get a red colour-code in the params table.
+  const paramRowsHtml = checked.filter(p => p && typeof p === 'object').map((p, i) => {
+    const spec = (p.spec_type === 'range')
+      ? `${p.spec_from ?? ''} – ${p.spec_to ?? ''}${p.unit ? ' ' + p.unit : ''}`.trim()
+      : (p.spec_target || '—');
+    const obs  = (p.observed != null && p.observed !== '')
+      ? (p.observed + (p.unit ? ' ' + p.unit : ''))
+      : '—';
+    const verdict = p.passed === true
+      ? '<span class="pass">PASS</span>'
+      : p.passed === false
+        ? '<span class="fail">FAIL</span>'
+        : '<span style="color:#94a3b8">—</span>';
+    return `<tr>
+      <td class="center">${i+1}</td>
+      <td><b>${esc(p.name || '')}</b></td>
+      <td>${esc(spec || '—')}</td>
+      <td>${esc(obs)}</td>
+      <td class="center">${verdict}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `
+    <div class="trsreg-kv-grid">
+      <div class="trsreg-kv">
+        <span class="k">Status</span>
+        <span class="v">${statusBadge(r.approval_status || 'Pending')}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">TRS Date</span>
+        <span class="v">${fmtDate((r.generated_at||'').slice(0,10))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Approval Date</span>
+        <span class="v">${fmtDt(r.approval_dt)}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">GRN No</span>
+        <span class="v mono">${esc(v(r.grn_num))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">GRN Date</span>
+        <span class="v">${fmtDate(r.grn_date)}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Verified By</span>
+        <span class="v">${esc(v(r.verified_by))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Item Name</span>
+        <span class="v">${esc(v(r.material))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Batch No</span>
+        <span class="v mono">${esc(v(r.batch_num))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Physical State</span>
+        <span class="v">${esc(v(r.physical_state))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Packages</span>
+        <span class="v">${v(r.packages)}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Total Qty</span>
+        <span class="v">${fmtNum(r.total_qty)} ${esc(r.uom||'KG')}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Sample Qty</span>
+        <span class="v">${fmtNum(r.sample_qty)} ${esc(r.uom||'KG')}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Manufacturer</span>
+        <span class="v">${esc(v(r.manufacturer))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Mfg Date</span>
+        <span class="v">${fmtDate(r.mfg_date)}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Expiry Date</span>
+        <span class="v">${fmtDate(r.expiry_date)}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Last Supplier</span>
+        <span class="v">${esc(v(r.previous_supplier || r.supplier_name))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">New Supplier</span>
+        <span class="v">${esc(v(r.new_supplier))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">NEW / OLD</span>
+        <span class="v">${esc(v(r.new_or_old))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Generated By</span>
+        <span class="v">${esc(v(r.generated_by))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Approved By</span>
+        <span class="v">${esc(v(r.approved_by))}</span>
+      </div>
+      <div class="trsreg-kv">
+        <span class="k">Locked At (IST)</span>
+        <span class="v">${fmtDt(r.approval_locked_at)}</span>
+      </div>
+    </div>
+
+    ${r.approval_remarks ? `
+      <div class="trsreg-section">
+        <h4>Approval Remarks</h4>
+        <div class="trsreg-remarks">${esc(r.approval_remarks)}</div>
+      </div>` : ''}
+
+    ${r.rejection_reason ? `
+      <div class="trsreg-section">
+        <h4 style="color:#dc2626">Rejection Reason</h4>
+        <div class="trsreg-remarks" style="border-left-color:#dc2626;background:#fef2f2">${esc(r.rejection_reason)}</div>
+      </div>` : ''}
+
+    ${paramRowsHtml ? `
+      <div class="trsreg-section">
+        <h4>Checked Parameters (${checked.filter(p => p && typeof p === 'object').length})</h4>
+        <table class="trsreg-params-table">
+          <thead>
+            <tr>
+              <th class="center" style="width:36px">#</th>
+              <th>Parameter</th>
+              <th style="width:150px">Specification</th>
+              <th style="width:150px">Observation</th>
+              <th class="center" style="width:80px">Result</th>
+            </tr>
+          </thead>
+          <tbody>${paramRowsHtml}</tbody>
+        </table>
+      </div>` : ''}
+  `;
+  document.getElementById('md-body').innerHTML = html;
+
+  // Print is ALWAYS available now — the TRS slip is built locally (see
+  // printApprovalReport), so it prints whether or not QC has filled in the
+  // approval. The slip layout matches the one generated at GRN time.
+  const printBtn = document.getElementById('md-print-btn');
+  printBtn.disabled = false;
+  printBtn.title = 'Open the printable TRS slip';
+
+  document.getElementById('trsreg-modal').classList.add('open');
+}
+
+function closeRegDetail(){
+  document.getElementById('trsreg-modal').classList.remove('open');
+  _currentDetail = null;
+}
+
+/* Build and open the TRS slip locally — a faithful port of
+   _buildTrsPrintHtml from inventory_grn.js (the slip generated at GRN
+   time), so the register prints the SAME standard TRS layout. Works
+   whether or not QC has filled in the approval: the Physical Verification
+   observation cells are intentionally blank on the slip regardless, and
+   every data field maps to the row already in _currentDetail. Dates print
+   as DD-MM-YYYY to match the reference slip. Kept self-contained (no
+   dependency on inventory_grn.js, which isn't loaded on this page). */
+function printApprovalReport(){
+  const t = _currentDetail;
+  if(!t){ return; }
+
+  function v(x){ return (x === null || x === undefined || x === '') ? '—' : String(x); }
+  function num(x){
+    if (x === null || x === undefined || x === '') return '—';
+    var n = parseFloat(x);
+    if (!isFinite(n)) return v(x);
+    return n.toFixed(3).replace(/\.?0+$/, '');
+  }
+  function dt(iso){                       // DD-MM-YYYY (matches reference slip)
+    if (!iso) return '—';
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+    if (!m) return String(iso);
+    return m[3] + '-' + m[2] + '-' + m[1];
+  }
+  var today = (new Date()).toISOString().slice(0,10);
+
+  var html = ''
++ '<!DOCTYPE html><html><head><meta charset="utf-8">'
++ '<title>TRS ' + esc(t.trs_num || '') + '</title>'
++ '<style>'
++ '  *{box-sizing:border-box}'
++ '  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
++ '       color:#111827;margin:0;padding:24px;background:#fff;font-size:12px}'
++ '  .sheet{max-width:780px;margin:0 auto;border:2px solid #111827}'
++ '  .head{display:grid;grid-template-columns:130px 1fr;'
++ '        border-bottom:2px solid #111827}'
++ '  .head .logo{padding:14px;border-right:2px solid #111827;'
++ '        display:flex;align-items:center;justify-content:center;'
++ '        font-weight:900;font-size:20px;color:#1e3a8a;letter-spacing:-1px}'
++ '  .head .logo small{display:block;font-size:8px;letter-spacing:.6px;'
++ '        color:#374151;margin-top:2px;font-weight:600}'
++ '  .head .title{padding:14px;display:flex;flex-direction:column;'
++ '        align-items:center;justify-content:center;text-align:center}'
++ '  .head .title h1{margin:0;font-size:16px;letter-spacing:1px;'
++ '        font-weight:800}'
++ '  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}'
++ '  td{border:1px solid #111827;padding:8px 10px;vertical-align:middle;'
++ '      word-wrap:break-word;overflow-wrap:break-word}'
++ '  .lbl{background:#f9fafb;font-weight:700;white-space:nowrap}'
++ '  .center{text-align:center}'
++ '  .nowrap{white-space:nowrap}'
++ '  .pv-head td{background:#f3f4f6;font-weight:700;text-align:center;'
++ '        letter-spacing:1px}'
++ '  .sign-row td{height:42px}'
++ '  .actions{max-width:780px;margin:14px auto 0;display:flex;'
++ '        gap:10px;justify-content:flex-end}'
++ '  .btn{padding:8px 16px;font-size:12px;font-weight:700;'
++ '       border:1px solid #4338ca;border-radius:6px;cursor:pointer;'
++ '       background:#4338ca;color:#fff}'
++ '  .btn-ghost{background:#fff;color:#4338ca}'
++ '  @media print{ .actions{display:none} body{padding:0} }'
++ '</style></head><body>'
++ '<div class="sheet">'
++ '  <div class="head">'
++ '    <div class="logo">HCP'
++ '      <small style="display:block">WELLNESS PVT. LTD.</small>'
++ '    </div>'
++ '    <div class="title">'
++ '      <h1>TESTING REQUISITION SLIP (TRS)</h1>'
++ '    </div>'
++ '  </div>'
++ '  <table>'
++ '    <colgroup>'
++ '      <col style="width:19%">'
++ '      <col style="width:14%">'
++ '      <col style="width:14%">'
++ '      <col style="width:19%">'
++ '      <col style="width:17%">'
++ '      <col style="width:17%">'
++ '    </colgroup>'
++ '    <tr><td class="lbl">TRS No</td><td>' + esc(t.trs_num || '') + '</td>'
++ '        <td class="lbl">Date</td><td class="nowrap">' + dt(today) + '</td>'
++ '        <td class="lbl">Department</td><td>R M STORE</td></tr>'
++ '    <tr>'
++ '      <td class="lbl">Name of Sample</td>'
++ '      <td colspan="5">' + esc(v(t.material)) + '</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="lbl">Batch No / Product Code</td>'
++ '      <td colspan="2">' + esc(v(t.batch_num)) + '</td>'
++ '      <td class="lbl">No of Pkt / Label</td>'
++ '      <td colspan="2" class="center">' + v(t.packages) + '</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="lbl">GRN No</td>'
++ '      <td colspan="2">' + esc(v(t.grn_num)) + '</td>'
++ '      <td class="lbl">GRN Date</td>'
++ '      <td colspan="2" class="nowrap">' + dt(t.grn_date) + '</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="lbl">Physical State</td>'
++ '      <td colspan="2">' + esc(v(t.physical_state)) + '</td>'
++ '      <td class="lbl">Total Qty (in ' + esc(t.uom || 'KG') + ')</td>'
++ '      <td colspan="2" class="center">' + num(t.total_qty) + '</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="lbl">Sample Qty (in ' + esc(t.uom || 'KG') + ')</td>'
++ '      <td colspan="5" class="center">' + num(t.sample_qty) + '</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="lbl">Mfg. Name</td>'
++ '      <td colspan="2">' + esc(v(t.manufacturer)) + '</td>'
++ '      <td class="lbl">Mfg. Date</td>'
++ '      <td colspan="2" class="nowrap">' + dt(t.mfg_date) + '</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="lbl">Supplier Name</td>'
++ '      <td colspan="2">' + esc(v(t.supplier_name)) + '</td>'
++ '      <td class="lbl">Expiry Date</td>'
++ '      <td colspan="2" class="nowrap">' + dt(t.expiry_date) + '</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="lbl">Previous Supplier</td>'
++ '      <td colspan="2">' + esc(v(t.previous_supplier || t.supplier_name)) + '</td>'
++ '      <td class="lbl">NEW / OLD Material</td>'
++ '      <td colspan="2" class="center"><b>' + esc(v(t.new_or_old)) + '</b></td>'
++ '    </tr>'
++ '    <tr class="pv-head">'
++ '      <td colspan="6">PHYSICAL VERIFICATION</td>'
++ '    </tr>'
++ '    <tr>'
++ '      <td class="center" style="width:60px"><b>Sr No</b></td>'
++ '      <td colspan="2"><b>Parameter</b></td>'
++ '      <td colspan="3" class="center"><b>Observation</b></td>'
++ '    </tr>'
++ '    <tr><td class="center">1</td><td colspan="2">Appearance</td><td colspan="3"></td></tr>'
++ '    <tr><td class="center">2</td><td colspan="2">Odour</td><td colspan="3"></td></tr>'
++ '    <tr><td class="center">3</td><td colspan="2">COA Availability</td><td colspan="3"></td></tr>'
++ '    <tr class="sign-row">'
++ '      <td class="lbl">Verified By</td>'
++ '      <td colspan="2">' + esc(v(t.verified_by)) + '</td>'
++ '      <td colspan="2"></td>'
++ '      <td class="nowrap center">' + dt(today) + '</td>'
++ '    </tr>'
++ '    <tr class="sign-row pv-head">'
++ '      <td></td>'
++ '      <td colspan="2">Name of Incharge</td>'
++ '      <td colspan="2">Sign</td>'
++ '      <td>Date</td>'
++ '    </tr>'
++ '  </table>'
++ '</div>'
++ '<div class="actions">'
++ '  <button class="btn btn-ghost" onclick="window.close()">Close</button>'
++ '  <button class="btn" onclick="window.print()">Print</button>'
++ '</div>'
++ '</body></html>';
+
+  var win = window.open('', '_blank', 'width=900,height=700');
+  if(!win){ alert('Pop-up blocked — please allow pop-ups for this site.'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+}
+
+
+/* ── ESC key closes the modal (helpful keyboard navigation) ── */
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && document.getElementById('trsreg-modal').classList.contains('open')){
+    closeRegDetail();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  trsRegFilter('All', document.getElementById('kpi-all'));
+  loadRegister();
+  // Auto-refresh every 90s (but keep modal state if it's open)
+  setInterval(() => {
+    if(!document.getElementById('trsreg-modal').classList.contains('open')){
+      loadRegister();
+    }
+  }, 90_000);
+});
+</script>
+</body>
+</html>

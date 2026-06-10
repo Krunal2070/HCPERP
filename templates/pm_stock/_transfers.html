@@ -1,0 +1,713 @@
+<!-- ═══════════════════════════════════════════════════════════════════════
+     STOCK TRANSFERS PANEL  (QR voucher — RM phase 2, PM-stock parity)
+     ───────────────────────────────────────────────────────────────────────
+     Included by templates/inventory/inventory_mgmt.html via Jinja include.
+
+     LAYOUT (matches PM Stock's Material Movement screen):
+       Three pill-style internal tabs at the top:
+         📤 Material OUT   — Create-OUT card + Pending-OUT scanning list
+         📥 Material IN    — In-Transit dashboard cards (click to receive)
+         🗂 History        — Received + Cancelled vouchers, searchable
+
+     The wide modal overlay (out_started / in_pending / read-only) stays
+     unchanged — it's what opens when the user clicks a row to keep
+     scanning or to confirm receipt.
+
+     The "Simple Voucher (manual)" workflow now lives in its OWN sidebar
+     panel — see static/inventory/inventory_simple_transfer.js. That
+     module injects its own sidebar nav item, panel, and routes at
+     runtime, so no edits needed in inventory_mgmt.html.
+
+     CSS namespace: tr-*  +  trm-* (transfer-modal)
+     JS pairs:  static/inventory/inventory_transfers.js
+     Backend:   inventory/inventory_transfers.py  (UNCHANGED — same APIs)
+═════════════════════════════════════════════════════════════════════════ -->
+<style>
+/* ─── Status badges (used in tables and modal header) ───────────── */
+.tr-status-badge{
+  display:inline-block; padding:3px 10px;
+  border-radius:14px; font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.tr-status-out_started{ background:#fff7ed; color:#9a3412; border:1px solid #fdba74; }
+.tr-status-in_pending  { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+.tr-status-received    { background:#dcfce7; color:#15803d; border:1px solid #86efac; }
+.tr-status-cancelled   { background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; }
+.tr-status-draft       { background:#f3f4f6; color:#374151; border:1px solid #d1d5db; }
+.tr-status-posted      { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+
+/* ─── PM-style internal pill tabs (OUT / IN / History) ──────────── */
+.tr-pills{
+  display:inline-flex; gap:4px;
+  background:#f1f5f9; padding:4px;
+  border-radius:10px; margin-bottom:14px;
+}
+.tr-pill{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 18px;
+  font-size:12px; font-weight:800;
+  color:#6b7280; background:transparent;
+  border:none; border-radius:7px;
+  cursor:pointer; font-family:inherit;
+  transition:all .12s;
+}
+.tr-pill:hover{ color:#111; background:rgba(0,0,0,.04); }
+.tr-pill.active{
+  background:#0d9488; color:#fff;
+  box-shadow:0 1px 3px rgba(13,148,136,.25);
+}
+.tr-pill .icon{ font-size:11px; }
+.tr-pill .count{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:16px; padding:0 6px;
+  border-radius:9px;
+  background:#f59e0b; color:#fff;
+  font-size:9px; font-weight:800;
+}
+.tr-pill.active .count{
+  background:rgba(255,255,255,.25);
+}
+.tr-pill-pane{ display:none; }
+.tr-pill-pane.active{ display:block; }
+
+/* ─── Create OUT card  (top of Material OUT pane) ───────────────── */
+.tr-create-card{
+  background:#fff; border:1.5px solid #e5e7eb;
+  border-radius:10px; padding:14px 18px;
+  margin-bottom:18px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.tr-create-head{
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:12px;
+}
+.tr-create-title{
+  font-size:13px; font-weight:800; color:#111;
+}
+.tr-create-grid{
+  display:grid; grid-template-columns:1fr 1fr 2fr auto;
+  gap:10px; align-items:end;
+}
+@media (max-width:760px){
+  .tr-create-grid{ grid-template-columns:1fr; }
+}
+.tr-create-grid label{
+  font-size:10px; font-weight:800; color:#6b7280;
+  text-transform:uppercase; letter-spacing:.4px;
+  display:block; margin-bottom:4px;
+}
+.tr-create-grid select,
+.tr-create-grid input{
+  width:100%; padding:8px 11px; font-size:12.5px;
+  background:#fff;
+  border:1.5px solid #d1d5db; border-radius:7px;
+  outline:none; box-sizing:border-box;
+  font-weight:600;
+}
+.tr-create-grid select:focus,
+.tr-create-grid input:focus{
+  border-color:#0d9488;
+  box-shadow:0 0 0 3px rgba(13,148,136,.10);
+}
+.tr-create-btn{
+  background:#0d9488; color:#fff;
+  border:none; border-radius:7px;
+  padding:9px 18px;
+  font-size:12px; font-weight:800;
+  cursor:pointer; white-space:nowrap;
+  font-family:inherit;
+}
+.tr-create-btn:hover{ background:#0f766e; }
+.tr-create-btn:disabled{
+  background:#9ca3af; cursor:not-allowed;
+}
+
+/* ─── Section title (e.g. "Pending OUT vouchers") ───────────────── */
+.tr-section-title{
+  font-size:12px; font-weight:800; color:#111;
+  margin:14px 0 8px;
+  display:flex; align-items:center; gap:8px;
+  text-transform:uppercase; letter-spacing:.4px;
+}
+.tr-section-title .pulse{
+  display:inline-block; width:8px; height:8px;
+  border-radius:50%; background:#f59e0b;
+  animation:trPulse 1.4s infinite;
+}
+@keyframes trPulse{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.4; transform:scale(1.3); }
+}
+.tr-section-meta{
+  margin-left:auto;
+  font-size:10.5px; color:#9ca3af; font-weight:600;
+  text-transform:none; letter-spacing:0;
+}
+
+/* ─── In-Transit dashboard cards (Material IN pane) ─────────────── */
+.tr-it-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:10px;
+}
+.tr-it-card{
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px;
+  background:linear-gradient(135deg,#fff7ed,#ffedd5);
+  border:1.5px solid #fdba74;
+  border-radius:10px;
+  cursor:pointer; transition:all .15s;
+}
+.tr-it-card:hover{
+  border-color:#f59e0b;
+  box-shadow:0 2px 10px rgba(245,158,11,.22);
+  transform:translateY(-1px);
+}
+.tr-it-card .icon{ font-size:22px; }
+.tr-it-card .info{ flex:1; min-width:0; }
+.tr-it-card .num{
+  font-size:12.5px; font-weight:800; color:#111;
+  font-family:'JetBrains Mono',monospace;
+}
+.tr-it-card .route{
+  font-size:11px; color:#6b7280; margin-top:2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.tr-it-card .meta{
+  font-size:10px; color:#9ca3af; margin-top:2px;
+}
+.tr-it-card .boxes{ text-align:right; }
+.tr-it-card .boxes .lbl{
+  font-size:9px; color:#9ca3af; font-weight:700;
+  text-transform:uppercase; letter-spacing:.4px;
+}
+.tr-it-card .boxes .val{
+  font-size:18px; font-weight:800; color:#c2410c;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* ─── History filter toolbar ────────────────────────────────────── */
+.tr-hist-toolbar{
+  display:flex; gap:8px; align-items:center;
+  flex-wrap:wrap; margin-bottom:12px;
+}
+.tr-hist-toolbar .search{
+  flex:1; min-width:200px; max-width:360px;
+}
+.tr-hist-toolbar input[type="search"],
+.tr-hist-toolbar input[type="date"]{
+  width:100%; padding:7px 10px;
+  border:1px solid #d1d5db; border-radius:6px;
+  font-size:12px; box-sizing:border-box;
+}
+
+/* ═══ TRANSFER MODAL — unchanged from before ═════════════════════ */
+.trm-overlay{
+  position:fixed; inset:0;
+  background:rgba(15,23,42,.55);
+  display:none;
+  align-items:flex-start; justify-content:center;
+  z-index:1050; padding:20px;
+  overflow-y:auto;
+}
+.trm-overlay.open{ display:flex; }
+.trm-modal{
+  background:#fff;
+  width:min(98vw,1400px); max-width:1400px;
+  max-height:calc(100vh - 40px);
+  border-radius:14px;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.35);
+  animation:trmIn .18s cubic-bezier(.4,0,.2,1);
+}
+@keyframes trmIn{
+  from{ transform:translateY(10px); opacity:0; }
+  to  { transform:translateY(0); opacity:1; }
+}
+.trm-head{
+  padding:14px 20px;
+  border-bottom:2.5px solid #92400e;
+  background:linear-gradient(135deg,#92400e 0%,#b45309 100%);
+  color:#fff; flex-shrink:0;
+}
+.trm-modal.mode-in .trm-head{
+  border-bottom-color:#1e40af;
+  background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);
+}
+.trm-modal.mode-done .trm-head{
+  border-bottom-color:#15803d;
+  background:linear-gradient(135deg,#15803d 0%,#22c55e 100%);
+}
+.trm-modal.mode-cancelled .trm-head{
+  border-bottom-color:#b91c1c;
+  background:linear-gradient(135deg,#b91c1c 0%,#dc2626 100%);
+}
+.trm-head-row{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+}
+.trm-head-title-lbl{
+  font-size:11px; font-weight:700; opacity:.85;
+  letter-spacing:.5px; text-transform:uppercase;
+}
+.trm-head-vno{
+  font-size:18px; font-weight:900; font-family:monospace;
+  margin-top:2px;
+}
+.trm-head-route{ text-align:right; }
+.trm-head-route .l{ font-size:10px; opacity:.85; margin-top:2px; }
+.trm-head-route .l strong{ font-weight:800; }
+.trm-close{
+  background:rgba(255,255,255,.2); color:#fff;
+  border:1px solid rgba(255,255,255,.3);
+  border-radius:6px; width:32px; height:32px;
+  font-size:18px; cursor:pointer; flex-shrink:0; line-height:1;
+}
+.trm-close:hover{ background:rgba(255,255,255,.3); }
+.trm-body{ padding:14px 20px; overflow-y:auto; flex:1; }
+.trm-banner{
+  padding:8px 12px; border-radius:5px;
+  border-left:3px solid #f59e0b;
+  background:rgba(245,158,11,.10);
+  color:#92400e; font-size:12px; font-weight:700;
+  margin-bottom:14px;
+}
+.trm-modal.mode-in .trm-banner{
+  border-left-color:#3b82f6; background:rgba(59,130,246,.10); color:#1e40af;
+}
+.trm-modal.mode-done .trm-banner{
+  border-left-color:#22c55e; background:rgba(34,197,94,.10); color:#15803d;
+}
+.trm-modal.mode-cancelled .trm-banner{
+  border-left-color:#dc2626; background:rgba(220,38,38,.10); color:#b91c1c;
+}
+.trm-form-row{
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:14px; margin-bottom:14px;
+}
+.trm-form-row.full{ grid-template-columns:1fr; }
+@media (max-width:760px){ .trm-form-row{ grid-template-columns:1fr; } }
+.trm-field label{
+  font-size:10px; font-weight:800; color:#6b7280;
+  text-transform:uppercase; letter-spacing:.5px;
+  display:block; margin-bottom:5px;
+}
+.trm-field label .req{ color:#dc2626; }
+.trm-field input, .trm-field select{
+  width:100%; padding:9px 12px; font-size:13.5px;
+  border:1.5px solid #d1d5db; border-radius:7px;
+  box-sizing:border-box; outline:none; font-weight:600;
+}
+.trm-field input:focus, .trm-field select:focus{
+  border-color:var(--brand,#4f46e5);
+  box-shadow:0 0 0 3px rgba(79,70,229,.08);
+}
+.trm-field input:disabled, .trm-field select:disabled{
+  background:#f9fafb; cursor:not-allowed; color:#6b7280;
+}
+.trm-scan-strip{
+  background:#fff7ed; border:1.5px solid #fdba74;
+  border-radius:8px; padding:12px 14px; margin-bottom:14px;
+}
+.trm-modal.mode-in .trm-scan-strip{ background:#eff6ff; border-color:#93c5fd; }
+.trm-scan-row{ display:flex; align-items:center; gap:10px; }
+.trm-scan-row .ico{ font-size:22px; }
+.trm-scan-row .col{ flex:1; }
+.trm-scan-row .col label{
+  font-size:10px; font-weight:800; color:#92400e;
+  text-transform:uppercase; letter-spacing:.4px;
+}
+.trm-modal.mode-in .trm-scan-row .col label{ color:#1e40af; }
+.trm-scan-input{
+  width:100%; background:#fff;
+  border:1.5px solid #fcd34d !important;
+  border-radius:6px !important;
+  padding:9px 12px !important;
+  font-size:14px !important;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700; color:#111; outline:none;
+  margin-top:4px; text-transform:uppercase;
+  box-sizing:border-box;
+}
+.trm-modal.mode-in .trm-scan-input{ border-color:#93c5fd !important; }
+.trm-scan-input:focus{
+  border-color:#92400e !important;
+  box-shadow:0 0 0 3px rgba(146,64,14,.15) !important;
+}
+.trm-modal.mode-in .trm-scan-input:focus{
+  border-color:#1e40af !important;
+  box-shadow:0 0 0 3px rgba(30,64,175,.15) !important;
+}
+.trm-scan-help{ font-size:10.5px; color:#6b7280; margin-top:6px; padding-left:32px; }
+.trm-scan-feedback{ font-size:11.5px; margin-top:6px; padding-left:32px; min-height:14px; }
+.trm-scan-feedback.ok    { color:#15803d; font-weight:700; }
+.trm-scan-feedback.error { color:#dc2626; font-weight:700; }
+.trm-scan-feedback.info  { color:#4f46e5; font-weight:700; }
+.trm-totals{
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:8px; margin-bottom:10px;
+}
+.trm-tot{
+  padding:10px 14px; border-radius:6px;
+  background:rgba(146,64,14,.06);
+  border:1px solid rgba(146,64,14,.2);
+}
+.trm-tot.t-qty{ background:rgba(13,148,136,.06); border-color:rgba(13,148,136,.2); }
+.trm-tot.t-progress{ background:rgba(34,197,94,.06); border-color:rgba(34,197,94,.2); }
+.trm-tot .lbl{
+  font-size:9px; font-weight:800; color:#92400e;
+  text-transform:uppercase; letter-spacing:.4px;
+}
+.trm-tot.t-qty .lbl{ color:#0d9488; }
+.trm-tot.t-progress .lbl{ color:#15803d; }
+.trm-tot .val{
+  font-size:18px; font-weight:800; color:#92400e;
+  font-family:'JetBrains Mono',monospace;
+}
+.trm-tot.t-qty .val{ color:#0d9488; }
+.trm-tot.t-progress .val{ color:#15803d; }
+.trm-tot .progress-bar{
+  margin-top:5px; width:100%; height:6px;
+  background:rgba(34,197,94,.15); border-radius:3px;
+  overflow:hidden;
+}
+.trm-tot .progress-fill{ height:100%; background:#22c55e; transition:width .25s ease; }
+.trm-packages-wrap{
+  border:1px solid #e5e7eb; border-radius:8px;
+  background:#fff; overflow:hidden;
+}
+.trm-packages-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:9px 14px;
+  background:#f9fafb; border-bottom:1px solid #e5e7eb;
+  font-weight:700; font-size:12.5px; color:#374151;
+}
+.trm-packages-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.trm-packages-tbl thead th{
+  text-align:left; background:#fafbfc;
+  border-bottom:1px solid #e5e7eb;
+  padding:8px 12px; font-weight:700; font-size:11px;
+  color:#374151; text-transform:uppercase; letter-spacing:.4px;
+}
+.trm-packages-tbl tbody td{
+  padding:9px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle;
+}
+.trm-packages-tbl tbody tr:last-child td{ border-bottom:none; }
+.trm-packages-tbl .no-data{
+  text-align:center; color:#9ca3af; font-style:italic; padding:24px 12px;
+}
+.trm-packages-tbl .muted{ color:#9ca3af; }
+.trm-packages-tbl .right{ text-align:right; }
+.trm-packages-tbl .center{ text-align:center; }
+.trm-pkg-del{
+  border:none; background:transparent; color:#dc2626;
+  cursor:pointer; font-size:16px; padding:3px 8px;
+  border-radius:4px; line-height:1;
+}
+.trm-pkg-del:hover{ background:#fee2e2; }
+.trm-pkg-tick{ color:#16a34a; font-weight:700; font-size:15px; }
+.trm-pkg-x   { color:#9ca3af; }
+.trm-foot{
+  display:flex; align-items:center; gap:10px;
+  padding:14px 20px;
+  background:#fafbfc; border-top:1px solid #e5e7eb;
+  flex-shrink:0;
+}
+.trm-foot .btn{ padding:9px 18px; }
+.trm-spacer{ flex:1; }
+</style>
+
+
+<template id="igd-panel-stock-transfers-tpl">
+  <div class="panel" id="panel-stock-transfers">
+
+    <!-- BUILD MARKER — if you see this text on screen, the new _transfers.html
+         is being served. If the screen shows old QR/Manual sub-tabs or
+         All/Out Started/In Transit chips instead, Flask is serving a cached
+         older copy and needs to be restarted (or the file deployed to the
+         right path). Remove this marker line after verifying. -->
+    <div style="background:#fef3c7;border:1px dashed #f59e0b;color:#92400e;
+                padding:6px 10px;border-radius:6px;font-size:11px;
+                font-weight:600;margin-bottom:10px">
+      ✅ Stock Transfers v2 (PM-style three-pill layout) — build 2026-05-18
+    </div>
+
+    <!-- PM-style internal pill tabs -->
+    <div class="tr-pills" id="tr-pills">
+      <button class="tr-pill active" data-tab="out"
+              onclick="invTrSwitchPillTab('out')">
+        <span class="icon">📤</span> Material OUT
+      </button>
+      <button class="tr-pill" data-tab="in"
+              onclick="invTrSwitchPillTab('in')">
+        <span class="icon">📥</span> Material IN
+        <span class="count" id="tr-pill-in-count" style="display:none">0</span>
+      </button>
+      <button class="tr-pill" data-tab="history"
+              onclick="invTrSwitchPillTab('history')">
+        <span class="icon">🗂</span> History
+      </button>
+    </div>
+
+    <!-- ═══ MATERIAL OUT PANE ═══════════════════════════════════════ -->
+    <div id="tr-pane-out" class="tr-pill-pane active">
+
+      <!-- Create OUT card -->
+      <div class="tr-create-card">
+        <div class="tr-create-head">
+          <span class="tr-create-title">📤 Create new OUT voucher</span>
+          <span style="font-size:10.5px;color:#9ca3af;font-weight:600">
+            Pick from + to, then click create. The voucher opens for scanning.
+          </span>
+        </div>
+        <div class="tr-create-grid">
+          <div>
+            <label>From godown <span style="color:#dc2626">*</span></label>
+            <select id="tr-create-from">
+              <option value="">— select —</option>
+            </select>
+          </div>
+          <div>
+            <label>To godown <span style="color:#dc2626">*</span></label>
+            <select id="tr-create-to">
+              <option value="">— select —</option>
+            </select>
+          </div>
+          <div>
+            <label>Remarks</label>
+            <input type="text" id="tr-create-remarks"
+                   placeholder="e.g. Production run for batch B-2026-04"
+                   maxlength="255">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="tr-create-btn" onclick="invTrCreateOutClick()">
+              <i class="fas fa-plus"></i> Create OUT
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending OUT vouchers (status=out_started — still being scanned) -->
+      <div class="tr-section-title">
+        Pending OUT vouchers (still scanning)
+        <span class="tr-section-meta" id="tr-out-pending-meta">—</span>
+      </div>
+      <div class="inv-table-wrap">
+        <div class="inv-table-scroll">
+          <table class="inv-table">
+            <thead>
+              <tr>
+                <th style="width:50px">#</th>
+                <th style="width:170px">Transfer no.</th>
+                <th style="width:110px">Date</th>
+                <th>From godown</th>
+                <th>To godown</th>
+                <th style="width:90px;text-align:right">Packages</th>
+                <th style="width:120px;text-align:right">Total qty</th>
+                <th style="width:110px" class="td-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="tr-out-pending-body">
+              <tr><td colspan="8" class="no-data">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MATERIAL IN PANE ════════════════════════════════════════ -->
+    <div id="tr-pane-in" class="tr-pill-pane">
+      <div class="tr-section-title">
+        <span class="pulse"></span>
+        In transit — awaiting receipt at destination
+        <span class="tr-section-meta" id="tr-it-meta">—</span>
+      </div>
+      <div class="tr-it-grid" id="tr-it-grid">
+        <div class="no-data" style="grid-column:1 / -1;text-align:center;
+                                    color:#9ca3af;font-style:italic;
+                                    padding:40px 12px">
+          Loading…
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ HISTORY PANE (received + cancelled, searchable) ══════════ -->
+    <div id="tr-pane-history" class="tr-pill-pane">
+      <div class="tr-hist-toolbar">
+        <div class="search">
+          <input type="search" id="tr-hist-search"
+                 placeholder="Search by transfer #, godown, remarks…"
+                 oninput="invTrRenderHistory()">
+        </div>
+        <div>
+          <select id="tr-hist-status-filter"
+                  onchange="invTrRenderHistory()"
+                  style="padding:7px 10px;border:1px solid #d1d5db;
+                         border-radius:6px;font-size:12px;background:#fff">
+            <option value="">All completed</option>
+            <option value="received">Received only</option>
+            <option value="cancelled">Cancelled only</option>
+          </select>
+        </div>
+        <div style="margin-left:auto;font-size:10.5px;color:#9ca3af;font-weight:600"
+             id="tr-hist-meta">—</div>
+      </div>
+      <div class="inv-table-wrap">
+        <div class="inv-table-scroll">
+          <table class="inv-table">
+            <thead>
+              <tr>
+                <th style="width:50px">#</th>
+                <th style="width:170px">Transfer no.</th>
+                <th style="width:110px">Date</th>
+                <th>From godown</th>
+                <th>To godown</th>
+                <th style="width:90px;text-align:right">Packages</th>
+                <th style="width:120px;text-align:right">Total qty</th>
+                <th style="width:110px">Status</th>
+                <th style="width:80px" class="td-center">View</th>
+              </tr>
+            </thead>
+            <tbody id="tr-hist-body">
+              <tr><td colspan="9" class="no-data">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     TRANSFER MODAL (single overlay reused for OUT / IN / read-only)
+     Rendered directly (not in a template) since position:fixed.
+     ═════════════════════════════════════════════════════════════════ -->
+<div class="trm-overlay" id="trmOverlay" onclick="invTrModalBgClick(event)">
+  <div class="trm-modal" id="trmModal" onclick="event.stopPropagation()">
+
+    <div class="trm-head">
+      <div class="trm-head-row">
+        <div>
+          <div class="trm-head-title-lbl" id="trmHeadTitle">📤 Material OUT voucher</div>
+          <div class="trm-head-vno"><span id="trmVno">—</span></div>
+        </div>
+        <div class="trm-head-route">
+          <div class="l">FROM <strong><span id="trmFromName">—</span></strong></div>
+          <div class="l">TO <strong><span id="trmToName">—</span></strong></div>
+        </div>
+        <div id="trmStatusBadge"></div>
+        <button class="trm-close" onclick="invTrCloseModal()" title="Close">×</button>
+      </div>
+    </div>
+
+    <div class="trm-body">
+      <div class="trm-banner" id="trmBanner">Loading…</div>
+
+      <!-- Header form (locked once a voucher exists) -->
+      <div class="trm-form-row">
+        <div class="trm-field">
+          <label>Date <span class="req">*</span></label>
+          <input type="date" id="trmDate">
+        </div>
+        <div class="trm-field">
+          <label>From godown <span class="req">*</span></label>
+          <select id="trmFromGodown" onchange="invTrFromChanged()">
+            <option value="">— select —</option>
+          </select>
+        </div>
+        <div class="trm-field">
+          <label>To godown <span class="req">*</span></label>
+          <select id="trmToGodown" onchange="invTrToChanged()">
+            <option value="">— select —</option>
+          </select>
+        </div>
+      </div>
+      <div class="trm-form-row full">
+        <div class="trm-field">
+          <label>Remarks</label>
+          <input type="text" id="trmRemarks" maxlength="255" placeholder="Optional…">
+        </div>
+      </div>
+
+      <!-- Scan strip -->
+      <div class="trm-scan-strip" id="trmScanStrip">
+        <div class="trm-scan-row">
+          <div class="ico" id="trmScanIcon">📷</div>
+          <div class="col">
+            <label id="trmScanLabel">Scan package (or paste code + Enter)</label>
+            <input type="text" id="trmScanInput" class="trm-scan-input"
+                   placeholder="e.g. RM-A0000001"
+                   onkeydown="invTrScanKey(event)" autocomplete="off">
+          </div>
+        </div>
+        <div class="trm-scan-help" id="trmScanHelp">
+          Each scan attaches the package to this transfer and flips it to "in transit".
+        </div>
+        <div class="trm-scan-feedback" id="trmScanFeedback"></div>
+      </div>
+
+      <!-- Totals strip -->
+      <div class="trm-totals">
+        <div class="trm-tot">
+          <div class="lbl">Packages</div>
+          <div class="val" id="trmTotPackages">0</div>
+        </div>
+        <div class="trm-tot t-qty">
+          <div class="lbl">Total qty</div>
+          <div class="val" id="trmTotQty">0</div>
+        </div>
+        <div class="trm-tot t-progress" id="trmTotProgress" style="display:none">
+          <div class="lbl">Scanned in</div>
+          <div class="val" id="trmProgressText">0 / 0</div>
+          <div class="progress-bar">
+            <span class="progress-fill" id="trmProgressFill" style="width:0%;display:block"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Packages table -->
+      <div class="trm-packages-wrap">
+        <div class="trm-packages-head">
+          <span id="trmPackagesHeadLabel">Packages being scanned OUT</span>
+        </div>
+        <table class="trm-packages-tbl">
+          <thead>
+            <tr>
+              <th style="width:50px">#</th>
+              <th style="width:160px">Package code</th>
+              <th>Material</th>
+              <th style="width:130px">Batch</th>
+              <th style="width:120px" class="right">Qty</th>
+              <th style="width:80px" class="center" id="trmColScanIn">IN?</th>
+              <th style="width:50px"></th>
+            </tr>
+          </thead>
+          <tbody id="trmPackagesBody">
+            <tr><td colspan="7" class="no-data">No packages yet — scan one above</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="trm-foot">
+      <button class="btn btn-ghost" id="trmCancelBtn"
+              onclick="invTrCancelCurrent()" style="display:none">
+        <i class="fas fa-times-circle"></i> Cancel transfer
+      </button>
+      <div class="trm-spacer"></div>
+      <button class="btn btn-ghost" onclick="invTrCloseModal()">Close</button>
+      <button class="btn btn-primary" id="trmSubmitOutBtn"
+              onclick="invTrSubmitOut()" style="display:none">
+        <i class="fas fa-paper-plane"></i> Submit OUT (mark in transit)
+      </button>
+      <button class="btn btn-primary" id="trmConfirmInBtn"
+              onclick="invTrConfirmIn()"
+              style="display:none;background:#16a34a;border-color:#16a34a">
+        <i class="fas fa-check-circle"></i> Confirm receipt
+      </button>
+    </div>
+  </div>
+</div>
+<!-- end .trm-overlay -->

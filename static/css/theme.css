@@ -1,0 +1,278 @@
+/* ═══════════════════════════════════════════════════
+   THEME SYSTEM — 5 themes via data-theme attribute
+   Default (White/Gmail), Black, Blue, Orange, Grey
+   ═══════════════════════════════════════════════════ */
+
+/* ── DEFAULT / WHITE (Gmail-style) ── already in :root ── */
+
+/* ── BLACK / Night Mode ── */
+[data-theme="black"] {
+    --bg:             #0f0f0f;
+    --white:          #1a1a1a;
+    --border:         #2a2a2a;
+    --border-muted:   #222222;
+    --sb-bg:          #141414;
+    --sb-border:      #2a2a2a;
+    --sb-hover:       #1f1f1f;
+    --sb-active-bg:   #1e2a3a;
+    --sb-active-text: #60a5fa;
+    --sb-text:        #9ca3af;
+    --sb-sec-lbl:     #4b5563;
+    --blue:           #3b82f6;
+    --blue-dk:        #2563eb;
+    --blue-lt:        #1e2a3a;
+    --blue-border:    #1e3a5a;
+    --green:          #22c55e;
+    --green-lt:       #0f2a1a;
+    --green-border:   #14532d;
+    --red:            #ef4444;
+    --red-lt:         #2a0f0f;
+    --red-border:     #7f1d1d;
+    --amber:          #f59e0b;
+    --amber-lt:       #2a1a00;
+    --amber-border:   #78350f;
+    --purple:         #a78bfa;
+    --purple-lt:      #1e1a2a;
+    --purple-border:  #3b1f6a;
+    --text:           #f1f5f9;
+    --text2:          #9ca3af;
+    --text3:          #6b7280;
+    --text4:          #374151;
+    --sh-sm: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+    --sh-md: 0 4px 16px rgba(0,0,0,.4), 0 2px 4px rgba(0,0,0,.2);
+    --sh-lg: 0 10px 40px rgba(0,0,0,.5), 0 4px 12px rgba(0,0,0,.3);
+}
+
+/* ── BLUE Theme ── */
+[data-theme="blue"] {
+    --bg:             #e8f0fe;
+    --white:          #f0f6ff;
+    --border:         #bfdbfe;
+    --border-muted:   #dbeafe;
+    --sb-bg:          #1e3a5f;
+    --sb-border:      #1e4080;
+    --sb-hover:       #254a78;
+    --sb-active-bg:   #1a4fa8;
+    --sb-active-text: #ffffff;
+    --sb-text:        #93c5fd;
+    --sb-sec-lbl:     #60a5fa;
+    --blue:           #1d4ed8;
+    --blue-dk:        #1e40af;
+    --blue-lt:        #dbeafe;
+    --blue-border:    #93c5fd;
+    --green:          #16a34a;
+    --green-lt:       #dcfce7;
+    --green-border:   #86efac;
+    --red:            #dc2626;
+    --red-lt:         #fee2e2;
+    --red-border:     #fca5a5;
+    --amber:          #d97706;
+    --amber-lt:       #fef3c7;
+    --amber-border:   #fcd34d;
+    --purple:         #7c3aed;
+    --purple-lt:      #ede9fe;
+    --purple-border:  #c4b5fd;
+    --text:           #0f172a;
+    --text2:          #1e3a5f;
+    --text3:          #3b5a8a;
+    --text4:          #60a5fa;
+    --sh-sm: 0 1px 3px rgba(30,58,95,.12), 0 1px 2px rgba(30,58,95,.08);
+    --sh-md: 0 4px 16px rgba(30,58,95,.12), 0 2px 4px rgba(30,58,95,.06);
+    --sh-lg: 0 10px 40px rgba(30,58,95,.15), 0 4px 12px rgba(30,58,95,.08);
+}
+
+/* ── ORANGE Theme ── */
+[data-theme="orange"] {
+    --bg:             #fff7ed;
+    --white:          #ffffff;
+    --border:         #fed7aa;
+    --border-muted:   #ffedd5;
+    --sb-bg:          #431407;
+    --sb-border:      #7c2d12;
+    --sb-hover:       #6c2311;
+    --sb-active-bg:   #ea580c;
+    --sb-active-text: #ffffff;
+    --sb-text:        #fdba74;
+    --sb-sec-lbl:     #f97316;
+    --blue:           #ea580c;
+    --blue-dk:        #c2410c;
+    --blue-lt:        #fff7ed;
+    --blue-border:    #fed7aa;
+    --green:          #16a34a;
+    --green-lt:       #f0fdf4;
+    --green-border:   #86efac;
+    --red:            #dc2626;
+    --red-lt:         #fef2f2;
+    --red-border:     #fca5a5;
+    --amber:          #d97706;
+    --amber-lt:       #fffbeb;
+    --amber-border:   #fde68a;
+    --purple:         #7c3aed;
+    --purple-lt:      #f5f3ff;
+    --purple-border:  #ddd6fe;
+    --text:           #1c0a00;
+    --text2:          #7c2d12;
+    --text3:          #c2410c;
+    --text4:          #fdba74;
+    --sh-sm: 0 1px 3px rgba(234,88,12,.1), 0 1px 2px rgba(234,88,12,.06);
+    --sh-md: 0 4px 16px rgba(234,88,12,.1), 0 2px 4px rgba(234,88,12,.05);
+    --sh-lg: 0 10px 40px rgba(234,88,12,.12), 0 4px 12px rgba(234,88,12,.07);
+}
+
+/* ── GREY Theme ── */
+[data-theme="grey"] {
+    --bg:             #f0f0f0;
+    --white:          #f8f8f8;
+    --border:         #d1d5db;
+    --border-muted:   #e5e7eb;
+    --sb-bg:          #1f2937;
+    --sb-border:      #374151;
+    --sb-hover:       #2d3748;
+    --sb-active-bg:   #374151;
+    --sb-active-text: #f9fafb;
+    --sb-text:        #9ca3af;
+    --sb-sec-lbl:     #6b7280;
+    --blue:           #4b5563;
+    --blue-dk:        #374151;
+    --blue-lt:        #f3f4f6;
+    --blue-border:    #d1d5db;
+    --green:          #16a34a;
+    --green-lt:       #f0fdf4;
+    --green-border:   #86efac;
+    --red:            #dc2626;
+    --red-lt:         #fef2f2;
+    --red-border:     #fca5a5;
+    --amber:          #d97706;
+    --amber-lt:       #fffbeb;
+    --amber-border:   #fde68a;
+    --purple:         #7c3aed;
+    --purple-lt:      #f5f3ff;
+    --purple-border:  #ddd6fe;
+    --text:           #111827;
+    --text2:          #374151;
+    --text3:          #6b7280;
+    --text4:          #9ca3af;
+    --sh-sm: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.07);
+    --sh-md: 0 4px 16px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.05);
+    --sh-lg: 0 10px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.07);
+}
+
+/* ═══ THEME SWITCHER UI ═══ */
+.theme-btn {
+    position: relative;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 6px 9px;
+    cursor: pointer;
+    color: var(--text2);
+    line-height: 1;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.theme-btn:hover { background: var(--bg); border-color: var(--blue-border); color: var(--blue); }
+
+.theme-panel {
+    display: none;
+    position: fixed;
+    top: calc(var(--topbar-h) + 8px);
+    right: 14px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh-lg);
+    z-index: 9100;
+    padding: 14px;
+    width: 220px;
+}
+.theme-panel.open { display: block; }
+
+.theme-panel-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 10px;
+}
+
+.theme-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 6px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all .15s;
+    background: none;
+    font-family: inherit;
+}
+.theme-option:hover { background: var(--bg); }
+.theme-option.active { border-color: var(--blue); background: var(--blue-lt); }
+
+.theme-swatch {
+    width: 42px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,.08);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+/* Each swatch shows sidebar + content area */
+.theme-swatch::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 14px;
+}
+.theme-swatch::after {
+    content: '';
+    position: absolute;
+    left: 14px; top: 0; bottom: 0; right: 0;
+}
+
+/* White swatch */
+.ts-white { background: #f1f5f9; }
+.ts-white::before { background: #fff; }
+.ts-white::after  { background: #f1f5f9; }
+
+/* Black swatch */
+.ts-black { background: #0f0f0f; }
+.ts-black::before { background: #141414; }
+.ts-black::after  { background: #0f0f0f; }
+
+/* Blue swatch */
+.ts-blue { background: #e8f0fe; }
+.ts-blue::before { background: #1e3a5f; }
+.ts-blue::after  { background: #e8f0fe; }
+
+/* Orange swatch */
+.ts-orange { background: #fff7ed; }
+.ts-orange::before { background: #431407; }
+.ts-orange::after  { background: #fff7ed; }
+
+/* Grey swatch */
+.ts-grey { background: #f0f0f0; }
+.ts-grey::before { background: #1f2937; }
+.ts-grey::after  { background: #f0f0f0; }
+
+.theme-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    white-space: nowrap;
+}
+.theme-option.active .theme-name { color: var(--blue); font-weight: 700; }

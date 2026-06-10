@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCP Portal - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand:        #0d9488;
+            --brand-dark:   #0f766e;
+            --brand-glow:   rgba(13,148,136,0.12);
+            --bg:           #f8f9fb;
+            --card-bg:      #ffffff;
+            --text-primary: #0f172a;
+            --text-muted:   #64748b;
+            --border:       #d1d5db;
+            --error-bg:     rgba(225,29,72,0.06);
+            --error-text:   #e11d48;
+            --error-border: rgba(225,29,72,0.15);
+            --input-focus:  #f0fdfa;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shimmer {
+            0%   { background-position: -200% center; }
+            100% { background-position:  200% center; }
+        }
+
+        @keyframes pulse-ring {
+            0%   { transform: scale(1);    opacity: .6; }
+            100% { transform: scale(1.55); opacity: 0;  }
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse 80% 60% at 20% 10%,  rgba(13,148,136,.05) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 85% 90%,  rgba(6,182,212,.04) 0%, transparent 70%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            padding: 44px 40px 36px;
+            border-radius: 20px;
+            box-shadow:
+                0 1px 3px rgba(0,0,0,0.06),
+                0 4px 14px rgba(0,0,0,0.07),
+                0 16px 40px rgba(0,0,0,0.05);
+            width: 370px;
+            text-align: center;
+            animation: fadeUp .5s cubic-bezier(.22,.68,0,1.2) both;
+            position: relative;
+            overflow: hidden;
+            border: 1.5px solid var(--border);
+        }
+
+        /* Subtle top accent bar */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--brand-dark), var(--brand), #a8eddc, var(--brand));
+            background-size: 200% auto;
+            animation: shimmer 3s linear infinite;
+        }
+
+        /* Logo mark */
+        .logo-mark {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 20px;
+        }
+
+        .logo-mark::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            background: var(--brand);
+            opacity: .18;
+            animation: pulse-ring 2.2s ease-out infinite;
+        }
+
+        .logo-mark-inner {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px var(--brand-glow);
+            position: relative;
+        }
+
+        .logo-mark-inner svg {
+            width: 26px;
+            height: 26px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .login-card h2 {
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .login-card h2::after {
+            display: none; /* replaced the bottom-border with the top accent bar */
+        }
+
+        .subtitle {
+            font-size: .82rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            font-weight: 500;
+            letter-spacing: .01em;
+        }
+
+        .error-message {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            padding: 11px 14px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            border: 1px solid var(--error-border);
+            text-align: left;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-message::before {
+            content: '⚠';
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .success-message {
+            background-color: rgba(5,150,105,0.06);
+            color: #059669;
+            padding: 11px 14px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(5,150,105,0.15);
+            text-align: left;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .success-message::before {
+            content: '✔';
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .input-group {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color .2s;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px 13px 40px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: .95rem;
+            font-family: inherit;
+            font-weight: 500;
+            color: var(--text-primary);
+            background: var(--card-bg);
+            outline: none;
+            transition: border-color .2s, background .2s, box-shadow .2s;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        input:focus {
+            border-color: var(--brand);
+            background: var(--input-focus);
+            box-shadow: 0 0 0 4px var(--brand-glow);
+        }
+
+        input:focus + .input-icon,
+        .input-group:focus-within .input-icon {
+            color: var(--brand);
+        }
+
+        /* Icon SVGs via bg — using inline SVG in a sibling span instead */
+        .input-group .input-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            border: none;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: .97rem;
+            font-weight: 700;
+            font-family: inherit;
+            margin-top: 18px;
+            letter-spacing: .02em;
+            transition: transform .15s, box-shadow .15s, filter .15s;
+            box-shadow: 0 4px 14px var(--brand-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(255,255,255,.12), transparent);
+            border-radius: inherit;
+        }
+
+        button:hover {
+            filter: brightness(1.06);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px var(--brand-glow);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 8px var(--brand-glow);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 24px 0 16px;
+        }
+
+        .footer-text {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        /* ── RESPONSIVE ───────────────────────────────── */
+
+        /* Tablet: give a little breathing room */
+        @media (max-width: 480px) {
+            body {
+                align-items: flex-start;
+                padding: 24px 16px 40px;
+                min-height: 100vh;
+                height: auto;
+            }
+
+            .login-card {
+                width: 100%;
+                max-width: 400px;
+                margin: auto;
+                padding: 36px 24px 28px;
+                border-radius: 16px;
+            }
+
+            .logo-mark {
+                width: 50px;
+                height: 50px;
+            }
+
+            .logo-mark-inner {
+                width: 50px;
+                height: 50px;
+            }
+
+            .logo-mark-inner svg {
+                width: 22px;
+                height: 22px;
+            }
+
+            .login-card h2 {
+                font-size: 1.2rem;
+            }
+
+            input {
+                font-size: 1rem;  /* prevents iOS auto-zoom on focus */
+                padding: 14px 14px 14px 40px;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 14px;
+                margin-top: 16px;
+            }
+        }
+
+        /* Very small phones */
+        @media (max-width: 360px) {
+            .login-card {
+                padding: 28px 16px 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo-mark">
+            <div class="logo-mark-inner">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2z"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                </svg>
+            </div>
+        </div>
+
+        <h2>HCP USER LOGIN</h2>
+        <p class="subtitle">Welcome back — sign in to continue</p>
+
+        {% if success %}
+            <div class="success-message">
+                {{ success }}
+            </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form action="/login" method="POST">
+            <div class="input-group">
+                <input type="text" name="UID" placeholder="Username" required autocomplete="off">
+                <span class="input-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </span>
+            </div>
+            <div class="input-group">
+                <input type="password" name="Pwd" placeholder="Password" required>
+                <span class="input-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="divider"></div>
+
+        <div class="footer-text">
+            &copy; 2026 HCP Wellness Pvt Ltd
+        </div>
+    </div>
+
+</body>
+</html>
