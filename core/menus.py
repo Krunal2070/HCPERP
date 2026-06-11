@@ -297,6 +297,33 @@ MENUS = {
             ]},
         ],
     },
+    # ===== CRM / LEADS ====================================================
+    "crm": {
+        "brand": "HCP Wellness",
+        "tag":   "CRM",
+        "search": False,
+        "item_class": "sb-item",
+        "sections": [
+            {"label": "CRM", "items": [
+                {"id": "crm-dash",   "text": "CRM Dashboard",      "icon": _IC["grid"],     "href": "/crm/leads",   "color": "#7c3aed"},
+                {"id": "leads",      "text": "Leads",              "icon": _IC["users"],    "href": "/crm/leads",   "color": "#2563eb"},
+                {"id": "clients",    "text": "Client Master",      "icon": _IC["box"],      "href": "/crm/clients", "color": "#0d9488"},
+                {"id": "samples",    "text": "Sample Orders",      "icon": _IC["list"],     "href": "#",            "color": "#ea580c"},
+                {"id": "quotations", "text": "Quotations",         "icon": _IC["doc"],      "href": "#",            "color": "#db2777"},
+                {"id": "quot-prod",  "text": "Quot. Product List", "icon": _IC["list"],     "href": "#",            "color": "#0891b2"},
+                {"id": "leaderboard","text": "Leaderboard",        "icon": _IC["chart"],    "href": "#",            "color": "#16a34a"},
+            ]},
+            {"label": "Import", "items": [
+                {"id": "imp-leads",  "text": "Import Leads",       "icon": _IC["download"], "href": "/crm/leads/import",   "color": "#2563eb"},
+                {"id": "imp-clients","text": "Import Clients",     "icon": _IC["download"], "href": "/crm/clients/import", "color": "#0d9488"},
+            ]},
+            {"label": "Settings", "items": [
+                {"id": "mail-master","text": "Mail Master",        "icon": _IC["mail"],     "href": "#",            "color": "#7c3aed"},
+                {"id": "points-cfg", "text": "Points Config",      "icon": _IC["target"],   "href": "#",            "color": "#ea580c"},
+                {"id": "lead-mstr",  "text": "Lead Masters",       "icon": _IC["tag"],      "href": "#",            "color": "#16a34a"},
+            ]},
+        ],
+    },
 }
 
 

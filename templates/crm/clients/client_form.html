@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ 'Edit' if mode=='edit' else 'Add New' }} Client — CRM | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 8px;max-width:1200px;margin:0 auto;width:100%}
+  a{text-decoration:none;color:inherit}
+  .form-top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .btn{height:38px;padding:0 15px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.84rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--teal-glow2);border-color:var(--teal)}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
+  .form-top h1{font-size:1.3rem;font-weight:800;margin:0}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:visible}
+  .card-head{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface2);border-bottom:1px solid var(--border);border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+  .card-head .ic{width:30px;height:30px;border-radius:9px;background:var(--teal-glow);display:flex;align-items:center;justify-content:center;color:var(--teal-dim)}
+  .card-head .ttl{font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+  .card-head .pill{margin-left:auto;font-size:.72rem;font-weight:800;padding:4px 12px;border-radius:999px;background:var(--teal-glow);color:var(--teal-dim)}
+  .card-head .pill.amber{background:var(--amber-bg);color:var(--amber-text)}
+  .card-body{padding:18px}
+  .subhead{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted2);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:4px 0 14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .fld.full{grid-column:1/-1}
+  .fld label{font-size:.78rem;font-weight:700;color:var(--text)}
+  .fld label .req{color:var(--red-text)}
+  .fld input,.fld select,.fld textarea{height:42px;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.88rem;font-family:inherit;width:100%;box-sizing:border-box}
+  .fld textarea{height:auto;min-height:78px;padding:10px 12px;resize:vertical}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--teal);box-shadow:var(--shadow-teal)}
+  .brand-card{border:1px solid var(--border2);border-radius:var(--radius-md);padding:14px;margin-bottom:14px;background:var(--surface2)}
+  .brand-card .bh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .brand-num{width:26px;height:26px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center}
+  .brand-card .addr-grp{margin-top:12px;padding:12px;border:1px dashed var(--border2);border-radius:8px;background:var(--surface)}
+  .addr-grp .at{font-size:.7rem;font-weight:800;text-transform:uppercase;color:var(--muted2);margin-bottom:8px}
+  .rm-brand{margin-left:auto;background:var(--red-bg);color:var(--red-text);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-weight:800}
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;padding:6px 0 34px;margin-top:10px;border-top:1px solid var(--border);padding-top:16px}
+  .flash{padding:11px 16px;border-radius:var(--radius-md);margin-bottom:16px;font-size:.86rem;font-weight:600}
+  .flash.success{background:var(--green-bg);color:var(--green-text)}.flash.error{background:var(--red-bg);color:var(--red-text)}
+  .fld input.err,.fld select.err,.fld textarea.err,.ssel-btn.err{border-color:var(--red-text) !important;background:rgba(220,38,38,.04)}
+  .err-msg{color:var(--red-text);font-size:.74rem;font-weight:600;margin-top:3px}
+  .ssel{position:relative;flex:1;min-width:0}
+  .ssel-btn{height:42px;width:100%;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;text-align:left}
+  .ssel-btn .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ssel-btn.ph .lbl{color:var(--muted2)}
+  .ssel-btn .cv{opacity:.5;font-size:.75rem}
+  .ssel-pop{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);z-index:120;display:none;overflow:hidden}
+  .ssel-pop.open{display:block}
+  .ssel-search{width:100%;height:38px;border:none;border-bottom:1px solid var(--border);padding:0 12px;font-family:inherit;font-size:.86rem;background:var(--surface2);box-sizing:border-box;outline:none;color:var(--text)}
+  .ssel-list{max-height:220px;overflow-y:auto}
+  .ssel-opt{padding:9px 12px;font-size:.86rem;cursor:pointer;font-weight:600}
+  .ssel-opt:hover,.ssel-opt.sel{background:var(--teal-glow2)}
+  .ssel-opt.hidden{display:none}
+</style>
+</head>
+<body>
+{% set page_title = "CRM · " + ('Edit Client' if mode=='edit' else 'Add New Client') %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Client Master","url":"/crm/clients"},{"label": ('Edit' if mode=='edit' else 'Add New'),"url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <main class="page-root">
+    <div class="form-top">
+      <a class="btn" href="{{ url_for('crm.clients') }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg>Back</a>
+      <h1>{{ 'Edit Client' if mode=='edit' else 'Add New Client' }}{% if mode=='edit' and client %} <span style="font-family:var(--font-mono);font-size:.9rem;color:var(--muted2)">{{ client.code }}</span>{% endif %}</h1>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}{% endwith %}
+
+    <form method="POST" id="clientForm" autocomplete="off" novalidate onsubmit="return syncBrands()">
+      <!-- CLIENT SETTINGS -->
+      <div class="card">
+        <div class="card-head"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="ttl">Client Settings</div></div>
+        <div class="card-body"><div class="grid2">
+          <div class="fld"><label>Status <span class="req">*</span></label><select name="status"><option value="active" {{ 'selected' if not client or client.status=='active' }}>✅ Active</option><option value="inactive" {{ 'selected' if client and client.status=='inactive' }}>Inactive</option></select></div>
+          <div class="fld"><label>GSTIN</label><input type="text" name="gstin" value="{{ client.gstin if client else '' }}" placeholder="27ABCDE1234F1Z5"></div>
+        </div></div>
+      </div>
+
+      <!-- CONTACT INFORMATION -->
+      <div class="card">
+        <div class="card-head"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="ttl">Contact Information</div><div class="pill">Contact</div></div>
+        <div class="card-body">
+          <div class="subhead">Primary Contact</div>
+          <div class="grid2">
+            <div class="fld"><label>Contact Name <span class="req">*</span></label><input type="text" name="contact_name" required value="{{ client.contact_name if client else '' }}" placeholder="Full name"></div>
+            <div class="fld"><label>Position</label><input type="text" name="position" value="{{ client.position if client else '' }}" placeholder="CEO, Manager..."></div>
+            <div class="fld"><label>Mobile <span class="req">*</span></label><input type="text" name="mobile" required value="{{ client.mobile if client else '' }}" placeholder="9999999999"></div>
+            <div class="fld"><label>Alt. Mobile</label><input type="text" name="alternate_mobile" value="{{ client.alternate_mobile if client else '' }}" placeholder="Alternate number"></div>
+            <div class="fld"><label>Email Address <span class="req">*</span></label><input type="email" name="email" required value="{{ client.email if client else '' }}" placeholder="email@company.com"></div>
+            <div class="fld"><label>Website</label><input type="text" name="website" value="{{ client.website if client else '' }}" placeholder="www.company.com"></div>
+          </div>
+          <div class="subhead" style="margin-top:18px">Company</div>
+          <div class="fld full" style="margin-bottom:14px"><label>Company Name</label><input type="text" name="company_name" value="{{ client.company_name if client else '' }}" placeholder="Company / Firm name"></div>
+          <div class="fld full"><label>Notes</label><textarea name="notes" placeholder="Payment terms, preferences, special instructions...">{{ client.notes if client else '' }}</textarea></div>
+        </div>
+      </div>
+
+      <!-- BRANDS & ADDRESSES -->
+      <div class="card">
+        <div class="card-head"><div class="ic" style="background:var(--amber-bg);color:var(--amber-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><div class="ttl">Brands &amp; Addresses</div><div class="pill amber" style="background:transparent;color:var(--muted2);font-weight:600;text-transform:none;letter-spacing:0">Each brand has its own Billing &amp; Shipping addresses</div></div>
+        <div class="card-body">
+          <div id="brandsWrap"></div>
+          <button type="button" class="btn" onclick="addBrand()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Brand</button>
+        </div>
+      </div>
+
+      <input type="hidden" name="brands_json" id="brands_json">
+    </form>
+
+    <div class="form-actions">
+      <a class="btn" href="{{ url_for('crm.clients') }}">✕ Cancel</a>
+      <button type="submit" form="clientForm" class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Client</button>
+    </div>
+  </main>
+</div>
+<script>
+var BRANDS = {{ brands|tojson }};
+function addrBlock(kind,a){a=a||{};return '<div class="addr-grp"><div class="at">'+kind+' Address</div><div class="grid2"><div class="fld full"><label>Address</label><input class="b-'+kind+'-address" value="'+(a.address||'').replace(/"/g,'&quot;')+'" placeholder="Street address"></div><div class="fld"><label>City</label><input class="b-'+kind+'-city" value="'+(a.city||'').replace(/"/g,'&quot;')+'"></div><div class="fld"><label>State</label><input class="b-'+kind+'-state" value="'+(a.state||'').replace(/"/g,'&quot;')+'"></div><div class="fld"><label>Country</label><input class="b-'+kind+'-country" value="'+((a.country||'India')).replace(/"/g,'&quot;')+'"></div><div class="fld"><label>ZIP</label><input class="b-'+kind+'-zip_code" value="'+(a.zip_code||'').replace(/"/g,'&quot;')+'"></div></div></div>';}
+function brandCard(b,i){b=b||{};
+  return '<div class="brand-card"><div class="bh"><span class="brand-num">'+(i+1)+'</span><input class="b-name" style="flex:1;height:42px;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);font-family:inherit;font-size:.9rem" value="'+(b.brand_name||'').replace(/"/g,'&quot;')+'" placeholder="Brand Name e.g. XYZ Cosmetics"><button type="button" class="rm-brand" onclick="this.closest(\'.brand-card\').remove()">×</button></div>'
+   +'<div class="grid2"><div class="fld"><label>Category</label><input class="b-category" value="'+(b.category||'').replace(/"/g,'&quot;')+'" placeholder="Category"></div><div class="fld"><label>Description</label><input class="b-description" value="'+(b.description||'').replace(/"/g,'&quot;')+'" placeholder="Short note"></div></div>'
+   +addrBlock('billing',b.billing)+addrBlock('shipping',b.shipping)+'</div>';}
+function addBrand(b){var w=document.getElementById('brandsWrap');var d=document.createElement('div');d.innerHTML=brandCard(b||{},w.children.length);w.appendChild(d.firstChild);}
+function getAddr(card,kind){return {address:card.querySelector('.b-'+kind+'-address').value,city:card.querySelector('.b-'+kind+'-city').value,state:card.querySelector('.b-'+kind+'-state').value,country:card.querySelector('.b-'+kind+'-country').value,zip_code:card.querySelector('.b-'+kind+'-zip_code').value};}
+// ── Inline validation ──
+var ERRMSG={contact_name:'Contact name is required.',mobile:'Mobile number is required.',email:'Email address is required.'};
+function labelOf(el){var f=el.closest('.fld');var l=f&&f.querySelector('label');return l?l.textContent.replace('*','').trim():'This field';}
+function setErr(el,msg,on){var t=(el._ssel)?el._ssel.querySelector('.ssel-btn'):el;t.classList.toggle('err',on);var fld=el.closest('.fld')||el.parentElement;var m=fld.querySelector(':scope > .err-msg');if(on){if(!m){m=document.createElement('div');m.className='err-msg';fld.appendChild(m);}m.textContent=msg;m.style.display='block';}else if(m){m.style.display='none';}}
+function clearErrs(form){form.querySelectorAll('.err').forEach(e=>e.classList.remove('err'));form.querySelectorAll('.err-msg').forEach(m=>m.style.display='none');}
+function validateForm(form){clearErrs(form);var first=null;form.querySelectorAll('[required]').forEach(function(el){var v=(el.value||'').trim();if(!v){setErr(el,ERRMSG[el.name]||(labelOf(el)+' is required.'),true);if(!first)first=el;}else setErr(el,'',false);});var em=form.querySelector('[name=email]');if(em&&em.value.trim()&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value.trim())){setErr(em,'Valid email daalein.',true);if(!first)first=em;}return first;}
+document.addEventListener('input',function(e){if(e.target.classList&&e.target.classList.contains('err'))setErr(e.target,'',false);});
+document.addEventListener('change',function(e){if(e.target.classList&&e.target.classList.contains('err'))setErr(e.target,'',false);});
+
+function syncBrands(){
+  var first=validateForm(document.getElementById('clientForm'));
+  if(first){first.scrollIntoView({behavior:'smooth',block:'center'});try{first.focus();}catch(e){}return false;}
+  var arr=[];document.querySelectorAll('#brandsWrap .brand-card').forEach(function(c){var nm=c.querySelector('.b-name').value.trim();if(!nm)return;arr.push({brand_name:nm,category:c.querySelector('.b-category').value,description:c.querySelector('.b-description').value,billing:getAddr(c,'billing'),shipping:getAddr(c,'shipping')});});document.getElementById('brands_json').value=JSON.stringify(arr);return true;}
+// ── Searchable selects ──
+function buildSsel(sel){
+  if(sel.dataset.ssel||sel.multiple)return;sel.dataset.ssel='1';sel.style.display='none';
+  var w=document.createElement('div');w.className='ssel';
+  var btn=document.createElement('button');btn.type='button';btn.className='ssel-btn';
+  var pop=document.createElement('div');pop.className='ssel-pop';
+  var srch=document.createElement('input');srch.className='ssel-search';srch.placeholder='Search...';
+  var list=document.createElement('div');list.className='ssel-list';
+  pop.appendChild(srch);pop.appendChild(list);w.appendChild(btn);w.appendChild(pop);
+  sel.parentNode.insertBefore(w,sel);
+  function render(){list.innerHTML='';[].forEach.call(sel.options,function(o){var d=document.createElement('div');d.className='ssel-opt'+(o.selected?' sel':'');d.textContent=o.textContent;d.dataset.value=o.value;d.onclick=function(ev){ev.stopPropagation();sel.value=o.value;sel.dispatchEvent(new Event('change',{bubbles:true}));sync();if(window.setErr)setErr(sel,'',false);pop.classList.remove('open');};list.appendChild(d);});}
+  function sync(){var o=sel.options[sel.selectedIndex];btn.innerHTML='<span class="lbl">'+(o?o.textContent:'Select')+'</span><span class="cv">\u25be</span>';btn.classList.toggle('ph',!sel.value);}
+  btn.onclick=function(e){e.stopPropagation();var was=pop.classList.contains('open');document.querySelectorAll('.ssel-pop').forEach(p=>p.classList.remove('open'));if(!was){render();pop.classList.add('open');srch.value='';setTimeout(()=>srch.focus(),20);}};
+  srch.onclick=function(e){e.stopPropagation();};
+  srch.oninput=function(){var q=this.value.toLowerCase();[].forEach.call(list.children,function(d){d.classList.toggle('hidden',!d.textContent.toLowerCase().includes(q));});};
+  w._sel=sel;w._render=render;w._sync=sync;sel._ssel=w;render();sync();
+}
+document.addEventListener('click',function(){document.querySelectorAll('.ssel-pop').forEach(p=>p.classList.remove('open'));});
+document.querySelectorAll('#clientForm select').forEach(buildSsel);
+
+// init
+if(BRANDS && BRANDS.length){BRANDS.forEach(function(b){addBrand(b);});}else{addBrand();}
+</script>
+</body></html>

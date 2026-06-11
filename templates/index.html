@@ -581,6 +581,30 @@ a.nb-card,a.nb-card:visited{color:inherit;text-decoration:none}
 
   {# Show portal cards based on permitted pages — everyone who is logged in can see this page #}
 
+  {# ===== CRM section (sirf admin ko dikhega) ===== #}
+  {% if is_admin %}
+  <div class="section-head">
+    <div class="section-title">
+      <span class="section-dot" style="background:#C2185B"></span>
+      CRM
+    </div>
+  </div>
+  <div class="notebook-grid">
+    <a class="nb-card rose" href="/crm/leads">
+      <div class="nb-cover"><span class="nb-icon">📇</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">CRM</div>
+        <div class="nb-title">CRM · Leads</div>
+        <div class="nb-desc">Lead capture, follow-ups, discussions &amp; status</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endif %}
+
   <div class="section-head">
     <div class="section-title">
       <span class="section-dot" style="background:#1A73E8"></span>

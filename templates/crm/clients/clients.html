@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Master — CRM | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 44px;max-width:1850px;margin:0 auto;width:100%}
+  a{text-decoration:none;color:inherit}
+  .page-head{margin-bottom:16px}
+  .page-head h1{font-size:1.5rem;font-weight:800;margin:0}
+  .page-head p{margin:4px 0 0;color:var(--muted2);font-size:.86rem}
+  .btn{height:38px;padding:0 14px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.82rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--teal-glow2);border-color:var(--teal)}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
+  .grid-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+  .grid-toolbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .grid-search-wrap{position:relative;flex:1;min-width:180px;max-width:300px;display:flex;align-items:center}
+  .grid-search-wrap svg{position:absolute;left:12px;color:var(--muted2)}
+  .grid-search-input{width:100%;height:38px;padding:0 12px 0 36px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.86rem;font-family:inherit}
+  .tabs{display:flex;gap:8px;padding:0 16px 12px}
+  .tab{height:30px;padding:0 14px;border-radius:999px;font-size:.8rem;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--muted2);display:inline-flex;align-items:center;gap:6px}
+  .tab.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .tab.del.on{background:var(--red-text);border-color:var(--red-text)}
+  .tbl-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.84rem}
+  thead th{text-align:left;padding:11px 13px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);border-bottom:2px solid var(--border2);white-space:nowrap;background:var(--surface2)}
+  tbody td{padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tbody tr:hover{background:var(--teal-glow2)}
+  .ccode{font-family:var(--font-mono);font-size:.74rem;font-weight:700;color:var(--teal-dim)}
+  .cname{font-weight:700;color:var(--teal-dim)}
+  .mini-chip{font-size:.7rem;padding:1px 8px;border-radius:999px;background:var(--teal-glow);color:var(--teal-dim);font-weight:700;margin:1px 2px 1px 0;display:inline-block}
+  .sbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;font-size:.72rem;font-weight:800}
+  .sbadge.active{background:var(--green-bg);color:var(--green-text)}
+  .sbadge.inactive{background:var(--surface2);color:var(--muted2)}
+  .row-act{display:flex;gap:6px;justify-content:flex-end}
+  .ico-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--muted2)}
+  .ico-btn:hover{color:var(--teal);border-color:var(--teal)}
+  .ico-btn.danger:hover{color:var(--red-text);border-color:var(--red-text)}
+  .empty{padding:56px 20px;text-align:center;color:var(--muted2)}
+</style>
+</head>
+<body>
+{% set page_title = "CRM · Client Master" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Client Master","url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <main class="page-root">
+    <div class="page-head"><h1>Client Master</h1><p>Manage billing, brands, contacts</p></div>
+    <div class="grid-card">
+      <div class="grid-toolbar">
+        <a href="{{ url_for('crm.client_add') }}" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Client</a>
+        <div class="grid-search-wrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="grid-search-input" id="gSearch" placeholder="Global Search..." oninput="gSearchFn(this.value)"></div>
+        <a href="{{ url_for('crm.clients') }}" class="btn" style="margin-left:auto"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</a>
+        <a href="{{ url_for('crm.clients_import') }}" class="btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</a>
+      </div>
+      <div class="tabs">
+        <a href="{{ url_for('crm.clients') }}" class="tab {{ 'on' if not show_trash }}">All <span style="opacity:.8">{{ total_count }}</span></a>
+        <a href="{{ url_for('crm.clients', trash=1) }}" class="tab del {{ 'on' if show_trash }}">🗑 Deleted{% if deleted_count %} {{ deleted_count }}{% endif %}</a>
+      </div>
+      <div class="tbl-wrap">
+        <table id="clientsTable">
+          <thead><tr>
+            <th style="width:46px">#</th><th>Client Code</th><th>Created Date</th><th>Contact Name</th><th>Company</th><th>Mobile</th><th>Email</th><th>City</th><th>Brands</th><th>Status</th><th style="text-align:right;width:110px">Actions</th>
+          </tr></thead>
+          <tbody>
+            {% for c in clients %}
+            <tr data-search="{{ [c.code, c.contact_name or '', c.company_name or '', c.mobile or '', c.email or '', c.city or '']|join(' ')|lower }}">
+              <td style="color:var(--muted2);font-size:.78rem;font-weight:700">{{ loop.index }}</td>
+              <td><span class="ccode">{{ c.code or '—' }}</span></td>
+              <td style="white-space:nowrap;font-size:.82rem">{{ c.created_at | fmtdt('%d-%m-%Y') or '' }}</td>
+              <td><a href="{{ url_for('crm.client_edit', id=c.id) }}" class="cname">{{ c.contact_name }}</a></td>
+              <td style="font-size:.82rem">{{ c.company_name or '—' }}</td>
+              <td style="font-size:.82rem">{{ c.mobile or '—' }}</td>
+              <td style="font-size:.82rem">{{ c.email or '—' }}</td>
+              <td style="font-size:.82rem">{{ c.city or '—' }}</td>
+              <td>{% for b in c._brands[:2] %}<span class="mini-chip">{{ b }}</span>{% endfor %}{% if c._brands|length > 2 %}<span class="mini-chip" style="background:var(--surface2);color:var(--muted2)">+{{ c._brands|length-2 }}</span>{% endif %}{% if not c._brands %}<span style="color:var(--muted2)">—</span>{% endif %}</td>
+              <td><span class="sbadge {{ 'active' if (c.status or 'active')=='active' else 'inactive' }}">{% if (c.status or 'active')=='active' %}✓ Active{% else %}{{ c.status|title }}{% endif %}</span></td>
+              <td><div class="row-act">
+                {% if show_trash %}
+                <button class="ico-btn" title="Restore" onclick="clientAction({{ c.id }},'restore')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+                {% else %}
+                <a class="ico-btn" title="Edit" href="{{ url_for('crm.client_edit', id=c.id) }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></a>
+                <button class="ico-btn danger" title="Delete" onclick="clientAction({{ c.id }},'delete')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                {% endif %}
+              </div></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="11"><div class="empty"><div style="font-size:2rem;margin-bottom:8px">🏢</div><div>Koi client nahi mila.{% if not show_trash %} <a href="{{ url_for('crm.client_add') }}" style="color:var(--teal-dim);font-weight:700">Pehla client add karein →</a>{% endif %}</div></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function gSearchFn(q){q=q.toLowerCase().trim();document.querySelectorAll('#clientsTable tbody tr').forEach(tr=>{if(!tr.dataset.search)return;tr.style.display=(!q||tr.dataset.search.includes(q))?'':'none';});}
+function clientAction(id,action){
+  var msg=action==='delete'?'Client delete karein?':'Client restore karein?';
+  if(!confirm(msg))return;
+  fetch('/crm/clients/'+id+'/'+action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error||'Failed');}).catch(()=>alert('Request failed'));
+}
+</script>
+</body></html>

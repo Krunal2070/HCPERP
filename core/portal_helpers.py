@@ -14,7 +14,7 @@ ROLE_DEFAULT_PAGES = {
                    'canteen','task_reminders','task_scheduler','manage_users',
                    'access_control','lunch_coupons','transaction','loan','scrap',
                    'production_initiater','cms','procurement','production_dept',
-                   'planning','backup','trs_view','packing',
+                   'planning','backup','trs_view','packing','crm',
                   },
     'Purchase':   {'dashboard','rd_sampling','qc_sampling','qc_dashboard',
                    'transaction','loan','scrap','cms','canteen',

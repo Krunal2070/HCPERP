@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ 'Edit' if mode=='edit' else 'Add New' }} Lead — CRM | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 8px;max-width:1200px;margin:0 auto;width:100%}
+  a{text-decoration:none;color:inherit}
+  .form-top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .btn{height:38px;padding:0 15px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);
+       color:var(--text);font-size:.84rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--teal-glow2);border-color:var(--teal)}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .form-top h1{font-size:1.3rem;font-weight:800;margin:0}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:visible}
+  .card-head{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface2);border-bottom:1px solid var(--border);border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+  .card-head .ic{width:30px;height:30px;border-radius:9px;background:var(--teal-glow);display:flex;align-items:center;justify-content:center;color:var(--teal-dim)}
+  .card-head .ttl{font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+  .card-head .pill{margin-left:auto;font-size:.72rem;font-weight:800;padding:4px 12px;border-radius:999px;background:var(--teal-glow);color:var(--teal-dim)}
+  .card-body{padding:18px}
+
+  .subhead{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted2);
+       background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:4px 0 14px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 18px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+  @media(max-width:980px){.grid4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:720px){.grid4,.grid2{grid-template-columns:1fr}}
+  .fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .fld.full{grid-column:1/-1}
+  .fld label{font-size:.78rem;font-weight:700;color:var(--text)}
+  .fld label .req{color:var(--red-text)}
+  .fld input,.fld select,.fld textarea{height:42px;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);
+       background:var(--surface);color:var(--text);font-size:.88rem;font-family:inherit;transition:.15s;width:100%;box-sizing:border-box}
+  .fld textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--teal);box-shadow:var(--shadow-teal)}
+  .with-add{display:flex;gap:8px;align-items:stretch}
+  .with-add select{flex:1;min-width:0}
+  .add-btn{width:42px;border:1px solid var(--green-text);background:var(--green-bg);color:var(--green-text);border-radius:var(--radius-md);
+       font-size:1.2rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .add-btn:hover{filter:brightness(.97)}
+
+  .tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:42px;padding:6px 10px;border:1px solid var(--border2);border-radius:var(--radius-md);background:var(--surface)}
+  .tagbox:focus-within{border-color:var(--teal);box-shadow:var(--shadow-teal)}
+  .tag{display:inline-flex;align-items:center;gap:5px;background:var(--teal-glow);color:var(--teal-dim);font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:999px}
+  .tag b{cursor:pointer;font-weight:900}
+  .tagbox input{border:none;outline:none;flex:1;min-width:80px;height:28px;background:transparent;color:var(--text);font-family:inherit;font-size:.86rem}
+
+  .ms-wrap{position:relative}
+  .ms-btn{height:42px;width:100%;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);
+       color:var(--text);font-size:.88rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:inherit;box-sizing:border-box}
+  .ms-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:270px;background:var(--surface);border:1px solid var(--border);
+       border-radius:var(--radius-md);box-shadow:var(--shadow-md);z-index:120;padding:6px;display:none}
+  .ms-menu.open{display:block}
+  .ms-list{max-height:210px;overflow-y:auto;margin-top:6px}
+  .ms-foot{display:flex;gap:6px;padding-top:8px;margin-top:6px;border-top:1px solid var(--border)}
+  .ms-fbtn{flex:1;height:32px;border:1px solid var(--border2);background:var(--surface);border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text)}
+  .ms-fbtn:hover{background:var(--teal-glow2)}
+  .ms-fbtn.done{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
+  .ms-opt{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:.86rem;font-weight:600;white-space:nowrap}
+  .ms-opt input[type=checkbox]{width:16px;height:16px;min-width:16px;flex:0 0 16px;margin:0;padding:0;cursor:pointer;accent-color:var(--teal)}
+  .ms-opt:hover{background:var(--teal-glow2)}
+  .ms-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .ms-chip{display:inline-flex;align-items:center;gap:6px;background:var(--teal-glow);color:var(--teal-dim);font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:999px}
+
+  .rte{border:1px solid var(--border2);border-radius:var(--radius-md);overflow:hidden;background:var(--surface)}
+  .rte:focus-within{border-color:var(--teal);box-shadow:var(--shadow-teal)}
+  .rte-tb{display:flex;gap:2px;padding:6px;background:var(--surface2);border-bottom:1px solid var(--border)}
+  .rte-tb button{width:30px;height:30px;border:none;background:transparent;border-radius:6px;cursor:pointer;color:var(--text);font-size:.9rem;display:flex;align-items:center;justify-content:center}
+  .rte-tb button:hover{background:var(--teal-glow2)}
+  .rte-tb .sep{width:1px;background:var(--border);margin:4px 3px}
+  .rte-area{min-height:120px;padding:12px;font-size:.9rem;outline:none;line-height:1.55}
+  .rte-area:empty:before{content:attr(data-ph);color:var(--muted2)}
+
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;
+       padding:16px 0 34px;margin-top:10px;border-top:1px solid var(--border)}
+  .flash{padding:11px 16px;border-radius:var(--radius-md);margin-bottom:16px;font-size:.86rem;font-weight:600}
+  .flash.success{background:var(--green-bg);color:var(--green-text)}
+  .flash.error{background:var(--red-bg);color:var(--red-text)}
+  .fld input.err,.fld select.err,.fld textarea.err,.ms-btn.err,.rte.err,.ssel-btn.err{border-color:var(--red-text) !important;background:rgba(220,38,38,.04)}
+  .err-msg{color:var(--red-text);font-size:.74rem;font-weight:600;margin-top:3px}
+  /* searchable select */
+  .ssel{position:relative;flex:1;min-width:0}
+  .ssel-btn{height:42px;width:100%;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;text-align:left}
+  .ssel-btn .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ssel-btn.ph .lbl{color:var(--muted2)}
+  .ssel-btn .cv{opacity:.5;font-size:.75rem}
+  .ssel-pop{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);z-index:120;display:none;overflow:hidden}
+  .ssel-pop.open{display:block}
+  .ssel-search{width:100%;height:38px;border:none;border-bottom:1px solid var(--border);padding:0 12px;font-family:inherit;font-size:.86rem;background:var(--surface2);box-sizing:border-box;outline:none;color:var(--text)}
+  .ssel-list{max-height:220px;overflow-y:auto}
+  .ssel-opt{padding:9px 12px;font-size:.86rem;cursor:pointer;font-weight:600}
+  .ssel-opt:hover,.ssel-opt.sel{background:var(--teal-glow2)}
+  .ssel-opt.hidden{display:none}
+  .ssel-none{padding:14px;text-align:center;color:var(--muted2);font-size:.82rem}
+  /* mini modal */
+  .mini-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:900;align-items:center;justify-content:center}
+  .mini-ov.open{display:flex}
+  .mini-box{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);width:380px;max-width:92vw;overflow:hidden}
+  .mini-box h3{margin:0;padding:16px 18px;font-size:1rem;font-weight:800;border-bottom:1px solid var(--border)}
+  .mini-body{padding:18px}
+  .mini-body input{width:100%;height:42px;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.9rem;font-family:inherit;box-sizing:border-box}
+  .mini-body input:focus{outline:none;border-color:var(--teal);box-shadow:var(--shadow-teal)}
+  .mini-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
+</style>
+</head>
+<body>
+
+{% set page_title = "CRM · " + ('Edit Lead' if mode=='edit' else 'Add New Lead') %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Leads","url":"/crm/leads"},{"label": ('Edit' if mode=='edit' else 'Add New'),"url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+
+  <main class="page-root">
+
+    <div class="form-top">
+      <a class="btn" href="{{ url_for('crm.leads') }}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg>Back
+      </a>
+      <h1>{{ 'Edit Lead' if mode=='edit' else 'Add New Lead' }}{% if mode=='edit' and lead %} <span style="font-family:var(--font-mono);font-size:.9rem;color:var(--muted2)">{{ lead.code }}</span>{% endif %}</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+
+    <form method="POST" id="leadForm" autocomplete="off" novalidate onsubmit="return syncBeforeSubmit()">
+
+      <!-- ── LEAD SETTINGS ── -->
+      <div class="card">
+        <div class="card-head">
+          <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          <div class="ttl">Lead Settings</div>
+        </div>
+        <div class="card-body">
+          <div class="grid4">
+            <div class="fld">
+              <label>Status <span class="req">*</span></label>
+              <div class="with-add">
+                <select name="status" id="sel-status" required>
+                  {% if mode!='edit' %}<option value="">Select Status</option>{% endif %}
+                  {% for st in lead_statuses %}<option value="{{ st.name }}" {{ 'selected' if (lead and lead.status==st.name) or (not lead and st.name=='open') }}>{{ st.label or st.name }}</option>{% endfor %}
+                </select>
+                <button type="button" class="add-btn" onclick="quickAdd('status','sel-status')">+</button>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Lead Type</label>
+              <select name="lead_type">
+                <option value="Quality" {{ 'selected' if not lead or lead.lead_type=='Quality' }}>✅ Quality</option>
+                <option value="Non-Quality" {{ 'selected' if lead and lead.lead_type=='Non-Quality' }}>Non-Quality</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label>Source</label>
+              <div class="with-add">
+                <select name="source" id="sel-source">
+                  <option value="">Select Source</option>
+                  {% for s in lead_sources %}<option value="{{ s.name }}" {{ 'selected' if lead and lead.source==s.name }}>{{ s.label or s.name }}</option>{% endfor %}
+                </select>
+                <button type="button" class="add-btn" onclick="quickAdd('source','sel-source')">+</button>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Tags</label>
+              <div class="tagbox" id="tagbox" onclick="document.getElementById('tagInput').focus()">
+                <input type="text" id="tagInput" placeholder="Type + Enter..." onkeydown="tagKey(event)">
+              </div>
+              <input type="hidden" name="tags" id="tagsHidden" value="{{ lead.tags if lead else '' }}">
+            </div>
+            <div class="fld">
+              <label>Team Members <span class="req">*</span></label>
+              <div class="ms-wrap">
+                <button type="button" class="ms-btn" onclick="toggleMs(event)">
+                  <span id="msLabel">Select Members</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="ms-menu" id="msMenu">
+                  <input type="text" class="ssel-search" id="msSearch" placeholder="Search members..." onclick="event.stopPropagation()" oninput="msFilter(this.value)">
+                  <div class="ms-list" id="msList">
+                  {% for u in all_users %}
+                  {% set sel = lead and lead._team_ids and u.id in lead._team_ids %}
+                  <label class="ms-opt"><input type="checkbox" name="team_members" value="{{ u.id }}" {{ 'checked' if sel }} onchange="msSync()"> {{ u.full_name or u.username }}</label>
+                  {% endfor %}
+                  </div>
+                  <div class="ms-foot">
+                    <button type="button" class="ms-fbtn" onclick="msAll(true)">Select All</button>
+                    <button type="button" class="ms-fbtn" onclick="msAll(false)">Deselect All</button>
+                    <button type="button" class="ms-fbtn done" onclick="msDone(event)">Done</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CONTACT INFORMATION ── -->
+      <div class="card">
+        <div class="card-head">
+          <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="ttl">Contact Information</div>
+          <div class="pill">Contact</div>
+        </div>
+        <div class="card-body">
+          <div class="subhead">Contact Details</div>
+          <div class="grid2">
+            <div class="fld"><label>Name <span class="req">*</span></label><input type="text" name="contact_name" required value="{{ lead.contact_name if lead else '' }}" placeholder="Contact person name"></div>
+            <div class="fld"><label>Position</label><input type="text" name="position" value="{{ lead.position if lead else '' }}" placeholder="CEO, Manager..."></div>
+            <div class="fld"><label>Mobile <span class="req">*</span></label><input type="text" name="phone" required value="{{ lead.phone if lead else '' }}" placeholder="9999999999"></div>
+            <div class="fld"><label>Alt. Mobile</label><input type="text" name="alternate_mobile" value="{{ lead.alternate_mobile if lead else '' }}" placeholder="Alternate number"></div>
+            <div class="fld"><label>Email Address <span class="req">*</span></label><input type="email" name="email" required value="{{ lead.email if lead else '' }}" placeholder="email@company.com"></div>
+            <div class="fld"><label>Website</label><input type="text" name="website" value="{{ lead.website if lead else '' }}" placeholder="www.company.com"></div>
+          </div>
+
+          <div class="subhead" style="margin-top:18px">Company &amp; Address</div>
+          <div class="grid2">
+            <div class="fld full"><label>Company Name</label><input type="text" name="company_name" value="{{ lead.company_name if lead else '' }}" placeholder="Company name"></div>
+            <div class="fld full"><label>Address</label><textarea name="address" placeholder="Street address">{{ lead.address if lead else '' }}</textarea></div>
+            <div class="fld"><label>City <span class="req">*</span></label><input type="text" name="city" required value="{{ lead.city if lead else '' }}" placeholder="City"></div>
+            <div class="fld"><label>State <span class="req">*</span></label><input type="text" name="state" required value="{{ lead.state if lead else '' }}" placeholder="State"></div>
+            <div class="fld"><label>Country <span class="req">*</span></label><input type="text" name="country" required value="{{ lead.country if lead else 'India' }}"></div>
+            <div class="fld"><label>ZIP / Pin Code</label><input type="text" name="zip_code" value="{{ lead.zip_code if lead else '' }}" placeholder="Pincode"></div>
+          </div>
+
+          <div class="subhead" style="margin-top:18px">Other</div>
+          <div class="grid2">
+            <div class="fld"><label>Average Cost (₹)</label><input type="number" step="0.01" name="average_cost" value="{{ lead.average_cost if lead and lead.average_cost is not none else '' }}" placeholder="0.00"></div>
+            <div class="fld">
+              <label>Link to Client Master</label>
+              <select name="client_id">
+                <option value="">— No client linked —</option>
+                {% for c in (clients or []) %}
+                <option value="{{ c.id }}" {{ 'selected' if lead and lead.client_id==c.id }}>{{ c.code }} · {{ c.company_name or c.contact_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── REQUIREMENT INFORMATION ── -->
+      <div class="card">
+        <div class="card-head">
+          <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+          <div class="ttl">Requirement Information</div>
+          <div class="pill" style="background:var(--green-bg);color:var(--green-text)">Product</div>
+        </div>
+        <div class="card-body">
+          <div class="subhead">Product Details</div>
+          <div class="fld full" style="margin-bottom:14px"><label>Product Name <span class="req">*</span></label><input type="text" name="product_name" required value="{{ lead.product_name if lead else '' }}" placeholder="Product name"></div>
+          <div class="grid2">
+            <div class="fld">
+              <label>Category <span class="req">*</span></label>
+              <div class="with-add">
+                <select name="category" id="sel-category" required>
+                  <option value="">Select Category</option>
+                  {% for c in lead_categories %}<option value="{{ c.name }}" {{ 'selected' if lead and lead.category==c.name }}>{{ c.label or c.name }}</option>{% endfor %}
+                </select>
+                <button type="button" class="add-btn" onclick="quickAdd('category','sel-category')">+</button>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Product Range <span class="req">*</span></label>
+              <div class="with-add">
+                <select name="product_range" id="sel-range" required>
+                  <option value="">Select Range</option>
+                  {% for r in product_ranges %}<option value="{{ r.name }}" {{ 'selected' if lead and lead.product_range==r.name }}>{{ r.label or r.name }}</option>{% endfor %}
+                </select>
+                <button type="button" class="add-btn" onclick="quickAdd('range','sel-range')">+</button>
+              </div>
+            </div>
+            <div class="fld"><label>Order Quantity</label><input type="text" name="order_quantity" value="{{ lead.order_quantity if lead else '' }}" placeholder="e.g. 500 units, 1000 pcs"></div>
+          </div>
+
+          <div class="subhead" style="margin-top:18px">Specifications</div>
+          <div class="fld full">
+            <label>Requirement Specification <span class="req">*</span></label>
+            <div class="rte">
+              <div class="rte-tb">
+                <button type="button" onclick="rteCmd(event,'bold')"><b>B</b></button>
+                <button type="button" onclick="rteCmd(event,'italic')"><i>I</i></button>
+                <span class="sep"></span>
+                <button type="button" onclick="rteCmd(event,'insertUnorderedList')">•≡</button>
+                <button type="button" onclick="rteCmd(event,'insertOrderedList')">1≡</button>
+                <span class="sep"></span>
+                <button type="button" onclick="rteCmd(event,'undo')">↶</button>
+                <button type="button" onclick="rteCmd(event,'redo')">↷</button>
+              </div>
+              <div class="rte-area" id="rte-spec" data-target="requirement_spec" data-ph="Describe product requirements in detail..." contenteditable="true">{{ (lead.requirement_spec or '')|safe if lead else '' }}</div>
+            </div>
+            <textarea name="requirement_spec" id="ta-requirement_spec" hidden>{{ lead.requirement_spec if lead else '' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── REMARK ── -->
+      <div class="card">
+        <div class="card-head">
+          <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="ttl">Remark</div>
+        </div>
+        <div class="card-body">
+          <div class="fld full">
+            <div class="rte">
+              <div class="rte-tb">
+                <button type="button" onclick="rteCmd(event,'bold')"><b>B</b></button>
+                <button type="button" onclick="rteCmd(event,'italic')"><i>I</i></button>
+                <span class="sep"></span>
+                <button type="button" onclick="rteCmd(event,'insertUnorderedList')">•≡</button>
+                <button type="button" onclick="rteCmd(event,'insertOrderedList')">1≡</button>
+                <span class="sep"></span>
+                <button type="button" onclick="rteCmd(event,'undo')">↶</button>
+                <button type="button" onclick="rteCmd(event,'redo')">↷</button>
+              </div>
+              <div class="rte-area" id="rte-remark" data-target="remark" data-ph="Additional remarks, special instructions..." contenteditable="true">{{ (lead.remark or '')|safe if lead else '' }}</div>
+            </div>
+            <textarea name="remark" id="ta-remark" hidden>{{ lead.remark if lead else '' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+    </form>
+
+    <div class="form-actions">
+      <a class="btn" href="{{ url_for('crm.leads') }}">✕ Cancel</a>
+      <button type="submit" form="leadForm" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Lead
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<!-- master quick-add modal -->
+<div class="mini-ov" id="miniOv">
+  <div class="mini-box">
+    <h3 id="miniTitle">Add New</h3>
+    <div class="mini-body"><input type="text" id="miniInput" placeholder="Enter name..." onkeydown="if(event.key==='Enter'){event.preventDefault();miniSave();}"></div>
+    <div class="mini-foot">
+      <button type="button" class="btn" onclick="miniClose()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="miniSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tags ──
+function renderTags(){
+  var box=document.getElementById('tagbox'),inp=document.getElementById('tagInput');
+  box.querySelectorAll('.tag').forEach(t=>t.remove());
+  var vals=(document.getElementById('tagsHidden').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  vals.forEach(v=>{var s=document.createElement('span');s.className='tag';s.innerHTML=v.replace(/</g,'&lt;')+' <b onclick="rmTag(\''+v.replace(/'/g,"")+'\')">×</b>';box.insertBefore(s,inp);});
+}
+function tagKey(e){if(e.key==='Enter'||e.key===','){e.preventDefault();var v=e.target.value.trim();if(v){var h=document.getElementById('tagsHidden');var arr=(h.value||'').split(',').map(s=>s.trim()).filter(Boolean);if(arr.indexOf(v)<0){arr.push(v);h.value=arr.join(',');renderTags();}}e.target.value='';}}
+function rmTag(v){var h=document.getElementById('tagsHidden');h.value=(h.value||'').split(',').map(s=>s.trim()).filter(x=>x&&x!==v).join(',');renderTags();}
+renderTags();
+
+// ── Team multi-select ──
+function toggleMs(e){e.stopPropagation();document.getElementById('msMenu').classList.toggle('open');}
+document.addEventListener('click',function(e){var m=document.getElementById('msMenu');if(m&&!m.parentElement.contains(e.target))m.classList.remove('open');});
+function msSync(){
+  var n=document.querySelectorAll('#msMenu input:checked').length;
+  document.getElementById('msLabel').textContent=n?(n+' selected'):'Select Members';
+}
+msSync();
+
+// ── Searchable selects ──
+function buildSsel(sel){
+  if(sel.dataset.ssel||sel.multiple)return;sel.dataset.ssel='1';sel.style.display='none';
+  var w=document.createElement('div');w.className='ssel';
+  var btn=document.createElement('button');btn.type='button';btn.className='ssel-btn';
+  var pop=document.createElement('div');pop.className='ssel-pop';
+  var srch=document.createElement('input');srch.className='ssel-search';srch.placeholder='Search...';
+  var list=document.createElement('div');list.className='ssel-list';
+  pop.appendChild(srch);pop.appendChild(list);w.appendChild(btn);w.appendChild(pop);
+  sel.parentNode.insertBefore(w,sel);
+  function render(){list.innerHTML='';[].forEach.call(sel.options,function(o){var d=document.createElement('div');d.className='ssel-opt'+(o.selected?' sel':'');d.textContent=o.textContent;d.dataset.value=o.value;d.onclick=function(ev){ev.stopPropagation();sel.value=o.value;sel.dispatchEvent(new Event('change',{bubbles:true}));sync();if(window.setErr)setErr(sel,'',false);pop.classList.remove('open');};list.appendChild(d);});}
+  function sync(){var o=sel.options[sel.selectedIndex];btn.innerHTML='<span class="lbl">'+(o?o.textContent:'Select')+'</span><span class="cv">\u25be</span>';btn.classList.toggle('ph',!sel.value);}
+  btn.onclick=function(e){e.stopPropagation();var was=pop.classList.contains('open');document.querySelectorAll('.ssel-pop').forEach(p=>p.classList.remove('open'));if(!was){render();pop.classList.add('open');srch.value='';setTimeout(()=>srch.focus(),20);}};
+  srch.onclick=function(e){e.stopPropagation();};
+  srch.oninput=function(){var q=this.value.toLowerCase();[].forEach.call(list.children,function(d){d.classList.toggle('hidden',!d.textContent.toLowerCase().includes(q));});};
+  w._sel=sel;w._render=render;w._sync=sync;sel._ssel=w;render();sync();
+}
+document.addEventListener('click',function(){document.querySelectorAll('.ssel-pop').forEach(p=>p.classList.remove('open'));});
+document.querySelectorAll('#leadForm select').forEach(buildSsel);
+
+// ── Team members search ──
+function msFilter(q){q=(q||'').toLowerCase();document.querySelectorAll('#msMenu .ms-opt').forEach(function(o){o.style.display=o.textContent.toLowerCase().includes(q)?'':'none';});}
+function msAll(on){document.querySelectorAll('#msMenu .ms-opt').forEach(function(o){if(o.style.display!=='none')o.querySelector('input').checked=on;});msSync();}
+function msDone(e){e.stopPropagation();document.getElementById('msMenu').classList.remove('open');}
+
+// ── Quick-add master ( + button → modal ) ──
+var _miniKind=null,_miniSelId=null;
+function quickAdd(kind,selId){_miniKind=kind;_miniSelId=selId;document.getElementById('miniTitle').textContent='Add New '+({status:'Status',source:'Source',category:'Category',range:'Product Range'}[kind]||kind);var inp=document.getElementById('miniInput');inp.value='';document.getElementById('miniOv').classList.add('open');setTimeout(()=>inp.focus(),50);}
+function miniClose(){document.getElementById('miniOv').classList.remove('open');_miniKind=null;_miniSelId=null;}
+function miniSave(){
+  var name=document.getElementById('miniInput').value.trim();if(!name)return;
+  var fd=new FormData();fd.append('name',name);if(_miniKind==='status')fd.append('label',name);
+  fetch('/crm/master/'+_miniKind+'/add',{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
+   .then(r=>r.json()).then(d=>{
+     if(d.ok){var sel=document.getElementById(_miniSelId);var o=document.createElement('option');o.value=d.name;o.textContent=d.label||d.name;o.selected=true;sel.appendChild(o);if(sel._ssel){sel._ssel._render();sel._ssel._sync();}if(window.setErr)setErr(sel,'',false);miniClose();}
+     else alert(d.error||'Failed');
+   }).catch(()=>alert('Request failed'));
+}
+document.getElementById('miniOv').addEventListener('click',function(e){if(e.target===this)miniClose();});
+
+// ── Rich text ──
+function rteCmd(e,cmd){e.preventDefault();document.execCommand(cmd,false,null);}
+document.querySelectorAll('.rte-area').forEach(function(a){
+  a.addEventListener('input',function(){document.getElementById('ta-'+a.dataset.target).value=a.innerHTML;});
+});
+// ── Inline validation ──
+var ERRMSG={contact_name:'Contact name is required.',phone:'Mobile number is required.',email:'Email address is required.',city:'City is required.',state:'State is required.',country:'Country is required.',product_name:'Product name is required.',category:'Please select a category.',product_range:'Please select a product range.',status:'Please select a status.'};
+function labelOf(el){var f=el.closest('.fld');var l=f&&f.querySelector('label');return l?l.textContent.replace('*','').trim():'This field';}
+function setErr(el,msg,on){var t=(el._ssel)?el._ssel.querySelector('.ssel-btn'):el;t.classList.toggle('err',on);var fld=el.closest('.fld')||el.parentElement;var m=fld.querySelector(':scope > .err-msg');if(on){if(!m){m=document.createElement('div');m.className='err-msg';fld.appendChild(m);}m.textContent=msg;m.style.display='block';}else if(m){m.style.display='none';}}
+function clearErrs(form){form.querySelectorAll('.err').forEach(e=>e.classList.remove('err'));form.querySelectorAll('.err-msg').forEach(m=>m.style.display='none');}
+function validateForm(form){clearErrs(form);var first=null;form.querySelectorAll('[required]').forEach(function(el){var v=(el.value||'').trim();if(!v){setErr(el,ERRMSG[el.name]||(labelOf(el)+' is required.'),true);if(!first)first=el;}else setErr(el,'',false);});var em=form.querySelector('[name=email]');if(em&&em.value.trim()&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value.trim())){setErr(em,'Valid email daalein.',true);if(!first)first=em;}return first;}
+document.addEventListener('input',function(e){if(e.target.classList&&e.target.classList.contains('err'))setErr(e.target,'',false);});
+document.addEventListener('change',function(e){if(e.target.classList&&e.target.classList.contains('err'))setErr(e.target,'',false);});
+
+function syncBeforeSubmit(){
+  document.querySelectorAll('.rte-area').forEach(function(a){document.getElementById('ta-'+a.dataset.target).value=a.innerHTML;});
+  var form=document.getElementById('leadForm');
+  var first=validateForm(form);
+  // team members
+  if(document.querySelectorAll('#msMenu input:checked').length===0){var btn=document.querySelector('.ms-btn');setErr(btn,'Select at least one team member.',true);if(!first)first=btn;}
+  // requirement spec
+  var spec=document.getElementById('ta-requirement_spec').value.replace(/<[^>]*>/g,'').trim();
+  var rte=document.getElementById('rte-spec').closest('.rte');
+  if(!spec){setErr(rte,'Requirement specification is required.',true);if(!first)first=rte;}
+  if(first){(first.scrollIntoView?first:first).scrollIntoView({behavior:'smooth',block:'center'});try{first.focus();}catch(e){}return false;}
+  return true;
+}
+</script>
+</body>
+</html>

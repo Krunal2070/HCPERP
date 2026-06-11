@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Import Clients — CRM | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 50px;max-width:1500px;margin:0 auto;width:100%}
+  a{text-decoration:none;color:inherit}
+  .ptop{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}
+  .ptop h1{font-size:1.5rem;font-weight:800;margin:0;display:flex;align-items:center;gap:9px}
+  .ptop p{margin:4px 0 0;color:var(--muted2);font-size:.86rem}
+  .btn{height:38px;padding:0 15px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.84rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--teal-glow2);border-color:var(--teal)}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
+  .grid{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:start}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:22px}
+  .card h2{font-size:1rem;font-weight:800;margin:0 0 16px;display:flex;align-items:center;gap:9px}
+  .step{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:.9rem}
+  .step .n{width:26px;height:26px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tmpl{display:flex;align-items:center;gap:12px;justify-content:space-between;background:var(--green-bg);border:1px solid var(--green-text);border-radius:var(--radius-md);padding:14px 16px;margin:16px 0}
+  .tmpl .t{font-size:.9rem;font-weight:800;color:var(--green-text)}
+  .tmpl .s{font-size:.78rem;color:var(--green-text);opacity:.85}
+  .drop{border:2px dashed var(--border2);border-radius:var(--radius-md);padding:36px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)}
+  .drop:hover,.drop.drag{border-color:var(--teal);background:var(--teal-glow2)}
+  .drop .ic{font-size:2.4rem}
+  .drop .big{font-size:.98rem;font-weight:800;margin-top:8px}
+  .drop .sm{font-size:.8rem;color:var(--muted2);margin-top:4px}
+  .drop .fname{margin-top:10px;font-size:.85rem;font-weight:700;color:var(--teal-dim)}
+  .act{display:flex;gap:10px;margin-top:18px}
+  .act .btn-primary{flex:1;height:44px;justify-content:center;font-size:.9rem}
+  .notes{background:var(--amber-bg);border:1px solid var(--amber-text);border-radius:var(--radius-md);padding:14px 16px;margin-top:18px}
+  .notes .nh{font-size:.84rem;font-weight:800;color:var(--amber-text);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+  .notes ul{margin:0;padding-left:18px}
+  .notes li{font-size:.82rem;color:var(--amber-text);margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;font-size:.84rem}
+  thead th{text-align:left;padding:9px 10px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);border-bottom:2px solid var(--border2)}
+  tbody td{padding:8px 10px;border-bottom:1px solid var(--border)}
+  .col-nm{font-family:var(--font-mono);font-size:.8rem;color:var(--teal-dim);font-weight:600}
+  .req-y{color:var(--red-text);font-weight:800;font-size:.76rem}
+  .req-n{color:var(--muted2);font-size:.8rem}
+  .ex{color:var(--muted2);font-size:.82rem}
+  .flash{padding:11px 16px;border-radius:var(--radius-md);margin-bottom:16px;font-size:.86rem;font-weight:600}
+  .flash.success{background:var(--green-bg);color:var(--green-text)}.flash.error{background:var(--red-bg);color:var(--red-text)}
+</style>
+</head>
+<body>
+{% set page_title = "Import Clients" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Client Master","url":"/crm/clients"},{"label":"Import","url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <main class="page-root">
+    <div class="ptop">
+      <div style="flex:1">
+        <h1>📥 Import Clients</h1>
+        <p>Bulk import clients from CSV or Excel file</p>
+      </div>
+      <a class="btn" href="{{ url_for('crm.clients') }}">← Back to Clients</a>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}{% endwith %}
+
+    <div class="grid">
+      <!-- LEFT: upload -->
+      <div class="card">
+        <h2>📁 Upload File</h2>
+        <div class="step"><span class="n">1</span> Download the sample template below</div>
+        <div class="step"><span class="n">2</span> Fill your clients data in the template</div>
+        <div class="step"><span class="n">3</span> Upload the completed file here</div>
+
+        <div class="tmpl">
+          <div><div class="t">📄 Sample Template</div><div class="s">Download Excel (.xlsx) with all fields + dropdown validation</div></div>
+          <a class="btn btn-primary" href="{{ url_for('crm.clients_import_template') }}">⬇ Download</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('crm.clients_import') }}" enctype="multipart/form-data" id="impForm">
+          <div class="drop" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="ic">📁</div>
+            <div class="big">Drop file here or click to browse</div>
+            <div class="sm">Supports: CSV, Excel (.xlsx)</div>
+            <div class="fname" id="fname"></div>
+          </div>
+          <input type="file" name="file" id="fileInput" accept=".csv,.xlsx,.xls" required style="display:none" onchange="showName(this)">
+          <div class="act">
+            <button type="submit" class="btn btn-primary">📥 Import Now</button>
+            <a class="btn" href="{{ url_for('crm.clients') }}">Cancel</a>
+          </div>
+        </form>
+
+        <div class="notes">
+          <div class="nh">⚠️ Important Notes</div>
+          <ul>
+            <li>First row must be the header row</li>
+            <li><b>name</b> (contact name) column is required</li>
+            <li>status must be: active or inactive (default: active)</li>
+            <li>Brands &amp; addresses ko form me alag se add karein</li>
+            <li>Duplicate entries will be added as new clients</li>
+            <li>Max file size: 5MB</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- RIGHT: column reference -->
+      <div class="card">
+        <h2>📋 Column Reference</h2>
+        <table>
+          <thead><tr><th>Column Name</th><th>Required?</th><th>Example</th></tr></thead>
+          <tbody>
+            {% set cols = [
+              ('name','req','Ramesh Shah'),('company','opt','ABC Cosmetics Pvt Ltd'),('position','opt','Director'),
+              ('email','opt','ramesh@abc.com'),('website','opt','www.abc.com'),('mobile','opt','9999999999'),
+              ('alternate_mobile','opt','8888888888'),('gstin','opt','24ABCDE1234F1Z5'),('status','opt','active'),
+              ('address','opt','Plot 12, GIDC'),('city','opt','Surat'),('state','opt','Gujarat'),
+              ('country','opt','India'),('zip_code','opt','395003'),('notes','opt','Net 30 terms')
+            ] %}
+            {% for nm, rq, ex in cols %}
+            <tr><td><span class="col-nm">{{ nm }}</span></td><td>{% if rq=='req' %}<span class="req-y">Required</span>{% else %}<span class="req-n">Optional</span>{% endif %}</td><td><span class="ex">{{ ex }}</span></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function showName(inp){document.getElementById('fname').textContent=inp.files&&inp.files[0]?('✓ '+inp.files[0].name):'';}
+var dz=document.getElementById('dropZone');
+['dragover','dragenter'].forEach(e=>dz.addEventListener(e,function(ev){ev.preventDefault();dz.classList.add('drag');}));
+['dragleave','drop'].forEach(e=>dz.addEventListener(e,function(ev){ev.preventDefault();dz.classList.remove('drag');}));
+dz.addEventListener('drop',function(ev){var f=ev.dataTransfer.files;if(f&&f.length){document.getElementById('fileInput').files=f;showName(document.getElementById('fileInput'));}});
+</script>
+</body></html>

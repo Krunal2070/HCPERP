@@ -89,6 +89,11 @@ app.register_blueprint(hcp_stock_bp)         # HCP Stock routes
 hcp_stock_db.ensure_tables()                 # Create hcp_stock_* tables on first run
 app.register_blueprint(qc_bp)                # QC Dashboard / QC Sampling / Inprocess Approval Form
 
+# ===== CRM · Leads module (modules/crm/) =====
+from crm import crm_bp, ensure_lead_tables   # CRM Leads blueprint + table bootstrap
+app.register_blueprint(crm_bp)               # CRM Leads routes  ->  /crm/leads
+ensure_lead_tables()                         # lead_* tables ko first-run pe auto-create
+
 # User-administration lookup tables (Department / Designation / User Type / Access Level)
 import sys as _ua_sys
 from user_admin import user_admin_bp, ensure_user_admin_tables, _fetch_lookups
@@ -3512,6 +3517,7 @@ def api_save_user_permissions():
 # so existing routes pick up the toggles automatically.
 INDEX_PERM_KEYS = [
     # Operations
+    ('crm',                     'CRM · Leads'),
     ('production_initiater',    'Production Initiater'),
     ('production_dept',         'Production Department'),
     ('planning',                'Planning Dashboard'),
