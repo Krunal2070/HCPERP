@@ -121,3 +121,40 @@ function csbFilter(q){
   });
 }
 </script>
+
+<script>
+/* ── Smooth sidebar: default CLOSED, click-outside close, choice yaad ──
+   .sidebar me already `transition:width/opacity` + `.collapsed{width:0;opacity:0}`
+   hai. Hum 'collapsed' class toggle karte hain (smooth). window.toggleSidebar
+   define karne se header ka hamburger bhi isi smooth toggle ko use karega
+   (hcp-hidden display:none fallback ke bajaye). */
+(function(){
+  var sb = document.getElementById('appSidebar');
+  if(!sb) return;
+
+  function closed(){ return sb.classList.contains('collapsed'); }
+  function save(c){ try{ localStorage.setItem('hcp_sidebar', c?'closed':'open'); }catch(e){} }
+  function openSb(){ sb.classList.remove('collapsed'); save(false); }
+  function closeSb(){ sb.classList.add('collapsed'); save(true); }
+
+  /* Initial state bina animation ke set karo (load pe collapse na dikhe) */
+  var st=null; try{ st=localStorage.getItem('hcp_sidebar'); }catch(e){}
+  var prev = sb.style.transition;
+  sb.style.transition = 'none';
+  if(st === 'open') sb.classList.remove('collapsed');
+  else sb.classList.add('collapsed');     // pehli baar => closed
+  void sb.offsetHeight;                    // reflow force
+  sb.style.transition = prev;              // ab transition wapas on
+
+  /* Header hamburger isko use karega (page-defined toggle wins) */
+  window.toggleSidebar = function(){ if(closed()) openSb(); else closeSb(); };
+
+  /* Sidebar ke bahar click => smoothly band */
+  document.addEventListener('click', function(e){
+    if(closed()) return;
+    if(e.target.closest('#appSidebar')) return;
+    if(e.target.closest('.hcp-burger')) return;
+    closeSb();
+  });
+})();
+</script>

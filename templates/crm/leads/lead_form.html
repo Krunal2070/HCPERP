@@ -113,6 +113,20 @@
   .mini-body input{width:100%;height:42px;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.9rem;font-family:inherit;box-sizing:border-box}
   .mini-body input:focus{outline:none;border-color:var(--teal);box-shadow:var(--shadow-teal)}
   .mini-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
+  /* ── Review modal ── */
+  .rv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:opacity .18s;padding:16px}
+  .rv-overlay.show{opacity:1}
+  .rv-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);width:480px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;transform:translateY(10px);transition:transform .18s}
+  .rv-overlay.show .rv-box{transform:translateY(0)}
+  .rv-head{padding:16px 20px;font-size:1rem;font-weight:800;color:var(--text);border-bottom:1px solid var(--border)}
+  .rv-body{padding:16px 20px;overflow-y:auto}
+  .rv-grid{display:grid;grid-template-columns:130px 1fr;gap:8px 14px}
+  .rv-k{font-size:.74rem;font-weight:800;color:var(--muted2);text-transform:uppercase;letter-spacing:.04em;padding-top:1px}
+  .rv-v{font-size:.86rem;color:var(--text);font-weight:600;word-break:break-word}
+  .rv-actions{padding:14px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border)}
+  .rv-btn{padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;border:1px solid var(--border)}
+  .rv-edit{background:var(--surface2);color:var(--muted2)}
+  .rv-ok{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
 </style>
 </head>
 <body>
@@ -138,7 +152,7 @@
       {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
     {% endwith %}
 
-    <form method="POST" id="leadForm" autocomplete="off" novalidate onsubmit="return syncBeforeSubmit()">
+    <form method="POST" id="leadForm" autocomplete="off" novalidate onsubmit="return reviewAndSave()">
 
       <!-- ── LEAD SETTINGS ── -->
       <div class="card">
@@ -446,6 +460,40 @@ function syncBeforeSubmit(){
   if(!spec){setErr(rte,'Requirement specification is required.',true);if(!first)first=rte;}
   if(first){(first.scrollIntoView?first:first).scrollIntoView({behavior:'smooth',block:'center'});try{first.focus();}catch(e){}return false;}
   return true;
+}
+
+/* ── Review confirmation before save ── */
+function reviewAndSave(){
+  if(!syncBeforeSubmit()) return false;          // validate + sync; error => ruk jao
+  var form=document.getElementById('leadForm');
+  var g=function(n){var el=form.querySelector('[name="'+n+'"]');return el?(el.value||'').trim():'';};
+  var tm=[].slice.call(document.querySelectorAll('#msMenu input:checked')).map(function(c){return c.parentNode.innerText.trim();});
+  var rows=[
+    ['Name',g('contact_name')],['Company',g('company_name')],['Mobile',g('phone')],
+    ['Alt. Mobile',g('alternate_mobile')],['Email',g('email')],['Status',g('status')],
+    ['Lead Type',g('lead_type')],['Source',g('source')],['Product',g('product_name')],
+    ['Category',g('category')],['Product Range',g('product_range')],['Order Qty',g('order_quantity')],
+    ['City',g('city')],['State',g('state')],['Country',g('country')],
+    ['Team',tm.join(', ')]
+  ].filter(function(r){return r[1];});
+  var html='<div class="rv-grid">';
+  rows.forEach(function(r){html+='<div class="rv-k">'+r[0]+'</div><div class="rv-v">'+r[1].replace(/</g,'&lt;')+'</div>';});
+  html+='</div>';
+  reviewModal(html,function(){ form.submit(); });   // confirm => actual submit
+  return false;                                       // is submit ko rok do
+}
+function reviewModal(bodyHtml,onOk){
+  var ov=document.createElement('div');ov.className='rv-overlay';
+  ov.innerHTML='<div class="rv-box"><div class="rv-head">Review &amp; Confirm</div>'
+    +'<div class="rv-body">'+bodyHtml+'</div>'
+    +'<div class="rv-actions"><button type="button" class="rv-btn rv-edit">✎ Edit</button>'
+    +'<button type="button" class="rv-btn rv-ok">✓ Confirm &amp; Save</button></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ov.classList.add('show');});
+  function close(){ov.classList.remove('show');setTimeout(function(){ov.remove();},200);}
+  ov.querySelector('.rv-edit').onclick=close;
+  ov.querySelector('.rv-ok').onclick=function(){ov.querySelector('.rv-ok').textContent='Saving…';if(onOk)onOk();};
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
 }
 </script>
 </body>

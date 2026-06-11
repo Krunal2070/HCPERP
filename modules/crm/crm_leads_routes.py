@@ -33,6 +33,30 @@ from werkzeug.utils import secure_filename
 
 import sampling_portal  # main project ka pymysql bridge (core/ on sys.path)
 
+# CRM schema model — single source of truth for the list/columns dropdown.
+# (routes raw pymysql use karte hain, par column-metadata model se aata hai.)
+try:
+    from models.crm_lead import LEAD_LIST_COLUMNS
+except Exception:
+    try:
+        from crm_lead import LEAD_LIST_COLUMNS
+    except Exception:
+        LEAD_LIST_COLUMNS = [
+            ('created', 'Created', True), ('name', 'Name', True),
+            ('company', 'Company', True), ('email', 'Email', True),
+            ('mobile', 'Mobile', True), ('product', 'Product', True),
+            ('team', 'Team', True), ('status', 'Status', True),
+            ('lead_type', 'Lead Type', True), ('last_contact', 'Last Contact', True),
+            ('age', 'Days (Age)', True), ('code', 'Code', False),
+            ('position', 'Position', False), ('website', 'Website', False),
+            ('alt_mobile', 'Alt. Mobile', False), ('source', 'Source', False),
+            ('category', 'Category', False), ('product_range', 'Product Range', False),
+            ('order_quantity', 'Order Qty', False), ('city', 'City', False),
+            ('state', 'State', False), ('country', 'Country', False),
+            ('zip_code', 'ZIP', False), ('avg_cost', 'Avg Cost', False),
+            ('tags', 'Tags', False),
+        ]
+
 # Common, data-driven sidebar (menu defined once in core/menus.py)
 try:
     from menus import get_menu
@@ -373,6 +397,7 @@ def leads():
         return render_template(
             'crm/leads/leads.html',
             leads=all_leads, counts=counts, total_count=total_count,
+            list_columns=LEAD_LIST_COLUMNS,
             deleted_count=deleted_count, show_trash=show_trash,
             npd_count=npd_count, epd_count=epd_count,
             all_users=all_users, status=status, search=search,
@@ -757,31 +782,6 @@ def lead_update_status(id):
 # ─────────────────────────────────────────────────────────────────────────────
 # INLINE EDIT (ajax single field)
 # ─────────────────────────────────────────────────────────────────────────────
-@crm_bp.route('/leads/<int:id>/inline-edit', methods=['POST'])
-@login_required
-def lead_inline_edit(id):
-    field = request.form.get('field')
-    value = request.form.get('value')
-    allowed = {'contact_name', 'company_name', 'email', 'phone',
-               'alternate_mobile', 'city', 'product_name', 'category',
-               'source', 'priority', 'follow_up_date', 'expected_value',
-               'lead_type', 'status'}
-    if field not in allowed:
-        return jsonify(ok=False, error='field not editable'), 400
-    conn = _db()
-    try:
-        conn.execute(f"UPDATE `leads` SET `{field}`=%s, modified_by=%s "
-                     f"WHERE id=%s", (value or None, _uid(), id))
-        log_activity(conn, id, f"Inline edit: {field}")
-        conn.commit()
-        return jsonify(ok=True, field=field, value=value)
-    finally:
-        conn.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# DISCUSSION
-# ─────────────────────────────────────────────────────────────────────────────
 @crm_bp.route('/leads/<int:id>/discussion/add', methods=['POST'])
 @login_required
 def lead_discussion_add(id):
@@ -1133,11 +1133,61 @@ def leads_import_template():
 # ─────────────────────────────────────────────────────────────────────────────
 # EXPORT (Excel)
 # ─────────────────────────────────────────────────────────────────────────────
+@crm_bp.route('/leads/<int:id>/inline-edit', methods=['POST'])
+@login_required
+def lead_inline_edit(id):
+    """List page se cell-level quick edit (AJAX JSON: {field, value})."""
+    data = request.get_json(silent=True) or {}
+    field = (data.get('field') or '').strip()
+    value = data.get('value', '')
+    allowed = {
+        'contact_name', 'company_name', 'email', 'phone', 'alternate_mobile',
+        'website', 'position', 'city', 'state', 'country', 'zip_code', 'source',
+        'product_name', 'category', 'product_range', 'order_quantity', 'tags',
+        'status', 'lead_type', 'average_cost',
+    }
+    if field not in allowed:
+        return jsonify(success=False, error='Field not allowed'), 400
+    if isinstance(value, str):
+        value = value.strip()
+    if field == 'lead_type' and value not in ('Quality', 'Non-Quality'):
+        return jsonify(success=False, error='Invalid lead type'), 400
+    if field == 'average_cost':
+        try:
+            value = float(value) if value not in ('', None) else None
+        except Exception:
+            return jsonify(success=False, error='Invalid number'), 400
+    conn = _db()
+    try:
+        lead = conn.execute(
+            "SELECT id FROM `leads` WHERE id=%s AND is_deleted=0", (id,)).fetchone()
+        if not lead:
+            return jsonify(success=False, error='Lead not found'), 404
+        conn.execute(
+            f"UPDATE `leads` SET `{field}`=%s, modified_by=%s, updated_at=NOW() "
+            f"WHERE id=%s", (value, _uid(), id))
+        try:
+            log_activity(conn, id, f'Inline edit: {field} updated')
+        except Exception:
+            pass
+        conn.commit()
+        return jsonify(success=True, field=field, value=value)
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return jsonify(success=False, error=str(e)), 500
+    finally:
+        conn.close()
+
+
 @crm_bp.route('/leads/export')
 @login_required
 def leads_export():
     try:
         from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
     except Exception:
         flash('openpyxl not installed.', 'error')
         return redirect(url_for('crm.leads'))
@@ -1147,31 +1197,86 @@ def leads_export():
         rows = conn.execute(
             "SELECT * FROM `leads` WHERE is_deleted=0" + vis_frag
             + " ORDER BY created_at DESC", vis_params).fetchall() or []
-        umap = _user_map(conn)
+
+        def d(val):
+            """date → dd-mm-yyyy (string ya datetime dono)."""
+            if not val:
+                return ''
+            if isinstance(val, str):
+                v = val.strip()
+                for f in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d'):
+                    try:
+                        from datetime import datetime as _dt
+                        return _dt.strptime(v[:19], f).strftime('%d-%m-%Y')
+                    except Exception:
+                        continue
+                return v
+            try:
+                return val.strftime('%d-%m-%Y')
+            except Exception:
+                return str(val)
+
+        ST = {'open': 'Open', 'in_process': 'In Process',
+              'close': 'Close', 'cancel': 'Cancel'}
+
         wb = Workbook()
         ws = wb.active
         ws.title = 'Leads'
-        headers = ['Code', 'Date', 'Name', 'Company', 'Email', 'Mobile',
-                   'Alt Mobile', 'City', 'Product', 'Category', 'Source',
-                   'Status', 'Lead Type', 'Priority', 'Assigned To',
-                   'Follow Up', 'Expected Value']
+        headers = ['Created Date', 'Code', 'Company', 'Contact Name', 'Position',
+                   'Email', 'Mobile', 'Alt Mobile', 'Website', 'City', 'State',
+                   'Country', 'Source', 'Product Name', 'Category', 'Product Range',
+                   'Order Quantity', 'Expected Value', 'Priority', 'Status',
+                   'Lead Type', 'Follow Up Date', 'Last Contact', 'Tags',
+                   'Lead Age (Days)']
         ws.append(headers)
         for r in rows:
             ws.append([
-                r.get('code'),
-                str(r.get('created_at') or '')[:10],
-                r.get('contact_name'), r.get('company_name'), r.get('email'),
-                r.get('phone'), r.get('alternate_mobile'), r.get('city'),
-                r.get('product_name'), r.get('category'), r.get('source'),
-                r.get('status'), r.get('lead_type'), r.get('priority'),
-                umap.get(r.get('assigned_to'), ''),
-                str(r.get('follow_up_date') or ''),
-                float(r.get('expected_value') or 0),
+                d(r.get('created_at')), r.get('code') or '',
+                r.get('company_name') or '', r.get('contact_name') or '',
+                r.get('position') or '', r.get('email') or '',
+                r.get('phone') or '', r.get('alternate_mobile') or '',
+                r.get('website') or '', r.get('city') or '', r.get('state') or '',
+                r.get('country') or '', r.get('source') or '',
+                r.get('product_name') or '', r.get('category') or '',
+                r.get('product_range') or '', r.get('order_quantity') or '',
+                (float(r['expected_value']) if r.get('expected_value') is not None
+                 else ''),
+                r.get('priority') or '', ST.get(r.get('status'), r.get('status') or ''),
+                r.get('lead_type') or '', d(r.get('follow_up_date')),
+                d(r.get('last_contact')), r.get('tags') or '',
+                str(_lead_age(r)),
             ])
+
+        # header styling
+        hf = Font(bold=True, color='FFFFFF')
+        fill = PatternFill('solid', fgColor='2563EB')
+        for c in ws[1]:
+            c.font = hf
+            c.fill = fill
+            c.alignment = Alignment(vertical='center')
+        ws.freeze_panes = 'A2'
+        widths = [13, 11, 24, 20, 14, 24, 13, 13, 18, 14, 14, 12, 16, 22, 14,
+                  14, 14, 14, 10, 12, 11, 14, 14, 18, 14]
+        for i, w in enumerate(widths, start=1):
+            ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = w
+
+        # Summary sheet
+        s = wb.create_sheet('Summary')
+        s['A1'] = 'HCP ERP — Leads Export'
+        s['A1'].font = Font(bold=True, size=13)
+        s['A3'] = 'Date'
+        s['B3'] = datetime.now().strftime('%d-%m-%Y')
+        s['A4'] = 'Total Leads'
+        s['B4'] = len(rows)
+        for cell in ('A3', 'A4'):
+            s[cell].font = Font(bold=True)
+        s.column_dimensions['A'].width = 18
+        s.column_dimensions['B'].width = 18
+
         buf = io.BytesIO()
         wb.save(buf)
         buf.seek(0)
-        fname = f"leads_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        fname = f"HCP_Leads_{datetime.now().strftime('%Y-%m-%d')}.xlsx"
         return send_file(
             buf, as_attachment=True, download_name=fname,
             mimetype='application/vnd.openxmlformats-officedocument.'

@@ -14,117 +14,87 @@
 <style>
   body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;min-height:100vh;display:flex;flex-direction:column}
   .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
-  .page-root{flex:1;min-width:0;overflow-y:auto;padding:20px 24px 60px;max-width:1300px;margin:0 auto;width:100%}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:20px 24px 60px;max-width:1320px;margin:0 auto;width:100%}
   a{text-decoration:none;color:inherit}
-  .btn{height:38px;padding:0 14px;border-radius:var(--radius-md);border:1px solid var(--border2);
-       background:var(--surface);color:var(--text);font-size:.82rem;font-weight:700;cursor:pointer;
-       display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:.15s}
-  .btn:hover{background:var(--teal-glow2);border-color:var(--teal)}
-  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
-  .btn-primary:hover{filter:brightness(1.06)}
-  .btn-ghost{background:transparent}
-  .btn-danger{background:var(--red-bg);color:var(--red-text);border-color:transparent}
-  .btn-sm{height:32px;padding:0 11px;font-size:.76rem}
-  /* head card */
+  /* hero */
   .lead-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-       box-shadow:var(--shadow-sm);padding:20px 22px;margin-bottom:18px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
-  .lead-hero .code{font-family:var(--font-mono);font-size:.78rem;font-weight:700;color:var(--teal-dim);letter-spacing:.04em}
-  .lead-hero h1{font-size:1.5rem;font-weight:800;margin:6px 0 8px}
-  .lead-hero .sub{font-size:.86rem;color:var(--muted2);display:flex;flex-wrap:wrap;gap:14px;align-items:center}
-  .lead-hero .sub span{display:inline-flex;align-items:center;gap:5px}
-  .hero-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-  .badge{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:999px;font-size:.78rem;font-weight:800;text-transform:capitalize}
+    box-shadow:var(--shadow-sm);padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .lead-hero h1{font-size:1.32rem;font-weight:800;margin:0 0 9px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .lead-hero .sub{font-size:.82rem;color:var(--muted2);display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+  .lead-hero .sub b{color:var(--text)}
+  .lead-hero .sub span{display:inline-flex;align-items:center;gap:6px}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;font-size:.72rem;font-weight:800;text-transform:capitalize}
   .b-open{background:rgba(37,99,235,.14);color:#2563eb}
   .b-in_process{background:var(--amber-bg);color:var(--amber-text)}
   .b-close{background:var(--green-bg);color:var(--green-text)}
   .b-cancel{background:var(--red-bg);color:var(--red-text)}
-  .prio{font-size:.72rem;font-weight:800;padding:3px 10px;border-radius:6px}
-  .prio.high{background:var(--red-bg);color:var(--red-text)}
-  .prio.medium{background:var(--amber-bg);color:var(--amber-text)}
-  .prio.low{background:var(--green-bg);color:var(--green-text)}
-  .hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-  /* layout grid */
-  .grid2{display:grid;grid-template-columns:1.7fr 1fr;gap:18px;align-items:start}
+  .hero-actions{display:flex;gap:9px;align-items:flex-start;flex-wrap:wrap}
+  .hbtn{height:38px;padding:0 16px;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer;border:none;
+    display:inline-flex;align-items:center;gap:7px;font-family:inherit;color:#fff;transition:.15s}
+  .hbtn:hover{filter:brightness(1.06)}
+  .hbtn.wa{background:#22c55e}.hbtn.mail{background:#2563eb}
+  .hbtn.act{background:var(--surface);color:var(--text);border:1px solid var(--border2)}
+  .hbtn.act:hover{background:var(--surface2);filter:none}
+  .act-wrap{position:relative}
+  .act-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:170px;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-md);box-shadow:var(--shadow-md);z-index:60;display:none;overflow:hidden}
+  .act-menu.open{display:block}
+  .act-menu a,.act-menu button{display:flex;align-items:center;gap:9px;width:100%;padding:10px 14px;font-size:.84rem;font-weight:600;
+    color:var(--text);background:none;border:none;cursor:pointer;font-family:inherit;text-align:left}
+  .act-menu a:hover,.act-menu button:hover{background:var(--surface2)}
+  .act-menu .danger{color:var(--red-text)}
+  /* tabs */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+  .tab{padding:11px 16px;font-size:.85rem;font-weight:700;color:var(--muted2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--teal-dim);border-bottom-color:var(--teal)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  /* cards */
+  .grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;align-items:start}
   @media(max-width:980px){.grid2{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:hidden}
-  .card .c-head{padding:13px 18px;border-bottom:1px solid var(--border);background:var(--surface2);
-       display:flex;align-items:center;justify-content:space-between;gap:9px}
-  .card .c-head .t{display:flex;align-items:center;gap:9px;font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
-  .card .c-head svg{color:var(--teal)}
-  .card .c-body{padding:18px}
-  /* detail rows */
-  .dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 18px}
-  .dl .row .k{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);margin-bottom:3px}
-  .dl .row .v{font-size:.9rem;color:var(--text);font-weight:500;word-break:break-word}
-  .dl .row .v.empty{color:var(--muted2);font-style:italic;font-weight:400}
-  .mini-chip{font-size:.7rem;padding:2px 9px;border-radius:999px;background:var(--teal-glow);color:var(--teal-dim);font-weight:700;display:inline-block;margin:2px 3px 0 0}
-  /* discussion */
-  .disc{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
-  .disc:last-child{border-bottom:none}
-  .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-dim));
-       color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0}
-  .disc-body{flex:1;min-width:0}
-  .disc-meta{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-  .disc-meta .nm{font-weight:700;font-size:.86rem}
-  .disc-meta .tm{font-size:.72rem;color:var(--muted2)}
-  .disc-text{font-size:.88rem;line-height:1.5;white-space:pre-wrap;word-break:break-word}
-  .file-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;margin:7px 6px 0 0;border-radius:8px;
-       background:var(--surface2);border:1px solid var(--border2);font-size:.76rem;font-weight:600;color:var(--text)}
-  .file-pill:hover{border-color:var(--teal);color:var(--teal-dim)}
-  .comment-box{display:flex;flex-direction:column;gap:10px;padding-bottom:16px;margin-bottom:8px;border-bottom:1px solid var(--border)}
-  textarea,.inp{width:100%;border-radius:var(--radius-md);border:1px solid var(--border2);background:var(--surface);
-       color:var(--text);font-size:.88rem;font-family:inherit;padding:10px 12px;box-sizing:border-box}
-  textarea{min-height:64px;resize:vertical}
-  .inp{height:40px;padding:0 12px}
-  textarea:focus,.inp:focus{outline:none;border-color:var(--teal);box-shadow:var(--shadow-teal)}
-  .file-input{font-size:.8rem;color:var(--muted2)}
-  /* reminders / notes lists */
-  .item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:10px}
-  .item:last-child{border-bottom:none}
-  .item .it-title{font-weight:700;font-size:.88rem}
-  .item .it-sub{font-size:.76rem;color:var(--muted2);margin-top:3px}
-  .item.done .it-title{text-decoration:line-through;color:var(--muted2)}
-  .it-act{display:flex;gap:6px;align-items:flex-start}
-  .ico-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);
-       cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--muted2);transition:.15s}
-  .ico-btn:hover{color:var(--teal);border-color:var(--teal)}
-  .ico-btn.danger:hover{color:var(--red-text);border-color:var(--red-text)}
-  .ico-btn.ok:hover{color:var(--green-text);border-color:var(--green-text)}
-  /* timeline */
-  .tl{position:relative;padding-left:20px}
-  .tl::before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--border2)}
-  .tl-item{position:relative;padding:0 0 14px 0}
-  .tl-item::before{content:"";position:absolute;left:-19px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px var(--teal-glow2)}
-  .tl-item .a{font-size:.84rem;font-weight:600}
-  .tl-item .m{font-size:.72rem;color:var(--muted2);margin-top:2px}
-  /* contributions */
-  .contrib-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
-  .contrib-row:last-child{border-bottom:none}
-  .contrib-row .nm{display:flex;align-items:center;gap:9px;font-size:.86rem;font-weight:600}
-  .pts{font-weight:800;color:var(--teal-dim);font-size:.95rem}
-  .cnt{font-size:.7rem;color:var(--muted2)}
-  .empty-sm{padding:20px;text-align:center;color:var(--muted2);font-size:.84rem}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+  .card .c-head{padding:14px 20px;border-bottom:1px solid var(--border);font-size:.95rem;font-weight:800}
+  .card .c-body{padding:6px 20px 12px}
+  /* info rows */
+  .info-row{display:grid;grid-template-columns:160px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);font-size:.88rem;align-items:start}
+  .info-row:last-child{border-bottom:none}
+  .info-row .lbl{color:var(--muted2);font-weight:600}
+  .info-row .val{color:var(--text);font-weight:600;word-break:break-word}
+  .info-row .val.muted{color:var(--muted2);font-weight:500}
+  .info-row .val a{color:var(--teal-dim);font-weight:700}
+  .lt-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;font-size:.76rem;font-weight:700}
+  .lt-q{background:var(--green-bg);color:var(--green-text)}
+  .lt-nq{background:var(--red-bg);color:var(--red-text)}
+  .spec{white-space:pre-wrap;line-height:1.6;font-weight:500;color:var(--text)}
+  .chip{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:999px;background:var(--teal-glow);color:var(--teal-dim);font-weight:700;margin:0 4px 4px 0}
+  /* dummy table placeholder */
+  .ph-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+  .ph-head{padding:14px 20px;border-bottom:1px solid var(--border);font-size:.95rem;font-weight:800}
+  table.ph{width:100%;border-collapse:collapse;font-size:.85rem}
+  table.ph th{text-align:left;padding:11px 16px;background:var(--surface2);color:var(--muted2);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+  table.ph td{padding:24px 16px;text-align:center;color:var(--muted2);font-style:italic}
   .flash{padding:11px 16px;border-radius:var(--radius-md);margin-bottom:16px;font-size:.86rem;font-weight:600}
   .flash.success{background:var(--green-bg);color:var(--green-text)}
   .flash.error{background:var(--red-bg);color:var(--red-text)}
   /* status modal */
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:60}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:80}
   .modal-bg.open{display:flex}
-  .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);
-       width:min(420px,92vw);padding:22px}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);width:min(420px,92vw);padding:22px}
   .modal h3{margin:0 0 14px;font-size:1rem;font-weight:800}
   .seg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
   .seg label{flex:1;min-width:90px}
   .seg input{display:none}
-  .seg span{display:block;text-align:center;padding:9px;border-radius:var(--radius-md);border:1px solid var(--border2);
-       cursor:pointer;font-size:.82rem;font-weight:700;text-transform:capitalize;transition:.15s}
+  .seg span{display:block;text-align:center;padding:9px;border-radius:var(--radius-md);border:1px solid var(--border2);cursor:pointer;font-size:.82rem;font-weight:700;text-transform:capitalize}
   .seg input:checked + span{background:var(--teal-glow);border-color:var(--teal);color:var(--teal-dim)}
+  .btn{height:38px;padding:0 16px;border-radius:9px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
   @media(max-width:640px){.page-root{padding:14px 12px 40px}.lead-hero{padding:16px}}
 </style>
 </head>
 <body>
 
-{% set page_title = "CRM · " + lead.code %}
+{% set page_title = "CRM · " + (lead.code or 'Lead') %}
 {% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Leads","url":"/crm/leads"},{"label": lead.code,"url":"#"}] %}
 {% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
 {% include 'partials/_header.html' %}
@@ -141,255 +111,163 @@
     <!-- HERO -->
     <div class="lead-hero">
       <div>
-        <div class="code">{{ lead.code }}</div>
-        <h1>{{ lead.contact_name }}{% if lead.company_name %} <span style="color:var(--muted2);font-weight:600;font-size:1.05rem">· {{ lead.company_name }}</span>{% endif %}</h1>
+        <h1>
+          {{ lead.contact_name }}{% if lead.city %} — {{ lead.city }}{% endif %}{% if lead.product_name %} — {{ lead.product_name }}{% endif %}
+          <span class="badge b-{{ lead.status }}">{{ lead.status|replace('_',' ') if lead.status else '—' }}</span>
+        </h1>
         <div class="sub">
-          {% if lead.phone %}<span>📞 {{ lead.phone }}</span>{% endif %}
-          {% if lead.email %}<span>✉ {{ lead.email }}</span>{% endif %}
-          {% if lead.city %}<span>📍 {{ lead.city }}{% if lead.state %}, {{ lead.state }}{% endif %}</span>{% endif %}
-          <span>🕑 {{ lead._age }} din purani</span>
+          <span>🗓 Create Date: <b>{{ lead.created_at | fmtdt('%d-%m-%Y %I:%M:%S %p') if lead.created_at else 'N/A' }}</b></span>
+          <span>🕑 Last Connected: <b>{{ lead.last_contact | fmtdt('%d-%m-%Y') if lead.last_contact else '—' }}</b></span>
+          <span>📌 Follow Up Date: <b>{{ lead.follow_up_date | fmtdt('%d-%m-%Y') if lead.follow_up_date else 'N/A' }}</b></span>
         </div>
       </div>
-      <div class="hero-right">
-        <div style="display:flex;gap:8px;align-items:center">
-          <span class="prio {{ lead.priority }}">{{ lead.priority|capitalize }} priority</span>
-          <span class="badge b-{{ lead.status }}">{{ lead.status|replace('_',' ') }}</span>
-        </div>
-        <div class="hero-actions">
-          <button class="btn btn-sm" onclick="document.getElementById('statusModal').classList.add('open')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Status
+      <div class="hero-actions">
+        {% if lead.phone %}<a class="hbtn wa" href="https://wa.me/{{ lead.phone|replace('+','')|replace(' ','') }}" target="_blank"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.8.9.9-2.7-.2-.3A8 8 0 1 1 12 20z"/></svg>WhatsApp</a>{% endif %}
+        {% if lead.email %}<a class="hbtn mail" href="mailto:{{ lead.email }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>Email</a>{% endif %}
+        <div class="act-wrap">
+          <button class="hbtn act" onclick="event.stopPropagation();document.getElementById('actMenu').classList.toggle('open')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>Actions ▾
           </button>
-          <a class="btn btn-sm" href="{{ url_for('crm.lead_edit', id=lead.id) }}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Edit
-          </a>
-          <a class="btn btn-sm btn-ghost" href="{{ url_for('crm.leads') }}">← Leads</a>
+          <div class="act-menu" id="actMenu">
+            <a href="{{ url_for('crm.lead_edit', id=lead.id) }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Edit Lead</a>
+            <button onclick="document.getElementById('statusModal').classList.add('open');document.getElementById('actMenu').classList.remove('open')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Change Status</button>
+            <a href="{{ url_for('crm.leads') }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Back to Leads</a>
+            <button class="danger" onclick="leadTrash()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Move to Trash</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="grid2">
-      <!-- LEFT column -->
-      <div>
-        <!-- Overview -->
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab(this,'tab-overview')">Overview</button>
+      <button class="tab" onclick="showTab(this,'tab-discussion')">Discussion Board</button>
+      <button class="tab" onclick="showTab(this,'tab-activity')">Activity Log</button>
+      <button class="tab" onclick="showTab(this,'tab-attach')">Attachments List</button>
+      <button class="tab" onclick="showTab(this,'tab-reminder')">Reminder</button>
+      <button class="tab" onclick="showTab(this,'tab-notes')">Personal Notes</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-panel active" id="tab-overview">
+      <div class="grid2">
+        <!-- Lead Information -->
         <div class="card">
-          <div class="c-head"><div class="t"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Overview</div></div>
+          <div class="c-head">Lead Information</div>
           <div class="c-body">
-            <div class="dl">
-              <div class="row"><div class="k">Title</div><div class="v {{ 'empty' if not lead.title }}">{{ lead.title or '—' }}</div></div>
-              <div class="row"><div class="k">Source</div><div class="v {{ 'empty' if not lead.source }}">{{ lead.source or '—' }}</div></div>
-              <div class="row"><div class="k">Lead Type</div><div class="v">{{ lead.lead_type or '—' }}</div></div>
-              <div class="row"><div class="k">Position</div><div class="v {{ 'empty' if not lead.position }}">{{ lead.position or '—' }}</div></div>
-              <div class="row"><div class="k">Website</div><div class="v {{ 'empty' if not lead.website }}">{{ lead.website or '—' }}</div></div>
-              <div class="row"><div class="k">Alternate Mobile</div><div class="v {{ 'empty' if not lead.alternate_mobile }}">{{ lead.alternate_mobile or '—' }}</div></div>
-              <div class="row"><div class="k">Follow-up Date</div><div class="v {{ 'empty' if not lead.follow_up_date }}">{{ lead.follow_up_date | fmtdt('%d %b %Y') if lead.follow_up_date else '—' }}</div></div>
-              <div class="row"><div class="k">Expected Value</div><div class="v {{ 'empty' if lead.expected_value is none }}">{% if lead.expected_value is not none %}₹ {{ '{:,.0f}'.format(lead.expected_value) }}{% else %}—{% endif %}</div></div>
-              <div class="row"><div class="k">Assigned To</div><div class="v {{ 'empty' if not lead._assigned_name }}">{{ lead._assigned_name or 'Unassigned' }}</div></div>
-              <div class="row"><div class="k">Created By</div><div class="v">{{ lead._created_name or '—' }}{% if lead.created_at %} · {{ lead.created_at | fmtdt('%d %b %Y') }}{% endif %}</div></div>
-            </div>
-            {% if lead._team %}
-            <div style="margin-top:16px">
-              <div class="k" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);margin-bottom:6px">Team Members</div>
-              {% for t in lead._team %}<span class="mini-chip">{{ t.name }}</span>{% endfor %}
-            </div>
-            {% endif %}
-            {% if lead.tags %}
-            <div style="margin-top:14px">
-              <div class="k" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);margin-bottom:6px">Tags</div>
-              {% for tg in lead.tags.split(',') if tg.strip() %}<span class="mini-chip" style="background:var(--amber-bg);color:var(--amber-text)">{{ tg.strip() }}</span>{% endfor %}
-            </div>
-            {% endif %}
+            <div class="info-row"><div class="lbl">Name</div><div class="val">{{ lead.contact_name or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Lead Type</div><div class="val">{% if lead.lead_type == 'Quality' %}<span class="lt-badge lt-q">✅ Quality</span>{% elif lead.lead_type %}<span class="lt-badge lt-nq">{{ lead.lead_type }}</span>{% else %}<span class="muted">N/A</span>{% endif %}</div></div>
+            <div class="info-row"><div class="lbl">Position</div><div class="val {{ '' if lead.position else 'muted' }}">{{ lead.position or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Email Address</div><div class="val">{% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% else %}<span class="muted">N/A</span>{% endif %}</div></div>
+            <div class="info-row"><div class="lbl">Website</div><div class="val {{ '' if lead.website else 'muted' }}">{{ lead.website or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Mobile</div><div class="val">{% if lead.phone %}<a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% else %}<span class="muted">N/A</span>{% endif %}</div></div>
+            <div class="info-row"><div class="lbl">Alternate Mobile</div><div class="val {{ '' if lead.alternate_mobile else 'muted' }}">{{ lead.alternate_mobile or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Average Cost</div><div class="val">{{ '%.2f'|format(lead.average_cost|float) if lead.average_cost is not none else '0.00' }}</div></div>
+            <div class="info-row"><div class="lbl">Company</div><div class="val {{ '' if lead.company_name else 'muted' }}">{{ lead.company_name or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Address</div><div class="val {{ '' if lead.address else 'muted' }}">{{ lead.address or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">City</div><div class="val {{ '' if lead.city else 'muted' }}">{{ lead.city or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">State</div><div class="val {{ '' if lead.state else 'muted' }}">{{ lead.state or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Country</div><div class="val {{ '' if lead.country else 'muted' }}">{{ lead.country or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Zip Code</div><div class="val {{ '' if lead.zip_code else 'muted' }}">{{ lead.zip_code or 'N/A' }}</div></div>
           </div>
         </div>
 
-        <!-- Requirement & Address -->
+        <!-- Requirement Information -->
         <div class="card">
-          <div class="c-head"><div class="t"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Requirement &amp; Address</div></div>
+          <div class="c-head">Requirement Information</div>
           <div class="c-body">
-            <div class="dl">
-              <div class="row"><div class="k">Product</div><div class="v {{ 'empty' if not lead.product_name }}">{{ lead.product_name or '—' }}</div></div>
-              <div class="row"><div class="k">Category</div><div class="v {{ 'empty' if not lead.category }}">{{ lead.category or '—' }}</div></div>
-              <div class="row"><div class="k">Product Range</div><div class="v {{ 'empty' if not lead.product_range }}">{{ lead.product_range or '—' }}</div></div>
-              <div class="row"><div class="k">Order Qty</div><div class="v {{ 'empty' if not lead.order_quantity }}">{{ lead.order_quantity or '—' }}</div></div>
-            </div>
-            {% if lead.requirement_spec %}<div style="margin-top:14px"><div class="k" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);margin-bottom:5px">Requirement Spec</div><div class="v" style="white-space:pre-wrap;font-size:.88rem">{{ lead.requirement_spec }}</div></div>{% endif %}
-            <div style="margin-top:14px"><div class="k" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);margin-bottom:5px">Full Address</div>
-              <div class="v {{ 'empty' if not lead.address and not lead.city }}">{{ [lead.address, lead.city, lead.state, lead.country, lead.zip_code]|select|join(', ') or '—' }}</div>
-            </div>
-            {% if lead.notes or lead.remark %}
-            <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
-              {% if lead.notes %}<div><div class="k" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);margin-bottom:5px">Notes</div><div class="v" style="white-space:pre-wrap">{{ lead.notes }}</div></div>{% endif %}
-              {% if lead.remark %}<div><div class="k" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);margin-bottom:5px">Remark</div><div class="v" style="white-space:pre-wrap">{{ lead.remark }}</div></div>{% endif %}
-            </div>
-            {% endif %}
-          </div>
-        </div>
-
-        <!-- Discussion -->
-        <div class="card" id="discussion">
-          <div class="c-head"><div class="t"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Discussion <span style="color:var(--muted2);font-weight:600">({{ discussions|length }})</span></div></div>
-          <div class="c-body">
-            <form class="comment-box" method="POST" action="{{ url_for('crm.lead_discussion_add', id=lead.id) }}" enctype="multipart/form-data">
-              <textarea name="comment" placeholder="Comment likhein... (file bhi attach kar sakte hain)"></textarea>
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-                <input class="file-input" type="file" name="files" multiple>
-                <button type="submit" class="btn btn-primary btn-sm">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post
-                </button>
-              </div>
-            </form>
-
-            {% for d in discussions %}
-            <div class="disc">
-              <div class="avatar">{{ (d._user or 'U')[0]|upper }}</div>
-              <div class="disc-body">
-                <div class="disc-meta">
-                  <span class="nm">{{ d._user }}</span>
-                  <span class="tm">{{ d.created_at | fmtdt('%d %b %Y, %I:%M %p') if d.created_at else '' }}</span>
-                  {% if is_admin or d.user_id==my_uid %}
-                  <button class="ico-btn danger" style="width:24px;height:24px;margin-left:auto" title="Delete"
-                          onclick="discDelete({{ d.id }})">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </button>
-                  {% endif %}
-                </div>
-                {% if d.comment %}<div class="disc-text">{{ d.comment }}</div>{% endif %}
-                {% for f in d._files %}
-                <a class="file-pill" href="{{ url_for('crm.lead_attachment_serve', aid=f.id) }}" target="_blank">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                  {{ f.file_name }}
-                </a>
-                {% endfor %}
-              </div>
-            </div>
-            {% else %}
-            <div class="empty-sm">Abhi tak koi discussion nahi.</div>
-            {% endfor %}
+            <div class="info-row"><div class="lbl">Client Attachments</div><div class="val {{ '' if lead.client_attachment else 'muted' }}">{% if lead.client_attachment %}<a href="{{ url_for('static', filename='uploads/' + lead.client_attachment) }}" target="_blank">View File</a>{% else %}No Files{% endif %}</div></div>
+            <div class="info-row"><div class="lbl">Product Name</div><div class="val {{ '' if lead.product_name else 'muted' }}">{{ lead.product_name or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Category</div><div class="val {{ '' if lead.category else 'muted' }}">{{ lead.category or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Requirement Spec</div><div class="val spec {{ '' if lead.requirement_spec else 'muted' }}">{{ lead.requirement_spec or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Tags</div><div class="val">{% if lead.tags %}{% for t in lead.tags.split(',') %}{% if t.strip() %}<span class="chip">{{ t.strip() }}</span>{% endif %}{% endfor %}{% else %}<span class="muted">N/A</span>{% endif %}</div></div>
+            <div class="info-row"><div class="lbl">Product Range</div><div class="val {{ '' if lead.product_range else 'muted' }}">{{ lead.product_range or 'N/A' }}</div></div>
+            <div class="info-row"><div class="lbl">Order Quantity</div><div class="val {{ '' if lead.order_quantity else 'muted' }}">{{ lead.order_quantity or 'N/A' }}</div></div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- RIGHT column -->
-      <div>
-        <!-- Reminders -->
-        <div class="card" id="reminders">
-          <div class="c-head"><div class="t"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Reminders</div></div>
-          <div class="c-body">
-            <form class="comment-box" method="POST" action="{{ url_for('crm.lead_reminder_add', id=lead.id) }}">
-              <input class="inp" type="text" name="title" placeholder="Reminder title" required>
-              <input class="inp" type="datetime-local" name="remind_at" required>
-              <input class="inp" type="text" name="description" placeholder="Description (optional)">
-              <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start">+ Add Reminder</button>
-            </form>
-            {% for r in reminders %}
-            <div class="item {{ 'done' if r.is_done }}" id="rem-{{ r.id }}">
-              <div>
-                <div class="it-title">{{ r.title }}</div>
-                <div class="it-sub">{{ r.remind_at | fmtdt('%d %b %Y, %I:%M %p') if r.remind_at else '' }} · {{ r._user }}{% if r.description %} — {{ r.description }}{% endif %}</div>
-              </div>
-              <div class="it-act">
-                {% if not r.is_done %}<button class="ico-btn ok" title="Mark done" onclick="remDone({{ r.id }})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>{% endif %}
-                <button class="ico-btn danger" title="Delete" onclick="remDelete({{ r.id }})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
-              </div>
-            </div>
-            {% else %}
-            <div class="empty-sm">Koi reminder nahi.</div>
-            {% endfor %}
-          </div>
-        </div>
+    <!-- DISCUSSION BOARD (dummy) -->
+    <div class="tab-panel" id="tab-discussion">
+      <div class="ph-card">
+        <div class="ph-head">Discussion Board</div>
+        <table class="ph"><thead><tr><th>User</th><th>Comment</th><th>Date</th></tr></thead>
+          <tbody><tr><td colspan="3">Discussion Board — jaldi hi (dummy)</td></tr></tbody></table>
+      </div>
+    </div>
 
-        <!-- Private Notes -->
-        <div class="card" id="notes">
-          <div class="c-head"><div class="t"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>My Private Notes</div></div>
-          <div class="c-body">
-            <form class="comment-box" method="POST" action="{{ url_for('crm.lead_note_add', id=lead.id) }}">
-              <textarea name="note" placeholder="Sirf aapko dikhega ye note..."></textarea>
-              <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start">+ Save Note</button>
-            </form>
-            {% for n in notes %}
-            <div class="item" id="note-{{ n.id }}">
-              <div>
-                <div class="it-title" style="font-weight:500;font-size:.86rem;white-space:pre-wrap">{{ n.note }}</div>
-                <div class="it-sub">{{ n.created_at | fmtdt('%d %b %Y, %I:%M %p') if n.created_at else '' }}</div>
-              </div>
-              <div class="it-act">
-                <button class="ico-btn danger" title="Delete" onclick="noteDelete({{ n.id }})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
-              </div>
-            </div>
-            {% else %}
-            <div class="empty-sm">Koi private note nahi.</div>
-            {% endfor %}
-          </div>
-        </div>
+    <!-- ACTIVITY LOG (dummy) -->
+    <div class="tab-panel" id="tab-activity">
+      <div class="ph-card">
+        <div class="ph-head">Activity Log</div>
+        <table class="ph"><thead><tr><th>Action</th><th>User</th><th>Date</th></tr></thead>
+          <tbody><tr><td colspan="3">Activity Log — jaldi hi (dummy)</td></tr></tbody></table>
+      </div>
+    </div>
 
-        <!-- Contributions -->
-        <div class="card">
-          <div class="c-head"><div class="t"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Contributions</div></div>
-          <div class="c-body">
-            {% for c in contributions %}
-            <div class="contrib-row">
-              <div class="nm"><div class="avatar" style="width:30px;height:30px;font-size:.78rem">{{ (c._user or 'U')[0]|upper }}</div>{{ c._user }}</div>
-              <div style="text-align:right"><span class="pts">{{ c.pts or 0 }} pts</span><div class="cnt">{{ c.cnt }} actions</div></div>
-            </div>
-            {% else %}
-            <div class="empty-sm">Abhi koi contribution points nahi.</div>
-            {% endfor %}
-          </div>
-        </div>
+    <!-- ATTACHMENTS (dummy) -->
+    <div class="tab-panel" id="tab-attach">
+      <div class="ph-card">
+        <div class="ph-head">Attachments List</div>
+        <table class="ph"><thead><tr><th>File Name</th><th>Size</th><th>Uploaded</th></tr></thead>
+          <tbody><tr><td colspan="3">Attachments List — jaldi hi (dummy)</td></tr></tbody></table>
+      </div>
+    </div>
 
-        <!-- Activity timeline -->
-        <div class="card">
-          <div class="c-head"><div class="t"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Activity Log</div></div>
-          <div class="c-body">
-            {% if logs %}
-            <div class="tl">
-              {% for lg in logs %}
-              <div class="tl-item">
-                <div class="a">{{ lg.action }}</div>
-                <div class="m">{{ lg._user }} · {{ lg.created_at | fmtdt('%d %b %Y, %I:%M %p') if lg.created_at else '' }}</div>
-              </div>
-              {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-sm">Koi activity nahi.</div>
-            {% endif %}
-          </div>
-        </div>
+    <!-- REMINDER (dummy) -->
+    <div class="tab-panel" id="tab-reminder">
+      <div class="ph-card">
+        <div class="ph-head">Reminder</div>
+        <table class="ph"><thead><tr><th>Title</th><th>Remind At</th><th>Status</th></tr></thead>
+          <tbody><tr><td colspan="3">Reminder — jaldi hi (dummy)</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- PERSONAL NOTES (dummy) -->
+    <div class="tab-panel" id="tab-notes">
+      <div class="ph-card">
+        <div class="ph-head">Personal Notes</div>
+        <table class="ph"><thead><tr><th>Note</th><th>Date</th></tr></thead>
+          <tbody><tr><td colspan="2">Personal Notes — jaldi hi (dummy)</td></tr></tbody></table>
       </div>
     </div>
 
   </main>
 </div>
 
-<!-- STATUS MODAL -->
+<!-- Status modal -->
 <div class="modal-bg" id="statusModal">
   <div class="modal">
     <h3>Update Status</h3>
     <form method="POST" action="{{ url_for('crm.lead_update_status', id=lead.id) }}">
       <div class="seg">
-        {% for st in lead_statuses %}
-        <label><input type="radio" name="status" value="{{ st.name }}" {{ 'checked' if lead.status==st.name }} onchange="toggleLost(this.value)"><span>{{ st.label or st.name }}</span></label>
+        {% for s in ['open','in_process','close','cancel'] %}
+        <label><input type="radio" name="status" value="{{ s }}" {{ 'checked' if lead.status==s }}><span>{{ s|replace('_',' ') }}</span></label>
         {% endfor %}
       </div>
-      <div id="lostWrap" style="display:none;margin-bottom:14px">
-        <input class="inp" type="text" name="lost_reason" placeholder="Reason (close/cancel)" value="{{ lead.lost_reason or '' }}">
-      </div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('statusModal').classList.remove('open')">Cancel</button>
-        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+        <button type="button" class="btn" onclick="document.getElementById('statusModal').classList.remove('open')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-function post(url){return fetch(url,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json());}
-function discDelete(id){if(!confirm('Discussion delete karein?'))return;post('/crm/leads/discussion/'+id+'/delete').then(d=>{if(d.ok)location.reload();else alert(d.error||'Failed');});}
-function remDone(id){post('/crm/leads/reminder/'+id+'/done').then(d=>{if(d.ok)location.reload();});}
-function remDelete(id){if(!confirm('Reminder delete karein?'))return;post('/crm/leads/reminder/'+id+'/delete').then(d=>{if(d.ok)document.getElementById('rem-'+id).remove();});}
-function noteDelete(id){if(!confirm('Note delete karein?'))return;post('/crm/leads/note/'+id+'/delete').then(d=>{if(d.ok)document.getElementById('note-'+id).remove();});}
-function toggleLost(v){document.getElementById('lostWrap').style.display=(v==='close'||v==='cancel')?'block':'none';}
+function showTab(btn,id){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  var el=document.getElementById(id); if(el)el.classList.add('active');
+}
+document.addEventListener('click',function(){var m=document.getElementById('actMenu');if(m)m.classList.remove('open');});
+function leadTrash(){
+  if(!confirm('Lead ko Trash me move karein?'))return;
+  fetch('/crm/leads/{{ lead.id }}/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(r=>r.json()).then(d=>{if(d.ok)location.href='{{ url_for("crm.leads") }}';else alert(d.error||'Failed');});
+}
 document.getElementById('statusModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
-(function(){var c=document.querySelector('#statusModal input[name=status]:checked');if(c)toggleLost(c.value);})();
 </script>
 </body>
 </html>

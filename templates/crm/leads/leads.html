@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
 <style>
   body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
@@ -34,7 +36,7 @@
   .si-bar span{display:block;height:100%;background:var(--sc);border-radius:99px}
 
   /* ── Grid card ── */
-  .grid-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+  .grid-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:visible}
   .trash-banner{display:flex;align-items:center;gap:8px;padding:11px 16px;background:var(--amber-bg);color:var(--amber-text);font-size:.84rem;font-weight:600}
 
   /* ── Toolbar ── */
@@ -135,6 +137,42 @@
   .kb-card .meta{font-size:.74rem;color:var(--muted2);margin-top:3px}
 
   .col-hidden{display:none !important}
+  /* ── Inline Edit ── */
+  .ie-cell{cursor:pointer;position:relative}
+  .ie-cell:hover{background:rgba(13,148,136,.05)}
+  .ie-view{display:flex;align-items:center;gap:5px;min-height:22px}
+  .ie-pencil{opacity:0;font-size:11px;color:var(--muted2);transition:opacity .15s;flex-shrink:0}
+  .ie-cell:hover .ie-pencil{opacity:1}
+  .ie-input-wrap{display:none;align-items:center;gap:4px}
+  .ie-input,.ie-select{padding:3px 7px;border:1.5px solid var(--teal);border-radius:5px;
+    font-size:.8rem;font-family:inherit;color:var(--text);background:var(--surface);
+    outline:none;min-width:80px;max-width:190px;box-shadow:0 0 0 3px var(--teal-glow)}
+  .ie-select{cursor:pointer}
+  .ie-ok{padding:3px 8px;border-radius:5px;border:none;background:var(--teal);color:#fff;font-size:.72rem;font-weight:700;cursor:pointer}
+  .ie-esc{padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--muted2);font-size:.72rem;cursor:pointer}
+  .ie-cell.ie-saving .ie-view{opacity:.4}
+  .ie-cell.ie-saved{animation:ie-flash .6s ease}
+  @keyframes ie-flash{0%,100%{background:transparent}40%{background:rgba(16,185,129,.14)}}
+  .ie-toast{position:fixed;bottom:22px;right:22px;z-index:9999;padding:11px 18px;border-radius:10px;
+    font-size:.82rem;font-weight:700;color:#fff;box-shadow:var(--shadow-md);opacity:0;transform:translateY(10px);
+    transition:.25s;pointer-events:none}
+  .ie-toast.show{opacity:1;transform:translateY(0)}
+  .ie-toast.success{background:#16a34a}.ie-toast.danger{background:#dc2626}
+  /* ── Confirm modal ── */
+  .cm-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:opacity .18s}
+  .cm-overlay.show{opacity:1}
+  .cm-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:22px 24px;max-width:390px;width:90%;transform:translateY(8px);transition:transform .18s}
+  .cm-overlay.show .cm-box{transform:translateY(0)}
+  .cm-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:8px}
+  .cm-msg{font-size:.88rem;color:var(--muted2);font-weight:600;margin-bottom:18px;line-height:1.5}
+  .cm-actions{display:flex;gap:10px;justify-content:flex-end}
+  .cm-btn{padding:8px 18px;border-radius:8px;font-size:.84rem;font-weight:700;cursor:pointer;border:1px solid var(--border)}
+  .cm-cancel{background:var(--surface2);color:var(--muted2)}
+  .cm-ok.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .cm-ok.danger{background:#dc2626;color:#fff;border-color:#dc2626}
+  /* sort arrow */
+  thead th.sortable[data-sort=asc]::after{content:" ▲";font-size:.7em;opacity:.8}
+  thead th.sortable[data-sort=desc]::after{content:" ▼";font-size:.7em;opacity:.8}
   .chk-row{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:.84rem;font-weight:600;cursor:pointer}
   @media(max-width:680px){.page-root{padding:12px 10px 30px}}
 </style>
@@ -240,15 +278,6 @@
           <button class="btn-grid-action" onclick="toggleFilter()" id="filterBtn">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Filter
           </button>
-          <button class="btn-grid-action" onclick="togglePop('sortPop',event)" style="position:relative">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Sort
-          </button>
-          <div class="pop" id="sortPop" style="right:0;min-width:180px">
-            <div class="dd-item" onclick="sortTable('created',false)">Newest first</div>
-            <div class="dd-item" onclick="sortTable('created',true)">Oldest first</div>
-            <div class="dd-item" onclick="sortTable('name',true)">Name A–Z</div>
-            <div class="dd-item" onclick="sortTable('age',false)">Age (high→low)</div>
-          </div>
 
           <div class="tb-divider"></div>
 
@@ -260,15 +289,6 @@
               <div style="font-size:.72rem;font-weight:800;color:var(--muted2);margin-bottom:6px">SELECT COLUMNS</div>
               <div id="colChecks"></div>
             </div>
-          </div>
-
-          <div class="seg-toggle">
-            <button class="on" id="segList" onclick="setView('list')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>List
-            </button>
-            <button id="segKanban" onclick="setView('kanban')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="18" rx="1"/><rect x="10" y="3" width="6" height="11" rx="1"/><rect x="17" y="3" width="4" height="15" rx="1"/></svg>Kanban
-            </button>
           </div>
 
           <a href="{{ url_for('crm.leads_export') }}" class="btn-grid-action">
@@ -283,19 +303,21 @@
         </div>
       </div>
 
-      <!-- Filter panel -->
+      <!-- Filter panel (client-side, no Apply — direct filter) -->
       {% if not show_trash %}
-      <form class="filter-panel" id="filterPanel" method="GET" action="{{ url_for('crm.leads') }}">
-        {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
-        <div class="fp-fld"><label>Source</label><select name="source"><option value="">All</option>{% for s in all_sources %}<option value="{{ s }}" {{ 'selected' if source==s }}>{{ s }}</option>{% endfor %}</select></div>
-        <div class="fp-fld"><label>Category</label><select name="category"><option value="">All</option>{% for c in all_categories %}<option value="{{ c }}" {{ 'selected' if category==c }}>{{ c }}</option>{% endfor %}</select></div>
-        <div class="fp-fld"><label>Product Range</label><select name="product_range"><option value="">All</option>{% for r in all_ranges %}<option value="{{ r }}" {{ 'selected' if p_range==r }}>{{ r }}</option>{% endfor %}</select></div>
-        <div class="fp-fld"><label>City</label><input type="text" name="city" value="{{ city }}" placeholder="City"></div>
-        <div class="fp-fld"><label>From</label><input type="date" name="date_from" value="{{ date_from }}"></div>
-        <div class="fp-fld"><label>To</label><input type="date" name="date_to" value="{{ date_to }}"></div>
-        <button type="submit" class="btn-add-new" style="height:34px">Apply</button>
-        <a href="{{ url_for('crm.leads') }}" class="btn-grid-action" style="height:34px">Clear</a>
-      </form>
+      <div class="filter-panel" id="filterPanel">
+        <div class="fp-fld"><label>Source</label><select id="fSource" onchange="applyFilters()"><option value="">All Sources</option>{% for s in all_sources %}<option value="{{ s }}">{{ s }}</option>{% endfor %}</select></div>
+        <div class="fp-fld"><label>Category</label><select id="fCat" onchange="applyFilters()"><option value="">All Categories</option>{% for c in all_categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select></div>
+        <div class="fp-fld"><label>Product Range</label><select id="fRange" onchange="applyFilters()"><option value="">All Ranges</option>{% for r in all_ranges %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select></div>
+        <div class="fp-fld"><label>City</label><input type="text" id="fCity" oninput="applyFilters()" placeholder="All Cities"></div>
+        <div class="fp-fld"><label>Period</label><select id="fPeriod" onchange="onPeriodChange()">
+          <option value="">All</option><option value="today">Today</option><option value="yesterday">Yesterday</option>
+          <option value="7">Last 7 Days</option><option value="30">Last 30 Days</option><option value="custom">Custom Range</option>
+        </select></div>
+        <div class="fp-fld fp-custom" id="fCustomFrom" style="display:none"><label>From</label><input type="text" id="fFrom" class="fp-date" placeholder="dd-mm-yyyy" readonly></div>
+        <div class="fp-fld fp-custom" id="fCustomTo" style="display:none"><label>To</label><input type="text" id="fTo" class="fp-date" placeholder="dd-mm-yyyy" readonly></div>
+        <a href="#" onclick="clearFilters();return false;" class="btn-grid-action" style="height:34px;align-self:flex-end">Clear</a>
+      </div>
       {% endif %}
 
       <!-- LIST VIEW -->
@@ -305,23 +327,37 @@
             <tr>
               <th class="row-check"><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th>
               <th style="width:46px">#</th>
-              <th class="sortable" data-col="created">Created</th>
-              <th class="sortable" data-col="name">Name</th>
-              <th data-col="company">Company</th>
-              <th data-col="email">Email</th>
-              <th data-col="mobile">Mobile</th>
-              <th data-col="product">Product</th>
-              <th data-col="team">Team</th>
-              <th data-col="status">Status</th>
-              <th data-col="lead_type">Lead Type</th>
-              <th data-col="last_contact">Last Contact</th>
-              <th data-col="age" style="text-align:center">Days (Age)</th>
+              <th class="sortable" data-col="created" onclick="sortByCol(this)">Created</th>
+              <th class="sortable" data-col="name" onclick="sortByCol(this)">Name</th>
+              <th class="sortable" data-col="company" onclick="sortByCol(this)">Company</th>
+              <th class="sortable" data-col="email" onclick="sortByCol(this)">Email</th>
+              <th class="sortable" data-col="mobile" onclick="sortByCol(this)">Mobile</th>
+              <th class="sortable" data-col="product" onclick="sortByCol(this)">Product</th>
+              <th class="sortable" data-col="team" onclick="sortByCol(this)">Team</th>
+              <th class="sortable" data-col="status" onclick="sortByCol(this)">Status</th>
+              <th class="sortable" data-col="lead_type" onclick="sortByCol(this)">Lead Type</th>
+              <th class="sortable" data-col="last_contact" onclick="sortByCol(this)">Last Contact</th>
+              <th class="sortable" data-col="age" style="text-align:center" onclick="sortByCol(this)">Days (Age)</th>
+              <th data-col="code" class="col-hidden sortable" onclick="sortByCol(this)">Code</th>
+              <th data-col="position" class="col-hidden sortable" onclick="sortByCol(this)">Position</th>
+              <th data-col="website" class="col-hidden sortable" onclick="sortByCol(this)">Website</th>
+              <th data-col="alt_mobile" class="col-hidden sortable" onclick="sortByCol(this)">Alt. Mobile</th>
+              <th data-col="source" class="col-hidden sortable" onclick="sortByCol(this)">Source</th>
+              <th data-col="category" class="col-hidden sortable" onclick="sortByCol(this)">Category</th>
+              <th data-col="product_range" class="col-hidden sortable" onclick="sortByCol(this)">Product Range</th>
+              <th data-col="order_quantity" class="col-hidden sortable" onclick="sortByCol(this)">Order Qty</th>
+              <th data-col="city" class="col-hidden sortable" onclick="sortByCol(this)">City</th>
+              <th data-col="state" class="col-hidden sortable" onclick="sortByCol(this)">State</th>
+              <th data-col="country" class="col-hidden sortable" onclick="sortByCol(this)">Country</th>
+              <th data-col="zip_code" class="col-hidden sortable" onclick="sortByCol(this)">ZIP</th>
+              <th data-col="avg_cost" class="col-hidden sortable" onclick="sortByCol(this)">Avg Cost</th>
+              <th data-col="tags" class="col-hidden sortable" onclick="sortByCol(this)">Tags</th>
               <th style="text-align:right;width:110px">Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for l in leads %}
-            <tr class="lead-row" data-search="{{ [l.contact_name, l.company_name or '', l.product_name or '', l.source or '', l.city or '', l.email or '', l.phone or '']|join(' ')|lower }}"
+            <tr class="lead-row" data-id="{{ l.id }}" data-source="{{ (l.source or '')|lower }}" data-cat="{{ (l.category or '')|lower }}" data-range="{{ (l.product_range or '')|lower }}" data-city="{{ (l.city or '')|lower }}" data-search="{{ [l.contact_name, l.company_name or '', l.product_name or '', l.source or '', l.city or '', l.email or '', l.phone or '']|join(' ')|lower }}"
                 data-created="{{ l.created_at | fmtdt('%Y%m%d%H%M') if l.created_at else '' }}"
                 data-name="{{ (l.contact_name or '')|lower }}" data-age="{{ l._age }}">
               <td class="row-check"><input type="checkbox" class="row-cb" value="{{ l.id }}"></td>
@@ -332,20 +368,20 @@
                 <span class="ld-time">{{ l.created_at | fmtdt('%I:%M %p') }}</span>
                 {% else %}<span style="color:var(--muted2)">{{ (l.created_at|string)[:10] or '—' }}</span>{% endif %}
               </td>
-              <td data-col="name">
-                <div class="ld-name-wrap">
+              <td data-col="name" class="ie-cell" data-field="contact_name" data-val="{{ l.contact_name or '' }}" data-type="text" onclick="ieActivate(this)">
+                <div class="ie-view"><div class="ld-name-wrap">
                   {% set _nm = (l.contact_name or '?').split() %}
                   <span class="ld-avatar">{{ ((_nm[0][:1] ~ (_nm[1][:1] if _nm|length > 1 else _nm[0][1:2]))|upper) if _nm else '?' }}</span>
                   <div style="display:flex;flex-direction:column;min-width:0">
-                    <a href="{{ url_for('crm.lead_view', id=l.id) }}" class="entity-link">{{ l.contact_name }}</a>
+                    <a href="{{ url_for('crm.lead_view', id=l.id) }}" class="entity-link" onclick="event.stopPropagation()">{{ l.contact_name }}</a>
                     {% if l.company_name %}<span class="ld-name-sub">{{ l.company_name }}</span>{% endif %}
                   </div>
-                </div>
+                </div><span class="ie-pencil">✎</span></div>
               </td>
-              <td data-col="company"><span style="font-size:.82rem">{{ l.company_name or '—' }}</span></td>
-              <td data-col="email">{% if l.email %}<a href="mailto:{{ l.email }}" class="ld-mail">{{ l.email }}</a>{% else %}<span style="color:var(--muted2)">—</span>{% endif %}</td>
-              <td data-col="mobile"><span style="font-size:.82rem">{{ l.phone or '—' }}</span></td>
-              <td data-col="product"><span style="font-size:.82rem">{{ l.product_name or '—' }}</span></td>
+              <td data-col="company" class="ie-cell" data-field="company_name" data-val="{{ l.company_name or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.company_name or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="email" class="ie-cell" data-field="email" data-val="{{ l.email or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view">{% if l.email %}<a href="mailto:{{ l.email }}" class="ld-mail" onclick="event.stopPropagation()">{{ l.email }}</a>{% else %}<span style="color:var(--muted2)">—</span>{% endif %}<span class="ie-pencil">✎</span></div></td>
+              <td data-col="mobile" class="ie-cell" data-field="phone" data-val="{{ l.phone or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.phone or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="product" class="ie-cell" data-field="product_name" data-val="{{ l.product_name or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.product_name or '—' }}</span><span class="ie-pencil">✎</span></div></td>
               <td data-col="team">
                 {% if l._avatars %}
                 <div class="av-group">
@@ -354,10 +390,9 @@
                 </div>
                 {% else %}<span style="color:var(--muted2)">—</span>{% endif %}
               </td>
-              <td data-col="status"><span class="sbadge {{ l.status }}">{{ l.status.replace('_',' ')|title if l.status else '—' }}</span></td>
-              <td data-col="lead_type">
-                {% if l.lead_type == 'Quality' %}<span class="qbadge quality"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Quality</span>
-                {% elif l.lead_type %}<span class="qbadge nonquality">{{ l.lead_type }}</span>{% else %}<span style="color:var(--muted2)">—</span>{% endif %}
+              <td data-col="status" class="ie-cell" data-field="status" data-val="{{ l.status or '' }}" data-type="select" data-opts="{{ lead_statuses|map(attribute='name')|join('||') }}" onclick="ieActivate(this)"><div class="ie-view"><span class="sbadge {{ l.status }}">{{ l.status.replace('_',' ')|title if l.status else '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="lead_type" class="ie-cell" data-field="lead_type" data-val="{{ l.lead_type or 'Quality' }}" data-type="select" data-opts="Quality||Non-Quality" onclick="ieActivate(this)">
+                <div class="ie-view">{% if l.lead_type == 'Quality' %}<span class="qbadge quality"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Quality</span>{% elif l.lead_type %}<span class="qbadge nonquality">{{ l.lead_type }}</span>{% else %}<span style="color:var(--muted2)">—</span>{% endif %}<span class="ie-pencil">✎</span></div>
               </td>
               <td data-col="last_contact">
                 {% set lc = l.last_contact or l.updated_at %}
@@ -372,6 +407,20 @@
                 {% elif age > 15 %}<span class="age-pill age-warn">{{ age }}d</span>
                 {% else %}<span class="age-pill age-new">{{ age }}d</span>{% endif %}
               </td>
+              <td data-col="code" class="col-hidden"><span style="font-family:var(--font-mono);font-size:.74rem;font-weight:700;color:var(--teal-dim)">{{ l.code or '—' }}</span></td>
+              <td data-col="position" class="ie-cell col-hidden" data-field="position" data-val="{{ l.position or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.position or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="website" class="ie-cell col-hidden" data-field="website" data-val="{{ l.website or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.website or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="alt_mobile" class="ie-cell col-hidden" data-field="alternate_mobile" data-val="{{ l.alternate_mobile or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.alternate_mobile or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="source" class="ie-cell col-hidden" data-field="source" data-val="{{ l.source or '' }}" data-type="select" data-opts="{{ lead_sources|map(attribute='name')|join('||') }}" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.source or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="category" class="ie-cell col-hidden" data-field="category" data-val="{{ l.category or '' }}" data-type="select" data-opts="{{ lead_categories|map(attribute='name')|join('||') }}" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.category or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="product_range" class="ie-cell col-hidden" data-field="product_range" data-val="{{ l.product_range or '' }}" data-type="select" data-opts="{{ product_ranges|map(attribute='name')|join('||') }}" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.product_range or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="order_quantity" class="ie-cell col-hidden" data-field="order_quantity" data-val="{{ l.order_quantity or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.order_quantity or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="city" class="ie-cell col-hidden" data-field="city" data-val="{{ l.city or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.city or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="state" class="ie-cell col-hidden" data-field="state" data-val="{{ l.state or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.state or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="country" class="ie-cell col-hidden" data-field="country" data-val="{{ l.country or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.country or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="zip_code" class="ie-cell col-hidden" data-field="zip_code" data-val="{{ l.zip_code or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.zip_code or '—' }}</span><span class="ie-pencil">✎</span></div></td>
+              <td data-col="avg_cost" class="col-hidden"><span style="font-size:.82rem">{{ l.average_cost if l.average_cost is not none else '—' }}</span></td>
+              <td data-col="tags" class="ie-cell col-hidden" data-field="tags" data-val="{{ l.tags or '' }}" data-type="text" onclick="ieActivate(this)"><div class="ie-view"><span style="font-size:.82rem">{{ l.tags or '—' }}</span><span class="ie-pencil">✎</span></div></td>
               <td>
                 <div class="row-act">
                   {% if show_trash %}
@@ -386,7 +435,7 @@
               </td>
             </tr>
             {% else %}
-            <tr><td colspan="14"><div class="empty">
+            <tr><td colspan="26"><div class="empty">
               <div style="font-size:2rem;margin-bottom:8px">📋</div>
               <div>Koi lead nahi mili.{% if not show_trash %} <a href="{{ url_for('crm.lead_add') }}" style="color:var(--teal-dim);font-weight:700">Pehli lead add karein →</a>{% endif %}</div>
             </div></td></tr>
@@ -394,26 +443,6 @@
           </tbody>
         </table>
       </div>
-
-      <!-- KANBAN VIEW -->
-      {% if not show_trash %}
-      <div id="kanbanWrap">
-        {% for stat, label in [('open','Open'),('in_process','In Process'),('close','Close'),('cancel','Cancel')] %}
-        <div class="kb-col">
-          <div class="kb-col-hdr"><span>{{ label }}</span><span class="kb-count">{{ counts.get(stat,0) }}</span></div>
-          <div class="kb-body">
-            {% for l in leads if l.status == stat %}
-            <a href="{{ url_for('crm.lead_view', id=l.id) }}" class="kb-card">
-              <div class="nm">{{ l.contact_name }}</div>
-              <div class="meta">{{ l.company_name or '—' }}{% if l.product_name %} · {{ l.product_name }}{% endif %}</div>
-              <div class="meta">{{ l._age }}d{% if l.phone %} · {{ l.phone }}{% endif %}</div>
-            </a>
-            {% endfor %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
 
     </div>
   </main>
@@ -438,43 +467,206 @@
 function togglePop(id,e){if(e)e.stopPropagation();var p=document.getElementById(id);var open=p.classList.contains('open');document.querySelectorAll('.pop').forEach(x=>x.classList.remove('open'));if(!open)p.classList.add('open');}
 document.addEventListener('click',()=>document.querySelectorAll('.pop').forEach(x=>x.classList.remove('open')));
 
-function gSearchFn(q){q=q.toLowerCase().trim();document.querySelectorAll('#leadsTable tbody tr.lead-row').forEach(tr=>{tr.style.display=(!q||(tr.dataset.search||'').includes(q))?'':'none';});}
+function gSearchFn(q){ applyFilters(); }
 
-function toggleFilter(){var p=document.getElementById('filterPanel');if(p){p.classList.toggle('open');document.getElementById('filterBtn').classList.toggle('active');}}
+function toggleFilter(){var p=document.getElementById('filterPanel');if(p){p.classList.toggle('open');var b=document.getElementById('filterBtn');if(b)b.classList.toggle('active');}}
 
-function setView(v){
-  var list=document.getElementById('listView'),kb=document.getElementById('kanbanWrap');
-  document.getElementById('segList').classList.toggle('on',v==='list');
-  document.getElementById('segKanban').classList.toggle('on',v==='kanban');
-  if(v==='kanban'){list.style.display='none';if(kb)kb.classList.add('on');}
-  else{list.style.display='';if(kb)kb.classList.remove('on');}
+/* ── Client-side filters (direct, no Apply button) ── */
+function _v(id){var e=document.getElementById(id);return e?e.value.trim().toLowerCase():'';}
+function _ymd(d){return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function _dmyToYmd(s){var m=(s||'').split('-');return m.length===3?((+m[2])*10000+(+m[1])*100+(+m[0])):0;}
+function _rowYmd(tr){var c=tr.dataset.created||'';return c?(+c.slice(0,8)):0;}
+function onPeriodChange(){
+  var cust=document.getElementById('fPeriod').value==='custom';
+  document.getElementById('fCustomFrom').style.display=cust?'':'none';
+  document.getElementById('fCustomTo').style.display=cust?'':'none';
+  applyFilters();
 }
-
-function sortTable(key,asc){
-  var tb=document.querySelector('#leadsTable tbody');
-  var rows=[...tb.querySelectorAll('tr.lead-row')];
-  rows.sort((a,b)=>{
-    var x,y;
-    if(key==='name'){x=a.dataset.name;y=b.dataset.name;return asc?x.localeCompare(y):y.localeCompare(x);}
-    if(key==='age'){x=+a.dataset.age;y=+b.dataset.age;return asc?x-y:y-x;}
-    x=a.dataset.created;y=b.dataset.created;return asc?x.localeCompare(y):y.localeCompare(x);
+function _periodRange(){
+  var pe=document.getElementById('fPeriod'); if(!pe)return null;
+  var p=pe.value; if(!p)return null;
+  var now=new Date(); now.setHours(0,0,0,0);
+  if(p==='today'){var t=_ymd(now);return[t,t];}
+  if(p==='yesterday'){var y=new Date(now);y.setDate(y.getDate()-1);var yy=_ymd(y);return[yy,yy];}
+  if(p==='7'){var s=new Date(now);s.setDate(s.getDate()-6);return[_ymd(s),_ymd(now)];}
+  if(p==='30'){var s2=new Date(now);s2.setDate(s2.getDate()-29);return[_ymd(s2),_ymd(now)];}
+  if(p==='custom'){var f=_dmyToYmd(document.getElementById('fFrom').value)||0,t=_dmyToYmd(document.getElementById('fTo').value)||99999999;return[f,t];}
+  return null;
+}
+function applyFilters(){
+  var g=document.getElementById('gSearch');
+  var q=(g?g.value:'').toLowerCase().trim();
+  var src=_v('fSource'),cat=_v('fCat'),rng=_v('fRange'),city=_v('fCity'),pr=_periodRange();
+  document.querySelectorAll('#leadsTable tbody tr.lead-row').forEach(function(tr){
+    var ok=true;
+    if(q && (tr.dataset.search||'').indexOf(q)===-1) ok=false;
+    if(ok&&src && (tr.dataset.source||'')!==src) ok=false;
+    if(ok&&cat && (tr.dataset.cat||'')!==cat) ok=false;
+    if(ok&&rng && (tr.dataset.range||'')!==rng) ok=false;
+    if(ok&&city && (tr.dataset.city||'').indexOf(city)===-1) ok=false;
+    if(ok&&pr){var y=_rowYmd(tr); if(y<pr[0]||y>pr[1]) ok=false;}
+    tr.style.display=ok?'':'none';
   });
-  rows.forEach(r=>tb.appendChild(r));
 }
+function clearFilters(){
+  ['fSource','fCat','fRange','fPeriod','fCity','fFrom','fTo'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('fCustomFrom').style.display='none';
+  document.getElementById('fCustomTo').style.display='none';
+  var g=document.getElementById('gSearch'); if(g)g.value='';
+  applyFilters();
+}
+
+/* ── Column header sort (click toggles asc/desc) ── */
+var _sortCol=null,_sortAsc=true;
+function sortByCol(th){
+  var key=th.dataset.col; if(!key)return;
+  if(_sortCol===key)_sortAsc=!_sortAsc; else {_sortCol=key;_sortAsc=true;}
+  var tb=document.querySelector('#leadsTable tbody');
+  var rows=[].slice.call(tb.querySelectorAll('tr.lead-row'));
+  rows.sort(function(a,b){
+    var x,y;
+    if(key==='created'||key==='last_contact'){x=a.dataset.created||'';y=b.dataset.created||'';}
+    else if(key==='age'){return _sortAsc?(+a.dataset.age||0)-(+b.dataset.age||0):(+b.dataset.age||0)-(+a.dataset.age||0);}
+    else if(key==='name'){x=a.dataset.name||'';y=b.dataset.name||'';}
+    else{
+      var ca=a.querySelector('[data-col="'+key+'"]'),cb=b.querySelector('[data-col="'+key+'"]');
+      x=(ca?ca.innerText:'').trim().toLowerCase(); y=(cb?cb.innerText:'').trim().toLowerCase();
+      var nx=parseFloat(x),ny=parseFloat(y);
+      if(!isNaN(nx)&&!isNaN(ny)&&x!==''&&y!=='')return _sortAsc?nx-ny:ny-nx;
+    }
+    return _sortAsc?String(x).localeCompare(y):String(y).localeCompare(x);
+  });
+  rows.forEach(function(r){tb.appendChild(r);});
+  document.querySelectorAll('#leadsTable thead th.sortable').forEach(function(h){h.removeAttribute('data-sort');});
+  th.setAttribute('data-sort',_sortAsc?'asc':'desc');
+}
+
+/* ── flatpickr (nice date picker) on custom-range ── */
+document.addEventListener('DOMContentLoaded',function(){
+  if(window.flatpickr){ flatpickr('.fp-date',{dateFormat:'d-m-Y',allowInput:true,onChange:applyFilters}); }
+});
 
 // Columns toggle
-var COLS=[['created','Created'],['name','Name'],['company','Company'],['email','Email'],['mobile','Mobile'],['product','Product'],['team','Team'],['status','Status'],['lead_type','Lead Type'],['last_contact','Last Contact'],['age','Days (Age)']];
-(function(){var wrap=document.getElementById('colChecks');if(!wrap)return;COLS.forEach(([k,lbl])=>{var d=document.createElement('label');d.className='chk-row';d.innerHTML='<input type="checkbox" checked onchange="toggleCol(\''+k+'\',this.checked)"> '+lbl;wrap.appendChild(d);});})();
+var COLS={{ (list_columns or []) | tojson }};
+(function(){var wrap=document.getElementById('colChecks');if(!wrap)return;COLS.forEach(([k,lbl,on])=>{var d=document.createElement('label');d.className='chk-row';d.innerHTML='<input type="checkbox" '+(on?'checked':'')+' onchange="toggleCol(\''+k+'\',this.checked)"> '+lbl;wrap.appendChild(d);});})();
 function toggleCol(k,on){document.querySelectorAll('[data-col="'+k+'"]').forEach(el=>el.classList.toggle('col-hidden',!on));}
+
+/* ── Inline Edit ─────────────────────────────────────── */
+var _ieActive=null;
+function ieToast(msg,kind){
+  var t=document.createElement('div');
+  t.className='ie-toast '+(kind||'success');t.textContent=msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(function(){t.classList.add('show');});
+  setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},250);},1800);
+}
+function ieActivate(cell){
+  if(cell.classList.contains('ie-saving'))return;
+  if(_ieActive&&_ieActive!==cell)ieCancel(_ieActive);
+  _ieActive=cell;
+  var val=cell.dataset.val||'',type=cell.dataset.type,
+      opts=(cell.dataset.opts||'').split('||').filter(Boolean),
+      view=cell.querySelector('.ie-view'),wrap=cell.querySelector('.ie-input-wrap');
+  if(!wrap){
+    wrap=document.createElement('div');wrap.className='ie-input-wrap';
+    var inp;
+    if(type==='select'){
+      inp=document.createElement('select');inp.className='ie-select';
+      var blank=document.createElement('option');blank.value='';blank.textContent='— select —';inp.appendChild(blank);
+      opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=o;inp.appendChild(op);});
+      inp.addEventListener('change',function(){ieSave(cell);});
+      inp.addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();ieCancel(cell);}});
+      wrap.appendChild(inp);
+    }else{
+      inp=document.createElement('input');inp.type='text';inp.className='ie-input';
+      inp.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){e.preventDefault();ieSave(cell);}
+        if(e.key==='Escape'){e.stopPropagation();ieCancel(cell);}});
+      var ok=document.createElement('button');ok.className='ie-ok';ok.type='button';ok.textContent='✓';ok.onclick=function(e){e.stopPropagation();ieSave(cell);};
+      var esc=document.createElement('button');esc.className='ie-esc';esc.type='button';esc.textContent='✕';esc.onclick=function(e){e.stopPropagation();ieCancel(cell);};
+      wrap.appendChild(inp);wrap.appendChild(ok);wrap.appendChild(esc);
+    }
+    cell.appendChild(wrap);
+  }
+  var f=wrap.querySelector('input,select');f.value=val;
+  view.style.display='none';wrap.style.display='flex';f.focus();
+  if(f.select)try{f.select();}catch(e){}
+}
+function ieCancel(cell){
+  if(!cell)return;
+  var view=cell.querySelector('.ie-view'),wrap=cell.querySelector('.ie-input-wrap');
+  if(view)view.style.display='flex';if(wrap)wrap.style.display='none';
+  if(_ieActive===cell)_ieActive=null;
+}
+function ieSave(cell){
+  var tr=cell.closest('tr'),id=tr&&tr.dataset.id,field=cell.dataset.field,
+      f=cell.querySelector('input,select'),val=f?f.value.trim():'',
+      view=cell.querySelector('.ie-view'),wrap=cell.querySelector('.ie-input-wrap'),
+      old=cell.dataset.val||'';
+  if(val===old){ieCancel(cell);return;}
+  cell.classList.add('ie-saving');if(wrap)wrap.style.display='none';if(view)view.style.display='flex';
+  _ieActive=null;
+  fetch('/crm/leads/'+id+'/inline-edit',{
+    method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    body:JSON.stringify({field:field,value:val})
+  }).then(function(r){return r.json();}).then(function(d){
+    cell.classList.remove('ie-saving');
+    if(d&&d.success){
+      cell.dataset.val=val;ieUpdateView(cell,field,val);
+      cell.classList.add('ie-saved');setTimeout(function(){cell.classList.remove('ie-saved');},600);
+      ieToast('Saved','success');
+    }else{ieToast((d&&d.error)||'Save failed','danger');ieActivate(cell);}
+  }).catch(function(){cell.classList.remove('ie-saving');ieToast('Network error','danger');});
+}
+function ieUpdateView(cell,field,val){
+  var view=cell.querySelector('.ie-view');if(!view)return;
+  var label=val||'—';
+  if(field==='status'){
+    var txt=val?val.replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();}):'—';
+    view.innerHTML='<span class="sbadge '+(val||'')+'">'+txt+'</span><span class="ie-pencil">✎</span>';return;
+  }
+  if(field==='lead_type'){
+    var html=val==='Non-Quality'?'<span class="qbadge nonquality">Non-Quality</span>'
+      :val==='Quality'?'<span class="qbadge quality">✓ Quality</span>':'<span style="color:var(--muted2)">—</span>';
+    view.innerHTML=html+'<span class="ie-pencil">✎</span>';return;
+  }
+  if(field==='contact_name'){var lk=view.querySelector('a.entity-link');if(lk)lk.textContent=val||'—';return;}
+  if(field==='email'){
+    view.innerHTML=(val?'<a href="mailto:'+val+'" class="ld-mail" onclick="event.stopPropagation()">'+val+'</a>':'<span style="color:var(--muted2)">—</span>')+'<span class="ie-pencil">✎</span>';return;
+  }
+  var sp=view.querySelector('span:not(.ie-pencil)');
+  if(sp)sp.textContent=label;
+  else view.innerHTML='<span style="font-size:.82rem">'+label+'</span><span class="ie-pencil">✎</span>';
+}
+document.addEventListener('click',function(e){if(_ieActive&&!_ieActive.contains(e.target))ieCancel(_ieActive);});
 
 function toggleAll(cb){document.querySelectorAll('#leadsTable tbody .row-cb').forEach(x=>x.checked=cb.checked);}
 
-function leadAction(id,action,confirmFirst){
-  var msg=action==='delete'?'Lead trash me move karein?':action==='restore'?'Lead restore karein?':'PERMANENTLY delete? Undo nahi hoga.';
-  if(confirmFirst||action==='delete'){if(!confirm(msg))return;}
+function _doLeadAction(id,action){
   fetch('/crm/leads/'+id+'/'+action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
-    .then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error||'Failed');}).catch(()=>alert('Request failed'));
+    .then(r=>r.json()).then(d=>{if(d.ok)location.reload();else cmAlert(d.error||'Failed');}).catch(()=>cmAlert('Request failed'));
 }
+function leadAction(id,action){
+  if(action==='delete'){ confirmModal('Trash','Lead ko Trash me move karein?','Move to Trash','danger',function(){_doLeadAction(id,'delete');}); return; }
+  if(action==='permanent-delete'){ confirmModal('Delete Forever','Ye lead PERMANENTLY delete ho jayega — undo nahi hoga.','Delete','danger',function(){_doLeadAction(id,'permanent-delete');}); return; }
+  if(action==='restore'){ confirmModal('Restore','Is lead ko restore karein?','Restore','primary',function(){_doLeadAction(id,'restore');}); return; }
+  _doLeadAction(id,action);
+}
+/* Reusable themed confirm modal */
+function confirmModal(title,msg,okLabel,kind,onOk){
+  var ov=document.createElement('div');ov.className='cm-overlay';
+  ov.innerHTML='<div class="cm-box"><div class="cm-title">'+title+'</div><div class="cm-msg">'+msg+'</div>'
+    +'<div class="cm-actions"><button class="cm-btn cm-cancel">Cancel</button>'
+    +'<button class="cm-btn cm-ok '+(kind||'primary')+'">'+(okLabel||'OK')+'</button></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ov.classList.add('show');});
+  function close(){ov.classList.remove('show');setTimeout(function(){ov.remove();},200);}
+  ov.querySelector('.cm-cancel').onclick=close;
+  ov.querySelector('.cm-ok').onclick=function(){close();if(onOk)onOk();};
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){close();document.removeEventListener('keydown',esc);}});
+}
+function cmAlert(msg){ confirmModal('Notice',msg,'OK','primary',null); }
 </script>
 </body>
 </html>
