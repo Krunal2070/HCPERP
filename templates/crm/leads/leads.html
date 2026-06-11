@@ -176,6 +176,7 @@
   .chk-row{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:.84rem;font-weight:600;cursor:pointer}
   @media(max-width:680px){.page-root{padding:12px 10px 30px}}
 </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/crm-mobile-cards.css') }}">
 </head>
 <body>
 
@@ -668,5 +669,6 @@ function confirmModal(title,msg,okLabel,kind,onOk){
 }
 function cmAlert(msg){ confirmModal('Notice',msg,'OK','primary',null); }
 </script>
+  <script src="{{ url_for('static', filename='js/crm-mobile-cards.js') }}"></script>
 </body>
 </html>

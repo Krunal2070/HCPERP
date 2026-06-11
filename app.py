@@ -91,7 +91,9 @@ app.register_blueprint(qc_bp)                # QC Dashboard / QC Sampling / Inpr
 
 # ===== CRM · Leads module (modules/crm/) =====
 from crm import crm_bp, ensure_lead_tables   # CRM Leads blueprint + table bootstrap
+from mail import mail_bp                      # Mail Master (CRM) Blueprint -> modules/mail/
 app.register_blueprint(crm_bp)               # CRM Leads routes  ->  /crm/leads
+app.register_blueprint(mail_bp)              # Mail Master routes -> /mail/master
 ensure_lead_tables()                         # lead_* tables ko first-run pe auto-create
 
 # User-administration lookup tables (Department / Designation / User Type / Access Level)

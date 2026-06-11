@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Template — Mail Master | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<!-- TinyMCE (self-hosted build via jsdelivr — koi API key nahi chahiye) -->
+<script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js" referrerpolicy="origin"></script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 44px;width:100%}
+  a{text-decoration:none;color:inherit}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);max-width:880px}
+  .top{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--border)}
+  .top .ic{width:38px;height:38px;border-radius:10px;background:#e7f0ff;display:flex;align-items:center;justify-content:center;color:#2563eb}
+  .top h1{font-size:1.15rem;font-weight:800;margin:0}
+  .top .code{font-family:var(--font-mono);font-size:.74rem;color:var(--muted2)}
+  .body{padding:20px 22px}
+  .fld{margin-bottom:16px}
+  .fld label{display:block;font-size:.78rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
+  .fld input,.fld textarea{width:100%;box-sizing:border-box;border:1px solid var(--border2);border-radius:10px;padding:11px 13px;font-size:.88rem;font-family:inherit;background:var(--surface);color:var(--text)}
+  .fld textarea{min-height:240px;resize:vertical;font-family:var(--font-mono);font-size:.82rem;line-height:1.6}
+  .row2{display:flex;gap:14px}
+  .row2 .fld{flex:1}
+  .chk{display:flex;align-items:center;gap:9px;font-size:.88rem;font-weight:600}
+  .chk input{width:18px;height:18px}
+  .actions{display:flex;gap:10px;justify-content:flex-end;padding:16px 22px;border-top:1px solid var(--border)}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:.86rem;font-weight:700;padding:10px 18px;border-radius:10px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer}
+  .btn-primary{background:#2563eb;color:#fff;border-color:#2563eb}
+  .btn-primary:hover{background:#1d4ed8}
+  .hint{font-size:.75rem;color:var(--muted2);margin-top:8px}
+  .vars{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .vars code{font-family:var(--font-mono);font-size:.72rem;color:#2563eb;background:#e7f0ff;padding:3px 8px;border-radius:5px;cursor:pointer;user-select:none}
+  .vars code:hover{background:#d4e4ff}
+  .tox-tinymce{border-radius:10px !important;border-color:var(--border2) !important}
+</style>
+</head>
+<body>
+{% set page_title = "Edit Mail Template" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Mail Templates","url":"/mail/master"},{"label":"Edit","url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <main class="page-root">
+
+    <form class="card" method="POST" action="{{ url_for('mail.mail_template_edit', code=t.code) }}" onsubmit="if(window.tinymce){tinymce.triggerSave();}">
+      <div class="top">
+        <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div>
+          <h1>{{ t.name }}</h1>
+          <span class="code">{{ t.code }}</span>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="fld">
+          <label>Template Name</label>
+          <input type="text" name="name" value="{{ t.name }}" required>
+        </div>
+
+        <div class="row2">
+          <div class="fld">
+            <label>From Name</label>
+            <input type="text" name="from_name" value="{{ t.from_name or 'HCP Wellness Pvt. Ltd.' }}">
+          </div>
+          <div class="fld">
+            <label>From Email</label>
+            <input type="text" name="from_email" value="{{ t.from_email or 'info@hcpwellness.in' }}">
+          </div>
+        </div>
+
+        <div class="fld">
+          <label>Subject</label>
+          <input type="text" name="subject" value="{{ t.subject }}" required>
+        </div>
+
+        <div class="fld">
+          <label>Email Body</label>
+          <textarea name="body" id="bodyEditor">{{ t.body }}</textarea>
+          <div class="hint">Variables (editor me cursor rakh ke click karo — wahin insert ho jayega):</div>
+          <div class="vars">
+            <code data-var="{client_name}">{client_name}</code>
+            <code data-var="{company}">{company}</code>
+            <code data-var="{email}">{email}</code>
+            <code data-var="{phone}">{phone}</code>
+            <code data-var="{product}">{product}</code>
+            <code data-var="{city}">{city}</code>
+            <code data-var="{lead_code}">{lead_code}</code>
+            <code data-var="{quot_number}">{quot_number}</code>
+            <code data-var="{order_number}">{order_number}</code>
+            <code data-var="{project_code}">{project_code}</code>
+          </div>
+        </div>
+
+        <div class="fld">
+          <label class="chk">
+            <input type="checkbox" name="is_active" value="1" {{ 'checked' if t.is_active else '' }}>
+            Active (is template ko mails me use karein)
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="{{ url_for('mail.mail_master') }}">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Template
+        </button>
+      </div>
+    </form>
+
+  </main>
+</div>
+
+<script>
+  tinymce.init({
+    selector: '#bodyEditor',
+    height: 380,
+    menubar: false,
+    branding: false,
+    promotion: false,
+    plugins: 'lists link table code autolink',
+    toolbar: 'undo redo | blocks | bold italic underline forecolor | alignleft aligncenter alignright | bullist numlist | link table | code',
+    content_style: 'body{font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#333;line-height:1.6}',
+    // editor ready hone par variable-chips ko wire karo
+    setup: function (editor) {
+      editor.on('init', function () {
+        document.querySelectorAll('.vars code[data-var]').forEach(function (el) {
+          el.addEventListener('click', function () {
+            editor.focus();
+            editor.execCommand('mceInsertContent', false, el.getAttribute('data-var'));
+          });
+        });
+      });
+    }
+  });
+</script>
+</body>
+</html>

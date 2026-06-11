@@ -490,3 +490,81 @@ window.hcpHdr = (function () {
            toggleNotif:toggleNotif, search:search, setNotif:setNotif, closeAll:closeAll };
 })();
 </script>
+
+<!-- ── CRM Reminder due-time notifier (app-wide, rich cards) ── -->
+<style>
+  #hcpRemStack{position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:12px;width:330px;max-width:92vw}
+  .hcp-remc{background:#fff;border:1px solid #eef0f4;border-left:5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 34px rgba(15,23,42,.18);padding:13px 15px;font-family:system-ui,'Segoe UI',sans-serif;animation:hcpRemIn .3s ease}
+  @keyframes hcpRemIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .hcp-remc .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+  .hcp-remc .now{display:inline-flex;align-items:center;gap:5px;background:#fef2f2;color:#dc2626;font-size:.62rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:999px}
+  .hcp-remc .now i{width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;animation:hcpBlink 1s infinite}
+  @keyframes hcpBlink{50%{opacity:.3}}
+  .hcp-remc .x{background:none;border:none;color:#94a3b8;font-size:1.05rem;cursor:pointer;line-height:1;padding:0 2px}
+  .hcp-remc .ttl{font-weight:800;font-size:.92rem;color:#0f172a;display:flex;align-items:center;gap:6px}
+  .hcp-remc .meta{font-size:.78rem;color:#64748b;margin-top:4px;display:flex;align-items:center;gap:6px}
+  .hcp-remc .acts{display:flex;gap:8px;margin-top:11px}
+  .hcp-remc .acts button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:.74rem;font-weight:800;padding:7px 6px;border-radius:8px;cursor:pointer;border:1px solid}
+  .hcp-remc .b-done{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0}
+  .hcp-remc .b-snz{background:#fffbeb;color:#d97706;border-color:#fde68a}
+  .hcp-remc .b-view{background:#f8fafc;color:#475569;border-color:#e2e8f0}
+  .hcp-remc .acts button:hover{filter:brightness(.97)}
+</style>
+<script>
+(function(){
+  if(window.__hcpRemPoller) return; window.__hcpRemPoller=true;
+  function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  try{ if('Notification' in window && Notification.permission==='default'){ Notification.requestPermission(); } }catch(e){}
+  var shown={};
+  function stack(){
+    var s=document.getElementById('hcpRemStack');
+    if(!s){ s=document.createElement('div'); s.id='hcpRemStack'; document.body.appendChild(s); }
+    return s;
+  }
+  function card(x){
+    if(shown[x.id]) return; shown[x.id]=true;
+    var el=document.createElement('div'); el.className='hcp-remc'; el.setAttribute('data-id',x.id);
+    el.innerHTML=
+      '<div class="top"><span class="now"><i></i> NOW</span><button class="x" title="Dismiss">&times;</button></div>'
+      +'<div class="ttl">📌 '+esc(x.title)+'</div>'
+      +'<div class="meta">👤 '+esc(x.contact||x.lead_code||'Lead')+'</div>'
+      +'<div class="meta">🕐 '+esc(x.remind_at)+'</div>'
+      +'<div class="acts">'
+        +'<button class="b-done">✅ Done</button>'
+        +'<button class="b-snz">💤 +5 min</button>'
+        +'<button class="b-view">🔗 View</button>'
+      +'</div>';
+    function close(){ el.style.transition='.25s'; el.style.opacity='0'; el.style.transform='translateY(8px)'; setTimeout(function(){el.remove();},250); }
+    el.querySelector('.x').onclick=close;
+    el.querySelector('.b-done').onclick=function(){
+      fetch('/crm/leads/reminder/'+x.id+'/done',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).finally(close);
+    };
+    el.querySelector('.b-snz').onclick=function(){
+      var fd=new FormData(); fd.append('minutes','5');
+      fetch('/crm/leads/reminder/'+x.id+'/snooze',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).finally(function(){ shown[x.id]=false; close(); });
+    };
+    el.querySelector('.b-view').onclick=function(){ if(x.lead_id) window.location.href='/crm/leads/'+x.lead_id+'#reminders'; };
+    stack().appendChild(el);
+    // OS notification bhi
+    try{ if('Notification' in window && Notification.permission==='granted'){
+      var n=new Notification('⏰ Reminder: '+x.title,{body:(x.contact||x.lead_code||'')+' — Time to follow up the client'});
+      n.onclick=function(){ window.focus(); if(x.lead_id) window.location.href='/crm/leads/'+x.lead_id+'#reminders'; };
+    } }catch(e){}
+  }
+  function poll(){
+    fetch('/crm/reminders/due',{headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(!d || !d.ok) return;
+        var rems=d.reminders||[]; if(!rems.length) return;
+        if(window.hcpHdr && hcpHdr.setNotif){
+          var body=rems.map(function(x){return '📌 <b>'+esc(x.title)+'</b> — '+esc(x.contact||x.lead_code||'Lead');}).join('<br>');
+          hcpHdr.setNotif(rems.length, body);
+        }
+        rems.forEach(card);
+      }).catch(function(){});
+  }
+  setTimeout(poll, 3500);
+  setInterval(poll, 60000);
+})();
+</script>

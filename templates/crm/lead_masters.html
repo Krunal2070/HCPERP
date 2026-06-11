@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Masters — CRM | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:20px 24px 48px;width:100%}
+  .lm-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:1500px}
+  @media(max-width:900px){.lm-grid{grid-template-columns:1fr}}
+  .lm-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column}
+  .lm-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);background:var(--surface2)}
+  .lm-head h2{margin:0;font-size:1.12rem;font-weight:800}
+  .lm-cnt{font-size:.74rem;font-weight:700;color:var(--muted2);background:var(--surface);border:1px solid var(--border2);padding:3px 11px;border-radius:999px}
+  .lm-list{display:flex;flex-direction:column}
+  .lm-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 22px;border-bottom:1px solid var(--border)}
+  .lm-item:hover{background:var(--surface2)}
+  .lm-name{font-weight:700;font-size:.92rem;flex:1}
+  .lm-name input{width:100%;border:1px solid var(--teal);border-radius:7px;padding:6px 9px;font-size:.9rem;font-weight:600;font-family:inherit;background:var(--surface);color:var(--text);outline:none}
+  .lm-acts{display:flex;gap:6px;opacity:0;transition:.15s}
+  .lm-item:hover .lm-acts{opacity:1}
+  .lm-ib{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted2)}
+  .lm-ib.ed:hover{color:#2563eb;border-color:#2563eb}.lm-ib.dl:hover{color:#dc2626;border-color:#dc2626}
+  .lm-ib.ok:hover{color:#16a34a;border-color:#16a34a}
+  .lm-add{display:flex;gap:8px;padding:14px 22px;background:var(--surface)}
+  .lm-add input{flex:1;border:1px solid var(--border2);border-radius:9px;padding:9px 12px;font-size:.88rem;font-family:inherit;background:var(--surface2);color:var(--text);outline:none}
+  .lm-add input:focus{border-color:var(--teal)}
+  .lm-add button{display:inline-flex;align-items:center;gap:6px;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:0 16px;font-size:.86rem;font-weight:700;cursor:pointer}
+  .lm-add button:hover{background:var(--teal-dim)}
+  .lm-empty{padding:18px 22px;color:var(--muted2);font-size:.85rem}
+  .lv-toast{position:fixed;bottom:22px;right:22px;z-index:10001;padding:13px 18px;border-radius:11px;font-size:.84rem;font-weight:700;color:#fff;background:#16a34a;box-shadow:var(--shadow-md);opacity:0;transform:translateY(10px);transition:.25s;max-width:360px}
+  .lv-toast.show{opacity:1;transform:translateY(0)}.lv-toast.err{background:#dc2626}
+  .cv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:.18s}
+  .cv-overlay.show{opacity:1}
+  .cv-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md);padding:22px 24px;max-width:380px;width:90%}
+  .cv-title{font-size:.95rem;font-weight:800;margin-bottom:8px}.cv-msg{font-size:.86rem;color:var(--muted2);margin-bottom:18px}
+  .cv-actions{display:flex;gap:10px;justify-content:flex-end}
+  .cv-btn{padding:8px 18px;border-radius:8px;font-size:.84rem;font-weight:700;cursor:pointer;border:1px solid var(--border)}
+  .cv-cancel{background:var(--surface2);color:var(--muted2)}.cv-ok{background:#dc2626;color:#fff;border:none}
+</style>
+</head>
+<body>
+{% set page_title = "CRM · Lead Masters" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Lead Masters","url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <main class="page-root">
+    <div class="lm-grid">
+      {% for t in types %}
+      <div class="lm-card" data-type="{{ t }}">
+        <div class="lm-head">
+          <h2>{{ labels[t] }}</h2>
+          <span class="lm-cnt" id="cnt-{{ t }}">{{ data[t]|length }} items</span>
+        </div>
+        <div class="lm-list" id="list-{{ t }}">
+          {% for it in data[t] %}
+          <div class="lm-item" id="lm-{{ it.id }}">
+            <div class="lm-name" data-name>{{ it.name }}</div>
+            <div class="lm-acts">
+              <button class="lm-ib ed" title="Edit" onclick="lmEdit({{ it.id }})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+              <button class="lm-ib dl" title="Delete" onclick="lmDel({{ it.id }},'{{ t }}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+            </div>
+          </div>
+          {% else %}
+          <div class="lm-empty">Koi item nahi — niche se add karo.</div>
+          {% endfor %}
+        </div>
+        <div class="lm-add">
+          <input type="text" id="add-{{ t }}" placeholder="Add new {{ labels[t]|lower }}..." onkeydown="if(event.key==='Enter'){lmAdd('{{ t }}');}">
+          <button onclick="lmAdd('{{ t }}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+<script>
+function toast(m,e){var t=document.createElement('div');t.className='lv-toast'+(e?' err':'');t.textContent=m;document.body.appendChild(t);requestAnimationFrame(function(){t.classList.add('show');});setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},250);},3000);}
+function cvConfirm(title,msg,ok,fn){var o=document.createElement('div');o.className='cv-overlay';o.style.display='flex';o.innerHTML='<div class="cv-box"><div class="cv-title">'+title+'</div><div class="cv-msg">'+msg+'</div><div class="cv-actions"><button class="cv-btn cv-cancel">Cancel</button><button class="cv-btn cv-ok">'+ok+'</button></div></div>';document.body.appendChild(o);requestAnimationFrame(function(){o.classList.add('show');});function c(){o.classList.remove('show');setTimeout(function(){o.remove();},200);}o.querySelector('.cv-cancel').onclick=c;o.querySelector('.cv-ok').onclick=function(){c();fn();};o.addEventListener('click',function(e){if(e.target===o)c();});}
+function cnt(t,d){var el=document.getElementById('cnt-'+t);if(el){var n=parseInt(el.textContent,10)||0;el.textContent=Math.max(0,n+d)+' items';}}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function lmAdd(t){var inp=document.getElementById('add-'+t);var name=inp.value.trim();if(!name){inp.focus();return;}var fd=new FormData();fd.append('type',t);fd.append('name',name);fetch('/crm/lead-masters/add',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){if(d.ok){var list=document.getElementById('list-'+t);var emp=list.querySelector('.lm-empty');if(emp)emp.remove();var div=document.createElement('div');div.className='lm-item';div.id='lm-'+d.id;div.innerHTML='<div class="lm-name" data-name>'+esc(d.name)+'</div><div class="lm-acts"><button class="lm-ib ed" title="Edit" onclick="lmEdit('+d.id+')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button><button class="lm-ib dl" title="Delete" onclick="lmDel('+d.id+',\''+t+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></div>';list.appendChild(div);inp.value='';cnt(t,1);toast('Add ho gaya.');}else toast(d.error||'Add failed',1);});}
+function lmEdit(id){var row=document.getElementById('lm-'+id);var nameDiv=row.querySelector('[data-name]');var cur=nameDiv.textContent;nameDiv.innerHTML='<input type="text" value="'+esc(cur)+'">';var inp=nameDiv.querySelector('input');inp.focus();inp.select();var acts=row.querySelector('.lm-acts');acts.style.opacity='1';acts.innerHTML='<button class="lm-ib ok" title="Save" onclick="lmSave('+id+')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button><button class="lm-ib dl" title="Cancel" onclick="lmCancel('+id+',\''+esc(cur)+'\')">✕</button>';inp.addEventListener('keydown',function(e){if(e.key==='Enter')lmSave(id);if(e.key==='Escape')lmCancel(id,cur);});}
+function lmRowReset(id,name){var row=document.getElementById('lm-'+id);var t=row.closest('.lm-card').getAttribute('data-type');row.querySelector('[data-name]').innerHTML=esc(name);row.querySelector('[data-name]').textContent=name;var acts=row.querySelector('.lm-acts');acts.style.opacity='';acts.innerHTML='<button class="lm-ib ed" title="Edit" onclick="lmEdit('+id+')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button><button class="lm-ib dl" title="Delete" onclick="lmDel('+id+',\''+t+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>';}
+function lmCancel(id,name){lmRowReset(id,name);}
+function lmSave(id){var row=document.getElementById('lm-'+id);var t=row.closest('.lm-card').getAttribute('data-type');var inp=row.querySelector('[data-name] input');var name=inp.value.trim();if(!name){inp.focus();return;}var fd=new FormData();fd.append('type',t);fd.append('id',id);fd.append('name',name);fetch('/crm/lead-masters/edit',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){if(d.ok){lmRowReset(id,d.name);toast('Update ho gaya.');}else toast(d.error||'Update failed',1);});}
+function lmDel(id,t){cvConfirm('Delete Item','Ye item delete karein? Form ke dropdown se bhi hat jayega.','Delete',function(){var fd=new FormData();fd.append('type',t);fd.append('id',id);fetch('/crm/lead-masters/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){if(d.ok){var row=document.getElementById('lm-'+id);if(row)row.remove();cnt(t,-1);toast('Delete ho gaya.');}else toast(d.error||'Delete failed',1);});});}
+</script>
+</body>
+</html>

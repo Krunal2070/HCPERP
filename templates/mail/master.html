@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mail Master — CRM | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 44px;width:100%}
+  a{text-decoration:none;color:inherit}
+  .mm-head{display:flex;align-items:center;gap:12px;margin:4px 0 6px}
+  .mm-head .ic{width:42px;height:42px;border-radius:12px;background:#e7f0ff;display:flex;align-items:center;justify-content:center;color:#2563eb}
+  .mm-head h1{font-size:1.4rem;font-weight:800;margin:0}
+  .mm-head p{margin:2px 0 0;font-size:.85rem;color:var(--muted2)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden}
+  .sec-lbl{display:flex;align-items:center;gap:9px;font-size:1rem;font-weight:800;padding:16px 20px;border-bottom:1px solid var(--border)}
+  .sec-lbl svg{color:#2563eb}
+  .tpl-row{display:flex;align-items:center;gap:16px;padding:18px 20px;border-bottom:1px solid var(--border)}
+  .tpl-row:last-child{border-bottom:none}
+  .tpl-ic{width:40px;height:40px;flex:0 0 40px;border-radius:10px;background:#eff4ff;display:flex;align-items:center;justify-content:center;color:#3b6fe0}
+  .tpl-main{flex:1;min-width:0}
+  .tpl-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .tpl-title b{font-size:.98rem;font-weight:800}
+  .badge-act{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:800;padding:3px 10px;border-radius:999px;background:#dcfce7;color:#15803d;text-transform:uppercase;letter-spacing:.03em}
+  .badge-act.off{background:#fee2e2;color:#b91c1c}
+  .badge-act .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .tpl-code{display:inline-block;font-family:var(--font-mono);font-size:.72rem;font-weight:700;color:var(--muted2);background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:6px;margin:6px 0 4px}
+  .tpl-sub{font-size:.84rem;color:var(--text)}
+  .tpl-sub span{color:var(--muted2);font-weight:700}
+  .tpl-right{display:flex;align-items:center;gap:18px;flex:0 0 auto}
+  .tpl-upd{text-align:right;font-size:.72rem;color:var(--muted2)}
+  .tpl-upd b{display:block;font-size:.82rem;color:var(--text);font-weight:700;margin-top:2px}
+  .btn-edit{display:inline-flex;align-items:center;gap:7px;background:#2563eb;color:#fff;font-size:.84rem;font-weight:700;padding:9px 16px;border-radius:10px;border:none;cursor:pointer}
+  .btn-edit:hover{background:#1d4ed8}
+  .guide{margin-top:18px}
+  .guide .sec-lbl svg{color:#ca8a04}
+  .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:18px 20px}
+  .var-chip{display:flex;align-items:center;gap:10px;border:1px solid var(--border2);border-radius:10px;padding:10px 12px;background:var(--surface2)}
+  .var-chip code{font-family:var(--font-mono);font-size:.78rem;font-weight:700;color:#2563eb;background:#e7f0ff;padding:3px 8px;border-radius:6px}
+  .var-chip span{font-size:.82rem;color:var(--muted2)}
+  .guide .note{padding:14px 20px;font-size:.84rem;color:var(--muted2);border-bottom:1px solid var(--border)}
+  @media(max-width:640px){
+    .tpl-row{flex-wrap:wrap}
+    .tpl-right{width:100%;justify-content:space-between;margin-top:4px}
+  }
+</style>
+</head>
+<body>
+{% set page_title = "Mail Master" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Mail Templates","url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <main class="page-root">
+
+    <div class="mm-head">
+      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></div>
+      <div>
+        <h1>Mail Templates</h1>
+        <p>View and manage automated email templates for clients</p>
+      </div>
+    </div>
+
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}{% for cat,msg in msgs %}
+      <div style="margin:10px 0;padding:11px 16px;border-radius:10px;font-size:.86rem;font-weight:600;
+        {% if cat=='error' %}background:#fee2e2;color:#b91c1c{% else %}background:#dcfce7;color:#15803d{% endif %}">{{ msg }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="card">
+      <div class="sec-lbl">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+        Available Templates
+      </div>
+
+      {% for t in templates %}
+      <div class="tpl-row">
+        <div class="tpl-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="tpl-main">
+          <div class="tpl-title">
+            <b>{{ t.name }}</b>
+            {% if t.is_active %}<span class="badge-act"><span class="dot"></span>Active</span>
+            {% else %}<span class="badge-act off"><span class="dot"></span>Inactive</span>{% endif %}
+          </div>
+          <span class="tpl-code">{{ t.code }}</span>
+          <div class="tpl-sub"><span>Subject:</span> {{ t.subject }}</div>
+        </div>
+        <div class="tpl-right">
+          <div class="tpl-upd">Last Updated
+            <b>{% if t.updated_at %}{{ t.updated_at.strftime('%d %b %Y') if t.updated_at.strftime is defined else t.updated_at }}{% else %}—{% endif %}</b>
+          </div>
+          <a class="btn-edit" href="{{ url_for('mail.mail_template_edit', code=t.code) }}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+            Edit
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <div style="padding:30px;text-align:center;color:var(--muted2)">Koi template nahi. Page refresh karein — defaults auto-seed ho jayenge.</div>
+      {% endfor %}
+    </div>
+
+    <div class="card guide">
+      <div class="sec-lbl">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Template Variables Guide
+      </div>
+      <div class="note">Email Subject aur Body me ye variables use kar sakte ho — bhejte waqt actual Lead/Client data se replace ho jayenge.</div>
+      <div class="var-grid">
+        <div class="var-chip"><code>{client_name}</code><span>Contact name</span></div>
+        <div class="var-chip"><code>{company}</code><span>Company name</span></div>
+        <div class="var-chip"><code>{email}</code><span>Email address</span></div>
+        <div class="var-chip"><code>{phone}</code><span>Phone number</span></div>
+        <div class="var-chip"><code>{product}</code><span>Product name</span></div>
+        <div class="var-chip"><code>{city}</code><span>City</span></div>
+        <div class="var-chip"><code>{lead_code}</code><span>Lead code</span></div>
+        <div class="var-chip"><code>{quot_number}</code><span>Quotation no.</span></div>
+        <div class="var-chip"><code>{order_number}</code><span>Sample order no.</span></div>
+        <div class="var-chip"><code>{project_code}</code><span>Project code</span></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

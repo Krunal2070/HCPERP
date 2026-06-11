@@ -1,0 +1,157 @@
+/*  CRM Mobile Cards  (v3 — image-matched)
+    Table listings -> mobile card view. Desktop (>768px) par koi asar nahi.
+    Pair file: crm-mobile-cards.js                                          */
+
+/* Select-all bar: default hidden (sirf mobile par dikhega) */
+.cf-selectbar{ display:none; }
+
+@media (max-width: 834px){
+
+  /* ===== Mobile "Select All" bar (cards ke upar) ===== */
+  .cf-selectbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:4px 2px 12px 2px; gap:10px;
+  }
+  .cf-selectbar .cf-sb-left{
+    display:flex; align-items:center; gap:9px;
+    font-size:14px; font-weight:700; color:#26415f; cursor:pointer; user-select:none;
+  }
+  .cf-selectbar .cf-sb-cb{ width:18px; height:18px; accent-color:#2b6cff; }
+  .cf-selectbar .cf-sb-count{ font-size:13px; color:#9aa3b2; font-weight:600; }
+
+  /* ===================== BASE CARD ===================== */
+  table.cf-ready{ width:100%; border-collapse:separate; border-spacing:0; background:transparent; }
+  table.cf-ready thead{ display:none; }
+  table.cf-ready, table.cf-ready tbody{ display:block; width:100%; }
+
+  table.cf-ready tbody tr.cf-card{
+    display:flex; flex-wrap:wrap; align-items:stretch;
+    background:#ffffff; border:1px solid #e7ebf2; border-radius:16px;
+    overflow:hidden; box-shadow:0 6px 18px rgba(16,38,76,.10);
+    margin:0 0 16px 0;
+  }
+  table.cf-ready tbody tr.cf-card > td{
+    display:block; padding:12px 16px; border:none !important;
+    background:transparent; vertical-align:top;
+  }
+  table.cf-ready tbody tr.cf-card:hover{ background:#ffffff; } /* hover bg override */
+
+  /* hidden columns mobile par bhi hidden rahein (IMPORTANT) */
+  table.cf-ready tbody tr.cf-card > td.col-hidden{ display:none !important; }
+  table.cf-ready td.cf-serial{ display:none !important; }
+  table.cf-ready tr.cf-card .ie-pencil,
+  table.cf-ready tr.cf-card .ld-avatar{ display:none !important; }
+
+  /* ===================== HEADER BAR (navy) ===================== */
+  /* !important taaki theme ka koi td/tr background isko override na kare */
+  table.cf-ready td.cf-check,
+  table.cf-ready td.cf-title,
+  table.cf-ready td.cf-status{
+    background:linear-gradient(180deg,#22456f 0%,#1c3a5e 100%) !important;
+  }
+  table.cf-ready td.cf-check{
+    order:0; flex:0 0 auto; padding:16px 4px 16px 16px;
+    display:flex; align-items:center;
+  }
+  table.cf-ready td.cf-check input{ width:17px; height:17px; accent-color:#2b6cff; }
+
+  table.cf-ready td.cf-title{
+    order:1; flex:1 1 55%; min-width:0;
+    padding:13px 12px 13px 2px;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  table.cf-ready td.cf-title .ld-name-wrap{ display:flex; align-items:center; min-width:0; gap:0; }
+  table.cf-ready td.cf-title .entity-link,
+  table.cf-ready td.cf-title a{
+    color:#ffffff !important; font-size:16px; font-weight:700; line-height:1.25; text-decoration:none;
+  }
+  table.cf-ready td.cf-title .ld-name-sub{
+    color:#b9c9de !important; font-size:12.5px; font-weight:500; margin-top:3px; display:block;
+  }
+
+  table.cf-ready td.cf-status{
+    order:2; flex:1 1 auto; padding:13px 14px;
+    display:flex; align-items:center; justify-content:flex-end;
+  }
+  table.cf-ready td.cf-status .sbadge,
+  table.cf-ready td.cf-status .cf-pill{
+    display:inline-block; padding:5px 14px; border-radius:999px;
+    font-size:12px; font-weight:700; line-height:1; border:none !important;
+    background:rgba(255,255,255,.16) !important; color:#ffffff !important;
+  }
+  table.cf-ready td.cf-st-amber .sbadge, table.cf-ready td.cf-st-amber .cf-pill{ background:#f6c453 !important; color:#5a3d00 !important; }
+  table.cf-ready td.cf-st-green .sbadge, table.cf-ready td.cf-st-green .cf-pill{ background:#46c98b !important; color:#063b22 !important; }
+  table.cf-ready td.cf-st-red   .sbadge, table.cf-ready td.cf-st-red   .cf-pill{ background:#f2776f !important; color:#43060a !important; }
+
+  /* generic subtitle (clients/other pages) */
+  table.cf-ready td.cf-sub{
+    order:3; flex:1 1 100%;
+    background:#1c3a5e !important; padding:0 16px 13px 16px;
+    color:#b9c9de !important; font-size:12.5px; font-weight:500; margin-top:-4px;
+  }
+  table.cf-ready td.cf-sub *{ color:#b9c9de !important; }
+
+  /* ---- LEADS specific: duplicate company + noise hide ---- */
+  table#leadsTable td.cf-sub{ display:none !important; }
+  table#leadsTable td[data-col="email"],
+  table#leadsTable td[data-col="team"]{ display:none !important; }
+
+  /* ===================== BODY FIELDS (2-col grid) ===================== */
+  table.cf-ready td.cf-field{
+    order:5; flex:1 1 42%; padding:14px 16px 6px 16px;
+    font-size:14px; font-weight:600; color:#243247 !important; min-width:0; word-break:break-word;
+  }
+  table.cf-ready td.cf-field::before{
+    content:attr(data-label); display:block;
+    font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
+    color:#9aa3b2; font-weight:700; margin-bottom:4px;
+  }
+  table.cf-ready td.cf-field .ld-date{ display:flex; align-items:center; gap:5px; }
+  table.cf-ready td.cf-field .ld-date svg{ width:13px; height:13px; color:#9aa3b2; }
+  table.cf-ready td.cf-field .ld-time{ display:none; }
+
+  /* ===================== PRODUCT BOX ===================== */
+  table.cf-ready td.cf-product{
+    order:6; flex:1 1 100%; margin:4px 16px 14px 16px; padding:11px 14px;
+    background:#eef4ff !important; border:1px solid #d8e4ff; border-radius:12px;
+    font-size:14px; font-weight:700; color:#1f3b63 !important;
+  }
+  table.cf-ready td.cf-product::before{
+    content:attr(data-label); display:block;
+    font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
+    color:#5e7cab; font-weight:700; margin-bottom:4px;
+  }
+
+  /* ===================== FOOTER: days + actions ===================== */
+  table.cf-ready td.cf-age,
+  table.cf-ready td.cf-actions{
+    background:#f7f9fc !important; border-top:1px solid #eef1f6;
+  }
+  table.cf-ready td.cf-age{
+    order:7; flex:0 0 auto; padding:12px 16px; display:flex; align-items:center;
+  }
+  table.cf-ready td.cf-age .age-pill,
+  table.cf-ready td.cf-age .cf-age-pill{
+    background:#e8f0ff !important; color:#2b6cff !important; border:none !important;
+    padding:5px 12px; border-radius:999px; font-size:12px; font-weight:800;
+  }
+
+  table.cf-ready td.cf-actions{
+    order:8; flex:1 1 auto; margin-left:auto;
+    padding:9px 14px; display:flex; align-items:center; justify-content:flex-end; gap:8px;
+  }
+  table.cf-ready td.cf-actions .row-act{ display:flex; gap:8px; }
+  table.cf-ready td.cf-actions .ico-btn,
+  table.cf-ready td.cf-actions a,
+  table.cf-ready td.cf-actions button{
+    width:34px; height:34px; border-radius:10px; border:none !important;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:#eef2f8; color:#5b6b82; cursor:pointer;
+  }
+  table.cf-ready td.cf-actions .ico-btn[title="View"]{ background:#e7f0ff; color:#2b6cff; }
+  table.cf-ready td.cf-actions .ico-btn[title="Edit"]{ background:#e6f7ed; color:#16a34a; }
+  table.cf-ready td.cf-actions .ico-btn.danger,
+  table.cf-ready td.cf-actions .ico-btn[title="Trash"],
+  table.cf-ready td.cf-actions .ico-btn[title*="Delete"],
+  table.cf-ready td.cf-actions .ico-btn[title*="delete"]{ background:#fdecec; color:#e2453d; }
+}

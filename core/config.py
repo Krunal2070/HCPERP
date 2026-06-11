@@ -46,3 +46,10 @@ SQLALCHEMY_DATABASE_URI = (
 
 # ── Flask / app ──────────────────────────────────────────────────────────────
 SECRET_KEY = os.environ.get("SECRET_KEY", "hcp-portal-secret-key-2024")
+
+
+MAIL_SERVER   = os.environ.get('MAIL_SERVER',   'smtp.gmail.com')
+MAIL_PORT     = int(os.environ.get('MAIL_PORT', 587))
+MAIL_USE_TLS  = True
+MAIL_USERNAME = os.environ.get('MAIL_USERNAME', 'no-reply@hcpwellness.in')
+MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', 'sdrmjnitxnplzklg')

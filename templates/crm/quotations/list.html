@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quotations — CRM | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 44px;width:100%}
+  a{text-decoration:none;color:inherit}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm)}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .top h1{font-size:1.3rem;font-weight:800;margin:0;display:flex;align-items:center;gap:10px}
+  .toolr{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .srch{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:999px;padding:8px 16px;min-width:260px}
+  .srch input{border:none;background:none;outline:none;flex:1;font-size:.86rem;color:var(--text)}
+  .stsel{border:1px solid var(--border2);border-radius:999px;padding:8px 14px;font-size:.84rem;background:var(--surface);color:var(--text);font-weight:600}
+  .tabs2{display:flex;gap:10px;padding:14px 22px;border-bottom:1px solid var(--border)}
+  .tab2{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:999px;font-size:.84rem;font-weight:700;border:1px solid var(--border2);color:var(--muted2)}
+  .tab2.active{background:#2563eb;color:#fff;border-color:#2563eb}
+  .tab2 .b{background:rgba(0,0,0,.12);padding:1px 8px;border-radius:999px;font-size:.74rem}.tab2.active .b{background:rgba(255,255,255,.25)}
+  table{width:100%;border-collapse:collapse}
+  thead th{padding:13px 14px;text-align:left;font-size:.7rem;font-weight:800;color:var(--muted2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody td{padding:13px 14px;font-size:.84rem;border-bottom:1px solid var(--border);vertical-align:middle}
+  tbody tr:hover{background:var(--surface2)}
+  .ono{font-weight:800;color:var(--teal-dim)}
+  .lc{font-weight:700}.lc small{display:block;color:var(--muted2);font-weight:500;font-size:.78rem}
+  .amt{text-align:right;font-weight:700;white-space:nowrap}
+  .gst{text-align:right;white-space:nowrap}.gst small{display:block;color:var(--muted2);font-weight:500}
+  .by small{display:block;color:var(--muted2);font-weight:500;font-size:.76rem}
+  .sbadge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:.74rem;font-weight:800;cursor:pointer;border:1px solid transparent}
+  .st-draft{background:#fef9c3;color:#854d0e}.st-sent{background:#dbeafe;color:#1e40af}.st-accepted{background:#dcfce7;color:#166534}.st-rejected{background:#fee2e2;color:#991b1b}
+  .st-sub{display:block;font-size:.7rem;color:var(--muted2);font-weight:500;margin-top:3px}
+  .acts{display:flex;gap:6px}
+  .ib{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted2)}
+  .ib.dl:hover{color:#2563eb;border-color:#2563eb}.ib.em:hover{color:#16a34a;border-color:#16a34a}
+  .ib.st:hover{color:#d97706;border-color:#d97706}.ib.del:hover{color:#dc2626;border-color:#dc2626}.ib.vw:hover{color:#16a34a;border-color:#16a34a}
+  .empty{padding:44px;text-align:center;color:var(--muted2)}
+  .cv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:.18s}
+  .cv-overlay.show{opacity:1}
+  .cv-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md);padding:22px 24px;max-width:380px;width:90%}
+  .cv-title{font-size:.95rem;font-weight:800;margin-bottom:8px}.cv-msg{font-size:.86rem;color:var(--muted2);margin-bottom:18px}
+  .cv-actions{display:flex;gap:10px;justify-content:flex-end}
+  .cv-btn{padding:8px 18px;border-radius:8px;font-size:.84rem;font-weight:700;cursor:pointer;border:1px solid var(--border)}
+  .cv-cancel{background:var(--surface2);color:var(--muted2)}.cv-ok{background:#dc2626;color:#fff;border:none}
+  .lv-toast{position:fixed;bottom:22px;right:22px;z-index:10001;padding:13px 18px;border-radius:11px;font-size:.84rem;font-weight:700;color:#fff;background:#16a34a;box-shadow:var(--shadow-md);opacity:0;transform:translateY(10px);transition:.25s;max-width:360px}
+  .lv-toast.show{opacity:1;transform:translateY(0)}.lv-toast.err{background:#dc2626}
+</style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/crm-mobile-cards.css') }}">
+</head>
+<body>
+{% set page_title = "CRM · Quotations" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"CRM","url":"/crm/leads"},{"label":"Quotations","url":"#"}] %}
+{% set brand = {"name":"HCP Wellness","sub":"CRM Portal","mark":"H"} %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <main class="page-root">
+    <div class="card">
+      <div class="top">
+        <h1><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Quotations</h1>
+        <form class="toolr" method="get">
+          <div class="srch"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" name="search" value="{{ search or '' }}" placeholder="Search quotation, company, subject..."></div>
+          <select class="stsel" name="status" onchange="this.form.submit()">
+            <option value="">All Status</option>
+            {% for s in ['draft','sent','accepted','rejected'] %}<option value="{{ s }}" {{ 'selected' if status_f==s }}>{{ s|capitalize }}</option>{% endfor %}
+          </select>
+        </form>
+      </div>
+      <div class="tabs2">
+        <a class="tab2 {{ 'active' if not trash }}" href="?trash=0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg> Active <span class="b" id="cntActive">{{ active_n }}</span></a>
+        <a class="tab2 {{ 'active' if trash }}" href="?trash=1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Deleted <span class="b" id="cntDeleted">{{ del_n }}</span></a>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Quot. No</th><th>Date</th><th>Valid Until</th><th>Lead / Company</th><th>Subject</th>
+            <th style="text-align:right">Sub Total</th><th style="text-align:right">GST</th><th style="text-align:right">Total</th>
+            <th>Status</th><th>Created By</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            {% for o in quotations %}
+            <tr id="qtrow-{{ o.id }}">
+              <td>{{ loop.index }}</td>
+              <td><a class="ono" href="{{ url_for('crm.quotation_pdf', qid=o.id) }}" target="_blank">{{ o.quot_number }}</a></td>
+              <td>{{ o.quot_date }}</td>
+              <td>{{ o.valid_until or '—' }}</td>
+              <td class="lc">{{ o.lead_contact or '—' }}<small>{{ o.bill_company or '' }}</small></td>
+              <td>{{ (o.subject or '—')|truncate(28) }}</td>
+              <td class="amt">₹{{ '%.2f'|format(o.sub_total or 0) }}</td>
+              <td class="gst">{{ (o.gst_pct or 0)|int }}%<small>₹{{ '%.2f'|format(o.gst_amount or 0) }}</small></td>
+              <td class="amt">₹{{ '%.2f'|format(o.total_amount or 0) }}</td>
+              <td><span class="sbadge st-{{ o.status or 'draft' }}" onclick="qtCycleStatus({{ o.id }}, this)" title="Click to change">{{ (o.status or 'draft')|capitalize }}</span>{% if o.email_sent_to %}<span class="st-sub">→ {{ o.email_sent_to }}</span>{% endif %}</td>
+              <td class="by">{{ o._by }}<small>{{ o.created_at }}</small></td>
+              <td><div class="acts">
+                <a class="ib dl" title="Download PDF" href="{{ url_for('crm.quotation_pdf', qid=o.id) }}" target="_blank"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+                {% if not trash %}
+                <button class="ib em" title="Email PDF" onclick="qtEmailOpen({{ o.id }}, this)" data-email="{{ o.bill_email or '' }}" data-quot="{{ o.quot_number }}" data-company="{{ o.bill_company or '' }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></button>
+                <button class="ib del" title="Delete" onclick="qtDel({{ o.id }})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                {% else %}
+                <button class="ib vw" title="Restore" onclick="qtRestore({{ o.id }})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+                <button class="ib del" title="Permanent Delete" onclick="qtPurge({{ o.id }})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                {% endif %}
+              </div></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="12" class="empty">{{ 'Deleted me kuch nahi.' if trash else 'Abhi koi quotation nahi bana.' }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Quotation email compose modal -->
+<div class="cv-overlay" id="qtEmlBg" style="z-index:10002;display:none">
+  <div class="cv-box" style="max-width:560px;padding:0;overflow:hidden">
+    <div style="background:#1e3a5f;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:1rem">✉️ Email Quotation <span id="qtEmlQuot" style="opacity:.8;font-weight:600;font-size:.82rem"></span></div>
+      <button onclick="qtEmlClose()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem">×</button>
+    </div>
+    <div style="padding:18px 20px">
+      <label style="font-size:.74rem;font-weight:700;color:var(--muted2);display:block;margin-bottom:4px">To (Email) *</label>
+      <input id="qtEmlTo" type="email" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:.86rem;margin-bottom:12px;background:var(--surface);color:var(--text)">
+      <label style="font-size:.74rem;font-weight:700;color:var(--muted2);display:block;margin-bottom:4px">Subject *</label>
+      <input id="qtEmlSubject" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:.86rem;margin-bottom:12px;background:var(--surface);color:var(--text)">
+      <label style="font-size:.74rem;font-weight:700;color:var(--muted2);display:block;margin-bottom:4px">Message</label>
+      <div id="qtEmlBody" contenteditable="true" style="min-height:120px;max-height:240px;overflow-y:auto;padding:11px 13px;border:1px solid var(--border2);border-radius:8px;font-size:.86rem;line-height:1.55;background:var(--surface);color:var(--text);outline:none"></div>
+      <div style="font-size:.74rem;color:var(--muted2);margin-top:8px">📎 Quotation PDF auto-attach hoga. Send hone par status "Sent" ho jayega.</div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);background:var(--surface2)">
+      <button class="cv-btn cv-cancel" onclick="qtEmlClose()">Cancel</button>
+      <button class="cv-btn" style="background:#16a34a;color:#fff;border:none" id="qtEmlSendBtn" onclick="qtEmlSend()">Send Email</button>
+    </div>
+  </div>
+</div>
+<script>
+var ST=['draft','sent','accepted','rejected'];
+var IS_TRASH = {{ 'true' if trash else 'false' }};
+var qtEmlId=null;
+function bump(id,d){var el=document.getElementById(id);if(el){var n=parseInt(el.textContent,10)||0;el.textContent=Math.max(0,n+d);}}
+function rmRow(id){var row=document.getElementById('qtrow-'+id);if(row){var tb=row.parentNode;row.remove();if(tb && !tb.querySelector('tr[id^=qtrow-]')){tb.innerHTML='<tr><td colspan="12" class="empty">'+(IS_TRASH?'Deleted me kuch nahi.':'Abhi koi quotation nahi bana.')+'</td></tr>';}}}
+function toast(m,e){var t=document.createElement('div');t.className='lv-toast'+(e?' err':'');t.textContent=m;document.body.appendChild(t);requestAnimationFrame(function(){t.classList.add('show');});setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},250);},3500);}
+function cvConfirm(title,msg,ok,fn){var o=document.createElement('div');o.className='cv-overlay';o.innerHTML='<div class="cv-box"><div class="cv-title">'+title+'</div><div class="cv-msg">'+msg+'</div><div class="cv-actions"><button class="cv-btn cv-cancel">Cancel</button><button class="cv-btn cv-ok">'+ok+'</button></div></div>';document.body.appendChild(o);requestAnimationFrame(function(){o.classList.add('show');});function c(){o.classList.remove('show');setTimeout(function(){o.remove();},200);}o.querySelector('.cv-cancel').onclick=c;o.querySelector('.cv-ok').onclick=function(){c();fn();};o.addEventListener('click',function(e){if(e.target===o)c();});}
+function qtDel(id){cvConfirm('Delete Quotation','Ye quotation delete (trash) karein?','Delete',function(){fetch('/crm/quotations/'+id+'/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d.ok){rmRow(id);bump('cntActive',-1);bump('cntDeleted',1);toast('Deleted — Deleted tab me chala gaya.');}});});}
+function qtRestore(id){fetch('/crm/quotations/'+id+'/restore',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d.ok){rmRow(id);bump('cntDeleted',-1);bump('cntActive',1);toast('Restore ho gaya.');}});}
+function qtPurge(id){cvConfirm('Permanent Delete','Ye quotation HAMESHA ke liye delete ho jayega — wapas nahi aayega. Pakka?','Delete Forever',function(){fetch('/crm/quotations/'+id+'/purge',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d.ok){rmRow(id);bump('cntDeleted',-1);toast('Permanent delete ho gaya.');}else toast(d.error||'Delete failed',1);});});}
+function qtEmailOpen(id,btn){qtEmlId=id;var em=btn.getAttribute('data-email')||'';var qn=btn.getAttribute('data-quot')||'';var co=btn.getAttribute('data-company')||'Sir/Madam';document.getElementById('qtEmlQuot').textContent=qn?('— '+qn):'';document.getElementById('qtEmlTo').value=em;document.getElementById('qtEmlSubject').value='Quotation '+qn+' — HCP Wellness';document.getElementById('qtEmlBody').innerHTML='Dear <b>'+co+'</b>,<br><br>Please find attached our Quotation <b>'+qn+'</b> for your reference.<br><br>Regards,<br>HCP Wellness Pvt. Ltd.';var bg=document.getElementById('qtEmlBg');bg.style.display='flex';requestAnimationFrame(function(){bg.classList.add('show');});}
+function qtEmlClose(){var bg=document.getElementById('qtEmlBg');bg.classList.remove('show');setTimeout(function(){bg.style.display='none';},200);}
+function qtEmlSend(){if(!qtEmlId)return;var to=document.getElementById('qtEmlTo').value.trim();var subj=document.getElementById('qtEmlSubject').value.trim();var body=document.getElementById('qtEmlBody').innerHTML;if(!to){toast('To email zaroori hai',1);return;}if(!subj){toast('Subject zaroori hai',1);return;}var b=document.getElementById('qtEmlSendBtn');b.disabled=true;b.textContent='Sending...';var fd=new FormData();fd.append('to',to);fd.append('subject',subj);fd.append('body',body);fetch('/crm/quotations/'+qtEmlId+'/email',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){b.disabled=false;b.textContent='Send Email';if(d.ok){qtEmlClose();toast('📧 Email sent to '+d.to);var row=document.getElementById('qtrow-'+qtEmlId);if(row){var bd=row.querySelector('.sbadge');if(bd){bd.className='sbadge st-sent';bd.textContent='Sent';}}}else toast(d.error||'Email failed',1);}).catch(function(){b.disabled=false;b.textContent='Send Email';toast('Network error',1);});}
+function qtCycleStatus(id,el){var cur=el.textContent.trim().toLowerCase();var i=ST.indexOf(cur);var nx=ST[(i+1)%ST.length];var fd=new FormData();fd.append('status',nx);fetch('/crm/quotations/'+id+'/status',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){if(d.ok){el.className='sbadge st-'+d.status;el.textContent=d.status.charAt(0).toUpperCase()+d.status.slice(1);toast('Status: '+el.textContent);}});}
+document.getElementById('qtEmlBg').addEventListener('click',function(e){if(e.target===this)qtEmlClose();});
+</script>
+  <script src="{{ url_for('static', filename='js/crm-mobile-cards.js') }}"></script>
+</body>
+</html>

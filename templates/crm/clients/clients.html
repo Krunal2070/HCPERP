@@ -47,6 +47,7 @@
   .ico-btn.danger:hover{color:var(--red-text);border-color:var(--red-text)}
   .empty{padding:56px 20px;text-align:center;color:var(--muted2)}
 </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/crm-mobile-cards.css') }}">
 </head>
 <body>
 {% set page_title = "CRM · Client Master" %}
@@ -56,6 +57,12 @@
 <div class="layout-wrap">
   {% include 'partials/_sidebar.html' %}
   <main class="page-root">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}{% for cat, msg in msgs %}
+      <div style="margin:0 0 14px;padding:11px 16px;border-radius:10px;font-size:.88rem;font-weight:600;
+        {% if cat in ('error','danger') %}background:#fee2e2;color:#b91c1c{% else %}background:#dcfce7;color:#15803d{% endif %}">{{ msg }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
     <div class="page-head"><h1>Client Master</h1><p>Manage billing, brands, contacts</p></div>
     <div class="grid-card">
       <div class="grid-toolbar">
@@ -112,4 +119,5 @@ function clientAction(id,action){
   fetch('/crm/clients/'+id+'/'+action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error||'Failed');}).catch(()=>alert('Request failed'));
 }
 </script>
+  <script src="{{ url_for('static', filename='js/crm-mobile-cards.js') }}"></script>
 </body></html>

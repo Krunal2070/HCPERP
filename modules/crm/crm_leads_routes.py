@@ -130,10 +130,56 @@ def login_required(f):
     return wrapper
 
 
+@crm_bp.before_request
+def _crm_admin_only():
+    """Abhi CRM module SIRF admin ke liye (temporary lock).
+    Hatane ke liye is poore function ko comment/delete kar do."""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if not _is_admin():
+        if request.is_json or request.headers.get('X-Requested-With'):
+            return jsonify(ok=False, success=False,
+                           error='Access denied — CRM abhi sirf admin ke liye hai.'), 403
+        flash('CRM module abhi sirf admin ke liye available hai.', 'error')
+        return redirect('/')
+    return None  # admin → aage badho
+
+
 def _upload_dir():
     d = os.path.join(current_app.root_path, 'static', 'uploads', 'leads')
     os.makedirs(d, exist_ok=True)
     return d
+
+
+def _remove_upload(rel_path):
+    """static/uploads/<rel_path> file ko disk se hatao (slash normalize karke)."""
+    if not rel_path:
+        return
+    rel = str(rel_path).replace('\\', '/').lstrip('/')
+    full = os.path.join(current_app.root_path, 'static', 'uploads',
+                        *rel.split('/'))
+    try:
+        if os.path.exists(full):
+            os.remove(full)
+    except Exception:
+        pass
+
+
+def _parse_dt(s):
+    """Kisi bhi common format ki datetime string ko MySQL 'Y-m-d H:M:S' me convert."""
+    if not s:
+        return None
+    s = str(s).strip().replace('T', ' ')
+    fmts = ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M',
+            '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M',
+            '%d-%m-%Y %I:%M %p', '%d/%m/%Y %H:%M',
+            '%m/%d/%Y %H:%M', '%Y-%m-%d')
+    for f in fmts:
+        try:
+            return datetime.strptime(s, f).strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            continue
+    return None
 
 
 def _allowed_file(filename):
@@ -648,7 +694,9 @@ def lead_view(id):
             lg['_user'] = umap.get(lg.get('user_id'), 'System')
 
         attachments = q("SELECT * FROM `lead_attachments` WHERE lead_id=%s "
-                        "AND (discussion_id IS NULL) ORDER BY created_at DESC", (id,))
+                        "ORDER BY created_at DESC", (id,))
+        for a in attachments:
+            a['_user'] = umap.get(a.get('uploaded_by'), 'User')
 
         contrib = q("SELECT user_id, SUM(points) AS pts, COUNT(*) AS cnt "
                     "FROM `lead_contributions` WHERE lead_id=%s GROUP BY user_id "
@@ -665,6 +713,7 @@ def lead_view(id):
             'crm/leads/lead_view.html', lead=lead, discussions=discussions,
             reminders=reminders, notes=notes, logs=logs, attachments=attachments,
             contributions=contrib, lead_statuses=statuses,
+            all_users=[{'id': k, 'name': v} for k, v in (umap or {}).items()],
             is_admin=_is_admin(), is_admin_mgr=_is_admin_mgr(), my_uid=_uid(),
             sidebar_menu=get_menu('crm', role=_role(), is_admin=_is_admin()),
             active_item='leads', user_name=_uname(),
@@ -788,6 +837,8 @@ def lead_discussion_add(id):
     comment = (request.form.get('comment') or '').strip()
     files = request.files.getlist('files')
     if not comment and not any(f.filename for f in files):
+        if request.is_json or request.headers.get('X-Requested-With'):
+            return jsonify(ok=False, error='Comment ya file zaroori hai.'), 400
         flash('Comment ya file zaroori hai.', 'error')
         return redirect(url_for('crm.lead_view', id=id) + '#discussion')
     conn = _db()
@@ -796,6 +847,7 @@ def lead_discussion_add(id):
             "INSERT INTO `lead_discussions` (lead_id, user_id, comment, created_at) "
             "VALUES (%s, %s, %s, NOW())", (id, _uid(), comment or '(file)'))
         did = cur.lastrowid
+        saved_files = []
         for fs in files:
             if not fs or not fs.filename:
                 continue
@@ -814,9 +866,18 @@ def lead_discussion_add(id):
                 "VALUES (%s,%s,%s,%s,%s,%s,%s,NOW())",
                 (id, did, fname, f"leads/{stored}", size,
                  fname.rsplit('.', 1)[-1].lower(), _uid()))
+            _aid = conn.execute(
+                "SELECT id FROM `lead_attachments` WHERE discussion_id=%s "
+                "ORDER BY id DESC LIMIT 1", (did,)).fetchone()
+            saved_files.append({'id': (_aid or {}).get('id'),
+                                'name': fname, 'path': f"leads/{stored}"})
         log_activity(conn, id, "Added a discussion comment")
         add_contribution(conn, id, 'comment')
         conn.commit()
+        if request.is_json or request.headers.get('X-Requested-With'):
+            return jsonify(ok=True, id=did, user=_uname(), comment=comment,
+                           created_at=datetime.now().strftime('%d-%m-%Y %I:%M %p'),
+                           files=saved_files)
         flash('Comment added.', 'success')
     finally:
         conn.close()
@@ -832,18 +893,14 @@ def lead_discussion_delete(did):
                          (did,)).fetchone()
         if not d:
             return jsonify(ok=False), 404
-        if d['user_id'] != _uid() and not _is_admin():
-            return jsonify(ok=False, error='Not allowed'), 403
+        if d['user_id'] != _uid():
+            return jsonify(ok=False, error='Sirf apni comment delete kar sakte ho'), 403
         lead_id = d['lead_id']
         atts = conn.execute(
             "SELECT file_path FROM `lead_attachments` WHERE discussion_id=%s",
             (did,)).fetchall() or []
         for a in atts:
-            try:
-                os.remove(os.path.join(current_app.root_path, 'static',
-                                       'uploads', a['file_path']))
-            except Exception:
-                pass
+            _remove_upload(a['file_path'])
         conn.execute("DELETE FROM `lead_attachments` WHERE discussion_id=%s", (did,))
         conn.execute("DELETE FROM `lead_discussions` WHERE id=%s", (did,))
         conn.commit()
@@ -851,6 +908,69 @@ def lead_discussion_delete(did):
             return jsonify(ok=True)
         flash('Comment deleted.', 'success')
         return redirect(url_for('crm.lead_view', id=lead_id) + '#discussion')
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/leads/discussion/<int:did>/edit', methods=['POST'])
+@login_required
+def lead_discussion_edit(did):
+    """Sirf apni comment edit (owner-only). Text + attachments change kar sakte ho."""
+    conn = _db()
+    try:
+        d = conn.execute("SELECT * FROM `lead_discussions` WHERE id=%s",
+                         (did,)).fetchone()
+        if not d:
+            return jsonify(ok=False, error='Not found'), 404
+        if d['user_id'] != _uid():
+            return jsonify(ok=False, error='Sirf apni comment edit kar sakte ho.'), 403
+        comment = (request.form.get('comment') or '').strip()
+        removed = [x for x in (request.form.get('removed') or '').split(',')
+                   if x.strip().isdigit()]
+        new_files = request.files.getlist('files')
+        lead_id = d['lead_id']
+
+        conn.execute("UPDATE `lead_discussions` SET comment=%s WHERE id=%s",
+                     (comment, did))
+
+        # selected attachments hatao (file + DB dono se)
+        for aid in removed:
+            arow = conn.execute(
+                "SELECT file_path FROM `lead_attachments` WHERE id=%s AND discussion_id=%s",
+                (aid, did)).fetchone()
+            if arow:
+                _remove_upload(arow['file_path'])
+                conn.execute("DELETE FROM `lead_attachments` WHERE id=%s", (aid,))
+
+        # naye attachments add
+        for fs in new_files:
+            if not fs or not fs.filename or not _allowed_file(fs.filename):
+                continue
+            fname = secure_filename(fs.filename)
+            stamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            stored = f"{lead_id}_{did}_{stamp}_{fname}"
+            path = os.path.join(_upload_dir(), stored)
+            fs.save(path)
+            size = os.path.getsize(path)
+            conn.execute(
+                "INSERT INTO `lead_attachments` "
+                "(lead_id, discussion_id, file_name, file_path, file_size, "
+                " file_type, uploaded_by, created_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,NOW())",
+                (lead_id, did, fname, f"leads/{stored}", size,
+                 fname.rsplit('.', 1)[-1].lower(), _uid()))
+
+        try:
+            log_activity(conn, lead_id, "Edited a discussion comment")
+        except Exception:
+            pass
+        conn.commit()
+        frows = conn.execute(
+            "SELECT id, file_name, file_path FROM `lead_attachments` "
+            "WHERE discussion_id=%s ORDER BY id", (did,)).fetchall() or []
+        files_out = [{'id': fr['id'], 'name': fr['file_name'],
+                      'path': fr['file_path']} for fr in frows]
+        return jsonify(ok=True, comment=comment, files=files_out)
     finally:
         conn.close()
 
@@ -864,19 +984,28 @@ def lead_reminder_add(id):
     title = (request.form.get('title') or '').strip()
     remind_at = request.form.get('remind_at')
     desc = request.form.get('description', '')
-    if not title or not remind_at:
+    _ajax = request.is_json or request.headers.get('X-Requested-With')
+    rdt = _parse_dt(remind_at)
+    if not title or not rdt:
+        if _ajax:
+            return jsonify(ok=False, error='Title aur sahi Date & Time zaroori hai.'), 400
         flash('Title aur date/time zaroori hai.', 'error')
         return redirect(url_for('crm.lead_view', id=id) + '#reminders')
     conn = _db()
     try:
-        conn.execute(
+        cur = conn.execute(
             "INSERT INTO `lead_reminders` "
             "(lead_id, user_id, title, description, remind_at, created_at) "
             "VALUES (%s,%s,%s,%s,%s,NOW())",
-            (id, _uid(), title, desc, remind_at.replace('T', ' ')))
+            (id, _uid(), title, desc, rdt))
+        rid = cur.lastrowid
         log_activity(conn, id, f"Reminder set: {title}")
         add_contribution(conn, id, 'reminder')
         conn.commit()
+        if _ajax:
+            disp = datetime.strptime(rdt, '%Y-%m-%d %H:%M:%S').strftime('%d-%m-%Y %H:%M')
+            return jsonify(ok=True, id=rid, title=title, description=desc,
+                           remind_at=disp, user=_uname())
         flash('Reminder added.', 'success')
     finally:
         conn.close()
@@ -907,6 +1036,77 @@ def lead_reminder_delete(rid):
         conn.close()
 
 
+def _ensure_reminder_cols(conn):
+    """lead_reminders me 'notified' column ensure karo (once)."""
+    try:
+        conn.execute("ALTER TABLE `lead_reminders` ADD COLUMN `notified` "
+                     "TINYINT DEFAULT 0")
+        conn.commit()
+    except Exception:
+        pass
+
+
+@crm_bp.route('/reminders/due', methods=['GET'])
+@login_required
+def reminders_due():
+    """Current user ke jo reminders due ho gaye + abhi tak notify nahi hue."""
+    conn = _db()
+    try:
+        _ensure_reminder_cols(conn)
+        rows = conn.execute(
+            "SELECT r.id, r.lead_id, r.title, r.description, r.remind_at, "
+            "       l.code AS lead_code, l.contact_name AS contact "
+            "FROM `lead_reminders` r "
+            "LEFT JOIN `leads` l ON l.id = r.lead_id "
+            "WHERE r.user_id=%s AND r.is_done=0 "
+            "  AND (r.notified=0 OR r.notified IS NULL) "
+            "  AND r.remind_at <= NOW() "
+            "ORDER BY r.remind_at", (_uid(),)).fetchall() or []
+        if rows:
+            ids = [r['id'] for r in rows]
+            conn.execute(
+                "UPDATE `lead_reminders` SET notified=1 WHERE id IN (%s)"
+                % ",".join(['%s'] * len(ids)), tuple(ids))
+            conn.commit()
+        out = []
+        for r in rows:
+            try:
+                disp = datetime.strptime(str(r['remind_at']), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y %I:%M %p')
+            except Exception:
+                disp = str(r['remind_at'])
+            out.append({'id': r['id'], 'lead_id': r['lead_id'],
+                        'title': r['title'], 'description': r['description'] or '',
+                        'lead_code': r['lead_code'] or '',
+                        'contact': r['contact'] or '',
+                        'remind_at': disp})
+        return jsonify(ok=True, reminders=out)
+    except Exception:
+        return jsonify(ok=True, reminders=[])
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/leads/reminder/<int:rid>/snooze', methods=['POST'])
+@login_required
+def lead_reminder_snooze(rid):
+    """Reminder ko +N minutes aage badha do (default 5), notified reset."""
+    try:
+        mins = int(request.form.get('minutes') or request.args.get('minutes') or 5)
+    except Exception:
+        mins = 5
+    conn = _db()
+    try:
+        _ensure_reminder_cols(conn)
+        conn.execute(
+            "UPDATE `lead_reminders` "
+            "SET remind_at = DATE_ADD(NOW(), INTERVAL %s MINUTE), notified=0 "
+            "WHERE id=%s", (mins, rid))
+        conn.commit()
+        return jsonify(ok=True, minutes=mins)
+    finally:
+        conn.close()
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # PERSONAL NOTES (private per user)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -914,14 +1114,21 @@ def lead_reminder_delete(rid):
 @login_required
 def lead_note_add(id):
     note = (request.form.get('note') or '').strip()
+    _ajax = request.is_json or request.headers.get('X-Requested-With')
     if not note:
+        if _ajax:
+            return jsonify(ok=False, error='Note khali nahi ho sakta.'), 400
         return redirect(url_for('crm.lead_view', id=id) + '#notes')
     conn = _db()
     try:
-        conn.execute(
+        cur = conn.execute(
             "INSERT INTO `lead_notes` (lead_id, user_id, note, created_at) "
             "VALUES (%s,%s,%s,NOW())", (id, _uid(), note))
+        nid = cur.lastrowid
         conn.commit()
+        if _ajax:
+            return jsonify(ok=True, id=nid, note=note,
+                           created_at=datetime.now().strftime('%d-%m-%Y %I:%M %p'))
         flash('Note saved.', 'success')
     finally:
         conn.close()
@@ -940,6 +1147,88 @@ def lead_note_delete(nid):
         return jsonify(ok=True)
     finally:
         conn.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EMAIL — SMTP direct send (no-reply@hcpwellness.in)
+# ─────────────────────────────────────────────────────────────────────────────
+@crm_bp.route('/leads/<int:id>/email/send', methods=['POST'])
+@login_required
+def lead_email_send(id):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    from email.utils import formataddr
+
+    def _mailcfg(key, default=''):
+        """MAIL_* value app.config -> env -> config.py module se dhundo."""
+        v = current_app.config.get(key)
+        if v not in (None, ''):
+            return v
+        v = os.environ.get(key)
+        if v not in (None, ''):
+            return v
+        for modname in ('config', 'app_config', 'settings', 'configuration'):
+            try:
+                mod = __import__(modname)
+                v = getattr(mod, key, None)
+                if v not in (None, ''):
+                    return v
+            except Exception:
+                continue
+        return default
+
+    to_addr = (request.form.get('to') or '').strip()
+    from_name = (request.form.get('from_name') or 'HCP Wellness Pvt. Ltd.').strip()
+    from_email = (request.form.get('from_email') or '').strip()
+    subject = (request.form.get('subject') or '').strip()
+    body_html = request.form.get('body') or ''
+    if not to_addr or not subject:
+        return jsonify(ok=False, error='To aur Subject zaroori hai.'), 400
+
+    server = _mailcfg('MAIL_SERVER', 'smtp.gmail.com')
+    port = int(_mailcfg('MAIL_PORT', 587) or 587)
+    use_tls = _mailcfg('MAIL_USE_TLS', True)
+    username = _mailcfg('MAIL_USERNAME', 'no-reply@hcpwellness.in')
+    password = _mailcfg('MAIL_PASSWORD', '')
+    sender = username or from_email or 'no-reply@hcpwellness.in'
+    if not from_email:
+        from_email = sender
+
+    if not password:
+        return jsonify(ok=False, error='SMTP password nahi mila. config.py me '
+                       'MAIL_PASSWORD set karein (ya app.config me load karein).'), 500
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = formataddr((from_name, from_email))
+        msg['To'] = to_addr
+        msg['Reply-To'] = from_email
+        import re as _re
+        plain = _re.sub(r'<br\s*/?>', '\n', body_html)
+        plain = _re.sub(r'</li>', '\n', plain)
+        plain = _re.sub(r'<[^>]+>', '', plain)
+        msg.attach(MIMEText(plain, 'plain', 'utf-8'))
+        msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+
+        s = smtplib.SMTP(server, port, timeout=25)
+        if use_tls:
+            s.starttls()
+        s.login(username, password)
+        s.sendmail(sender, [to_addr], msg.as_string())
+        s.quit()
+
+        try:
+            conn = _db()
+            log_activity(conn, id, f"Email sent to {to_addr}")
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False, error='Email bhejne me dikkat: ' + str(e)), 500
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1457,7 +1746,7 @@ import json as _json
 
 def gen_client_code(conn):
     row = conn.execute(
-        "SELECT code FROM `client_masters` WHERE code LIKE 'CLT-%' "
+        "SELECT code FROM `client_masters` WHERE code LIKE 'CLT-%%' "
         "ORDER BY id DESC LIMIT 1").fetchone()
     n = 1
     if row and row.get('code'):
@@ -1672,28 +1961,38 @@ def clients_import():
             sidebar_menu=get_menu('crm', role=_role(), is_admin=_is_admin()),
             active_item='imp-clients', user_name=_uname(),
             role=session.get('User_Type'))
+
     f = request.files.get('file')
     if not f or not f.filename:
         flash('Koi file select nahi hui.', 'error')
         return redirect(url_for('crm.clients_import'))
+
     name = f.filename.lower()
     rows = []
     try:
+        raw = f.read()                          # poori file memory me (robust)
         if name.endswith('.csv'):
             import csv
-            data = f.read().decode('utf-8-sig', errors='ignore').splitlines()
-            for r in csv.DictReader(data):
+            text = raw.decode('utf-8-sig', errors='ignore')
+            for r in csv.DictReader(text.splitlines()):
                 rows.append({(k or '').strip().lower(): (str(v).strip() if v is not None else '')
                              for k, v in r.items()})
-        elif name.endswith(('.xlsx', '.xls')):
+        elif name.endswith('.xlsx'):
+            import io as _io
             from openpyxl import load_workbook
-            wb = load_workbook(f, read_only=True, data_only=True)
+            wb = load_workbook(_io.BytesIO(raw), read_only=True, data_only=True)
             ws = wb.active
             it = ws.iter_rows(values_only=True)
             hdr = [str(h or '').strip().lower() for h in next(it, [])]
             for r in it:
+                if not any(c is not None and str(c).strip() for c in r):
+                    continue                    # blank row skip
                 rows.append({hdr[i]: (str(c).strip() if c is not None else '')
                              for i, c in enumerate(r) if i < len(hdr)})
+        elif name.endswith('.xls'):
+            flash('Purani .xls file support nahi hoti. File ko Excel me '
+                  '"Save As .xlsx" karke (ya CSV) upload karein.', 'error')
+            return redirect(url_for('crm.clients_import'))
         else:
             flash('Sirf .csv ya .xlsx file allowed hai.', 'error')
             return redirect(url_for('crm.clients_import'))
@@ -1701,49 +2000,124 @@ def clients_import():
         flash(f'File padh nahi paaye: {e}', 'error')
         return redirect(url_for('crm.clients_import'))
 
+    if not rows:
+        flash('File me koi data row nahi mila (sirf header row?).', 'error')
+        return redirect(url_for('crm.clients_import'))
+
+    # Header alias — spaces/underscores dono, kaafi variants cover
     alias = {
-        'name': 'contact_name', 'contact name': 'contact_name', 'contact_name': 'contact_name',
+        'name': 'contact_name', 'contact': 'contact_name', 'contact name': 'contact_name',
+        'contact_name': 'contact_name', 'client name': 'contact_name', 'person': 'contact_name',
         'company': 'company_name', 'company name': 'company_name', 'company_name': 'company_name',
-        'position': 'position', 'email': 'email', 'website': 'website',
-        'mobile': 'mobile', 'phone': 'mobile', 'alt mobile': 'alternate_mobile',
-        'alternate_mobile': 'alternate_mobile', 'gstin': 'gstin', 'gst': 'gstin',
-        'status': 'status', 'address': 'address', 'city': 'city', 'state': 'state',
-        'country': 'country', 'zip': 'zip_code', 'zip_code': 'zip_code', 'pincode': 'zip_code',
-        'notes': 'notes',
+        'firm': 'company_name', 'organisation': 'company_name', 'organization': 'company_name',
+        'position': 'position', 'designation': 'position', 'title': 'position',
+        'email': 'email', 'email id': 'email', 'e-mail': 'email', 'mail': 'email',
+        'website': 'website', 'web': 'website', 'url': 'website',
+        'mobile': 'mobile', 'mobile no': 'mobile', 'mobile number': 'mobile',
+        'phone': 'mobile', 'phone no': 'mobile', 'contact no': 'mobile', 'number': 'mobile',
+        'alt mobile': 'alternate_mobile', 'alternate mobile': 'alternate_mobile',
+        'alternate_mobile': 'alternate_mobile', 'alt phone': 'alternate_mobile',
+        'secondary mobile': 'alternate_mobile',
+        'gstin': 'gstin', 'gst': 'gstin', 'gst no': 'gstin', 'gst number': 'gstin',
+        'status': 'status',
+        'address': 'address', 'addr': 'address',
+        'city': 'city', 'state': 'state', 'country': 'country',
+        'zip': 'zip_code', 'zip_code': 'zip_code', 'zipcode': 'zip_code',
+        'pincode': 'zip_code', 'pin': 'zip_code', 'pin code': 'zip_code', 'postal code': 'zip_code',
+        'notes': 'notes', 'note': 'notes', 'remarks': 'notes', 'remark': 'notes',
+        # brand + shipping (import me 1 brand auto-create ke liye)
+        'brand': 'brand', 'brand name': 'brand', 'brand_name': 'brand',
+        'category': 'category', 'brand category': 'brand_category', 'brand_category': 'brand_category',
+        'description': 'description', 'desc': 'description',
+        'brand description': 'brand_description', 'brand_description': 'brand_description',
+        'shipping address': 'ship_address', 'ship address': 'ship_address', 'shipping_address': 'ship_address',
+        'shipping city': 'ship_city', 'ship city': 'ship_city',
+        'shipping state': 'ship_state', 'ship state': 'ship_state',
+        'shipping country': 'ship_country', 'ship country': 'ship_country',
+        'shipping zip': 'ship_zip', 'ship zip': 'ship_zip', 'shipping zip_code': 'ship_zip', 'ship_zip': 'ship_zip',
     }
     CLIENT_COLS = ['company_name', 'contact_name', 'position', 'email', 'website',
                    'mobile', 'alternate_mobile', 'gstin', 'address', 'city', 'state',
                    'country', 'zip_code', 'notes']
+
     conn = _db()
-    inserted, skipped = 0, 0
+    inserted, skipped, errors = 0, 0, []
     try:
-        for r in rows:
-            rec = {}
-            for k, v in r.items():
-                if k in alias and v:
-                    rec[alias[k]] = v
-            cname = rec.get('contact_name')
-            if not cname:
-                skipped += 1
+        # Starting CLT-#### EK baar nikaal lo, fir locally increment (batch-safe)
+        last = conn.execute(
+            "SELECT code FROM `client_masters` WHERE code LIKE 'CLT-%%' "
+            "ORDER BY id DESC LIMIT 1").fetchone()
+        seq = 1
+        if last and last.get('code'):
+            try:
+                seq = int(str(last['code']).split('-')[1]) + 1
+            except Exception:
+                seq = 1
+
+        for idx, r in enumerate(rows, start=2):    # row 2 = pehli data row
+            try:
+                rec = {}
+                for k, v in r.items():
+                    if not v:
+                        continue
+                    key = (k or '').strip().lower()
+                    tgt = alias.get(key) or alias.get(key.replace('_', ' '))
+                    if tgt:
+                        rec[tgt] = v
+                cname = rec.get('contact_name')
+                if not cname:
+                    skipped += 1
+                    continue
+                st = (rec.get('status') or 'active').lower()
+                if st not in ('active', 'inactive'):
+                    st = 'active'
+                code = f"CLT-{seq:04d}"
+                seq += 1
+                cols, ph, vals = ['code'], ['%s'], [code]
+                for c in CLIENT_COLS:
+                    if rec.get(c):
+                        cols.append(c); ph.append('%s'); vals.append(rec[c])
+                cols += ['status', 'created_by', 'created_at']
+                ph   += ['%s', '%s', 'NOW()']
+                vals += [st, _uid()]
+                sql = ("INSERT INTO `client_masters` (" + ",".join("`" + c + "`" for c in cols)
+                       + ") VALUES (" + ",".join(ph) + ")")
+                cur = conn.execute(sql, vals)
+                cid = cur.lastrowid
+
+                # ── kam se kam 1 brand + Billing & Shipping address ──
+                billing = {
+                    'address': rec.get('address'), 'city': rec.get('city'),
+                    'state': rec.get('state'), 'country': rec.get('country') or 'India',
+                    'zip_code': rec.get('zip_code'),
+                }
+                shipping = {
+                    'address':  rec.get('ship_address') or billing['address'],
+                    'city':     rec.get('ship_city')    or billing['city'],
+                    'state':    rec.get('ship_state')   or billing['state'],
+                    'country':  rec.get('ship_country') or billing['country'],
+                    'zip_code': rec.get('ship_zip')     or billing['zip_code'],
+                }
+                _save_client_brands(conn, cid, [{
+                    'brand_name':  rec.get('brand') or rec.get('company_name') or cname,
+                    'category':    rec.get('brand_category') or rec.get('category'),
+                    'description': rec.get('brand_description') or rec.get('description'),
+                    'billing':  billing,
+                    'shipping': shipping,
+                }])
+                inserted += 1
+            except Exception as row_err:
+                errors.append(f'Row {idx}: {row_err}')
                 continue
-            st = (rec.get('status') or 'active').lower()
-            if st not in ('active', 'inactive'):
-                st = 'active'
-            code = gen_client_code(conn)
-            cols, ph, vals = ['code'], ['%s'], [code]
-            for c in CLIENT_COLS:
-                if rec.get(c):
-                    cols.append(c); ph.append('%s'); vals.append(rec[c])
-            cols += ['status', 'created_by', 'created_at']
-            ph += ['%s', '%s', 'NOW()']
-            vals += [st, _uid()]
-            sql = ("INSERT INTO `client_masters` (" + ",".join("`" + c + "`" for c in cols)
-                   + ") VALUES (" + ",".join(ph) + ")")
-            conn.execute(sql, vals)
-            inserted += 1
         conn.commit()
-        flash(f'{inserted} clients import hue.'
-              + (f' {skipped} skip (name missing).' if skipped else ''), 'success')
+        msg = f'{inserted} clients import hue.'
+        if skipped:
+            msg += f' {skipped} skip (name missing).'
+        if errors:
+            msg += f' {len(errors)} row error.'
+        flash(msg, 'success' if inserted else 'error')
+        if errors:
+            flash('Pehla error → ' + errors[0], 'error')
     except Exception as e:
         flash(f'Import error: {e}', 'error')
     finally:
@@ -1760,11 +2134,15 @@ def clients_import_template():
     wb = Workbook(); ws = wb.active; ws.title = 'Clients'
     headers = ['name', 'company', 'position', 'email', 'website', 'mobile',
                'alternate_mobile', 'gstin', 'status', 'address', 'city', 'state',
-               'country', 'zip_code', 'notes']
+               'country', 'zip_code', 'notes',
+               'brand', 'category', 'description',
+               'ship_address', 'ship_city', 'ship_state', 'ship_country', 'ship_zip']
     ws.append(headers)
     ws.append(['Ramesh Shah', 'ABC Cosmetics Pvt Ltd', 'Director', 'ramesh@abc.com',
                'www.abc.com', '9999999999', '8888888888', '24ABCDE1234F1Z5', 'active',
-               'Plot 12, GIDC', 'Surat', 'Gujarat', 'India', '395003', 'Net 30 terms'])
+               'Plot 12, GIDC', 'Surat', 'Gujarat', 'India', '395003', 'Net 30 terms',
+               'XYZ Cosmetics', 'Skincare', 'Premium brand',
+               'Plot 12, GIDC', 'Surat', 'Gujarat', 'India', '395003'])
     dv = DataValidation(type='list', formula1='"active,inactive"', allow_blank=True)
     ws.add_data_validation(dv); dv.add('I2:I1000')
     for col in ws.columns:
@@ -1773,3 +2151,1195 @@ def clients_import_template():
     from flask import send_file
     return send_file(bio, as_attachment=True, download_name='clients_import_template.xlsx',
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SAMPLE ORDERS  (ported from legacy CRM — same schema for data merge)
+# ═════════════════════════════════════════════════════════════════════════════
+def _ensure_sample_orders(conn):
+    try:
+        conn.execute("""CREATE TABLE IF NOT EXISTS `sample_orders` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            order_number VARCHAR(50) UNIQUE NOT NULL,
+            lead_id INT NOT NULL,
+            order_date DATE,
+            category VARCHAR(50) DEFAULT 'Sample Order',
+            bill_company VARCHAR(200), bill_address TEXT, bill_phone VARCHAR(20),
+            bill_email VARCHAR(150), bill_gst VARCHAR(20),
+            gst_pct DECIMAL(5,2) DEFAULT 18, sub_total DECIMAL(12,2) DEFAULT 0,
+            gst_amount DECIMAL(12,2) DEFAULT 0, total_amount DECIMAL(12,2) DEFAULT 0,
+            items_json TEXT, terms TEXT, invoice_file VARCHAR(300),
+            created_by INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_deleted TINYINT DEFAULT 0, deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+        conn.commit()
+    except Exception:
+        pass
+
+
+def _next_so_number(conn):
+    row = conn.execute("SELECT order_number FROM `sample_orders` "
+                       "WHERE order_number LIKE 'HCPSMPL%%' ORDER BY id DESC LIMIT 1").fetchone()
+    num = 1
+    if row and row.get('order_number'):
+        try:
+            num = int(str(row['order_number']).replace('HCPSMPL', '')) + 1
+        except ValueError:
+            num = 1
+    cand = 'HCPSMPL%03d' % num
+    while conn.execute("SELECT id FROM `sample_orders` WHERE order_number=%s",
+                       (cand,)).fetchone():
+        num += 1
+        cand = 'HCPSMPL%03d' % num
+    return cand
+
+
+@crm_bp.route('/sample-orders/next-number')
+@login_required
+def sample_order_next_number():
+    conn = _db()
+    try:
+        _ensure_sample_orders(conn)
+        return jsonify(order_number=_next_so_number(conn))
+    finally:
+        conn.close()
+
+
+def _build_so_pdf(d):
+    """d = dict(order_number, order_date, category, bill_*, gst_pct, items[list],
+       sub_total, gst_amount, total_amount, terms, by_name). Returns BytesIO."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,
+                                    Paragraph, Spacer, HRFlowable, Image)
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=15*mm, rightMargin=15*mm,
+                            topMargin=12*mm, bottomMargin=15*mm)
+    W = A4[0] - 30*mm
+    styles = getSampleStyleSheet()
+
+    def S(name, **kw):
+        return ParagraphStyle(name, parent=styles['Normal'], **kw)
+
+    normal = S('N', fontSize=9, leading=13)
+    right = S('R', fontSize=9, alignment=TA_RIGHT)
+    center = S('C', fontSize=9, alignment=TA_CENTER)
+    small = S('Sm', fontSize=8, textColor=colors.HexColor('#6b7280'), leading=11)
+    story = []
+
+    company_info = (
+        '<b>HCP Wellness Pvt. Ltd.</b><br/>'
+        '403, Maruti Vertex Elanza,<br/>'
+        'Opp. Global Hospital, Sindhu Bhavan Road, Bodakdev,<br/>'
+        'Ahmedabad-380054, Gujarat, India.<br/>'
+        '<b>GST :</b> 24AAFCH7246H1ZK'
+    )
+    logo_path = os.path.join(current_app.root_path, 'static', 'images', 'hcp-logo.png')
+    if os.path.exists(logo_path):
+        hdr_left = Image(logo_path, width=40*mm, height=18*mm, kind='proportional')
+    else:
+        hdr_left = Paragraph('<b><font size="16" color="#1e3a5f">HCP Wellness</font></b>', normal)
+    hdr = Table([[hdr_left, Paragraph(company_info,
+                 S('CI', fontSize=8.5, alignment=TA_RIGHT, leading=13))]],
+                colWidths=[W*0.35, W*0.65])
+    hdr.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                             ('TOPPADDING', (0, 0), (-1, -1), 6),
+                             ('BOTTOMPADDING', (0, 0), (-1, -1), 6)]))
+    story.append(hdr)
+    story.append(HRFlowable(width='100%', thickness=1.5,
+                            color=colors.HexColor('#1e3a5f'), spaceAfter=5))
+
+    bl = []
+    if d.get('bill_company'):
+        bl.append('<b>%s</b>' % d['bill_company'])
+    if d.get('bill_address'):
+        bl.append(str(d['bill_address']).replace('\n', '<br/>'))
+    if d.get('bill_phone'):
+        bl.append(d['bill_phone'])
+    if d.get('bill_email'):
+        bl.append(d['bill_email'])
+    if d.get('bill_gst'):
+        bl.append('GST: %s' % d['bill_gst'])
+    bill_txt = '<font size="7.5" color="#6b7280"><b>BILLING ADDRESS</b></font><br/>' + '<br/>'.join(bl)
+    info_txt = ('<font size="7.5" color="#6b7280">Date</font><br/><b>%s</b><br/><br/>'
+                '<font size="7.5" color="#6b7280">Order ID</font><br/><b>%s</b><br/><br/>'
+                '<font size="7.5" color="#6b7280">Category</font><br/><b>%s</b>'
+                % (d.get('order_date', ''), d.get('order_number', ''), d.get('category', 'Sample Order')))
+    at = Table([[Paragraph(bill_txt, S('BT', fontSize=9, leading=14)),
+                 Paragraph(info_txt, S('OI', fontSize=9, leading=13, alignment=TA_RIGHT))]],
+               colWidths=[W*0.55, W*0.45])
+    at.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                            ('TOPPADDING', (0, 0), (-1, -1), 8),
+                            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                            ('LINEBELOW', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb'))]))
+    story.append(at)
+    story.append(Spacer(1, 5*mm))
+
+    th = [Paragraph('<b>Product Name</b>', normal),
+          Paragraph('<b>Rate</b>', right), Paragraph('<b>Qty</b>', center),
+          Paragraph('<b>Amount</b>', right)]
+    rows = [th]
+    for it in d.get('items', []):
+        rows.append([Paragraph(str(it.get('name', '')), normal),
+                     Paragraph('%.2f' % float(it.get('rate', 0) or 0), right),
+                     Paragraph(str(it.get('qty', 0)), center),
+                     Paragraph('%.2f' % float(it.get('amount', 0) or 0), right)])
+    itbl = Table(rows, colWidths=[W*0.45, W*0.18, W*0.15, W*0.22], repeatRows=1)
+    itbl.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f5f9')),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TOPPADDING', (0, 0), (-1, -1), 7), ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8), ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e2e8f0')),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'), ('ALIGN', (2, 0), (2, -1), 'CENTER'),
+        ('ALIGN', (3, 0), (3, -1), 'RIGHT')]))
+    story.append(itbl)
+    story.append(Spacer(1, 4*mm))
+
+    gp = float(d.get('gst_pct', 0) or 0)
+    totals = [[Paragraph('Sub Total', small), Paragraph('%.2f' % float(d.get('sub_total', 0)), right)],
+              [Paragraph('GST (%g%%)' % gp, small), Paragraph('%.2f' % float(d.get('gst_amount', 0)), right)],
+              [Paragraph('<b>Total Amount</b>', S('TB', fontSize=10, textColor=colors.HexColor('#1e3a5f'))),
+               Paragraph('<b>%.2f</b>' % float(d.get('total_amount', 0)),
+                         S('TRB', fontSize=10, alignment=TA_RIGHT, textColor=colors.HexColor('#1e3a5f')))]]
+    ttbl = Table(totals, colWidths=[W*0.6, W*0.4])
+    ttbl.setStyle(TableStyle([('TOPPADDING', (0, 0), (-1, -1), 5),
+                              ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                              ('LEFTPADDING', (0, 0), (-1, -1), 8), ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                              ('LINEBELOW', (0, 0), (-1, 1), 0.5, colors.HexColor('#e5e7eb')),
+                              ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#e8f0fe'))]))
+    story.append(ttbl)
+    story.append(Spacer(1, 5*mm))
+
+    terms = (d.get('terms') or '').replace('\n', '<br/>')
+    ts = Table([[Paragraph('<b>Terms &amp; Conditions:</b><br/>' + terms, small),
+                 Paragraph('<br/><br/><br/>________________________<br/><b>Authorised Signature</b>',
+                           S('Sig', fontSize=9, alignment=TA_CENTER))]],
+               colWidths=[W*0.6, W*0.4])
+    ts.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    story.append(ts)
+    story.append(Spacer(1, 3*mm))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#d1d5db')))
+    story.append(Paragraph('<i>Generated %s &middot; %s</i>'
+                           % (datetime.now().strftime('%d-%m-%Y %H:%M'), d.get('by_name', '')),
+                           S('F', fontSize=7.5, textColor=colors.HexColor('#9ca3af'),
+                             alignment=TA_CENTER, spaceBefore=3)))
+    doc.build(story)
+    buf.seek(0)
+    return buf
+
+
+@crm_bp.route('/leads/<int:id>/sample-order', methods=['POST'])
+@login_required
+def lead_sample_order(id):
+    import json as _json
+    conn = _db()
+    try:
+        _ensure_sample_orders(conn)
+        lead = conn.execute("SELECT * FROM `leads` WHERE id=%s", (id,)).fetchone()
+        if not lead:
+            abort(404)
+
+        so_number = (request.form.get('so_number') or '').strip() or _next_so_number(conn)
+        so_date = request.form.get('so_date') or datetime.now().strftime('%Y-%m-%d')
+        category = request.form.get('so_category', 'Sample Order')
+        gst_pct = float(request.form.get('so_gst_pct', '18') or 0)
+        bill_company = (request.form.get('bill_company') or lead.get('company_name') or '').strip()
+        bill_address = (request.form.get('bill_address') or '').strip()
+        bill_phone = (request.form.get('bill_phone') or lead.get('phone') or '').strip()
+        bill_email = (request.form.get('bill_email') or lead.get('email') or '').strip()
+        bill_gst = (request.form.get('bill_gst') or '').strip()
+        terms = request.form.get('terms', '')
+        names = request.form.getlist('item_name[]')
+        qtys = request.form.getlist('item_qty[]')
+        rates = request.form.getlist('item_rate[]')
+
+        if not bill_company or not bill_address or not bill_phone:
+            flash('Company, Address aur Mobile zaroori hai.', 'error')
+            return redirect(url_for('crm.lead_view', id=id))
+
+        items, sub_total = [], 0.0
+        for i, nm in enumerate(names):
+            if not nm.strip():
+                continue
+            try:
+                qty = float(qtys[i]) if i < len(qtys) and qtys[i] else 0
+            except ValueError:
+                qty = 0
+            try:
+                rate = float(rates[i]) if i < len(rates) and rates[i] else 0
+            except ValueError:
+                rate = 0
+            amt = qty * rate
+            sub_total += amt
+            items.append({'name': nm.strip(), 'qty': qty, 'rate': rate, 'amount': amt})
+        if not items:
+            flash('Kam se kam ek product add karo.', 'error')
+            return redirect(url_for('crm.lead_view', id=id))
+
+        gst_amount = sub_total * gst_pct / 100.0
+        total_amount = sub_total + gst_amount
+        try:
+            od = datetime.strptime(so_date, '%Y-%m-%d').strftime('%Y-%m-%d')
+        except Exception:
+            od = datetime.now().strftime('%Y-%m-%d')
+
+        try:
+            conn.execute(
+                "INSERT INTO `sample_orders` (order_number, lead_id, order_date, category, "
+                "bill_company, bill_address, bill_phone, bill_email, bill_gst, gst_pct, "
+                "sub_total, gst_amount, total_amount, items_json, terms, created_by, created_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())",
+                (so_number, id, od, category, bill_company, bill_address, bill_phone,
+                 bill_email, bill_gst, gst_pct, sub_total, gst_amount, total_amount,
+                 _json.dumps(items), terms, _uid()))
+            log_activity(conn, id, 'Sample Order generated: %s' % so_number)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            flash('Order number "%s" already exists, refresh karke retry karein.' % so_number, 'error')
+            return redirect(url_for('crm.lead_view', id=id))
+
+        pdf = _build_so_pdf({
+            'order_number': so_number,
+            'order_date': datetime.strptime(od, '%Y-%m-%d').strftime('%d-%m-%Y'),
+            'category': category, 'bill_company': bill_company, 'bill_address': bill_address,
+            'bill_phone': bill_phone, 'bill_email': bill_email, 'bill_gst': bill_gst,
+            'gst_pct': gst_pct, 'items': items, 'sub_total': sub_total,
+            'gst_amount': gst_amount, 'total_amount': total_amount, 'terms': terms,
+            'by_name': _uname()})
+        return send_file(pdf, mimetype='application/pdf', as_attachment=False,
+                         download_name='%s.pdf' % so_number)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/sample-orders')
+@login_required
+def sample_orders_list():
+    conn = _db()
+    try:
+        _ensure_sample_orders(conn)
+        trash = request.args.get('trash') == '1'
+        search = (request.args.get('search') or '').strip()
+        where = "s.is_deleted=%s" % (1 if trash else 0)
+        params = []
+        if search:
+            where += " AND (s.order_number LIKE %s OR s.bill_company LIKE %s OR l.contact_name LIKE %s)"
+            like = '%' + search + '%'
+            params = [like, like, like]
+        rows = conn.execute(
+            "SELECT s.*, l.contact_name AS lead_contact, l.code AS lead_code "
+            "FROM `sample_orders` s LEFT JOIN `leads` l ON l.id=s.lead_id "
+            "WHERE " + where + " ORDER BY s.id DESC", tuple(params)).fetchall() or []
+        cnt = conn.execute("SELECT is_deleted, COUNT(*) c FROM `sample_orders` "
+                           "GROUP BY is_deleted").fetchall() or []
+        active_n = sum(c['c'] for c in cnt if not c['is_deleted'])
+        del_n = sum(c['c'] for c in cnt if c['is_deleted'])
+        umap = _user_map(conn)
+        for r in rows:
+            r['_by'] = (umap or {}).get(r.get('created_by'), 'Administrator')
+        return render_template('crm/sample_orders/list.html', orders=rows,
+                               trash=trash, search=search, active_n=active_n, del_n=del_n,
+                               sidebar_menu=get_menu('crm', role=_role(), is_admin=_is_admin()),
+                               active_item='samples', user_name=_uname(),
+                               role=session.get('User_Type'), is_admin=_is_admin(),
+                               is_admin_mgr=_is_admin_mgr())
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/sample-orders/<int:soid>/pdf')
+@login_required
+def sample_order_pdf(soid):
+    import json as _json
+    conn = _db()
+    try:
+        s = conn.execute("SELECT * FROM `sample_orders` WHERE id=%s", (soid,)).fetchone()
+        if not s:
+            abort(404)
+        items = []
+        try:
+            items = _json.loads(s.get('items_json') or '[]')
+        except Exception:
+            items = []
+        od = s.get('order_date')
+        try:
+            od = datetime.strptime(str(od), '%Y-%m-%d').strftime('%d-%m-%Y')
+        except Exception:
+            od = str(od)
+        pdf = _build_so_pdf({
+            'order_number': s['order_number'], 'order_date': od,
+            'category': s.get('category'), 'bill_company': s.get('bill_company'),
+            'bill_address': s.get('bill_address'), 'bill_phone': s.get('bill_phone'),
+            'bill_email': s.get('bill_email'), 'bill_gst': s.get('bill_gst'),
+            'gst_pct': s.get('gst_pct'), 'items': items, 'sub_total': s.get('sub_total'),
+            'gst_amount': s.get('gst_amount'), 'total_amount': s.get('total_amount'),
+            'terms': s.get('terms'), 'by_name': _uname()})
+        return send_file(pdf, mimetype='application/pdf', as_attachment=False,
+                         download_name='%s.pdf' % s['order_number'])
+    finally:
+        conn.close()
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# QUOTATIONS  (ported from legacy CRM — same schema for data merge)
+# ═════════════════════════════════════════════════════════════════════════════
+def _ensure_quotations(conn):
+    try:
+        conn.execute("""CREATE TABLE IF NOT EXISTS `quotations` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            quot_number VARCHAR(50) UNIQUE NOT NULL,
+            lead_id INT NOT NULL,
+            quot_date DATE, valid_until DATE, subject VARCHAR(300),
+            bill_company VARCHAR(200), bill_address TEXT, bill_phone VARCHAR(20),
+            bill_email VARCHAR(150), bill_gst VARCHAR(20),
+            gst_pct DECIMAL(5,2) DEFAULT 18, sub_total DECIMAL(12,2) DEFAULT 0,
+            gst_amount DECIMAL(12,2) DEFAULT 0, total_amount DECIMAL(12,2) DEFAULT 0,
+            items_json TEXT, terms TEXT, notes TEXT,
+            status VARCHAR(20) DEFAULT 'draft',
+            email_sent_at DATETIME NULL, email_sent_to VARCHAR(150),
+            created_by INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_deleted TINYINT DEFAULT 0, deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+        conn.commit()
+    except Exception:
+        pass
+
+
+def _fy_qt():
+    n = datetime.now()
+    y = n.year
+    if n.month >= 4:
+        return '%02d-%02d' % (y % 100, (y + 1) % 100)
+    return '%02d-%02d' % ((y - 1) % 100, y % 100)
+
+
+def _next_quot_number(conn):
+    fy = _fy_qt()
+    row = conn.execute("SELECT quot_number FROM `quotations` "
+                       "WHERE quot_number LIKE %s ORDER BY id DESC LIMIT 1",
+                       ('QT-%%/' + fy,)).fetchone()
+    num = 1
+    if row and row.get('quot_number'):
+        try:
+            num = int(str(row['quot_number']).split('-')[1].split('/')[0]) + 1
+        except Exception:
+            num = 1
+    cand = 'QT-%03d/%s' % (num, fy)
+    while conn.execute("SELECT id FROM `quotations` WHERE quot_number=%s",
+                       (cand,)).fetchone():
+        num += 1
+        cand = 'QT-%03d/%s' % (num, fy)
+    return cand
+
+
+@crm_bp.route('/quotations/next-number')
+@login_required
+def quotation_next_number():
+    conn = _db()
+    try:
+        _ensure_quotations(conn)
+        return jsonify(quot_number=_next_quot_number(conn))
+    finally:
+        conn.close()
+
+
+def _build_quot_pdf(d):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,
+                                    Paragraph, Spacer, HRFlowable, Image)
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=14*mm, rightMargin=14*mm,
+                            topMargin=12*mm, bottomMargin=14*mm)
+    W = A4[0] - 28*mm
+    styles = getSampleStyleSheet()
+
+    def S(name, **kw):
+        return ParagraphStyle(name, parent=styles['Normal'], **kw)
+
+    normal = S('N', fontSize=8.5, leading=12)
+    right = S('R', fontSize=8.5, alignment=TA_RIGHT)
+    center = S('C', fontSize=8.5, alignment=TA_CENTER)
+    small = S('Sm', fontSize=8, textColor=colors.HexColor('#6b7280'), leading=11)
+    story = []
+
+    company_info = (
+        '<b>HCP Wellness Pvt. Ltd.</b><br/>403, Maruti Vertex Elanza,<br/>'
+        'Opp. Global Hospital, Sindhu Bhavan Road, Bodakdev,<br/>'
+        'Ahmedabad-380054, Gujarat, India.<br/><b>GST :</b> 24AAFCH7246H1ZK')
+    logo_path = os.path.join(current_app.root_path, 'static', 'images', 'hcp-logo.png')
+    if os.path.exists(logo_path):
+        hl = Image(logo_path, width=40*mm, height=18*mm, kind='proportional')
+    else:
+        hl = Paragraph('<b><font size="16" color="#1e3a5f">HCP Wellness</font></b>', normal)
+    hdr = Table([[hl, Paragraph(company_info, S('CI', fontSize=8, alignment=TA_RIGHT, leading=12))]],
+                colWidths=[W*0.35, W*0.65])
+    hdr.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
+    story.append(hdr)
+    story.append(HRFlowable(width='100%', thickness=1.5, color=colors.HexColor('#1e3a5f'), spaceAfter=4))
+    story.append(Paragraph('<b><font size="13" color="#1e3a5f">QUOTATION</font></b>', S('Q', spaceAfter=4)))
+
+    bl = []
+    if d.get('bill_company'):
+        bl.append('<b>%s</b>' % d['bill_company'])
+    if d.get('bill_address'):
+        bl.append(str(d['bill_address']).replace('\n', '<br/>'))
+    if d.get('bill_phone'):
+        bl.append(d['bill_phone'])
+    if d.get('bill_email'):
+        bl.append(d['bill_email'])
+    if d.get('bill_gst'):
+        bl.append('GST: %s' % d['bill_gst'])
+    bill_txt = '<font size="7.5" color="#6b7280"><b>BILL TO</b></font><br/>' + '<br/>'.join(bl)
+    info = ('<font size="7.5" color="#6b7280">Quotation No</font><br/><b>%s</b><br/><br/>'
+            '<font size="7.5" color="#6b7280">Date</font><br/><b>%s</b><br/><br/>'
+            '<font size="7.5" color="#6b7280">Valid Until</font><br/><b>%s</b>'
+            % (d.get('quot_number', ''), d.get('quot_date', ''), d.get('valid_until', '-') or '-'))
+    at = Table([[Paragraph(bill_txt, S('BT', fontSize=8.5, leading=13)),
+                 Paragraph(info, S('OI', fontSize=8.5, leading=12, alignment=TA_RIGHT))]],
+               colWidths=[W*0.55, W*0.45])
+    at.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                            ('TOPPADDING', (0, 0), (-1, -1), 7), ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+                            ('LINEBELOW', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb'))]))
+    story.append(at)
+    if d.get('subject'):
+        story.append(Paragraph('<b>Subject:</b> %s' % d['subject'], S('Sub', fontSize=9, spaceBefore=6, spaceAfter=4)))
+    story.append(Spacer(1, 3*mm))
+
+    th = [Paragraph('<b>Product</b>', normal), Paragraph('<b>Size</b>', center),
+          Paragraph('<b>UOM</b>', center), Paragraph('<b>MOQ</b>', center),
+          Paragraph('<b>Final Cost</b>', right), Paragraph('<b>Amount</b>', right)]
+    rows = [th]
+    for it in d.get('items', []):
+        rows.append([Paragraph(str(it.get('name', '')), normal),
+                     Paragraph(str(it.get('size', '') or '-'), center),
+                     Paragraph(str(it.get('uom', '') or '-'), center),
+                     Paragraph(str(it.get('moq', 0)), center),
+                     Paragraph('%.2f' % float(it.get('final_cost', 0) or 0), right),
+                     Paragraph('%.2f' % float(it.get('amount', 0) or 0), right)])
+    itbl = Table(rows, colWidths=[W*0.30, W*0.12, W*0.12, W*0.12, W*0.17, W*0.17], repeatRows=1)
+    itbl.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, -1), 8.5),
+        ('TOPPADDING', (0, 0), (-1, -1), 6), ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6), ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e2e8f0'))]))
+    story.append(itbl)
+    story.append(Spacer(1, 4*mm))
+
+    gp = float(d.get('gst_pct', 0) or 0)
+    totals = [[Paragraph('Sub Total', small), Paragraph('%.2f' % float(d.get('sub_total', 0)), right)],
+              [Paragraph('GST (%g%%)' % gp, small), Paragraph('%.2f' % float(d.get('gst_amount', 0)), right)],
+              [Paragraph('<b>Total Amount</b>', S('TB', fontSize=10, textColor=colors.HexColor('#1e3a5f'))),
+               Paragraph('<b>%.2f</b>' % float(d.get('total_amount', 0)),
+                         S('TRB', fontSize=10, alignment=TA_RIGHT, textColor=colors.HexColor('#1e3a5f')))]]
+    ttbl = Table(totals, colWidths=[W*0.62, W*0.38])
+    ttbl.setStyle(TableStyle([('TOPPADDING', (0, 0), (-1, -1), 5), ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                              ('LEFTPADDING', (0, 0), (-1, -1), 8), ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                              ('LINEBELOW', (0, 0), (-1, 1), 0.5, colors.HexColor('#e5e7eb')),
+                              ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#e8f0fe'))]))
+    story.append(ttbl)
+    story.append(Spacer(1, 5*mm))
+
+    extras = ''
+    if d.get('notes'):
+        extras += '<b>Notes:</b><br/>%s<br/><br/>' % str(d['notes']).replace('\n', '<br/>')
+    extras += '<b>Terms &amp; Conditions:</b><br/>%s' % (d.get('terms') or '').replace('\n', '<br/>')
+    ts = Table([[Paragraph(extras, small),
+                 Paragraph('<br/><br/><br/>________________________<br/><b>Authorised Signature</b>',
+                           S('Sig', fontSize=9, alignment=TA_CENTER))]],
+               colWidths=[W*0.6, W*0.4])
+    ts.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    story.append(ts)
+    story.append(Spacer(1, 3*mm))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#d1d5db')))
+    story.append(Paragraph('<i>Generated %s &middot; %s</i>'
+                           % (datetime.now().strftime('%d-%m-%Y %H:%M'), d.get('by_name', '')),
+                           S('F', fontSize=7.5, textColor=colors.HexColor('#9ca3af'),
+                             alignment=TA_CENTER, spaceBefore=3)))
+    doc.build(story)
+    buf.seek(0)
+    return buf
+
+
+@crm_bp.route('/leads/<int:id>/create-npd')
+@login_required
+def lead_create_npd(id):
+    """
+    Create NPD gate (lead se):
+      - Lead ka client connected hai (leads.client_id)  -> seedha NPD form
+      - Connected nahi hai                               -> client page
+    """
+    conn = _db()
+    try:
+        lead = conn.execute(
+            "SELECT id, client_id FROM `leads` WHERE id=%s", (id,)).fetchone()
+    finally:
+        conn.close()
+
+    if not lead:
+        flash('Lead nahi mili.', 'error')
+        return redirect(url_for('crm.leads'))
+
+    if lead.get('client_id'):
+        # CLIENT CONNECTED -> seedha NPD form
+        # NPD route ka naam alag ho to neeche `except` wala path apne hisaab se badlo.
+        try:
+            target = url_for('npd.create',
+                             lead_id=id, client_id=lead['client_id'])
+        except Exception:
+            target = "/npd/new?lead_id=%s&client_id=%s" % (id, lead['client_id'])
+        return redirect(target)
+
+    # CLIENT NAHI CONNECTED -> client page (pehle connect/add karo)
+    flash('Is lead se koi Client connected nahi hai. '
+          'Pehle client connect/add karein, phir NPD banayein.', 'info')
+    return redirect(url_for('crm.clients', connect_lead=id, next='create-npd'))
+
+
+@crm_bp.route('/leads/<int:id>/quotation', methods=['POST'])
+@login_required
+def lead_create_quotation(id):
+    import json as _json
+    conn = _db()
+    try:
+        _ensure_quotations(conn)
+        lead = conn.execute("SELECT * FROM `leads` WHERE id=%s", (id,)).fetchone()
+        if not lead:
+            abort(404)
+
+        quot_number = (request.form.get('quot_number') or '').strip() or _next_quot_number(conn)
+        quot_date = request.form.get('quot_date') or datetime.now().strftime('%Y-%m-%d')
+        valid_until = request.form.get('valid_until') or ''
+        subject = request.form.get('quot_subject', '')
+        bill_company = (request.form.get('bill_company') or lead.get('company_name') or '').strip()
+        bill_address = (request.form.get('bill_address') or '').strip()
+        bill_phone = (request.form.get('bill_phone') or lead.get('phone') or '').strip()
+        bill_email = (request.form.get('bill_email') or lead.get('email') or '').strip()
+        bill_gst = (request.form.get('bill_gst') or '').strip()
+        terms = request.form.get('terms', '')
+        notes = request.form.get('notes', '')
+        gst_pct = float(request.form.get('quot_gst_pct', '18') or 0)
+
+        names = request.form.getlist('item_name[]')
+        sizes = request.form.getlist('item_size[]')
+        uoms = request.form.getlist('item_uom[]')
+        codes = request.form.getlist('item_code[]')
+        moqs = request.form.getlist('item_moq[]')
+        finals = request.form.getlist('item_final_cost[]')
+        costs = request.form.getlist('item_cost[]')
+        pm_specs = request.form.getlist('item_pm_spec[]')
+        pm_costs = request.form.getlist('item_pm_cost[]')
+        cats = request.form.getlist('item_category[]')
+
+        def _f(lst, i):
+            try:
+                return float(lst[i]) if i < len(lst) and lst[i] else 0.0
+            except ValueError:
+                return 0.0
+
+        def _s(lst, i):
+            return lst[i] if i < len(lst) else ''
+
+        if not bill_company:
+            flash('Company Name zaroori hai.', 'error')
+            return redirect(url_for('crm.lead_view', id=id))
+
+        items, sub_total = [], 0.0
+        for i, nm in enumerate(names):
+            if not nm.strip():
+                continue
+            moq = _f(moqs, i)
+            fc = _f(finals, i)
+            amt = moq * fc
+            sub_total += amt
+            items.append({'name': nm.strip(), 'size': _s(sizes, i), 'uom': _s(uoms, i),
+                          'code': _s(codes, i), 'moq': moq, 'final_cost': fc, 'amount': amt,
+                          'cost': _f(costs, i), 'pm_spec': _s(pm_specs, i),
+                          'pm_cost': _f(pm_costs, i), 'category': _s(cats, i)})
+        if not items:
+            flash('Kam se kam ek product add karo.', 'error')
+            return redirect(url_for('crm.lead_view', id=id))
+
+        gst_amount = sub_total * gst_pct / 100.0
+        total_amount = sub_total + gst_amount
+        try:
+            qd = datetime.strptime(quot_date, '%Y-%m-%d').strftime('%Y-%m-%d')
+        except Exception:
+            qd = datetime.now().strftime('%Y-%m-%d')
+        vu = None
+        if valid_until:
+            try:
+                vu = datetime.strptime(valid_until, '%Y-%m-%d').strftime('%Y-%m-%d')
+            except Exception:
+                vu = None
+
+        try:
+            conn.execute(
+                "INSERT INTO `quotations` (quot_number, lead_id, quot_date, valid_until, subject, "
+                "bill_company, bill_address, bill_phone, bill_email, bill_gst, gst_pct, sub_total, "
+                "gst_amount, total_amount, items_json, terms, notes, status, created_by, created_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'draft',%s,NOW())",
+                (quot_number, id, qd, vu, subject, bill_company, bill_address, bill_phone,
+                 bill_email, bill_gst, gst_pct, sub_total, gst_amount, total_amount,
+                 _json.dumps(items), terms, notes, _uid()))
+            log_activity(conn, id, 'Quotation generated: %s' % quot_number)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            flash('Quotation number "%s" already exists, retry karein.' % quot_number, 'error')
+            return redirect(url_for('crm.lead_view', id=id))
+
+        pdf = _build_quot_pdf({
+            'quot_number': quot_number,
+            'quot_date': datetime.strptime(qd, '%Y-%m-%d').strftime('%d-%m-%Y'),
+            'valid_until': datetime.strptime(vu, '%Y-%m-%d').strftime('%d-%m-%Y') if vu else '-',
+            'subject': subject, 'bill_company': bill_company, 'bill_address': bill_address,
+            'bill_phone': bill_phone, 'bill_email': bill_email, 'bill_gst': bill_gst,
+            'gst_pct': gst_pct, 'items': items, 'sub_total': sub_total, 'gst_amount': gst_amount,
+            'total_amount': total_amount, 'terms': terms, 'notes': notes, 'by_name': _uname()})
+        return send_file(pdf, mimetype='application/pdf', as_attachment=False,
+                         download_name='%s.pdf' % quot_number.replace('/', '_'))
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations')
+@login_required
+def quotations_list():
+    conn = _db()
+    try:
+        _ensure_quotations(conn)
+        trash = request.args.get('trash') == '1'
+        search = (request.args.get('search') or '').strip()
+        status_f = (request.args.get('status') or '').strip().lower()
+        where = "q.is_deleted=%s" % (1 if trash else 0)
+        params = []
+        if search:
+            where += " AND (q.quot_number LIKE %s OR q.bill_company LIKE %s OR q.subject LIKE %s OR l.contact_name LIKE %s)"
+            like = '%' + search + '%'
+            params = [like, like, like, like]
+        if status_f in ('draft', 'sent', 'accepted', 'rejected'):
+            where += " AND q.status=%s"
+            params.append(status_f)
+        rows = conn.execute(
+            "SELECT q.*, l.contact_name AS lead_contact, l.code AS lead_code "
+            "FROM `quotations` q LEFT JOIN `leads` l ON l.id=q.lead_id "
+            "WHERE " + where + " ORDER BY q.id DESC", tuple(params)).fetchall() or []
+        cnt = conn.execute("SELECT is_deleted, COUNT(*) c FROM `quotations` "
+                           "GROUP BY is_deleted").fetchall() or []
+        active_n = sum(c['c'] for c in cnt if not c['is_deleted'])
+        del_n = sum(c['c'] for c in cnt if c['is_deleted'])
+        umap = _user_map(conn)
+        for r in rows:
+            r['_by'] = (umap or {}).get(r.get('created_by'), 'Administrator')
+        return render_template('crm/quotations/list.html', quotations=rows,
+                               trash=trash, search=search, status_f=status_f,
+                               active_n=active_n, del_n=del_n,
+                               sidebar_menu=get_menu('crm', role=_role(), is_admin=_is_admin()),
+                               active_item='quotations', user_name=_uname(),
+                               role=session.get('User_Type'), is_admin=_is_admin(),
+                               is_admin_mgr=_is_admin_mgr())
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations/<int:qid>/pdf')
+@login_required
+def quotation_pdf(qid):
+    import json as _json
+    conn = _db()
+    try:
+        q = conn.execute("SELECT * FROM `quotations` WHERE id=%s", (qid,)).fetchone()
+        if not q:
+            abort(404)
+        try:
+            items = _json.loads(q.get('items_json') or '[]')
+        except Exception:
+            items = []
+
+        def _fmt(v):
+            try:
+                return datetime.strptime(str(v), '%Y-%m-%d').strftime('%d-%m-%Y')
+            except Exception:
+                return str(v) if v else '-'
+        pdf = _build_quot_pdf({
+            'quot_number': q['quot_number'], 'quot_date': _fmt(q.get('quot_date')),
+            'valid_until': _fmt(q.get('valid_until')), 'subject': q.get('subject'),
+            'bill_company': q.get('bill_company'), 'bill_address': q.get('bill_address'),
+            'bill_phone': q.get('bill_phone'), 'bill_email': q.get('bill_email'),
+            'bill_gst': q.get('bill_gst'), 'gst_pct': q.get('gst_pct'), 'items': items,
+            'sub_total': q.get('sub_total'), 'gst_amount': q.get('gst_amount'),
+            'total_amount': q.get('total_amount'), 'terms': q.get('terms'),
+            'notes': q.get('notes'), 'by_name': _uname()})
+        return send_file(pdf, mimetype='application/pdf', as_attachment=False,
+                         download_name='%s.pdf' % str(q['quot_number']).replace('/', '_'))
+    finally:
+        conn.close()
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SAMPLE ORDER / QUOTATION — list actions (delete, email, invoice, status)
+# ═════════════════════════════════════════════════════════════════════════════
+def _mail_get(key, default=''):
+    try:
+        v = current_app.config.get(key)
+        if v not in (None, ''):
+            return v
+    except Exception:
+        pass
+    v = os.environ.get(key)
+    if v not in (None, ''):
+        return v
+    for m in ('config', 'app_config', 'settings', 'configuration'):
+        try:
+            mod = __import__(m)
+            v = getattr(mod, key, None)
+            if v not in (None, ''):
+                return v
+        except Exception:
+            continue
+    return default
+
+
+def _smtp_send(to_addr, subject, body_html, attach_bytes=None, attach_name=None):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.application import MIMEApplication
+    from email.utils import formataddr
+    server = _mail_get('MAIL_SERVER', 'smtp.gmail.com')
+    port = int(_mail_get('MAIL_PORT', 587) or 587)
+    use_tls = _mail_get('MAIL_USE_TLS', True)
+    username = _mail_get('MAIL_USERNAME', 'no-reply@hcpwellness.in')
+    password = _mail_get('MAIL_PASSWORD', '')
+    from_name = _mail_get('MAIL_FROM_NAME', 'HCP Wellness Pvt. Ltd.')
+    if not to_addr:
+        return False, 'Koi email address nahi hai'
+    if not password:
+        return False, 'SMTP password config.py me set karein'
+    try:
+        msg = MIMEMultipart('mixed')
+        msg['Subject'] = subject
+        msg['From'] = formataddr((from_name, username))
+        msg['To'] = to_addr
+        alt = MIMEMultipart('alternative')
+        import re as _re
+        plain = _re.sub(r'<[^>]+>', '', body_html)
+        alt.attach(MIMEText(plain, 'plain', 'utf-8'))
+        alt.attach(MIMEText(body_html, 'html', 'utf-8'))
+        msg.attach(alt)
+        if attach_bytes:
+            ap = MIMEApplication(attach_bytes, _subtype='pdf')
+            ap.add_header('Content-Disposition', 'attachment',
+                          filename=attach_name or 'document.pdf')
+            msg.attach(ap)
+        s = smtplib.SMTP(server, port, timeout=25)
+        if use_tls:
+            s.starttls()
+        s.login(username, password)
+        s.sendmail(username, [to_addr], msg.as_string())
+        s.quit()
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+
+@crm_bp.route('/sample-orders/<int:soid>/delete', methods=['POST'])
+@login_required
+def sample_order_delete(soid):
+    conn = _db()
+    try:
+        conn.execute("UPDATE `sample_orders` SET is_deleted=1, deleted_at=NOW() "
+                     "WHERE id=%s", (soid,))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/sample-orders/<int:soid>/restore', methods=['POST'])
+@login_required
+def sample_order_restore(soid):
+    conn = _db()
+    try:
+        conn.execute("UPDATE `sample_orders` SET is_deleted=0, deleted_at=NULL "
+                     "WHERE id=%s", (soid,))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/sample-orders/<int:soid>/purge', methods=['POST'])
+@login_required
+def sample_order_purge(soid):
+    if not _is_admin_mgr():
+        return jsonify(ok=False, error='Permission nahi hai'), 403
+    conn = _db()
+    try:
+        s = conn.execute("SELECT invoice_file FROM `sample_orders` WHERE id=%s",
+                         (soid,)).fetchone()
+        if s and s.get('invoice_file'):
+            try:
+                p = os.path.join(current_app.root_path, 'static', 'uploads', s['invoice_file'])
+                if os.path.exists(p):
+                    os.remove(p)
+            except Exception:
+                pass
+        conn.execute("DELETE FROM `sample_orders` WHERE id=%s", (soid,))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/sample-orders/<int:soid>/email', methods=['POST'])
+@login_required
+def sample_order_email(soid):
+    import json as _json
+    conn = _db()
+    try:
+        s = conn.execute("SELECT * FROM `sample_orders` WHERE id=%s", (soid,)).fetchone()
+        if not s:
+            return jsonify(ok=False, error='Not found'), 404
+        to_addr = (request.form.get('to') or s.get('bill_email') or '').strip()
+        subj = (request.form.get('subject') or '').strip() or ('Sample Order %s — HCP Wellness' % s['order_number'])
+        body = request.form.get('body')
+        try:
+            items = _json.loads(s.get('items_json') or '[]')
+        except Exception:
+            items = []
+        od = s.get('order_date')
+        try:
+            od = datetime.strptime(str(od), '%Y-%m-%d').strftime('%d-%m-%Y')
+        except Exception:
+            od = str(od)
+        pdf = _build_so_pdf({
+            'order_number': s['order_number'], 'order_date': od, 'category': s.get('category'),
+            'bill_company': s.get('bill_company'), 'bill_address': s.get('bill_address'),
+            'bill_phone': s.get('bill_phone'), 'bill_email': s.get('bill_email'),
+            'bill_gst': s.get('bill_gst'), 'gst_pct': s.get('gst_pct'), 'items': items,
+            'sub_total': s.get('sub_total'), 'gst_amount': s.get('gst_amount'),
+            'total_amount': s.get('total_amount'), 'terms': s.get('terms'), 'by_name': _uname()})
+        if not body:
+            body = ('Dear %s,<br><br>Please find attached the Sample Order <b>%s</b>.<br><br>'
+                    'Regards,<br>HCP Wellness Pvt. Ltd.'
+                    % (s.get('bill_company') or 'Sir/Madam', s['order_number']))
+        ok, err = _smtp_send(to_addr, subj, body, pdf.getvalue(), '%s.pdf' % s['order_number'])
+        if ok:
+            log_activity(conn, s['lead_id'], 'Sample Order %s emailed to %s' % (s['order_number'], to_addr))
+            conn.commit()
+            return jsonify(ok=True, to=to_addr)
+        return jsonify(ok=False, error=err), 500
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/sample-orders/<int:soid>/invoice-upload', methods=['POST'])
+@login_required
+def sample_order_invoice_upload(soid):
+    conn = _db()
+    try:
+        f = request.files.get('invoice')
+        if not f or not f.filename:
+            return jsonify(ok=False, error='File chunno'), 400
+        d = os.path.join(current_app.root_path, 'static', 'uploads', 'invoices')
+        os.makedirs(d, exist_ok=True)
+        fname = secure_filename('%s_%s' % (soid, f.filename))
+        f.save(os.path.join(d, fname))
+        conn.execute("UPDATE `sample_orders` SET invoice_file=%s WHERE id=%s",
+                     ('invoices/%s' % fname, soid))
+        conn.commit()
+        return jsonify(ok=True, file=fname)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/sample-orders/<int:soid>/invoice-download')
+@login_required
+def sample_order_invoice_download(soid):
+    conn = _db()
+    try:
+        s = conn.execute("SELECT invoice_file FROM `sample_orders` WHERE id=%s",
+                         (soid,)).fetchone()
+        if not s or not s.get('invoice_file'):
+            abort(404)
+        path = os.path.join(current_app.root_path, 'static', 'uploads', s['invoice_file'])
+        if not os.path.exists(path):
+            abort(404)
+        return send_file(path, as_attachment=True)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations/<int:qid>/delete', methods=['POST'])
+@login_required
+def quotation_delete(qid):
+    conn = _db()
+    try:
+        conn.execute("UPDATE `quotations` SET is_deleted=1, deleted_at=NOW() WHERE id=%s", (qid,))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations/<int:qid>/restore', methods=['POST'])
+@login_required
+def quotation_restore(qid):
+    conn = _db()
+    try:
+        conn.execute("UPDATE `quotations` SET is_deleted=0, deleted_at=NULL WHERE id=%s", (qid,))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations/<int:qid>/purge', methods=['POST'])
+@login_required
+def quotation_purge(qid):
+    if not _is_admin_mgr():
+        return jsonify(ok=False, error='Permission nahi hai'), 403
+    conn = _db()
+    try:
+        conn.execute("DELETE FROM `quotations` WHERE id=%s", (qid,))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations/<int:qid>/status', methods=['POST'])
+@login_required
+def quotation_status(qid):
+    st = (request.form.get('status') or '').strip().lower()
+    if st not in ('draft', 'sent', 'accepted', 'rejected'):
+        return jsonify(ok=False, error='Invalid status'), 400
+    conn = _db()
+    try:
+        conn.execute("UPDATE `quotations` SET status=%s WHERE id=%s", (st, qid))
+        conn.commit()
+        return jsonify(ok=True, status=st)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations/<int:qid>/email', methods=['POST'])
+@login_required
+def quotation_email(qid):
+    import json as _json
+    conn = _db()
+    try:
+        q = conn.execute("SELECT * FROM `quotations` WHERE id=%s", (qid,)).fetchone()
+        if not q:
+            return jsonify(ok=False, error='Not found'), 404
+        to_addr = (request.form.get('to') or q.get('bill_email') or '').strip()
+        subj = (request.form.get('subject') or '').strip() or ('Quotation %s — HCP Wellness' % q['quot_number'])
+        cbody = request.form.get('body')
+        try:
+            items = _json.loads(q.get('items_json') or '[]')
+        except Exception:
+            items = []
+
+        def _fmt(v):
+            try:
+                return datetime.strptime(str(v), '%Y-%m-%d').strftime('%d-%m-%Y')
+            except Exception:
+                return str(v) if v else '-'
+        pdf = _build_quot_pdf({
+            'quot_number': q['quot_number'], 'quot_date': _fmt(q.get('quot_date')),
+            'valid_until': _fmt(q.get('valid_until')), 'subject': q.get('subject'),
+            'bill_company': q.get('bill_company'), 'bill_address': q.get('bill_address'),
+            'bill_phone': q.get('bill_phone'), 'bill_email': q.get('bill_email'),
+            'bill_gst': q.get('bill_gst'), 'gst_pct': q.get('gst_pct'), 'items': items,
+            'sub_total': q.get('sub_total'), 'gst_amount': q.get('gst_amount'),
+            'total_amount': q.get('total_amount'), 'terms': q.get('terms'),
+            'notes': q.get('notes'), 'by_name': _uname()})
+        if not cbody:
+            cbody = ('Dear %s,<br><br>Please find attached our Quotation <b>%s</b>.<br><br>'
+                     'Regards,<br>HCP Wellness Pvt. Ltd.'
+                     % (q.get('bill_company') or 'Sir/Madam', q['quot_number']))
+        ok, err = _smtp_send(to_addr, subj, cbody, pdf.getvalue(),
+                             '%s.pdf' % str(q['quot_number']).replace('/', '_'))
+        if ok:
+            conn.execute("UPDATE `quotations` SET status='sent', email_sent_at=NOW(), "
+                         "email_sent_to=%s WHERE id=%s", (to_addr, qid))
+            log_activity(conn, q['lead_id'], 'Quotation %s emailed to %s' % (q['quot_number'], to_addr))
+            conn.commit()
+            return jsonify(ok=True, to=to_addr)
+        return jsonify(ok=False, error=err), 500
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/quotations/products')
+@login_required
+def quotation_products_list():
+    import json as _json
+    conn = _db()
+    try:
+        _ensure_quotations(conn)
+        search = (request.args.get('search') or '').strip()
+        qrows = conn.execute(
+            "SELECT q.*, l.contact_name AS lead_contact FROM `quotations` q "
+            "LEFT JOIN `leads` l ON l.id=q.lead_id WHERE q.is_deleted=0 "
+            "ORDER BY q.created_at DESC").fetchall() or []
+        rows = []
+        sr = 0
+        for q in qrows:
+            try:
+                items = _json.loads(q.get('items_json') or '[]')
+            except Exception:
+                items = []
+            qd = q.get('quot_date')
+            try:
+                qd = datetime.strptime(str(qd), '%Y-%m-%d').strftime('%d-%m-%Y')
+            except Exception:
+                qd = str(qd)
+            company = q.get('bill_company') or q.get('lead_contact') or '—'
+            for it in items:
+                if search:
+                    blob = ('%s %s %s' % (it.get('name', ''), it.get('category', ''), company)).lower()
+                    if search.lower() not in blob:
+                        continue
+                sr += 1
+                rows.append({'sr': sr, 'quot_number': q['quot_number'], 'quot_id': q['id'],
+                             'quot_date': qd, 'company': company, 'lead_id': q['lead_id'],
+                             'name': it.get('name', '—'), 'size': it.get('size', '') or '—',
+                             'uom': it.get('uom', ''), 'cost': it.get('cost', 0),
+                             'moq': it.get('moq', '—'), 'pm_spec': it.get('pm_spec', '') or '—',
+                             'pm_cost': it.get('pm_cost', 0), 'category': it.get('category', '') or '—',
+                             'final_cost': it.get('final_cost', 0), 'status': q.get('status')})
+        return render_template('crm/quotations/products.html', rows=rows, search=search,
+                               sidebar_menu=get_menu('crm', role=_role(), is_admin=_is_admin()),
+                               active_item='quot-prod', user_name=_uname(),
+                               role=session.get('User_Type'), is_admin=_is_admin(),
+                               is_admin_mgr=_is_admin_mgr())
+    finally:
+        conn.close()
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# LEAD MASTERS  (Status / Source / Category / Product Range)
+# Operates on the SAME tables the Lead form uses -> fully unified.
+# ═════════════════════════════════════════════════════════════════════════════
+_LM_LABELS = {'status': 'Lead Status', 'source': 'Lead Source',
+              'category': 'Lead Category', 'product_range': 'Product Range'}
+_LM_MAP = {'status': 'lead_statuses', 'source': 'lead_sources',
+           'category': 'lead_categories', 'product_range': 'product_ranges',
+           'range': 'product_ranges'}
+
+
+@crm_bp.route('/lead-masters')
+@login_required
+def lead_masters():
+    conn = _db()
+    try:
+        data = {}
+        for t in ('status', 'source', 'category', 'product_range'):
+            tbl = _LM_MAP[t]
+            if tbl == 'lead_statuses':
+                rows = conn.execute(
+                    "SELECT id, COALESCE(NULLIF(label,''), name) AS name FROM `lead_statuses` "
+                    "WHERE is_active=1 ORDER BY sort_order, id").fetchall() or []
+            else:
+                rows = conn.execute(
+                    "SELECT id, name FROM `%s` WHERE is_active=1 ORDER BY sort_order, id" % tbl
+                ).fetchall() or []
+            data[t] = rows
+        return render_template('crm/lead_masters.html', data=data, labels=_LM_LABELS,
+                               types=['status', 'source', 'category', 'product_range'],
+                               sidebar_menu=get_menu('crm', role=_role(), is_admin=_is_admin()),
+                               active_item='lead-mstr', user_name=_uname(),
+                               role=session.get('User_Type'), is_admin=_is_admin(),
+                               is_admin_mgr=_is_admin_mgr())
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/lead-masters/add', methods=['POST'])
+@login_required
+def lead_master_add():
+    t = (request.form.get('type') or '').strip()
+    name = (request.form.get('name') or '').strip()
+    tbl = _LM_MAP.get(t)
+    if not tbl or not name:
+        return jsonify(ok=False, error='Type/Name galat hai'), 400
+    conn = _db()
+    try:
+        if tbl == 'lead_statuses':
+            key = name.lower().replace(' ', '_')
+            dup = conn.execute("SELECT id FROM `lead_statuses` WHERE name=%s OR label=%s",
+                               (key, name)).fetchone()
+            if dup:
+                return jsonify(ok=False, error='Already exists'), 409
+            conn.execute("INSERT INTO `lead_statuses` (name,label,color,sort_order,is_active) "
+                         "VALUES (%s,%s,'#64748b',99,1)", (key, name))
+        else:
+            dup = conn.execute("SELECT id FROM `%s` WHERE name=%%s" % tbl, (name,)).fetchone()
+            if dup:
+                conn.execute("UPDATE `%s` SET is_active=1 WHERE id=%%s" % tbl, (dup['id'],))
+                conn.commit()
+                return jsonify(ok=True, id=dup['id'], name=name)
+            conn.execute("INSERT INTO `%s` (name,sort_order,is_active) VALUES (%%s,99,1)" % tbl,
+                         (name,))
+        conn.commit()
+        nid = conn.execute("SELECT LAST_INSERT_ID() id").fetchone()['id']
+        return jsonify(ok=True, id=nid, name=name)
+    except Exception as e:
+        return jsonify(ok=False, error=str(e)), 500
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/lead-masters/edit', methods=['POST'])
+@login_required
+def lead_master_edit():
+    t = (request.form.get('type') or '').strip()
+    mid = request.form.get('id')
+    name = (request.form.get('name') or '').strip()
+    tbl = _LM_MAP.get(t)
+    if not tbl or not mid or not name:
+        return jsonify(ok=False, error='Galat data'), 400
+    conn = _db()
+    try:
+        if tbl == 'lead_statuses':
+            conn.execute("UPDATE `lead_statuses` SET label=%s WHERE id=%s", (name, mid))
+        else:
+            conn.execute("UPDATE `%s` SET name=%%s WHERE id=%%s" % tbl, (name, mid))
+        conn.commit()
+        return jsonify(ok=True, name=name)
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/lead-masters/delete', methods=['POST'])
+@login_required
+def lead_master_delete():
+    t = (request.form.get('type') or '').strip()
+    mid = request.form.get('id')
+    tbl = _LM_MAP.get(t)
+    if not tbl or not mid:
+        return jsonify(ok=False, error='Galat data'), 400
+    conn = _db()
+    try:
+        conn.execute("DELETE FROM `%s` WHERE id=%%s" % tbl, (mid,))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
