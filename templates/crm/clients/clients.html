@@ -46,8 +46,64 @@
   .ico-btn:hover{color:var(--teal);border-color:var(--teal)}
   .ico-btn.danger:hover{color:var(--red-text);border-color:var(--red-text)}
   .empty{padding:56px 20px;text-align:center;color:var(--muted2)}
+  /* ── Actions dropdown (old system jaise options) ── */
+  .act-dd{position:relative;display:inline-block}
+  .act-btn{width:32px;height:28px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);
+       cursor:pointer;font-weight:800;color:var(--muted2);font-family:inherit}
+  .act-menu{display:none;position:fixed;z-index:200;background:var(--surface);border:1px solid var(--border);
+       border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.16);min-width:215px;padding:6px}
+  .act-menu.open{display:block}
+  .act-menu a,.act-menu button{display:flex;align-items:flex-start;gap:10px;width:100%;padding:8px 10px;border:none;
+       background:none;font-size:.8rem;font-weight:700;border-radius:9px;cursor:pointer;font-family:inherit;
+       text-align:left;color:var(--text);text-decoration:none;box-sizing:border-box}
+  .act-menu a:hover,.act-menu button:hover{background:color-mix(in srgb,#0d9488 8%,transparent)}
+  .act-menu .mi-sub{display:block;font-size:.66rem;font-weight:600;color:var(--muted2);margin-top:1px}
+  .act-menu .sep{height:1px;background:var(--border);margin:5px 8px}
+  .act-menu .danger{color:#dc2626}
+  .cv-ov{display:none;position:fixed;inset:0;z-index:400;background:rgba(15,23,42,.45);
+       align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+  .cv-ov.open{display:flex}
+  .cv-card{width:430px;max-width:calc(100vw - 36px);background:var(--surface);border:1px solid var(--border);
+       border-radius:16px;box-shadow:0 22px 60px rgba(0,0,0,.28);padding:22px}
+  .cv-card h3{margin:0 0 2px;font-size:1.05rem;font-weight:800}
+  .cv-card .cvc{font-size:.74rem;font-weight:800;color:#0d9488;margin-bottom:14px}
+  .cv-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid color-mix(in srgb,var(--border) 60%,transparent);font-size:.83rem}
+  .cv-row b{width:110px;flex-shrink:0;color:var(--muted2);font-weight:700;font-size:.74rem;text-transform:uppercase}
+  .cv-row span{word-break:break-word}
+  .cv-close{margin-top:16px;width:100%;height:38px;border-radius:10px;border:1px solid var(--border2);
+       background:var(--surface);font-weight:700;font-family:inherit;cursor:pointer;color:var(--text)}
+  /* ── Inline edit ── */
+  .ie-cell{cursor:pointer;position:relative}
+  .ie-cell:hover{background:color-mix(in srgb,#0d9488 6%,transparent)}
+  .ie-view{display:flex;align-items:center;gap:5px;min-height:22px}
+  .ie-pencil{opacity:0;font-size:11px;color:var(--muted2);flex-shrink:0;transition:opacity .15s}
+  .ie-cell:hover .ie-pencil{opacity:1}
+  .ie-input-wrap{display:none;align-items:center;gap:4px}
+  .ie-input,.ie-select{height:30px;padding:0 8px;border-radius:8px;border:1.5px solid #0d9488;
+       background:var(--surface);color:var(--text);font-size:.78rem;font-family:inherit;min-width:120px}
+  .ie-ok,.ie-esc{width:26px;height:26px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);
+       cursor:pointer;font-weight:800;font-size:.72rem;font-family:inherit}
+  .ie-ok{color:#16a34a}.ie-esc{color:#dc2626}
+  .ie-cell.ie-saving .ie-view{opacity:.4}
+  @keyframes ie-flash{0%{background:color-mix(in srgb,#16a34a 25%,transparent)}100%{background:transparent}}
+  .ie-cell.ie-saved{animation:ie-flash .6s ease}
+  #ieToast{position:fixed;bottom:74px;right:22px;z-index:300;padding:10px 18px;border-radius:11px;
+       font-size:.82rem;font-weight:700;color:#fff;display:none;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+  /* ── Bulk bar ── */
+  #bulkBar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:350;
+       background:var(--surface);border:1px solid var(--border);border-radius:99px;
+       box-shadow:0 12px 36px rgba(0,0,0,.22);padding:9px 10px 9px 18px;align-items:center;gap:12px;
+       max-width:calc(100vw - 24px);flex-wrap:wrap}
+  #bulkBar.open{display:flex}
+  #bulkBar .bcnt{font-size:.84rem;font-weight:800;white-space:nowrap}
+  #bulkBar button{height:36px;padding:0 15px;border-radius:99px;border:1px solid var(--border2);
+       background:var(--surface);font-size:.8rem;font-weight:700;font-family:inherit;color:var(--text);
+       cursor:pointer;white-space:nowrap}
+  #bulkBar .bdel{background:#dc2626;border-color:#dc2626;color:#fff}
+  #bulkBar .bres{background:#16a34a;border-color:#16a34a;color:#fff}
 </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/crm-mobile-cards.css') }}">
+<script src="{{ url_for('static', filename='js/hcp-modal.js') }}"></script>
 </head>
 <body>
 {% set page_title = "CRM · Client Master" %}
@@ -78,32 +134,57 @@
       <div class="tbl-wrap">
         <table id="clientsTable">
           <thead><tr>
-            <th style="width:46px">#</th><th>Client Code</th><th>Created Date</th><th>Contact Name</th><th>Company</th><th>Mobile</th><th>Email</th><th>City</th><th>Brands</th><th>Status</th><th style="text-align:right;width:110px">Actions</th>
+            <th style="width:34px"><input type="checkbox" style="width:16px;height:16px;accent-color:#0d9488" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked);bulkBar()"></th><th style="width:40px">#</th><th>Client Code</th><th>Created Date</th><th>Contact Name</th><th>Company</th><th>Mobile</th><th>Email</th><th>City</th><th>Brands</th><th>Status</th><th style="text-align:right;width:110px">Actions</th>
           </tr></thead>
           <tbody>
             {% for c in clients %}
-            <tr data-search="{{ [c.code, c.contact_name or '', c.company_name or '', c.mobile or '', c.email or '', c.city or '']|join(' ')|lower }}">
+            <tr data-id="{{ c.id }}" data-search="{{ [c.code, c.contact_name or '', c.company_name or '', c.mobile or '', c.email or '', c.city or '']|join(' ')|lower }}">
+              <td><input type="checkbox" class="rowchk" value="{{ c.id }}" style="width:16px;height:16px;accent-color:#0d9488"></td>
               <td style="color:var(--muted2);font-size:.78rem;font-weight:700">{{ loop.index }}</td>
               <td><span class="ccode">{{ c.code or '—' }}</span></td>
               <td style="white-space:nowrap;font-size:.82rem">{{ c.created_at | fmtdt('%d-%m-%Y') or '' }}</td>
-              <td><a href="{{ url_for('crm.client_edit', id=c.id) }}" class="cname">{{ c.contact_name }}</a></td>
-              <td style="font-size:.82rem">{{ c.company_name or '—' }}</td>
-              <td style="font-size:.82rem">{{ c.mobile or '—' }}</td>
-              <td style="font-size:.82rem">{{ c.email or '—' }}</td>
-              <td style="font-size:.82rem">{{ c.city or '—' }}</td>
+              {% set ed = not show_trash %}
+              <td {% if ed %}class="ie-cell" data-field="contact_name" data-val="{{ c.contact_name or '' }}" data-type="text" onclick="ieActivate(this)"{% endif %}>
+                {% if ed %}<div class="ie-view"><a href="{{ url_for('crm.client_edit', id=c.id) }}" class="cname" onclick="event.stopPropagation()">{{ c.contact_name }}</a><span class="ie-pencil">✎</span></div>{% else %}<a href="{{ url_for('crm.client_edit', id=c.id) }}" class="cname">{{ c.contact_name }}</a>{% endif %}</td>
+              <td style="font-size:.82rem" {% if ed %}class="ie-cell" data-field="company_name" data-val="{{ c.company_name or '' }}" data-type="text" onclick="ieActivate(this)"{% endif %}>
+                {% if ed %}<div class="ie-view"><span>{{ c.company_name or '—' }}</span><span class="ie-pencil">✎</span></div>{% else %}{{ c.company_name or '—' }}{% endif %}</td>
+              <td style="font-size:.82rem" {% if ed %}class="ie-cell" data-field="mobile" data-val="{{ c.mobile or '' }}" data-type="text" onclick="ieActivate(this)"{% endif %}>
+                {% if ed %}<div class="ie-view"><span>{{ c.mobile or '—' }}</span><span class="ie-pencil">✎</span></div>{% else %}{{ c.mobile or '—' }}{% endif %}</td>
+              <td style="font-size:.82rem" {% if ed %}class="ie-cell" data-field="email" data-val="{{ c.email or '' }}" data-type="text" onclick="ieActivate(this)"{% endif %}>
+                {% if ed %}<div class="ie-view"><span>{{ c.email or '—' }}</span><span class="ie-pencil">✎</span></div>{% else %}{{ c.email or '—' }}{% endif %}</td>
+              <td style="font-size:.82rem" {% if ed %}class="ie-cell" data-field="city" data-val="{{ c.city or '' }}" data-type="text" onclick="ieActivate(this)"{% endif %}>
+                {% if ed %}<div class="ie-view"><span>{{ c.city or '—' }}</span><span class="ie-pencil">✎</span></div>{% else %}{{ c.city or '—' }}{% endif %}</td>
               <td>{% for b in c._brands[:2] %}<span class="mini-chip">{{ b }}</span>{% endfor %}{% if c._brands|length > 2 %}<span class="mini-chip" style="background:var(--surface2);color:var(--muted2)">+{{ c._brands|length-2 }}</span>{% endif %}{% if not c._brands %}<span style="color:var(--muted2)">—</span>{% endif %}</td>
-              <td><span class="sbadge {{ 'active' if (c.status or 'active')=='active' else 'inactive' }}">{% if (c.status or 'active')=='active' %}✓ Active{% else %}{{ c.status|title }}{% endif %}</span></td>
+              <td {% if not show_trash %}class="ie-cell" data-field="status" data-val="{{ c.status or 'active' }}" data-type="select" data-opts="active::Active||inactive::Inactive" onclick="ieActivate(this)"{% endif %}>
+                {% if not show_trash %}<div class="ie-view"><span class="sbadge {{ 'active' if (c.status or 'active')=='active' else 'inactive' }}">{% if (c.status or 'active')=='active' %}✓ Active{% else %}{{ c.status|title }}{% endif %}</span><span class="ie-pencil">✎</span></div>
+                {% else %}<span class="sbadge {{ 'active' if (c.status or 'active')=='active' else 'inactive' }}">{{ (c.status or 'active')|title }}</span>{% endif %}</td>
               <td><div class="row-act">
                 {% if show_trash %}
                 <button class="ico-btn" title="Restore" onclick="clientAction({{ c.id }},'restore')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
                 {% else %}
-                <a class="ico-btn" title="Edit" href="{{ url_for('crm.client_edit', id=c.id) }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></a>
-                <button class="ico-btn danger" title="Delete" onclick="clientAction({{ c.id }},'delete')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                <div class="act-dd">
+                  <button class="act-btn" onclick="tglAct(this)">⋯</button>
+                  <div class="act-menu">
+                    <button type="button" onclick="cvOpen(this)"
+                      data-code="{{ c.code or '—' }}" data-name="{{ c.contact_name or '—' }}"
+                      data-company="{{ c.company_name or '—' }}" data-mobile="{{ c.mobile or '—' }}"
+                      data-email="{{ c.email or '—' }}" data-city="{{ c.city or '—' }}"
+                      data-brands="{{ c.brands or '—' }}" data-status="{{ (c.status or 'active')|title }}"
+                      data-created="{{ c.created_at | fmtdt('%d-%m-%Y') or '—' }}">👁 <span style="color:#2563eb">View Client</span></button>
+                    <a href="{{ url_for('crm.client_edit', id=c.id) }}">✏️ <span>Edit Client</span></a>
+                    <div class="sep"></div>
+                    <a href="/npd/new?client_id={{ c.id }}&type=npd">🧪 <span style="color:#7c3aed">Create NPD Project<span class="mi-sub">New Product Development</span></span></a>
+                    <a href="/npd/new?client_id={{ c.id }}&type=existing">📦 <span style="color:#16a34a">Create EPD Project<span class="mi-sub">Existing Product</span></span></a>
+                    <a href="{{ url_for('crm.quotations_list') }}?search={{ (c.company_name or c.contact_name or '')|urlencode }}">📄 <span style="color:#2563eb">Send NPD Quote<span class="mi-sub">Create Quotation</span></span></a>
+                    <div class="sep"></div>
+                    <button type="button" class="danger" onclick="clientAction({{ c.id }},'delete')">🗑 <span>Delete Client</span></button>
+                  </div>
+                </div>
                 {% endif %}
               </div></td>
             </tr>
             {% else %}
-            <tr><td colspan="11"><div class="empty"><div style="font-size:2rem;margin-bottom:8px">🏢</div><div>Koi client nahi mila.{% if not show_trash %} <a href="{{ url_for('crm.client_add') }}" style="color:var(--teal-dim);font-weight:700">Pehla client add karein →</a>{% endif %}</div></div></td></tr>
+            <tr><td colspan="12"><div class="empty"><div style="font-size:2rem;margin-bottom:8px">🏢</div><div>No clients found.{% if not show_trash %} <a href="{{ url_for('crm.client_add') }}" style="color:var(--teal-dim);font-weight:700">Add the first client →</a>{% endif %}</div></div></td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -111,13 +192,219 @@
     </div>
   </main>
 </div>
+<!-- ══ BULK ACTION BAR ══ -->
+<div id="bulkBar">
+  <span class="bcnt"><span id="bulkN">0</span> selected</span>
+  {% if show_trash %}
+  <button class="bres" onclick="bulkDo('restore')">♻️ Restore</button>
+  {% else %}
+  <button class="bdel" onclick="bulkDo('delete')">🗑 Delete Selected</button>
+  {% endif %}
+  <button onclick="bulkClear()">✕</button>
+</div>
+
+<!-- ══ CLIENT QUICK VIEW ══ -->
+<div class="cv-ov" id="cvOv" onclick="if(event.target===this)cvClose()">
+  <div class="cv-card">
+    <h3 id="cvName"></h3>
+    <div class="cvc" id="cvCode"></div>
+    <div class="cv-row"><b>Company</b><span id="cvCompany"></span></div>
+    <div class="cv-row"><b>Mobile</b><span id="cvMobile"></span></div>
+    <div class="cv-row"><b>Email</b><span id="cvEmail"></span></div>
+    <div class="cv-row"><b>City</b><span id="cvCity"></span></div>
+    <div class="cv-row"><b>Brands</b><span id="cvBrands"></span></div>
+    <div class="cv-row"><b>Status</b><span id="cvStatus"></span></div>
+    <div class="cv-row" style="border-bottom:none"><b>Created</b><span id="cvCreated"></span></div>
+    <button class="cv-close" onclick="cvClose()">Close</button>
+  </div>
+</div>
+
+<script>
+// ── actions dropdown (portal — overflow/transform se azaad) ──
+function tglAct(btn){
+  const dd = btn.parentElement;
+  let menu = dd._menu || dd.querySelector('.act-menu');
+  const wasOpen = menu.classList.contains('open');
+  closeActMenus();
+  if (wasOpen) return;
+  if (!dd._menu){ dd._menu = menu; document.body.appendChild(menu); }
+  menu.classList.add('open');
+  const r = btn.getBoundingClientRect();
+  const mw = Math.max(215, menu.offsetWidth);
+  menu.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px';
+  menu.style.top = (r.bottom + 4) + 'px';
+  const mh = menu.offsetHeight;
+  if (r.bottom + mh + 8 > window.innerHeight) menu.style.top = Math.max(8, r.top - mh - 4) + 'px';
+}
+function closeActMenus(){ document.querySelectorAll('.act-menu.open').forEach(m=>m.classList.remove('open')); }
+window.addEventListener('resize', closeActMenus);
+document.addEventListener('scroll', closeActMenus, true);
+document.addEventListener('click', e=>{
+  if (!e.target.closest('.act-dd') && !e.target.closest('.act-menu')) closeActMenus();
+});
+
+// ── client quick view ──
+function cvOpen(btn){
+  closeActMenus();
+  const d = btn.dataset;
+  ['Name','Code','Company','Mobile','Email','City','Brands','Status','Created'].forEach(k=>{
+    document.getElementById('cv'+k).textContent = d[k.toLowerCase()] || '—';
+  });
+  document.getElementById('cvOv').classList.add('open');
+}
+function cvClose(){ document.getElementById('cvOv').classList.remove('open'); }
+document.addEventListener('keydown', e=>{ if (e.key === 'Escape') cvClose(); });
+</script>
+
 <script>
 function gSearchFn(q){q=q.toLowerCase().trim();document.querySelectorAll('#clientsTable tbody tr').forEach(tr=>{if(!tr.dataset.search)return;tr.style.display=(!q||tr.dataset.search.includes(q))?'':'none';});}
 function clientAction(id,action){
-  var msg=action==='delete'?'Client delete karein?':'Client restore karein?';
-  if(!confirm(msg))return;
-  fetch('/crm/clients/'+id+'/'+action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error||'Failed');}).catch(()=>alert('Request failed'));
+  var msg=action==='delete'?'Delete this client?':'Restore this client?';
+  cmConfirm(msg, function(){
+    fetch('/crm/clients/'+id+'/'+action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{if(d.ok)location.reload();else alert(d.error||'Failed');}).catch(()=>alert('Request failed'));
+  }, action==='delete'?'Delete':'Restore', action==='delete'?'danger':'primary');
 }
 </script>
   <script src="{{ url_for('static', filename='js/crm-mobile-cards.js') }}"></script>
+<script>
+// ── inline edit (NPD/leads jaisa) ──
+let _ieActive = null;
+function ieToast(msg, kind){
+  let t = document.getElementById('ieToast');
+  if (!t){ t = document.createElement('div'); t.id='ieToast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.background = kind==='success' ? '#16a34a' : '#dc2626';
+  t.style.display = 'block';
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display='none'; }, 1800);
+}
+function ieActivate(cell){
+  if (cell.classList.contains('ie-saving')) return;
+  if (_ieActive && _ieActive !== cell) ieCancel(_ieActive);
+  _ieActive = cell;
+  const val = cell.dataset.val || '', type = cell.dataset.type;
+  const opts = (cell.dataset.opts || '').split('||').filter(Boolean);
+  const view = cell.querySelector('.ie-view');
+  let wrap = cell.querySelector('.ie-input-wrap');
+  if (!wrap){
+    wrap = document.createElement('div'); wrap.className = 'ie-input-wrap';
+    let inp;
+    if (type === 'select'){
+      inp = document.createElement('select'); inp.className = 'ie-select';
+      opts.forEach(function(o){
+        const p = o.split('::');
+        const op = document.createElement('option'); op.value = p[0]; op.textContent = p[1] || p[0];
+        inp.appendChild(op);
+      });
+      inp.addEventListener('change', function(){ ieSave(cell); });
+      inp.addEventListener('keydown', function(e){ if(e.key==='Escape'){ e.stopPropagation(); ieCancel(cell); } });
+      wrap.appendChild(inp);
+    } else {
+      inp = document.createElement('input'); inp.type='text'; inp.className='ie-input';
+      inp.addEventListener('keydown', function(e){
+        if (e.key==='Enter'){ e.preventDefault(); ieSave(cell); }
+        if (e.key==='Escape'){ e.stopPropagation(); ieCancel(cell); }
+      });
+      inp.addEventListener('click', function(e){ e.stopPropagation(); });
+      const ok = document.createElement('button'); ok.className='ie-ok'; ok.type='button'; ok.textContent='\u2713';
+      ok.onclick = function(e){ e.stopPropagation(); ieSave(cell); };
+      const esc = document.createElement('button'); esc.className='ie-esc'; esc.type='button'; esc.textContent='\u2715';
+      esc.onclick = function(e){ e.stopPropagation(); ieCancel(cell); };
+      wrap.appendChild(inp); wrap.appendChild(ok); wrap.appendChild(esc);
+    }
+    cell.appendChild(wrap);
+  }
+  const f = wrap.querySelector('input,select');
+  f.value = val;
+  view.style.display = 'none'; wrap.style.display = 'flex';
+  f.focus(); if (f.select) try{ f.select(); }catch(e){}
+}
+function ieCancel(cell){
+  if (!cell) return;
+  const view = cell.querySelector('.ie-view'), wrap = cell.querySelector('.ie-input-wrap');
+  if (view) view.style.display = 'flex';
+  if (wrap) wrap.style.display = 'none';
+  if (_ieActive === cell) _ieActive = null;
+}
+function ieSave(cell){
+  const tr = cell.closest('tr'), id = tr && tr.dataset.id, field = cell.dataset.field;
+  const f = cell.querySelector('input,select');
+  const val = f ? f.value.trim() : '', old = cell.dataset.val || '';
+  const view = cell.querySelector('.ie-view'), wrap = cell.querySelector('.ie-input-wrap');
+  if (val === old){ ieCancel(cell); return; }
+  cell.classList.add('ie-saving');
+  if (wrap) wrap.style.display = 'none';
+  if (view) view.style.display = 'flex';
+  _ieActive = null;
+  fetch('/crm/clients/' + id + '/inline-edit', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    body: JSON.stringify({field: field, value: val})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    cell.classList.remove('ie-saving');
+    if (d && d.success){
+      cell.dataset.val = val;
+      ieUpdateView(cell, field, val);
+      cell.classList.add('ie-saved');
+      setTimeout(function(){ cell.classList.remove('ie-saved'); }, 600);
+      ieToast('Saved', 'success');
+    } else {
+      ieToast((d && d.error) || 'Save failed', 'danger');
+      ieActivate(cell);
+    }
+  }).catch(function(){ cell.classList.remove('ie-saving'); ieToast('Network error','danger'); });
+}
+function ieUpdateView(cell, field, val){
+  const view = cell.querySelector('.ie-view');
+  if (!view) return;
+  if (field === 'status'){
+    const act = val === 'active';
+    view.innerHTML = '<span class="sbadge ' + (act ? 'active' : 'inactive') + '">'
+                   + (act ? '\u2713 Active' : 'Inactive') + '</span><span class="ie-pencil">\u270E</span>';
+    return;
+  }
+  if (field === 'contact_name'){
+    const a = view.querySelector('a.cname');
+    if (a){ a.textContent = val || '\u2014'; return; }
+  }
+  const sp = view.querySelector('span:not(.ie-pencil)');
+  if (sp) sp.textContent = val || '\u2014';
+}
+document.addEventListener('click', function(e){ if (_ieActive && !_ieActive.contains(e.target)) ieCancel(_ieActive); });
+
+// ── bulk selection ──
+function bulkIds(){
+  const ids = [];
+  document.querySelectorAll('.rowchk:checked').forEach(function(c){ if (c.value) ids.push(c.value); });
+  return ids;
+}
+function bulkBar(){
+  const n = bulkIds().length;
+  document.getElementById('bulkN').textContent = n;
+  document.getElementById('bulkBar').classList.toggle('open', n > 0);
+}
+function bulkClear(){
+  document.querySelectorAll('.rowchk:checked').forEach(function(c){ c.checked = false; });
+  document.querySelectorAll('thead input[type=checkbox]').forEach(function(c){ c.checked = false; });
+  bulkBar();
+}
+document.addEventListener('change', function(e){ if (e.target.matches('.rowchk')) bulkBar(); });
+function bulkDo(action){
+  const ids = bulkIds();
+  if (!ids.length) return;
+  const msg = action === 'delete'
+    ? ids.length + ' client(s) — delete selected? (They will move to the Deleted tab)'
+    : ids.length + ' client(s) — restore selected?';
+  cmConfirm(msg, function(){
+  fetch('/crm/clients/bulk-action', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    body: JSON.stringify({action: action, ids: ids})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (d && d.success) location.reload();
+    else ieToast((d && d.error) || 'Action failed', 'danger');
+  }).catch(function(){ ieToast('Network error', 'danger'); });
+  }, action === 'delete' ? 'Delete' : 'Restore', action === 'delete' ? 'danger' : 'primary');
+}
+</script>
+
 </body></html>

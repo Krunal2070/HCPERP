@@ -144,7 +144,7 @@ function csbFilter(q){
   if(st === 'open') sb.classList.remove('collapsed');
   else sb.classList.add('collapsed');     // pehli baar => closed
   void sb.offsetHeight;                    // reflow force
-  sb.style.transition = prev;              // ab transition wapas on
+  sb.style.transition = prev;              // re-enable transition
 
   /* Header hamburger isko use karega (page-defined toggle wins) */
   window.toggleSidebar = function(){ if(closed()) openSb(); else closeSb(); };

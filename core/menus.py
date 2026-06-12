@@ -305,7 +305,8 @@ MENUS = {
         "item_class": "sb-item",
         "sections": [
             {"label": "CRM", "items": [
-                {"id": "crm-dash",   "text": "CRM Dashboard",      "icon": _IC["grid"],     "href": "/crm/leads",   "color": "#7c3aed"},
+                {"id": "home",       "text": "Back to Portal",     "icon": _IC["home"],     "href": "/",            "color": "#64748b"},
+                {"id": "crm-dash",   "text": "CRM Dashboard",      "icon": _IC["grid"],     "href": "/crm/dashboard",   "color": "#7c3aed"},
                 {"id": "leads",      "text": "Leads",              "icon": _IC["users"],    "href": "/crm/leads",   "color": "#2563eb"},
                 {"id": "clients",    "text": "Client Master",      "icon": _IC["box"],      "href": "/crm/clients", "color": "#0d9488"},
                 {"id": "samples",    "text": "Sample Orders",      "icon": _IC["list"],     "href": "/crm/sample-orders",            "color": "#ea580c"},
@@ -319,6 +320,20 @@ MENUS = {
             {"label": "Settings", "items": [
                 {"id": "mail-master","text": "Mail Master",        "icon": _IC["mail"],     "href": "/mail/master",            "color": "#7c3aed"},
                 {"id": "lead-mstr",  "text": "Lead Masters",       "icon": _IC["tag"],      "href": "/crm/lead-masters",            "color": "#16a34a"},
+            ]},
+        ],
+    },
+    # ===== NPD / EPD PROJECTS =============================================
+    "npd": {
+        "brand": "HCP Wellness",
+        "tag":   "NPD",
+        "search": False,
+        "item_class": "sb-item",
+        "sections": [
+            {"label": "NPD", "items": [
+                {"id": "home",     "text": "Back to Portal", "icon": _IC["home"],  "href": "/",         "color": "#64748b"},
+                {"id": "npd-dash", "text": "NPD Dashboard",  "icon": _IC["grid"],  "href": "/npd/dashboard", "color": "#7c3aed"},
+                {"id": "npd-list", "text": "NPD Projects",   "icon": _IC["list"],  "href": "/npd",      "color": "#2563eb"},
             ]},
         ],
     },

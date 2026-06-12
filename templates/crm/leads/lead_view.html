@@ -288,6 +288,7 @@
   .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#fff;border:none}
   @media(max-width:640px){.page-root{padding:14px 12px 40px}.lead-hero{padding:16px}}
 </style>
+<script src="{{ url_for('static', filename='js/hcp-modal.js') }}"></script>
 </head>
 <body>
 
@@ -331,8 +332,8 @@
             <button onclick="openQuotation()"><span class="ai">📄</span> Create Quotation</button>
             <button onclick="openNpdEmail()"><span class="ai">✉️</span> Send NPD Project</button>
             <div class="act-sep"></div>
-            <button class="np" onclick="lvToast('NPD Project flow jaldi aa raha hai (next).');document.getElementById('actMenu').classList.remove('open')"><span class="ai">🧪</span><span>NPD Project<small>{% if lead.client_id %}Client linked → Project Form{% else %}Create Client → Project Form{% endif %}</small></span></button>
-            <button class="ep" onclick="lvToast('EPD Project flow jaldi aa raha hai (next).');document.getElementById('actMenu').classList.remove('open')"><span class="ai">📦</span><span>EPD Project<small>{% if lead.client_id %}Client linked → Project Form{% else %}Create Client → Project Form{% endif %}</small></span></button>
+            <button class="np" onclick="location.href='/crm/leads/{{ lead.id }}/create-npd?type=npd'"><span class="ai">🧪</span><span>NPD Project<small>{% if lead.client_id %}Client linked → Project Form{% else %}Create Client → Project Form{% endif %}</small></span></button>
+            <button class="ep" onclick="location.href='/crm/leads/{{ lead.id }}/create-npd?type=existing'"><span class="ai">📦</span><span>EPD Project<small>{% if lead.client_id %}Client linked → Project Form{% else %}Create Client → Project Form{% endif %}</small></span></button>
             <div class="act-sep"></div>
             <button onclick="document.getElementById('statusModal').classList.add('open');document.getElementById('actMenu').classList.remove('open')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Change Status</button>
             <a href="{{ url_for('crm.leads') }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Back to Leads</a>
@@ -422,10 +423,10 @@
                 <button type="button" id="dcImg" title="Insert image">🖼</button>
                 <button type="button" id="dcAttach" title="Attach file">📎</button>
               </div>
-              <div class="dc-edit" id="dcEdit" contenteditable="true" data-ph="Write a message... (@ se tag karein)"></div>
+              <div class="dc-edit" id="dcEdit" contenteditable="true" data-ph="Write a message... (use @ to tag)"></div>
               <div class="dc-files" id="dcFiles"></div>
               <div class="dc-foot">
-                <span class="dc-hint">@ se employee tag karo · file yahan drag-drop bhi kar sakte ho</span>
+                <span class="dc-hint">Use @ to tag an employee · you can also drag &amp; drop files here</span>
                 <button type="button" class="dc-send" id="dcSend">Send ➤</button>
               </div>
             </div>
@@ -502,7 +503,7 @@
               <td><a class="at-dl" href="{{ url_for('static', filename='uploads/' + a.file_path) }}" download title="Download"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></td>
             </tr>
             {% else %}
-            <tr><td colspan="5">Koi attachment nahi mila.</td></tr>
+            <tr><td colspan="5">No attachments found.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -644,7 +645,7 @@
       </div>
       <div id="emlPreview" class="eml-edit" contenteditable="true"></div>
       <textarea id="emlHtml" class="eml-edit" style="display:none"></textarea>
-      <div class="eml-note">⚠️ Email server (SMTP) ke through direct chala jayega. SMTP <code>config.py</code> mein set karein — Gmail/Outlook nahi khulega.</div>
+      <div class="eml-note">⚠️ The email will be sent directly via the SMTP server. Configure SMTP in <code>config.py</code> — Gmail/Outlook will not open.</div>
     </div>
     <div class="eml-foot">
       <button type="button" class="eml-btn cancel" onclick="emlClose()">Cancel</button>
@@ -832,9 +833,10 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('click',function(){var m=document.getElementById('actMenu');if(m)m.classList.remove('open');});
 function leadTrash(){
-  if(!confirm('Lead ko Trash me move karein?'))return;
-  fetch('/crm/leads/{{ lead.id }}/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
-    .then(r=>r.json()).then(d=>{if(d.ok)location.href='{{ url_for("crm.leads") }}';else alert(d.error||'Failed');});
+  cmConfirm('Move this lead to Trash?', function(){
+    fetch('/crm/leads/{{ lead.id }}/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(r=>r.json()).then(d=>{if(d.ok)location.href='{{ url_for("crm.leads") }}';else alert(d.error||'Failed');});
+  }, 'Move to Trash', 'danger');
 }
 var _sm=document.getElementById('statusModal');
 if(_sm){_sm.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});}
@@ -961,7 +963,7 @@ function cvConfirm(title,msg,okLabel,onOk){
   ov.addEventListener('click',function(e){if(e.target===ov)close();});
 }
 function discDelete(id, el){
-  cvConfirm('Delete Comment','Apni ye comment delete karein?','Delete',function(){
+  cvConfirm('Delete Comment','Delete your comment?','Delete',function(){
     fetch('/crm/leads/discussion/'+id+'/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
       .then(function(r){return r.json();}).then(function(d){
         if(d.ok){
@@ -1001,7 +1003,7 @@ function discEdit(id, el){
     +'</div>'
     +'<div class="dc-edit ee-edit" contenteditable="true"></div>'
     +'<div class="dc-files ee-files"></div>'
-    +'<div class="dc-foot"><span class="dc-hint">file add/remove kar sakte ho · drag-drop bhi</span>'
+    +'<div class="dc-foot"><span class="dc-hint">you can add/remove files · drag &amp; drop works too</span>'
       +'<span class="di-edit-actions"><button class="di-eb cancel">Cancel</button><button class="di-eb save">Save</button></span></div>'
     +'</div><input type="file" class="ee-input" multiple style="display:none">';
   textEl.style.display='none'; if(filesEl)filesEl.style.display='none';
@@ -1030,7 +1032,7 @@ function discEdit(id, el){
   wrap.querySelector('.save').onclick=function(){
     var html=editBox.innerHTML.trim(),text=(editBox.innerText||'').trim();
     var remainFiles=existing.length-removed.length+newFiles.length;
-    if(!text && remainFiles<=0){alert('Comment ya file zaroori hai.');return;}
+    if(!text && remainFiles<=0){alert('A comment or file is required.');return;}
     var fd=new FormData();fd.append('comment',html);fd.append('removed',removed.join(','));
     newFiles.forEach(function(f){fd.append('files',f);});
     var sb=this;sb.textContent='Saving…';sb.disabled=true;
@@ -1068,7 +1070,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var title=document.getElementById('rmTitle').value.trim(),
         when=document.getElementById('rmWhen').value.trim(),
         desc=document.getElementById('rmDesc').value.trim();
-    if(!title||!when){alert('Title aur Date & Time zaroori hai.');return;}
+    if(!title||!when){alert('Title and Date & Time are required.');return;}
     var fd=new FormData();fd.append('title',title);fd.append('remind_at',when);fd.append('description',desc);
     addBtn.disabled=true;addBtn.textContent='Saving…';
     fetch('/crm/leads/{{ lead.id }}/reminder/add',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd})
@@ -1098,7 +1100,7 @@ function rmToggle(id,el){
     .then(function(r){return r.json();}).then(function(d){if(d.ok){var it=el.closest('.rm-item');if(it)it.classList.add('done');}});
 }
 function rmDelete(id,el){
-  cvConfirm('Delete Reminder','Ye reminder delete karein?','Delete',function(){
+  cvConfirm('Delete Reminder','Delete this reminder?','Delete',function(){
     fetch('/crm/leads/reminder/'+id+'/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
       .then(function(r){return r.json();}).then(function(d){if(d.ok){var it=el.closest('.rm-item');if(it)it.remove();
         var l=document.getElementById('rmList');if(l&&!l.querySelector('.rm-item'))l.innerHTML='<div class="disc-empty" id="rmEmpty">No reminders set. Add one from the form.</div>';}});
@@ -1110,7 +1112,7 @@ function rmDelete(id,el){
   var addBtn=document.getElementById('ntAdd'); if(!addBtn)return;
   addBtn.onclick=function(){
     var txt=document.getElementById('ntText').value.trim();
-    if(!txt){alert('Note khali nahi ho sakta.');return;}
+    if(!txt){alert('Note cannot be empty.');return;}
     var fd=new FormData();fd.append('note',txt);
     addBtn.disabled=true;addBtn.textContent='Saving…';
     fetch('/crm/leads/{{ lead.id }}/note/add',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd})
@@ -1130,7 +1132,7 @@ function ntAppend(d){
   list.insertBefore(item,list.firstChild);
 }
 function ntDelete(id,el){
-  cvConfirm('Delete Note','Ye note delete karein?','Delete',function(){
+  cvConfirm('Delete Note','Delete this note?','Delete',function(){
     fetch('/crm/leads/note/'+id+'/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
       .then(function(r){return r.json();}).then(function(d){if(d.ok){var it=el.closest('.nt-item');if(it)it.remove();
         var l=document.getElementById('ntList');if(l&&!l.querySelector('.nt-item'))l.innerHTML='<div class="disc-empty" id="ntEmpty">No personal notes yet.</div>';}});
@@ -1251,8 +1253,8 @@ function emlSend(){
   var body = htmlMode ? html.value : prev.innerHTML;
   var to=document.getElementById('emlTo').value.trim();
   var subject=document.getElementById('emlSubject').value.trim();
-  if(!to){alert('To (Email) zaroori hai.');return;}
-  if(!subject){alert('Subject zaroori hai.');return;}
+  if(!to){alert('To (Email) is required.');return;}
+  if(!subject){alert('Subject is required.');return;}
   var fd=new FormData();
   fd.append('to',to);
   fd.append('from_name',document.getElementById('emlFromName').value.trim());
@@ -1333,7 +1335,7 @@ function soBeforeSubmit(){
   var ei=document.getElementById('soErrItems'); if(!has){ ei.classList.add('show'); ok=false; } else { ei.classList.remove('show'); }
   if(!ok) return false;
   closeSampleOrder();
-  lvToast('📋 Sample Order ban gaya — Sample Orders list me dikhega. PDF nayi tab me khulegi.');
+  lvToast('📋 Sample Order created — it will appear in the Sample Orders list. The PDF will open in a new tab.');
   return true;
 }
 // typing pe error hatao
@@ -1405,7 +1407,7 @@ function qtBeforeSubmit(){
   var ei=document.getElementById('qtErrItems'); if(!has){ ei.classList.add('show'); ok=false; } else { ei.classList.remove('show'); }
   if(!ok) return false;
   closeQuotation();
-  lvToast('📄 Quotation ban gaya — Quotations list me dikhega. PDF nayi tab me khulegi.');
+  lvToast('📄 Quotation created — it will appear in the Quotations list. The PDF will open in a new tab.');
   return true;
 }
 document.addEventListener('input',function(e){ if(e.target && e.target.id==='qtCompany'){ e.target.classList.remove('invalid'); document.getElementById('qtErrCo').classList.remove('show'); } });

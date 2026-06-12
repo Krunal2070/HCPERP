@@ -648,9 +648,9 @@ function _doLeadAction(id,action){
     .then(r=>r.json()).then(d=>{if(d.ok)location.reload();else cmAlert(d.error||'Failed');}).catch(()=>cmAlert('Request failed'));
 }
 function leadAction(id,action){
-  if(action==='delete'){ confirmModal('Trash','Lead ko Trash me move karein?','Move to Trash','danger',function(){_doLeadAction(id,'delete');}); return; }
-  if(action==='permanent-delete'){ confirmModal('Delete Forever','Ye lead PERMANENTLY delete ho jayega — undo nahi hoga.','Delete','danger',function(){_doLeadAction(id,'permanent-delete');}); return; }
-  if(action==='restore'){ confirmModal('Restore','Is lead ko restore karein?','Restore','primary',function(){_doLeadAction(id,'restore');}); return; }
+  if(action==='delete'){ confirmModal('Trash','Move this lead to Trash?','Move to Trash','danger',function(){_doLeadAction(id,'delete');}); return; }
+  if(action==='permanent-delete'){ confirmModal('Delete Forever','This lead will be PERMANENTLY deleted — this cannot be undone.','Delete','danger',function(){_doLeadAction(id,'permanent-delete');}); return; }
+  if(action==='restore'){ confirmModal('Restore','Restore this lead?','Restore','primary',function(){_doLeadAction(id,'restore');}); return; }
   _doLeadAction(id,action);
 }
 /* Reusable themed confirm modal */

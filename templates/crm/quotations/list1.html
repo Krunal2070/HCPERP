@@ -109,7 +109,7 @@
               </div></td>
             </tr>
             {% else %}
-            <tr><td colspan="12" class="empty">{{ 'Deleted me kuch nahi.' if trash else 'Abhi koi quotation nahi bana.' }}</td></tr>
+            <tr><td colspan="12" class="empty">{{ 'Nothing in Deleted.' if trash else 'No quotations created yet.' }}</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -121,8 +121,8 @@
 var ST=['draft','sent','accepted','rejected'];
 function toast(m,e){var t=document.createElement('div');t.className='lv-toast'+(e?' err':'');t.textContent=m;document.body.appendChild(t);requestAnimationFrame(function(){t.classList.add('show');});setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},250);},3500);}
 function cvConfirm(title,msg,ok,fn){var o=document.createElement('div');o.className='cv-overlay';o.innerHTML='<div class="cv-box"><div class="cv-title">'+title+'</div><div class="cv-msg">'+msg+'</div><div class="cv-actions"><button class="cv-btn cv-cancel">Cancel</button><button class="cv-btn cv-ok">'+ok+'</button></div></div>';document.body.appendChild(o);requestAnimationFrame(function(){o.classList.add('show');});function c(){o.classList.remove('show');setTimeout(function(){o.remove();},200);}o.querySelector('.cv-cancel').onclick=c;o.querySelector('.cv-ok').onclick=function(){c();fn();};o.addEventListener('click',function(e){if(e.target===o)c();});}
-function qtDel(id){cvConfirm('Delete Quotation','Ye quotation delete (trash) karein?','Delete',function(){fetch('/crm/quotations/'+id+'/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d.ok){var row=document.getElementById('qtrow-'+id);if(row)row.remove();toast('Deleted — Deleted tab me chala gaya.');}});});}
-function qtRestore(id){fetch('/crm/quotations/'+id+'/restore',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d.ok){var row=document.getElementById('qtrow-'+id);if(row)row.remove();toast('Restore ho gaya.');}});}
+function qtDel(id){cvConfirm('Delete Quotation','Move this quotation to trash?','Delete',function(){fetch('/crm/quotations/'+id+'/delete',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d.ok){var row=document.getElementById('qtrow-'+id);if(row)row.remove();toast('Deleted — moved to the Deleted tab.');}});});}
+function qtRestore(id){fetch('/crm/quotations/'+id+'/restore',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d.ok){var row=document.getElementById('qtrow-'+id);if(row)row.remove();toast('Restored.');}});}
 function qtEmail(id){var fd=new FormData();fetch('/crm/quotations/'+id+'/email',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){if(d.ok){toast('📧 Email sent to '+d.to);var row=document.getElementById('qtrow-'+id);if(row){var b=row.querySelector('.sbadge');if(b){b.className='sbadge st-sent';b.textContent='Sent';}}}else toast(d.error||'Email failed',1);}).catch(function(){toast('Network error',1);});}
 function qtCycleStatus(id,el){var cur=el.textContent.trim().toLowerCase();var i=ST.indexOf(cur);var nx=ST[(i+1)%ST.length];var fd=new FormData();fd.append('status',nx);fetch('/crm/quotations/'+id+'/status',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){if(d.ok){el.className='sbadge st-'+d.status;el.textContent=d.status.charAt(0).toUpperCase()+d.status.slice(1);toast('Status: '+el.textContent);}});}
 </script>

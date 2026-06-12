@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NPD Form — {{ p.code }} | HCP Wellness</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{font-family:'Inter',Arial,sans-serif;margin:0;background:#f1f5f9;color:#0f172a;font-size:12.5px}
+  .sheet{width:210mm;min-height:280mm;margin:14px auto;background:#fff;padding:14mm 13mm;
+       box-shadow:0 4px 22px rgba(0,0,0,.12)}
+  .top{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #7c3aed;padding-bottom:9px;margin-bottom:14px}
+  .brand{font-size:19px;font-weight:800}
+  .brand span{color:#7c3aed}
+  .doc-title{text-align:right}
+  .doc-title h1{margin:0;font-size:17px;letter-spacing:.06em}
+  .doc-title .code{font-size:14px;font-weight:800;color:#7c3aed}
+  .meta-strip{display:flex;gap:18px;font-size:11px;color:#475569;margin-bottom:12px;flex-wrap:wrap}
+  .meta-strip b{color:#0f172a}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;background:#f5f3ff;color:#7c3aed;
+     padding:6px 10px;border-left:4px solid #7c3aed;margin:16px 0 0}
+  table{width:100%;border-collapse:collapse}
+  td{border:1px solid #cbd5e1;padding:6px 9px;vertical-align:top}
+  td.l{width:26%;background:#f8fafc;font-weight:700;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:.03em}
+  .two td.l{width:18%}
+  .print-bar{position:fixed;top:12px;right:14px;display:flex;gap:8px}
+  .print-bar button{height:36px;padding:0 16px;border-radius:9px;border:none;background:#7c3aed;color:#fff;
+       font-weight:700;font-family:inherit;cursor:pointer;font-size:13px}
+  .print-bar .alt{background:#475569}
+  @media print{
+    body{background:#fff}
+    .sheet{margin:0;box-shadow:none;width:auto;min-height:auto;padding:8mm 9mm}
+    .print-bar{display:none}
+    @page{size:A4;margin:8mm}
+  }
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <button onclick="window.print()">🖨 Print / Save PDF</button>
+  <button class="alt" onclick="window.close()">Close</button>
+</div>
+
+<div class="sheet">
+  <div class="top">
+    <div class="brand">HCP <span>Wellness</span><div style="font-size:10px;font-weight:600;color:#64748b">Pvt. Ltd. — New Product Development</div></div>
+    <div class="doc-title">
+      <h1>{{ 'NPD' if p.project_type=='npd' else 'EPD' }} PROJECT FORM</h1>
+      <div class="code">{{ p.code or '#' ~ p.id }}</div>
+    </div>
+  </div>
+
+  <table class="two" style="margin-bottom:12px">
+    <tr><td class="l">Project No.</td><td><b>{{ p.code or '#' ~ p.id }}</b></td>
+        <td class="l">Date</td><td>{{ (p.created_at or '')|string|truncate(19,True,'') }}</td>
+        <td class="l">Client Co-Ordinator</td><td>{{ p.client_coordinator or '—' }}</td></tr>
+  </table>
+
+  <table class="two">
+    <tr><td class="l">Product Name</td><td><b>{{ p.product_name }}</b></td>
+        <td class="l">Market Level</td><td>{{ p.market_level or '—' }}</td></tr>
+    <tr><td class="l">Client Name</td><td colspan="3">{{ p.client_name or '—' }}</td></tr>
+    <tr><td class="l">Company</td><td colspan="3">{{ p.client_company or p.cm_company or '—' }}</td></tr>
+    <tr><td class="l">Area of Applicant</td><td colspan="3">{{ p.area_of_application or '—' }}</td></tr>
+    <tr><td class="l">Description</td><td colspan="3">{{ p.description or '—' }}</td></tr>
+    <tr><td class="l">Ingredients</td><td colspan="3">{{ p.ingredients or '—' }}</td></tr>
+    <tr><td class="l">Video Link</td><td colspan="3">{{ p.video_link or '—' }}</td></tr>
+    <tr><td class="l">Active Ing. Req.</td><td colspan="3">{{ p.active_ingredients or '—' }}</td></tr>
+    <tr><td class="l">No of Sample</td><td>{{ p.no_of_samples or 0 }}</td>
+        <td class="l">Days</td><td>{{ p.project_lead_days or '—' }}</td></tr>
+  </table>
+
+  <table style="margin-top:-1px">
+    <tr><td class="l" style="width:26%">Reference Brand</td>
+        <td class="l" style="width:40%;text-align:left">Reference Product Name</td>
+        <td class="l" style="text-align:left">Variant / Variety / Type</td></tr>
+    <tr><td>{{ p.reference_brand or '—' }}</td>
+        <td>{{ p.reference_product_name or p.reference_product or '—' }}</td>
+        <td>{{ p.variant_type or '—' }}</td></tr>
+  </table>
+
+  <table class="two" style="margin-top:-1px">
+    <tr><td class="l">Appearance</td><td colspan="3">{{ p.appearance or '—' }}</td></tr>
+    <tr><td class="l">Product Claim</td><td colspan="3">{{ p.product_claim or '—' }}</td></tr>
+    <tr><td class="l">Label Claim</td><td colspan="3">{{ p.label_claim or '—' }}</td></tr>
+    <tr><td class="l">Costing Range</td><td>{{ p.costing_range or '—' }}</td>
+        <td class="l">Odour/Fragrance</td><td>{{ p.fragrance or '—' }}</td></tr>
+    <tr><td class="l">pH : Number</td><td>{{ p.ph_value or '—' }}</td>
+        <td class="l">Viscosity</td><td>{{ p.viscosity or '—' }}</td></tr>
+    <tr><td class="l">Packaging Type</td><td colspan="3">{{ p.packaging_type or '—' }}</td></tr>
+  </table>
+
+</div>
+</body>
+</html>

@@ -32,7 +32,13 @@ import tempfile
 
 
 
-import xlwings as xw
+# xlwings is optional — Windows + Excel par hi kaam karta hai.
+# Agar installed nahi hai (ya Linux VPS hai) to app bina Petty-Cash
+# Excel-sync ke chalega, crash nahi hoga.
+try:
+    import xlwings as xw
+except ImportError:
+    xw = None
 from datetime import datetime, timedelta
 import os
 import secrets  # for session tokens used by login audit pairing
@@ -95,6 +101,11 @@ from mail import mail_bp                      # Mail Master (CRM) Blueprint -> m
 app.register_blueprint(crm_bp)               # CRM Leads routes  ->  /crm/leads
 app.register_blueprint(mail_bp)              # Mail Master routes -> /mail/master
 ensure_lead_tables()                         # lead_* tables ko first-run pe auto-create
+
+# ===== NPD / EPD Projects module (modules/npd/) =====
+from npd import npd_bp, ensure_npd_tables    # NPD Projects blueprint + table bootstrap
+app.register_blueprint(npd_bp)               # NPD routes  ->  /npd
+ensure_npd_tables()                          # npd_* tables ko first-run pe auto-create
 
 # User-administration lookup tables (Department / Designation / User Type / Access Level)
 import sys as _ua_sys
@@ -895,6 +906,9 @@ def index():
 
 def get_excel_instance():
     """Connects to the Petty Cash Excel workbook using xlwings."""
+    if xw is None:
+        print("xlwings not installed — Petty Cash Excel sync disabled.")
+        return None
     try:
         try:
             return xw.books['PETTY CASH FROM 25-26 new.xlsx']

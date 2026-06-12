@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPD Projects | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<!-- ══ BULK ACTION BAR ══ -->
+<div id="bulkBar">
+  <span class="bcnt"><span id="bulkN">0</span> selected</span>
+  {% if show_deleted %}
+  <button class="bres" onclick="bulkDo('restore')">♻️ Restore</button>
+  <button class="bdel" onclick="bulkDo('purge')">⛔ Permanent Delete</button>
+  {% else %}
+  <button class="bdel" onclick="bulkDo('delete')">🗑 Delete Selected</button>
+  {% endif %}
+  <button onclick="bulkClear()">✕</button>
+</div>
+
+<!-- ══ DELETE CONFIRM MODAL ══ -->
+<div class="cmodal-ov" id="cmOv" onclick="if(event.target===this)cmClose()">
+  <div class="cmodal">
+    <div class="cic" id="cmIc">🗑️</div>
+    <h3><span id="cmCode"></span> <span id="cmTitle">— delete this project?</span></h3>
+    <p id="cmMsg">The project will move to the Deleted tab — you can restore it from there.</p>
+    <div class="row">
+      <button type="button" onclick="cmClose()">Cancel</button>
+      <button type="button" class="danger" id="cmBtn" onclick="cmGo()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body,'Inter',sans-serif);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:14px 18px 44px}
+  a{text-decoration:none;color:inherit}
+
+  /* ── Toolbar ── */
+  .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 13px;border-radius:10px;
+       font-size:.8rem;font-weight:700;border:1px solid var(--border2);background:var(--surface);
+       cursor:pointer;font-family:inherit;color:var(--text);white-space:nowrap}
+  .btn.primary{background:#7c3aed;border-color:#7c3aed;color:#fff}
+  .btn.active{background:color-mix(in srgb,#7c3aed 12%,transparent);border-color:#7c3aed;color:#7c3aed}
+  .btn .cnt{background:#fee2e2;color:#dc2626;font-size:.68rem;font-weight:800;border-radius:99px;padding:1px 7px}
+  .gsearch{flex:0 1 240px;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--border2);
+       background:var(--surface);color:var(--text);font-size:.8rem;font-family:inherit}
+  select.tb{height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--border2);
+       background:var(--surface);color:var(--text);font-size:.8rem;font-weight:600;font-family:inherit;cursor:pointer}
+  .seg{display:inline-flex;border:1px solid var(--border2);border-radius:10px;overflow:hidden}
+  .seg .btn{border:none;border-radius:0;height:34px}
+  .spacer{flex:1}
+
+  /* ── Dropdown panels ── */
+  .dd{position:relative}
+  .dd-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;background:var(--surface);
+       border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-md,0 8px 24px rgba(0,0,0,.12));
+       padding:12px;min-width:230px}
+  .dd.open .dd-panel{display:block}
+  .dd-panel label{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:600;padding:5px 2px;cursor:pointer}
+  .dd-panel .fl{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;color:var(--muted2);margin:8px 0 4px}
+  .dd-panel select{width:100%;height:34px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:inherit;font-size:.78rem}
+
+  /* ── Table ── */
+  .card-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:1280px}
+  th{background:var(--bg2,var(--bg));text-align:left;padding:9px 10px;font-size:.64rem;text-transform:uppercase;
+     letter-spacing:.04em;color:var(--muted2);border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
+  th a{display:inline-flex;align-items:center;gap:4px;color:inherit}
+  th a:hover{color:#7c3aed}
+  th .arr{font-size:.7rem;color:#7c3aed}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+  tr:hover td{background:color-mix(in srgb,#7c3aed 4%,transparent)}
+  .code{font-weight:800;color:#7c3aed}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.68rem;font-weight:700;color:#fff}
+  .pr-pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.68rem;font-weight:700}
+  .prog{width:80px;height:6px;border-radius:99px;background:var(--border);overflow:hidden;display:inline-block;vertical-align:middle}
+  .prog>i{display:block;height:100%;background:#22c55e;border-radius:99px}
+  .muted{color:var(--muted2);font-size:.72rem}
+  .ellip{max-width:230px;overflow:hidden;text-overflow:ellipsis}
+  .empty{padding:40px;text-align:center;color:var(--muted2)}
+
+  /* ── Row actions ── */
+  .act-dd{position:relative;display:inline-block}
+  .act-btn{width:30px;height:26px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);
+       cursor:pointer;font-weight:800;color:var(--muted2);font-family:inherit}
+  .act-menu{display:none;position:fixed;z-index:200;background:var(--surface);
+       border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-md,0 8px 24px rgba(0,0,0,.14));
+       min-width:185px;padding:6px}
+  .act-menu.open{display:block}
+  .act-menu a,.act-menu button{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:none;
+       background:none;font-size:.8rem;font-weight:600;color:var(--text);border-radius:8px;cursor:pointer;font-family:inherit;text-align:left}
+  .act-menu a:hover,.act-menu button:hover{background:color-mix(in srgb,#7c3aed 8%,transparent)}
+  .act-menu button.danger{color:#dc2626}
+  .act-menu .danger{color:#dc2626}
+
+  /* ── Card view ── */
+  .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .pcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);
+       padding:14px 16px;cursor:pointer;transition:.15s}
+  .pcard:hover{transform:translateY(-2px);box-shadow:var(--shadow-md,0 8px 22px rgba(0,0,0,.1))}
+  .pcard .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .pcard h4{margin:6px 0 2px;font-size:.92rem;font-weight:800}
+  .pcard .sub{font-size:.74rem;color:var(--muted2)}
+  .pcard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+
+  /* ── NPD mobile cards (custom — screenshot design) ── */
+  .npd-mcards{display:none}
+  @media (max-width:834px){
+    .card-box{display:none}                      /* table chhupao */
+    .npd-mcards{display:block}
+    .mc-selectbar{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 12px}
+    .mc-selectbar label{display:flex;align-items:center;gap:9px;font-size:.88rem;font-weight:700;cursor:pointer}
+    .mc-selectbar input{width:18px;height:18px;accent-color:#7c3aed}
+    .mc-selectbar .cnt{font-size:.78rem;color:var(--muted2);font-weight:600}
+    .mcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+         box-shadow:0 6px 18px rgba(16,38,76,.08);margin-bottom:16px;overflow:hidden}
+    .mcard .mtop{display:flex;align-items:flex-start;gap:11px;padding:14px 14px 10px;position:relative}
+    .mcard .mcb{width:17px;height:17px;accent-color:#7c3aed;margin-top:12px}
+    .mcard .mav{width:44px;height:44px;border-radius:13px;background:#7c3aed;color:#fff;font-weight:800;
+         font-size:1.15rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .mcard .mtt{min-width:0;flex:1}
+    .mcard .mtt .nm{font-size:.94rem;font-weight:800;display:block;overflow:hidden;
+         text-overflow:ellipsis;white-space:nowrap;padding-right:86px}
+    .mcard .mtt .cd{font-size:.72rem;font-weight:800;color:#7c3aed;margin-top:2px}
+    .mcard .mbadges{position:absolute;top:12px;right:13px;display:flex;flex-direction:column;
+         align-items:flex-end;gap:5px}
+    .mcard .mbadges .badge{font-size:.62rem;padding:3px 10px}
+    .mcard .mpr{font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:99px}
+    .mcard .mact{margin-top:2px}
+    .mcard .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;padding:6px 16px 12px}
+    .mcard .mf .ml{font-size:.6rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2)}
+    .mcard .mf .mv{font-size:.83rem;font-weight:600;margin-top:1px;word-break:break-word}
+    .mcard .mfoot{display:flex;align-items:center;gap:10px;padding:10px 16px;
+         background:color-mix(in srgb,#7c3aed 5%,transparent);border-top:1px solid var(--border)}
+    .mcard .mfoot .prog{flex:0 0 110px;margin:0}
+    .mcard .mfoot .mst{font-size:.72rem;color:var(--muted2);font-weight:600}
+    .mcard .mfoot .mcd{margin-left:auto;font-size:.72rem;font-weight:800;color:#7c3aed}
+  }
+
+  /* ── Bulk action bar ── */
+  #bulkBar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:350;
+       background:var(--surface);border:1px solid var(--border);border-radius:99px;
+       box-shadow:0 12px 36px rgba(0,0,0,.22);padding:9px 10px 9px 18px;
+       align-items:center;gap:12px;max-width:calc(100vw - 24px);flex-wrap:wrap}
+  #bulkBar.open{display:flex}
+  #bulkBar .bcnt{font-size:.84rem;font-weight:800;white-space:nowrap}
+  #bulkBar button{height:36px;padding:0 15px;border-radius:99px;border:1px solid var(--border2);
+       background:var(--surface);font-size:.8rem;font-weight:700;font-family:inherit;color:var(--text);
+       cursor:pointer;white-space:nowrap}
+  #bulkBar .bdel{background:#dc2626;border-color:#dc2626;color:#fff}
+  #bulkBar .bres{background:#16a34a;border-color:#16a34a;color:#fff}
+
+  /* ── Confirm modal ── */
+  .cmodal-ov{display:none;position:fixed;inset:0;z-index:400;background:rgba(15,23,42,.45);
+       align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+  .cmodal-ov.open{display:flex}
+  .cmodal{width:380px;max-width:calc(100vw - 40px);background:var(--surface);border:1px solid var(--border);
+       border-radius:16px;box-shadow:0 22px 60px rgba(0,0,0,.28);padding:24px;text-align:center;
+       animation:cm-pop .18s ease}
+  @keyframes cm-pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+  .cmodal .cic{width:52px;height:52px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;
+       justify-content:center;font-size:1.5rem;background:color-mix(in srgb,#dc2626 11%,transparent)}
+  .cmodal h3{margin:0 0 6px;font-size:1.02rem;font-weight:800}
+  .cmodal p{margin:0 0 18px;font-size:.83rem;color:var(--muted2)}
+  .cmodal .row{display:flex;gap:10px;justify-content:center}
+  .cmodal .row button{height:40px;padding:0 22px;border-radius:10px;font-size:.85rem;font-weight:700;
+       font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text)}
+  .cmodal .row .danger{background:#dc2626;border-color:#dc2626;color:#fff}
+
+  /* ── Inline edit (leads jaisa) ── */
+  .ie-cell{cursor:pointer;position:relative}
+  .ie-cell:hover{background:color-mix(in srgb,#7c3aed 6%,transparent)}
+  .ie-view{display:flex;align-items:center;gap:5px;min-height:22px}
+  .ie-pencil{opacity:0;font-size:11px;color:var(--muted2);transition:opacity .15s;flex-shrink:0}
+  .ie-cell:hover .ie-pencil{opacity:1}
+  .ie-input-wrap{display:none;align-items:center;gap:4px}
+  .ie-input,.ie-select{height:30px;padding:0 8px;border-radius:8px;border:1.5px solid #7c3aed;
+       background:var(--surface);color:var(--text);font-size:.78rem;font-family:inherit;min-width:120px}
+  .ie-ok,.ie-esc{width:26px;height:26px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);
+       cursor:pointer;font-weight:800;font-size:.72rem;font-family:inherit}
+  .ie-ok{color:#16a34a}.ie-esc{color:#dc2626}
+  .ie-cell.ie-saving .ie-view{opacity:.4}
+  @keyframes ie-flash{0%{background:color-mix(in srgb,#16a34a 25%,transparent)}100%{background:transparent}}
+  .ie-cell.ie-saved{animation:ie-flash .6s ease}
+  #ieToast{position:fixed;bottom:22px;right:22px;z-index:300;padding:10px 18px;border-radius:11px;
+       font-size:.82rem;font-weight:700;color:#fff;display:none;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+
+  /* ── Import modal ── */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--surface);border-radius:16px;padding:22px;width:min(480px,92vw);box-shadow:0 18px 50px rgba(0,0,0,.25)}
+  .modal h3{margin:0 0 8px;font-size:1rem;font-weight:800}
+  .modal p{font-size:.78rem;color:var(--muted2);margin:0 0 12px}
+  .modal input[type=file]{width:100%;font-size:.8rem;padding:10px;border:1.5px dashed var(--border2);border-radius:10px;background:var(--bg)}
+  .modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+</style>
+</head>
+<body>
+{% set page_title = "NPD Projects" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"NPD","url":"/npd"},{"label":"Projects","url":"#"}] %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <div class="page-root">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div style="padding:11px 16px;border-radius:11px;margin-bottom:12px;font-size:.85rem;font-weight:600;
+                  background:color-mix(in srgb,{{ '#16a34a' if cat=='success' else '#dc2626' }} 11%,transparent);
+                  color:{{ '#15803d' if cat=='success' else '#b91c1c' }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {# ── current query helpers ── #}
+    {% set baseargs = {'show': 'deleted' if show_deleted else None, 'status': cur_status or None,
+                       'type': cur_type or None, 'priority': cur_priority or None,
+                       'category': cur_category or None, 'q': q or None} %}
+    {% macro qs(extra) -%}
+      {%- set merged = {} -%}
+      {%- for k, v in baseargs.items() if v %}{% if merged.update({k: v}) %}{% endif %}{% endfor -%}
+      {%- for k, v in extra.items() %}{% if v is none %}{% if merged.pop(k, None) %}{% endif %}{% else %}{% if merged.update({k: v}) %}{% endif %}{% endif %}{% endfor -%}
+      /npd/?{{ merged.items() | map('join', '=') | join('&') }}
+    {%- endmacro %}
+    {% macro sorth(key, label) -%}
+      <a href="{{ qs({'sort': key, 'dir': 'asc' if (sort==key and sdir=='desc') else 'desc'}) | trim }}">{{ label }}
+        {% if sort==key %}<span class="arr">{{ '▲' if sdir=='asc' else '▼' }}</span>{% endif %}</a>
+    {%- endmacro %}
+
+    <!-- ══ TOOLBAR ══ -->
+    <div class="toolbar">
+      <a class="btn primary" href="/npd/new">+ Add New</a>
+      <a class="btn {{ '' if show_deleted else 'active' }}" href="{{ qs({'show': none}) | trim }}">🗂 All</a>
+      <a class="btn {{ 'active' if show_deleted else '' }}" href="{{ qs({'show': 'deleted'}) | trim }}">🗑 Deleted
+        {% if deleted_count %}<span class="cnt">{{ deleted_count }}</span>{% endif %}</a>
+
+      <form method="get" action="/npd/" style="display:contents">
+        {% if show_deleted %}<input type="hidden" name="show" value="deleted">{% endif %}
+        {% if cur_priority %}<input type="hidden" name="priority" value="{{ cur_priority }}">{% endif %}
+        {% if cur_category %}<input type="hidden" name="category" value="{{ cur_category }}">{% endif %}
+        <input class="gsearch" type="text" name="q" value="{{ q }}" placeholder="🔍 Global Search..." onchange="this.form.submit()">
+        <select class="tb" name="status" onchange="this.form.submit()">
+          <option value="">⏱ Status</option>
+          {% for s in statuses %}<option value="{{ s.slug }}" {% if cur_status==s.slug %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+      </form>
+
+      <div class="dd" id="ddFilter">
+        <button class="btn {{ 'active' if cur_priority or cur_category else '' }}" onclick="tgl('ddFilter')">▽ Filter</button>
+        <div class="dd-panel">
+          <form method="get" action="/npd/">
+            {% if show_deleted %}<input type="hidden" name="show" value="deleted">{% endif %}
+            {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+            {% if cur_status %}<input type="hidden" name="status" value="{{ cur_status }}">{% endif %}
+            <span class="fl">Priority</span>
+            <select name="priority"><option value="">All</option>
+              {% for p in priorities %}<option value="{{ p }}" {% if cur_priority==p %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
+            <span class="fl">Category</span>
+            <select name="category"><option value="">All</option>
+              {% for c in cats %}<option value="{{ c }}" {% if cur_category==c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+            <div style="display:flex;gap:6px;margin-top:10px">
+              <button class="btn primary" type="submit" style="height:32px">Apply</button>
+              <a class="btn" style="height:32px" href="/npd/">Clear</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="dd" id="ddCols">
+        <button class="btn" onclick="tgl('ddCols')">☷ Columns</button>
+        <div class="dd-panel" id="colPanel"></div>
+      </div>
+
+      <a class="btn" href="{{ (qs({}) | trim).replace('/npd/?', '/npd/export?') }}">⬇ Export</a>
+      <a class="btn" href="/npd/import">⬆ Import</a>
+    </div>
+
+    {% set st_opts %}{% for s in statuses %}{{ s.slug }}::{{ s.name }}{% if not loop.last %}||{% endif %}{% endfor %}{% endset %}
+    {% set cat_opts %}{% for c in cats %}{{ c }}::{{ c }}{% if not loop.last %}||{% endif %}{% endfor %}{% endset %}
+    {% set ml_opts %}{% for m in market_levels %}{{ m }}::{{ m }}{% if not loop.last %}||{% endif %}{% endfor %}{% endset %}
+    {% set IE_FIELD = {'product':'product_name','client':'client_name','brand':'reference_brand','category':'product_category'} %}
+    {% set IE_TEXT = ['product','client','brand','client_company','client_email','client_phone',
+                      'client_coordinator','reference_product_name','variant_type','area_of_application',
+                      'appearance','fragrance','viscosity','ph_value','packaging_type','product_size',
+                      'no_of_samples','moq','order_quantity','costing_range','product_claim','label_claim',
+                      'requirement_spec','description','video_link','delay_reason'] %}
+    {% set IE_SEL = ['priority','status','category','market_level'] %}
+
+    <!-- ══ LIST VIEW ══ -->
+    <div class="card-box" id="listView">
+      <table class="no-cardify" id="npdTable">
+        <thead><tr>
+          <th data-col="chk"><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked);bulkBar()"></th>
+          <th data-col="num">#</th>
+          {% for key, label, dv in coldefs %}
+          <th data-col="{{ key }}">{% if key in sortable %}{{ sorth(key, label) }}{% else %}{{ label }}{% endif %}</th>
+          {% endfor %}
+          <th data-col="actions">Actions</th>
+        </tr></thead>
+        <tbody>
+        {% macro cell(r, key) -%}
+          {%- if key == 'created' %}{{ (r.created_at or '')|string|truncate(10, True, '') }}
+          {%- elif key == 'code' %}<a class="code" href="/npd/{{ r.id }}">{{ r.code or '#' ~ r.id }}</a>
+          {%- elif key == 'project_type' %}{{ 'NPD' if r.project_type=='npd' else 'EPD' }}
+          {%- elif key == 'category' %}{{ r.product_category or '—' }}
+          {%- elif key == 'client' %}<b>{{ r.client_name or r.client_company or r.cm_company or '—' }}</b>
+          {%- elif key == 'product' %}<a href="/npd/{{ r.id }}" onclick="event.stopPropagation()"><b class="ellip" style="display:inline-block">{{ r.product_name }}</b></a>
+          {%- elif key == 'members' %}{{ r.members }} member{{ 's' if r.members != 1 }}
+          {%- elif key == 'brand' %}<span class="ellip" style="display:inline-block;max-width:180px">{{ r.reference_brand or '—' }}</span>
+          {%- elif key == 'priority' %}{% set pc = {'Urgent':'#dc2626','High':'#ea580c','Normal':'#2563eb','Low':'#64748b'}.get(r.priority or 'Normal','#2563eb') %}<span class="pr-pill" style="color:{{ pc }};background:color-mix(in srgb,{{ pc }} 12%,transparent)">{{ r.priority or 'Normal' }}</span>
+          {%- elif key == 'npd_fee' %}{% if r.project_type=='npd' %}{{ '✔ Paid' if r.npd_fee_paid else '✘ Pending' }} (₹{{ r.npd_fee_amount|int if r.npd_fee_amount else 10000 }}){% else %}—{% endif %}
+          {%- elif key == 'custom_formulation' %}{{ 'Yes' if r.custom_formulation else 'No' }}
+          {%- elif key == 'assigned_sc_nm' %}{{ umap.get(r.assigned_sc, '—') }}
+          {%- elif key == 'assigned_rd_nm' %}{{ umap.get(r.assigned_rd, '—') }}
+          {%- elif key == 'npd_poc_nm' %}{{ umap.get(r.npd_poc, '—') }}
+          {%- elif key == 'created_by_nm' %}{{ umap.get(r.created_by, '—') }}
+          {%- elif key == 'last_connected' %}{{ (r.last_connected or '')|string|truncate(10, True, '') or '—' }}
+          {%- elif key == 'milestones' %}<div class="muted">{{ r.ms_done }}/{{ r.ms_total }}</div><div class="prog"><i style="width:{{ (r.ms_done / r.ms_total * 100)|round|int if r.ms_total else 0 }}%"></i></div>
+          {%- elif key == 'tat' %}{{ r.tat_days or 0 }}d
+          {%- elif key == 'status' %}{% set found = namespace(ok=false) %}{% for s in statuses %}{% if s.slug==r.status %}{% set found.ok=true %}<span class="badge" style="background:{{ s.color }}">{{ s.name }}</span>{% endif %}{% endfor %}{% if not found.ok %}<span class="badge" style="background:#6b7280">{{ (r.status or '—')|replace('_',' ')|title }}</span>{% endif %}
+          {%- elif key == 'start' %}{{ r.project_start_date or '—' }}
+          {%- elif key == 'updated' %}{{ (r.updated_at or '')|string|truncate(16, True, '') or '—' }}
+          {%- elif key == 'video_link' %}{% if r.video_link %}<a href="{{ r.video_link }}" target="_blank" style="color:#2563eb;font-weight:600">Link ↗</a>{% else %}—{% endif %}
+          {%- else %}{% set v = r.get(key) %}<span class="ellip" style="display:inline-block;max-width:220px" title="{{ v if v is not none else '' }}">{{ v if v is not none and v != '' else '—' }}</span>
+          {%- endif %}
+        {%- endmacro %}
+        {% for r in rows %}
+          <tr data-id="{{ r.id }}">
+            <td data-col="chk"><input type="checkbox" class="rowchk" value="{{ r.id }}"></td>
+            <td data-col="num" class="muted">{{ loop.index }}</td>
+            {% for key, label, dv in coldefs %}
+            {% set ed = (not show_deleted) and (key in IE_TEXT or key in IE_SEL) %}
+            {% set fld = IE_FIELD.get(key, key) %}
+            <td data-col="{{ key }}"{% if ed %} class="ie-cell" data-field="{{ fld }}"
+                data-val="{{ (r.get(fld) if r.get(fld) is not none else '')|e }}"
+                data-type="{{ 'select' if key in IE_SEL else 'text' }}"
+                {%- if key=='priority' %} data-opts="Urgent::Urgent||High::High||Normal::Normal||Low::Low"
+                {%- elif key=='status' %} data-opts="{{ st_opts|trim }}"
+                {%- elif key=='category' %} data-opts="{{ cat_opts|trim }}"
+                {%- elif key=='market_level' %} data-opts="{{ ml_opts|trim }}"{% endif %}
+                onclick="ieActivate(this)"{% endif %}>
+              {%- if ed %}<div class="ie-view">{{ cell(r, key) }}<span class="ie-pencil">✎</span></div>
+              {%- else %}{{ cell(r, key) }}{% endif -%}
+            </td>
+            {% endfor %}
+            <td data-col="actions">
+              <div class="act-dd">
+                <button class="act-btn" onclick="tglAct(this)">⋯</button>
+                <div class="act-menu">
+                  {% if show_deleted %}
+                  <form method="post" action="/npd/{{ r.id }}/restore"><button type="submit">♻️ Restore</button></form>
+                  <form method="post" action="/npd/{{ r.id }}/purge" onsubmit="return npdConfirmPurge(this, '{{ r.code }}')"><button type="submit" class="danger">⛔ Permanent Delete</button></form>
+                  {% else %}
+                  <a href="/npd/{{ r.id }}">👁 View</a>
+                  <a href="/npd/{{ r.id }}/form" target="_blank">⬇ Download NPD Form</a>
+                  <a href="/npd/{{ r.id }}/edit">✏️ Edit</a>
+                  <form method="post" action="/npd/{{ r.id }}/delete" onsubmit="return npdConfirmDel(this, '{{ r.code }}')">
+                    <button type="submit" class="danger">🗑 Delete</button></form>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="{{ coldefs|length + 3 }}" class="empty">{% if show_deleted %}Nothing in Deleted.{% else %}No projects found. <a href="/npd/new" style="color:#7c3aed;font-weight:700">Create new &rarr;</a>{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ══ MOBILE CARDS (≤834px — Android app feel) ══ -->
+    <div class="npd-mcards">
+      <div class="mc-selectbar">
+        <label><input type="checkbox" onclick="document.querySelectorAll('.mcb').forEach(c=>c.checked=this.checked);bulkBar()"> Select All</label>
+        <span class="cnt">{{ rows|length }} project{{ 's' if rows|length != 1 }}</span>
+      </div>
+      {% for r in rows %}
+      <div class="mcard">
+        <div class="mtop">
+          <input type="checkbox" class="mcb" value="{{ r.id }}">
+          <div class="mav">{{ ((r.client_company or r.cm_company or r.client_name or r.product_name or '?')|trim)[:1]|upper }}</div>
+          <div class="mtt">
+            <a class="nm" href="/npd/{{ r.id }}">{{ r.product_name }}</a>
+            <div class="cd">{{ r.code or '#' ~ r.id }}</div>
+          </div>
+          <div class="mbadges">
+            {% set found = namespace(ok=false) %}
+            {% for s in statuses %}{% if s.slug==r.status %}{% set found.ok=true %}<span class="badge" style="background:{{ s.color }}">{{ s.name }}</span>{% endif %}{% endfor %}
+            {% if not found.ok %}<span class="badge" style="background:#6b7280">{{ (r.status or '—')|replace('_',' ')|title }}</span>{% endif %}
+            {% set pc = {'Urgent':'#dc2626','High':'#ea580c','Normal':'#2563eb','Low':'#64748b'}.get(r.priority or 'Normal','#2563eb') %}
+            <span class="mpr" style="color:{{ pc }};background:color-mix(in srgb,{{ pc }} 12%,transparent)">{{ r.priority or 'Normal' }}</span>
+            <div class="act-dd mact">
+              <button class="act-btn" onclick="tglAct(this)">⋯</button>
+              <div class="act-menu">
+                {% if show_deleted %}
+                <form method="post" action="/npd/{{ r.id }}/restore"><button type="submit">♻️ Restore</button></form>
+                <form method="post" action="/npd/{{ r.id }}/purge" onsubmit="return npdConfirmPurge(this, '{{ r.code }}')"><button type="submit" class="danger">⛔ Permanent Delete</button></form>
+                {% else %}
+                <a href="/npd/{{ r.id }}">👁 View</a>
+                <a href="/npd/{{ r.id }}/form" target="_blank">⬇ Download NPD Form</a>
+                <a href="/npd/{{ r.id }}/edit">✏️ Edit</a>
+                <form method="post" action="/npd/{{ r.id }}/delete" onsubmit="return npdConfirmDel(this, '{{ r.code }}')"><button type="submit" class="danger">🗑 Delete</button></form>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mgrid">
+          <div class="mf"><div class="ml">Client</div><div class="mv">{{ r.client_company or r.cm_company or r.client_name or '—' }}</div></div>
+          <div class="mf"><div class="ml">Category</div><div class="mv">{{ r.product_category or '—' }}</div></div>
+          <div class="mf"><div class="ml">Ref Brand</div><div class="mv">{{ r.reference_brand or '—' }}</div></div>
+          <div class="mf"><div class="ml">Created</div><div class="mv">{{ (r.created_at or '')|string|truncate(10, True, '') }}</div></div>
+          <div class="mf"><div class="ml">Age</div><div class="mv">{{ r.tat_days or 0 }}d</div></div>
+          <div class="mf"><div class="ml">Members</div><div class="mv">{{ r.members }} member{{ 's' if r.members != 1 }}</div></div>
+        </div>
+        <div class="mfoot">
+          <div class="prog"><i style="width:{{ (r.ms_done / r.ms_total * 100)|round|int if r.ms_total else 0 }}%"></i></div>
+          <span class="mst">{{ r.ms_done }}/{{ r.ms_total }} milestones</span>
+          <span class="mcd">{{ r.code }}</span>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty" style="background:var(--surface);border:1px solid var(--border);border-radius:16px">
+        {% if show_deleted %}Nothing in Deleted.{% else %}No projects found.{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+
+  </div>
+</div>
+
+<script>
+// ── dropdowns ──
+function tgl(id){
+  const el = document.getElementById(id);
+  document.querySelectorAll('.dd.open,.act-dd.open').forEach(d=>{ if(d!==el) d.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+function tglAct(btn){
+  const dd = btn.parentElement;
+  let menu = dd._menu || dd.querySelector('.act-menu');
+  const wasOpen = menu.classList.contains('open');
+  closeMenus();
+  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+  if (wasOpen) return;
+  // PORTAL: menu ko body me move karo — parent ka transform/overflow
+  // position:fixed ko kharab nahi kar payega
+  if (!dd._menu){ dd._menu = menu; document.body.appendChild(menu); }
+  menu.classList.add('open');
+  const r = btn.getBoundingClientRect();
+  const mw = Math.max(185, menu.offsetWidth);
+  menu.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px';
+  menu.style.top = (r.bottom + 4) + 'px';
+  const mh = menu.offsetHeight;
+  if (r.bottom + mh + 8 > window.innerHeight) {        // neeche jagah nahi -> upar kholo
+    menu.style.top = Math.max(8, r.top - mh - 4) + 'px';
+  }
+}
+// scroll pe menus band (fixed menu button ke saath move nahi karta)
+function closeMenus(){ document.querySelectorAll('.act-menu.open').forEach(m=>m.classList.remove('open')); }
+document.querySelector('.page-root')?.addEventListener('scroll', closeMenus, {passive:true});
+document.querySelector('.card-box')?.addEventListener('scroll', closeMenus, {passive:true});
+window.addEventListener('resize', closeMenus);
+document.addEventListener('click', e=>{
+  if (!e.target.closest('.dd') && !e.target.closest('.act-dd') && !e.target.closest('.act-menu')){
+    document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+    closeMenus();
+  }
+});
+
+// ── delete confirm modal (native confirm ki jagah) ──
+let _delForm = null, _delCb = null;
+function _cmOpen(form, code, title, msg, btn, icon){
+  _delForm = form; _delCb = null;
+  document.getElementById('cmCode').textContent = code;
+  document.getElementById('cmTitle').textContent = title;
+  document.getElementById('cmMsg').textContent = msg;
+  document.getElementById('cmBtn').textContent = btn;
+  document.getElementById('cmIc').textContent = icon;
+  document.getElementById('cmOv').classList.add('open');
+  return false;                       // form abhi submit mat karo
+}
+function npdConfirmDel(form, code){
+  return _cmOpen(form, code, '— delete this project?',
+    'The project will move to the Deleted tab — you can restore it from there.',
+    '🗑 Delete', '🗑️');
+}
+function npdConfirmPurge(form, code){
+  return _cmOpen(form, code, 'PERMANENTLY — delete this project?',
+    'This CANNOT be undone — the project along with milestones, comments, notes and dispatches will be deleted.',
+    '⛔ Permanent Delete', '⚠️');
+}
+function cmClose(){ document.getElementById('cmOv').classList.remove('open'); _delForm = null; _delCb = null; }
+function cmGo(){
+  if (_delCb){ const cb = _delCb; _delCb = null; cmClose(); cb(); return; }
+  if (_delForm){ const f = _delForm; _delForm = null; f.submit(); }
+}
+
+// ── bulk selection ──
+function bulkIds(){
+  const ids = new Set();
+  document.querySelectorAll('.rowchk:checked,.mcb:checked').forEach(c=>{ if (c.value) ids.add(c.value); });
+  return [...ids];
+}
+function bulkBar(){
+  const n = bulkIds().length;
+  document.getElementById('bulkN').textContent = n;
+  document.getElementById('bulkBar').classList.toggle('open', n > 0);
+}
+function bulkClear(){
+  document.querySelectorAll('.rowchk:checked,.mcb:checked').forEach(c=>c.checked=false);
+  document.querySelectorAll('thead input[type=checkbox], .mc-selectbar input').forEach(c=>c.checked=false);
+  bulkBar();
+}
+document.addEventListener('change', e=>{ if (e.target.matches('.rowchk,.mcb')) bulkBar(); });
+const BULK_TXT = {
+  delete:  {t:'— delete selected?', m:'Selected projects will move to the Deleted tab — you can restore them from there.', b:'Delete', i:'\uD83D\uDDD1\uFE0F'},
+  restore: {t:'— restore selected?', m:'Selected projects will be moved back to the All list.', b:'Restore', i:'\u267B\uFE0F'},
+  purge:   {t:'PERMANENTLY — delete selected?', m:'This CANNOT be undone — milestones, comments, notes and dispatches will all be deleted.', b:'Permanent Delete', i:'\u26A0\uFE0F'}
+};
+function bulkDo(action){
+  const ids = bulkIds();
+  if (!ids.length) return;
+  const tx = BULK_TXT[action];
+  _cmOpen(null, ids.length + ' project' + (ids.length > 1 ? 's' : ''), tx.t, tx.m, tx.b, tx.i);
+  _delCb = function(){
+    fetch('/npd/bulk-action', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+      body: JSON.stringify({action: action, ids: ids})
+    }).then(r=>r.json()).then(d=>{
+      if (d && d.success) location.reload();
+      else ieToast((d && d.error) || 'Action failed', 'danger');
+    }).catch(()=>ieToast('Network error', 'danger'));
+  };
+}
+document.addEventListener('keydown', e=>{ if (e.key==='Escape') cmClose(); });
+
+// ── inline edit (leads jaisa; opts "value::Label") ──
+const ST_MAP = {};
+{% for s in statuses %}ST_MAP[{{ s.slug|tojson }}] = {name: {{ s.name|tojson }}, color: {{ s.color|tojson }}};
+{% endfor %}
+const PR_COLORS = {'Urgent':'#dc2626','High':'#ea580c','Normal':'#2563eb','Low':'#64748b'};
+let _ieActive = null;
+
+function ieToast(msg, kind){
+  let t = document.getElementById('ieToast');
+  if (!t){ t = document.createElement('div'); t.id='ieToast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.background = kind==='success' ? '#16a34a' : '#dc2626';
+  t.style.display = 'block';
+  clearTimeout(t._h); t._h = setTimeout(()=>{ t.style.display='none'; }, 1800);
+}
+
+function ieActivate(cell){
+  if (cell.classList.contains('ie-saving')) return;
+  if (_ieActive && _ieActive !== cell) ieCancel(_ieActive);
+  _ieActive = cell;
+  const val = cell.dataset.val || '', type = cell.dataset.type;
+  const opts = (cell.dataset.opts || '').split('||').filter(Boolean);
+  const view = cell.querySelector('.ie-view');
+  let wrap = cell.querySelector('.ie-input-wrap');
+  if (!wrap){
+    wrap = document.createElement('div'); wrap.className = 'ie-input-wrap';
+    let inp;
+    if (type === 'select'){
+      inp = document.createElement('select'); inp.className = 'ie-select';
+      const blank = document.createElement('option'); blank.value=''; blank.textContent='— select —';
+      inp.appendChild(blank);
+      opts.forEach(o=>{
+        const [v, l] = o.split('::');
+        const op = document.createElement('option'); op.value = v; op.textContent = l || v;
+        inp.appendChild(op);
+      });
+      inp.addEventListener('change', ()=>ieSave(cell));
+      inp.addEventListener('keydown', e=>{ if(e.key==='Escape'){ e.stopPropagation(); ieCancel(cell); } });
+      wrap.appendChild(inp);
+    } else {
+      inp = document.createElement('input'); inp.type='text'; inp.className='ie-input';
+      inp.addEventListener('keydown', e=>{
+        if (e.key==='Enter'){ e.preventDefault(); ieSave(cell); }
+        if (e.key==='Escape'){ e.stopPropagation(); ieCancel(cell); }
+      });
+      inp.addEventListener('click', e=>e.stopPropagation());
+      const ok = document.createElement('button'); ok.className='ie-ok'; ok.type='button'; ok.textContent='✓';
+      ok.onclick = e=>{ e.stopPropagation(); ieSave(cell); };
+      const esc = document.createElement('button'); esc.className='ie-esc'; esc.type='button'; esc.textContent='✕';
+      esc.onclick = e=>{ e.stopPropagation(); ieCancel(cell); };
+      wrap.append(inp, ok, esc);
+    }
+    cell.appendChild(wrap);
+  }
+  const f = wrap.querySelector('input,select');
+  f.value = val;
+  view.style.display = 'none'; wrap.style.display = 'flex';
+  f.focus(); if (f.select) try{ f.select(); }catch(e){}
+}
+
+function ieCancel(cell){
+  if (!cell) return;
+  const view = cell.querySelector('.ie-view'), wrap = cell.querySelector('.ie-input-wrap');
+  if (view) view.style.display = 'flex';
+  if (wrap) wrap.style.display = 'none';
+  if (_ieActive === cell) _ieActive = null;
+}
+
+function ieSave(cell){
+  const tr = cell.closest('tr'), id = tr && tr.dataset.id, field = cell.dataset.field;
+  const f = cell.querySelector('input,select');
+  const val = f ? f.value.trim() : '', old = cell.dataset.val || '';
+  const view = cell.querySelector('.ie-view'), wrap = cell.querySelector('.ie-input-wrap');
+  if (val === old){ ieCancel(cell); return; }
+  cell.classList.add('ie-saving');
+  if (wrap) wrap.style.display = 'none';
+  if (view) view.style.display = 'flex';
+  _ieActive = null;
+  fetch('/npd/' + id + '/inline-edit', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    body: JSON.stringify({field: field, value: val})
+  }).then(r=>r.json()).then(d=>{
+    cell.classList.remove('ie-saving');
+    if (d && d.success){
+      cell.dataset.val = val;
+      ieUpdateView(cell, field, val);
+      cell.classList.add('ie-saved');
+      setTimeout(()=>cell.classList.remove('ie-saved'), 600);
+      ieToast('Saved', 'success');
+    } else {
+      ieToast((d && d.error) || 'Save failed', 'danger');
+      ieActivate(cell);
+    }
+  }).catch(()=>{ cell.classList.remove('ie-saving'); ieToast('Network error','danger'); });
+}
+
+function ieUpdateView(cell, field, val){
+  const view = cell.querySelector('.ie-view');
+  if (!view) return;
+  if (field === 'status'){
+    const s = ST_MAP[val];
+    view.innerHTML = (s ? '<span class="badge" style="background:' + s.color + '">' + s.name + '</span>'
+                        : '<span class="badge" style="background:#6b7280">' + (val || '—') + '</span>')
+                   + '<span class="ie-pencil">✎</span>';
+    return;
+  }
+  if (field === 'priority'){
+    const c = PR_COLORS[val] || '#2563eb';
+    view.innerHTML = '<span class="pr-pill" style="color:' + c + ';background:color-mix(in srgb,' + c + ' 12%,transparent)">'
+                   + (val || 'Normal') + '</span><span class="ie-pencil">✎</span>';
+    return;
+  }
+  if (field === 'product_name'){
+    const b = view.querySelector('a b');
+    if (b){ b.textContent = val || '—'; return; }
+  }
+  if (field === 'client_name'){
+    const b = view.querySelector('b');
+    if (b){ b.textContent = val || '—'; return; }
+  }
+  const sp = view.querySelector('span:not(.ie-pencil), b');
+  if (sp) sp.textContent = val || '—';
+  else view.innerHTML = '<span>' + (val || '—') + '</span><span class="ie-pencil">✎</span>';
+}
+document.addEventListener('click', e=>{ if (_ieActive && !_ieActive.contains(e.target)) ieCancel(_ieActive); });
+
+// ── columns show/hide (saare DB fields; persisted) ──
+const COLS = {{ coldefs|tojson }};                 // [key, label, default_visible]
+const DEFAULT_HIDDEN = COLS.filter(c=>!c[2]).map(c=>c[0]);
+let hidden = new Set(JSON.parse(localStorage.getItem('npd_cols_hidden_v2') || 'null') || DEFAULT_HIDDEN);
+const panel = document.getElementById('colPanel');
+panel.style.maxHeight = '420px'; panel.style.overflowY = 'auto'; panel.style.minWidth = '250px';
+panel.innerHTML = '<span class="fl">Show / hide columns</span>' + COLS.map(([k,l]) =>
+  `<label><input type="checkbox" data-k="${k}" ${hidden.has(k)?'':'checked'}> ${l}</label>`).join('')
+  + '<div style="margin-top:8px"><button class="btn" style="height:30px;font-size:.72rem" id="colReset">↺ Reset to default</button></div>';
+panel.addEventListener('change', e=>{
+  if (!e.target.dataset.k) return;
+  const k = e.target.dataset.k;
+  e.target.checked ? hidden.delete(k) : hidden.add(k);
+  localStorage.setItem('npd_cols_hidden_v2', JSON.stringify([...hidden]));
+  applyCols();
+});
+document.getElementById('colReset').onclick = ()=>{
+  localStorage.removeItem('npd_cols_hidden_v2');
+  hidden = new Set(DEFAULT_HIDDEN);
+  panel.querySelectorAll('input[data-k]').forEach(i=>i.checked=!hidden.has(i.dataset.k));
+  applyCols();
+};
+function applyCols(){
+  document.querySelectorAll('#npdTable [data-col]').forEach(el=>{
+    el.style.display = hidden.has(el.dataset.col) ? 'none' : '';
+  });
+}
+applyCols();
+</script>
+</body>
+</html>

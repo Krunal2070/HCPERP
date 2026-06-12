@@ -590,12 +590,35 @@ a.nb-card,a.nb-card:visited{color:inherit;text-decoration:none}
     </div>
   </div>
   <div class="notebook-grid">
-    <a class="nb-card rose" href="/crm/leads">
+    <a class="nb-card rose" href="/crm/dashboard">
       <div class="nb-cover"><span class="nb-icon">📇</span></div>
       <div class="nb-body">
         <div class="nb-meta">CRM</div>
-        <div class="nb-title">CRM · Leads</div>
+        <div class="nb-title">CRM · Dashboard</div>
         <div class="nb-desc">Lead capture, follow-ups, discussions &amp; status</div>
+        <div class="nb-foot">
+          <span class="nb-badge live">Live</span>
+          <span class="nb-arrow">→</span>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endif %}
+
+  {% if role in ['admin'] or 'npd' in allowed_sections %}
+  <div class="section-head">
+    <div class="section-title">
+      <span class="section-dot" style="background:#7c3aed"></span>
+      Research &amp; Development
+    </div>
+  </div>
+  <div class="notebook-grid">
+    <a class="nb-card purple" href="/npd/dashboard">
+      <div class="nb-cover"><span class="nb-icon">🧪</span></div>
+      <div class="nb-body">
+        <div class="nb-meta">Research &amp; Development</div>
+        <div class="nb-title">NPD</div>
+        <div class="nb-desc">NPD / EPD projects, milestones &amp; tracking</div>
         <div class="nb-foot">
           <span class="nb-badge live">Live</span>
           <span class="nb-arrow">→</span>

@@ -121,6 +121,49 @@ def _is_admin_mgr():
     return _is_admin() or _role() == 'manager'
 
 
+# ── Department-based full visibility ─────────────────────────────────────────
+# In departments ke users ko SARI leads dikhengi (chahe kisi ko bhi assign ho):
+#   NPD Manager, Management, Administrator (+ common variants)
+FULL_VISIBILITY_DEPTS = {'npd manager', 'management', 'administrator',
+                         'administration', 'admin'}
+
+
+def _dept():
+    """Current user ka department (login pe session['department'] me aata hai;
+    na ho to User_Tbl se ek baar fetch karke session me cache)."""
+    d = session.get('department')
+    if d is None and _uid():
+        conn = _db()
+        if conn:
+            try:
+                row = conn.execute(
+                    "SELECT department FROM `User_Tbl` WHERE id=%s",
+                    (_uid(),)).fetchone()
+                d = (row or {}).get('department') or ''
+                session['department'] = d
+            finally:
+                conn.close()
+    return (d or '').strip().lower()
+
+
+def _has_full_visibility():
+    """Admin/Manager role YA NPD Manager / Management / Administrator dept."""
+    return _is_admin_mgr() or _dept() in FULL_VISIBILITY_DEPTS
+
+
+def _unassigned_sql():
+    """'Unassigned' ki definition: lead kisi NORMAL user ko assign nahi —
+    yaani assigned_to khali ho YA NPD Manager / Management / Administrator
+    department ke kisi user ko assigned ho (in logon ko assignment real
+    assignment nahi ginte). Returns (sql_fragment, params)."""
+    depts = sorted(FULL_VISIBILITY_DEPTS)
+    ph = ','.join(['%s'] * len(depts))
+    frag = ("(assigned_to IS NULL OR assigned_to = 0 OR assigned_to IN "
+            "(SELECT id FROM `User_Tbl` "
+            f"WHERE LOWER(TRIM(COALESCE(department,''))) IN ({ph})))")
+    return frag, depts
+
+
 def login_required(f):
     @wraps(f)
     def wrapper(*a, **k):
@@ -132,17 +175,21 @@ def login_required(f):
 
 @crm_bp.before_request
 def _crm_admin_only():
-    """Abhi CRM module SIRF admin ke liye (temporary lock).
-    Hatane ke liye is poore function ko comment/delete kar do."""
+    """CRM ab sab logged-in users ke liye khula hai — visibility
+    _visibility_sql() handle karti hai (normal user = sirf apni
+    assigned/created/team leads; NPD Manager / Management / Administrator
+    dept + admin/manager = sab).
+    Wapas SIRF-admin lock chahiye to neeche wala block uncomment kar do:
+        if not _is_admin():
+            if request.is_json or request.headers.get('X-Requested-With'):
+                return jsonify(ok=False, success=False,
+                               error='Access denied.'), 403
+            flash('The CRM module is currently available to admins only.', 'error')
+            return redirect('/')
+    """
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    if not _is_admin():
-        if request.is_json or request.headers.get('X-Requested-With'):
-            return jsonify(ok=False, success=False,
-                           error='Access denied — CRM abhi sirf admin ke liye hai.'), 403
-        flash('CRM module abhi sirf admin ke liye available hai.', 'error')
-        return redirect('/')
-    return None  # admin → aage badho
+    return None
 
 
 def _upload_dir():
@@ -291,8 +338,10 @@ def _handle_close_contribution(conn, lead):
 
 # ── Visibility WHERE clause (role-based) ─────────────────────────────────────
 def _visibility_sql():
-    """Return (sql_fragment, params) limiting non-admin/manager users."""
-    if _is_admin_mgr():
+    """Return (sql_fragment, params) limiting normal users.
+    Full visibility: admin/manager role YA NPD Manager / Management /
+    Administrator department. Baaki users: sirf assigned / created / team."""
+    if _has_full_visibility():
         return "", []
     uid = _uid()
     us = str(uid)
@@ -310,6 +359,9 @@ def _visibility_sql():
 @login_required
 def leads():
     status = request.args.get('status', '')
+    # Dashboard mini-card filters:
+    #   pending_followup | unassigned | client_linked | client_unlinked
+    flt = request.args.get('filter', '')
     search = request.args.get('search', '')
     source = request.args.get('source', '')
     category = request.args.get('category', '')
@@ -330,6 +382,33 @@ def leads():
 
         where = ["is_deleted = %s"]
         params = [1 if show_trash else 0]
+
+        # ── Dashboard mini-card filters ──────────────────────────────────
+        # (visibility apne aap lagti hai — normal user ko sirf apni
+        #  assigned/created/team leads hi dikhengi in filters me bhi)
+        if flt == 'pending_followup':
+            where.append("status IN ('open','in_process')")
+            where.append("follow_up_date IS NOT NULL")
+            where.append("follow_up_date <= CURDATE()")
+        elif flt == 'open':
+            # Dashboard ka 'Open Leads' KPI = open + in_process dono
+            where.append("status IN ('open','in_process')")
+        elif flt == 'unassigned':
+            # Unassigned list SIRF full-visibility users ke liye
+            # (Management / Administrator / NPD Manager / admin / manager)
+            if not _has_full_visibility():
+                flash('The unassigned leads list is only visible to Management, Administrator '
+                      'aur NPD Manager ke liye hai.', 'error')
+                return redirect(url_for('crm.leads'))
+            # 'Unassigned' = kisi normal user ko assign nahi (privileged
+            # dept walon ko assignment nahi ginti)
+            ua_frag, ua_params = _unassigned_sql()
+            where.append(ua_frag)
+            params.extend(ua_params)
+        elif flt == 'client_linked':
+            where.append("client_id IS NOT NULL")
+        elif flt == 'client_unlinked':
+            where.append("client_id IS NULL")
 
         if not show_trash and status:
             where.append("status = %s")
@@ -539,7 +618,10 @@ def lead_add():
                  f.get('priority', 'medium'),
                  f.get('expected_value') or None,
                  f.get('average_cost') or None,
-                 f.get('assigned_to') or None, f.get('follow_up_date') or None,
+                 # AUTO-ASSIGN: form me kisi ko assign nahi kiya to
+                 # creator ko hi assign kar do.
+                 f.get('assigned_to') or _uid(),
+                 f.get('follow_up_date') or None,
                  f.get('notes'), f.get('position'), f.get('address'),
                  f.get('city'), f.get('state'), f.get('country', 'India'),
                  f.get('zip_code'), f.get('product_name'), f.get('category'),
@@ -838,8 +920,8 @@ def lead_discussion_add(id):
     files = request.files.getlist('files')
     if not comment and not any(f.filename for f in files):
         if request.is_json or request.headers.get('X-Requested-With'):
-            return jsonify(ok=False, error='Comment ya file zaroori hai.'), 400
-        flash('Comment ya file zaroori hai.', 'error')
+            return jsonify(ok=False, error='A comment or file is required.'), 400
+        flash('A comment or file is required.', 'error')
         return redirect(url_for('crm.lead_view', id=id) + '#discussion')
     conn = _db()
     try:
@@ -894,7 +976,7 @@ def lead_discussion_delete(did):
         if not d:
             return jsonify(ok=False), 404
         if d['user_id'] != _uid():
-            return jsonify(ok=False, error='Sirf apni comment delete kar sakte ho'), 403
+            return jsonify(ok=False, error='You can only delete your own comments'), 403
         lead_id = d['lead_id']
         atts = conn.execute(
             "SELECT file_path FROM `lead_attachments` WHERE discussion_id=%s",
@@ -923,7 +1005,7 @@ def lead_discussion_edit(did):
         if not d:
             return jsonify(ok=False, error='Not found'), 404
         if d['user_id'] != _uid():
-            return jsonify(ok=False, error='Sirf apni comment edit kar sakte ho.'), 403
+            return jsonify(ok=False, error='You can only edit your own comments.'), 403
         comment = (request.form.get('comment') or '').strip()
         removed = [x for x in (request.form.get('removed') or '').split(',')
                    if x.strip().isdigit()]
@@ -988,8 +1070,8 @@ def lead_reminder_add(id):
     rdt = _parse_dt(remind_at)
     if not title or not rdt:
         if _ajax:
-            return jsonify(ok=False, error='Title aur sahi Date & Time zaroori hai.'), 400
-        flash('Title aur date/time zaroori hai.', 'error')
+            return jsonify(ok=False, error='Title and a valid Date & Time are required.'), 400
+        flash('Title and date/time are required.', 'error')
         return redirect(url_for('crm.lead_view', id=id) + '#reminders')
     conn = _db()
     try:
@@ -1117,7 +1199,7 @@ def lead_note_add(id):
     _ajax = request.is_json or request.headers.get('X-Requested-With')
     if not note:
         if _ajax:
-            return jsonify(ok=False, error='Note khali nahi ho sakta.'), 400
+            return jsonify(ok=False, error='Note cannot be empty.'), 400
         return redirect(url_for('crm.lead_view', id=id) + '#notes')
     conn = _db()
     try:
@@ -1184,7 +1266,7 @@ def lead_email_send(id):
     subject = (request.form.get('subject') or '').strip()
     body_html = request.form.get('body') or ''
     if not to_addr or not subject:
-        return jsonify(ok=False, error='To aur Subject zaroori hai.'), 400
+        return jsonify(ok=False, error='To and Subject are required.'), 400
 
     server = _mailcfg('MAIL_SERVER', 'smtp.gmail.com')
     port = int(_mailcfg('MAIL_PORT', 587) or 587)
@@ -1196,8 +1278,8 @@ def lead_email_send(id):
         from_email = sender
 
     if not password:
-        return jsonify(ok=False, error='SMTP password nahi mila. config.py me '
-                       'MAIL_PASSWORD set karein (ya app.config me load karein).'), 500
+        return jsonify(ok=False, error='SMTP password not found. Set '
+                       'MAIL_PASSWORD in config.py (or load it in app.config).'), 500
 
     try:
         msg = MIMEMultipart('alternative')
@@ -1305,7 +1387,7 @@ def leads_import():
             role=session.get('User_Type'))
     f = request.files.get('file')
     if not f or not f.filename:
-        flash('Koi file select nahi hui.', 'error')
+        flash('No file selected.', 'error')
         return redirect(url_for('crm.leads_import'))
     name = f.filename.lower()
     rows = []
@@ -1326,10 +1408,10 @@ def leads_import():
                 rows.append({hdr[i]: (str(c).strip() if c is not None else '')
                              for i, c in enumerate(r) if i < len(hdr)})
         else:
-            flash('Sirf .csv ya .xlsx file allowed hai.', 'error')
+            flash('Only .csv or .xlsx files are allowed.', 'error')
             return redirect(url_for('crm.leads_import'))
     except Exception as e:
-        flash(f'File padh nahi paaye: {e}', 'error')
+        flash(f'Could not read the file: {e}', 'error')
         return redirect(url_for('crm.leads_import'))
 
     alias = {
@@ -1375,13 +1457,17 @@ def leads_import():
             cols += ['status', 'created_by', 'created_at']
             ph += ['%s', '%s', 'NOW()']
             vals += [st, _uid()]
+            # AUTO-ASSIGN: import file me assigned_to nahi tha to
+            # import karne wale (creator) ko hi assign.
+            if 'assigned_to' not in cols:
+                cols.append('assigned_to'); ph.append('%s'); vals.append(_uid())
             sql = ("INSERT INTO `leads` (" + ",".join("`" + c + "`" for c in cols)
                    + ") VALUES (" + ",".join(ph) + ")")
             conn.execute(sql, vals)
             inserted += 1
         conn.commit()
-        flash(f'{inserted} leads import hue.'
-              + (f' {skipped} skip (name missing).' if skipped else ''), 'success')
+        flash(f'{inserted} leads imported.'
+              + (f' {skipped} skipped (name missing).' if skipped else ''), 'success')
     except Exception as e:
         flash(f'Import error: {e}', 'error')
     finally:
@@ -1731,6 +1817,18 @@ def ensure_lead_tables():
         for q in seed:
             conn.execute(q)
         conn.commit()
+        # ── BACKFILL (one-time, idempotent) ─────────────────────────────
+        # Auto-assign rule se PEHLE bani leads ka assigned_to NULL hai —
+        # unhe creator ko assign kar do, warna wo "Unassigned" me ginti hain.
+        cur = conn.execute(
+            "UPDATE `leads` SET assigned_to = created_by "
+            "WHERE (assigned_to IS NULL OR assigned_to = 0) "
+            "AND created_by IS NOT NULL AND created_by <> 0")
+        if cur.rowcount:
+            print(f"[crm_leads] backfill: {cur.rowcount} purani lead(s) "
+                  f"creator ko auto-assign hui.")
+        conn.commit()
+
         print("[crm_leads] tables ready.")
     except Exception as e:
         print(f"[crm_leads] ensure_lead_tables error: {e}")
@@ -1923,6 +2021,79 @@ def client_edit(id):
         conn.close()
 
 
+@crm_bp.route('/clients/<int:id>/inline-edit', methods=['POST'])
+@login_required
+def client_inline_edit(id):
+    """Client master list se cell-level quick edit (AJAX JSON: {field, value})."""
+    data = request.get_json(silent=True) or {}
+    field = (data.get('field') or '').strip()
+    value = data.get('value', '')
+    allowed = {'contact_name', 'company_name', 'mobile', 'email', 'city',
+               'status', 'position', 'website', 'gstin', 'state'}
+    if field not in allowed:
+        return jsonify(success=False, error='Field not allowed'), 400
+    if isinstance(value, str):
+        value = value.strip()
+    if field == 'status' and value not in ('active', 'inactive'):
+        return jsonify(success=False, error='Invalid status'), 400
+    if field == 'contact_name' and not value:
+        return jsonify(success=False, error='Contact name cannot be empty'), 400
+    conn = _db()
+    try:
+        row = conn.execute("SELECT id FROM `client_masters` "
+                           "WHERE id=%s AND is_deleted=0", (id,)).fetchone()
+        if not row:
+            return jsonify(success=False, error='Client not found'), 404
+        conn.execute(
+            f"UPDATE `client_masters` SET `{field}`=%s, modified_by=%s "
+            f"WHERE id=%s", (value or None, _uid(), id))
+        conn.commit()
+        return jsonify(success=True, field=field, value=value)
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return jsonify(success=False, error=str(e)), 500
+    finally:
+        conn.close()
+
+
+@crm_bp.route('/clients/bulk-action', methods=['POST'])
+@login_required
+def clients_bulk_action():
+    """Selected clients pe bulk delete / restore (AJAX JSON)."""
+    data = request.get_json(silent=True) or {}
+    action = data.get('action')
+    try:
+        ids = [int(i) for i in (data.get('ids') or [])][:200]
+    except Exception:
+        ids = []
+    if action not in ('delete', 'restore') or not ids:
+        return jsonify(success=False, error='Invalid request'), 400
+    conn = _db()
+    try:
+        ph = ",".join(["%s"] * len(ids))
+        if action == 'delete':
+            cur = conn.execute(
+                f"UPDATE `client_masters` SET is_deleted=1, deleted_at=NOW() "
+                f"WHERE id IN ({ph}) AND is_deleted=0", ids)
+        else:
+            cur = conn.execute(
+                f"UPDATE `client_masters` SET is_deleted=0, deleted_at=NULL "
+                f"WHERE id IN ({ph}) AND is_deleted=1", ids)
+        conn.commit()
+        return jsonify(success=True, count=cur.rowcount)
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return jsonify(success=False, error=str(e)), 500
+    finally:
+        conn.close()
+
+
 @crm_bp.route('/clients/<int:id>/delete', methods=['POST'])
 @login_required
 def client_delete(id):
@@ -1964,7 +2135,7 @@ def clients_import():
 
     f = request.files.get('file')
     if not f or not f.filename:
-        flash('Koi file select nahi hui.', 'error')
+        flash('No file selected.', 'error')
         return redirect(url_for('crm.clients_import'))
 
     name = f.filename.lower()
@@ -1990,18 +2161,18 @@ def clients_import():
                 rows.append({hdr[i]: (str(c).strip() if c is not None else '')
                              for i, c in enumerate(r) if i < len(hdr)})
         elif name.endswith('.xls'):
-            flash('Purani .xls file support nahi hoti. File ko Excel me '
+            flash('Old .xls files are not supported. Please open the file in Excel '
                   '"Save As .xlsx" karke (ya CSV) upload karein.', 'error')
             return redirect(url_for('crm.clients_import'))
         else:
-            flash('Sirf .csv ya .xlsx file allowed hai.', 'error')
+            flash('Only .csv or .xlsx files are allowed.', 'error')
             return redirect(url_for('crm.clients_import'))
     except Exception as e:
-        flash(f'File padh nahi paaye: {e}', 'error')
+        flash(f'Could not read the file: {e}', 'error')
         return redirect(url_for('crm.clients_import'))
 
     if not rows:
-        flash('File me koi data row nahi mila (sirf header row?).', 'error')
+        flash('No data rows found in the file (only a header row?).', 'error')
         return redirect(url_for('crm.clients_import'))
 
     # Header alias — spaces/underscores dono, kaafi variants cover
@@ -2112,7 +2283,7 @@ def clients_import():
         conn.commit()
         msg = f'{inserted} clients import hue.'
         if skipped:
-            msg += f' {skipped} skip (name missing).'
+            msg += f' {skipped} skipped (name missing).'
         if errors:
             msg += f' {len(errors)} row error.'
         flash(msg, 'success' if inserted else 'error')
@@ -2360,7 +2531,7 @@ def lead_sample_order(id):
         rates = request.form.getlist('item_rate[]')
 
         if not bill_company or not bill_address or not bill_phone:
-            flash('Company, Address aur Mobile zaroori hai.', 'error')
+            flash('Company, Address and Mobile are required.', 'error')
             return redirect(url_for('crm.lead_view', id=id))
 
         items, sub_total = [], 0.0
@@ -2379,7 +2550,7 @@ def lead_sample_order(id):
             sub_total += amt
             items.append({'name': nm.strip(), 'qty': qty, 'rate': rate, 'amount': amt})
         if not items:
-            flash('Kam se kam ek product add karo.', 'error')
+            flash('Please add at least one product.', 'error')
             return redirect(url_for('crm.lead_view', id=id))
 
         gst_amount = sub_total * gst_pct / 100.0
@@ -2402,7 +2573,7 @@ def lead_sample_order(id):
             conn.commit()
         except Exception:
             conn.rollback()
-            flash('Order number "%s" already exists, refresh karke retry karein.' % so_number, 'error')
+            flash('Order number "%s" already exists, please refresh and retry.' % so_number, 'error')
             return redirect(url_for('crm.lead_view', id=id))
 
         pdf = _build_so_pdf({
@@ -2691,22 +2862,26 @@ def lead_create_npd(id):
         conn.close()
 
     if not lead:
-        flash('Lead nahi mili.', 'error')
+        flash('Lead not found.', 'error')
         return redirect(url_for('crm.leads'))
+
+    ptype = request.args.get('type') \
+        if request.args.get('type') in ('npd', 'existing') else 'npd'
 
     if lead.get('client_id'):
         # CLIENT CONNECTED -> seedha NPD form
         # NPD route ka naam alag ho to neeche `except` wala path apne hisaab se badlo.
         try:
-            target = url_for('npd.create',
-                             lead_id=id, client_id=lead['client_id'])
+            target = url_for('npd.create', lead_id=id,
+                             client_id=lead['client_id'], type=ptype)
         except Exception:
-            target = "/npd/new?lead_id=%s&client_id=%s" % (id, lead['client_id'])
+            target = "/npd/new?lead_id=%s&client_id=%s&type=%s" % (
+                id, lead['client_id'], ptype)
         return redirect(target)
 
     # CLIENT NAHI CONNECTED -> client page (pehle connect/add karo)
-    flash('Is lead se koi Client connected nahi hai. '
-          'Pehle client connect/add karein, phir NPD banayein.', 'info')
+    flash('No Client is connected to this lead. '
+          'Please connect/add a client first, then create the NPD.', 'info')
     return redirect(url_for('crm.clients', connect_lead=id, next='create-npd'))
 
 
@@ -2755,7 +2930,7 @@ def lead_create_quotation(id):
             return lst[i] if i < len(lst) else ''
 
         if not bill_company:
-            flash('Company Name zaroori hai.', 'error')
+            flash('Company Name is required.', 'error')
             return redirect(url_for('crm.lead_view', id=id))
 
         items, sub_total = [], 0.0
@@ -2771,7 +2946,7 @@ def lead_create_quotation(id):
                           'cost': _f(costs, i), 'pm_spec': _s(pm_specs, i),
                           'pm_cost': _f(pm_costs, i), 'category': _s(cats, i)})
         if not items:
-            flash('Kam se kam ek product add karo.', 'error')
+            flash('Please add at least one product.', 'error')
             return redirect(url_for('crm.lead_view', id=id))
 
         gst_amount = sub_total * gst_pct / 100.0
@@ -2800,7 +2975,7 @@ def lead_create_quotation(id):
             conn.commit()
         except Exception:
             conn.rollback()
-            flash('Quotation number "%s" already exists, retry karein.' % quot_number, 'error')
+            flash('Quotation number "%s" already exists, please retry.' % quot_number, 'error')
             return redirect(url_for('crm.lead_view', id=id))
 
         pdf = _build_quot_pdf({
@@ -2988,7 +3163,7 @@ def sample_order_restore(soid):
 @login_required
 def sample_order_purge(soid):
     if not _is_admin_mgr():
-        return jsonify(ok=False, error='Permission nahi hai'), 403
+        return jsonify(ok=False, error='You do not have permission'), 403
     conn = _db()
     try:
         s = conn.execute("SELECT invoice_file FROM `sample_orders` WHERE id=%s",
@@ -3114,7 +3289,7 @@ def quotation_restore(qid):
 @login_required
 def quotation_purge(qid):
     if not _is_admin_mgr():
-        return jsonify(ok=False, error='Permission nahi hai'), 403
+        return jsonify(ok=False, error='You do not have permission'), 403
     conn = _db()
     try:
         conn.execute("DELETE FROM `quotations` WHERE id=%s", (qid,))
@@ -3279,7 +3454,7 @@ def lead_master_add():
     name = (request.form.get('name') or '').strip()
     tbl = _LM_MAP.get(t)
     if not tbl or not name:
-        return jsonify(ok=False, error='Type/Name galat hai'), 400
+        return jsonify(ok=False, error='Invalid Type/Name'), 400
     conn = _db()
     try:
         if tbl == 'lead_statuses':

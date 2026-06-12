@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPD Dashboard | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body,'Inter',sans-serif);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:18px 22px 44px;max-width:1850px;margin:0 auto;width:100%}
+  a{text-decoration:none;color:inherit}
+  .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+  .page-head h1{font-size:1.4rem;font-weight:800;margin:0}
+  .page-sub{font-size:.82rem;color:var(--muted2);margin-top:3px}
+  .range-sel{height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--border2);
+       background:var(--surface);color:var(--text);font-size:.85rem;font-weight:600;font-family:inherit;cursor:pointer}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:10px}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:11px 13px;
+       display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-sm)}
+  .kpi-ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+       font-size:15px;flex-shrink:0;background:color-mix(in srgb,var(--kc) 13%,transparent);color:var(--kc)}
+  .kpi-lbl{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);line-height:1.2}
+  .kpi-num{font-size:1.25rem;font-weight:800;line-height:1.15;color:var(--kc)}
+  .kpi-num small{font-size:.66rem;color:var(--muted2);font-weight:600}
+  .kpi-sub{font-size:.62rem;color:var(--muted2)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+       box-shadow:var(--shadow-sm);padding:15px 17px;min-width:0}
+  .card h3{margin:0 0 12px;font-size:.92rem;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .view-all{font-size:.72rem;font-weight:700;color:#2563eb}
+  .rowA{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;margin:12px 0}
+  .rowB{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+  .rowC{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;margin-bottom:12px}
+
+  .life-wrap{display:flex;align-items:center;gap:18px}
+  .donut-box{position:relative;width:190px;height:190px;flex-shrink:0}
+  .donut-box.sm{width:120px;height:120px}
+  .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .donut-center b{font-size:1.7rem;font-weight:800;line-height:1}
+  .donut-box.sm .donut-center b{font-size:1.3rem}
+  .donut-center span{font-size:.6rem;color:var(--muted2);font-weight:600}
+  .fun-list{flex:1;min-width:0}
+  .fun-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--border);font-size:.82rem;font-weight:600}
+  .fun-row:last-child{border-bottom:none}
+  .fun-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .fun-val{margin-left:auto;font-weight:800}
+  .fun-pct{color:var(--muted2);font-size:.7rem;font-weight:600;width:54px;text-align:right}
+  .foot-note{font-size:.7rem;color:var(--muted2);margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+  .btn{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:9px;font-size:.74rem;
+       font-weight:700;border:1px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text)}
+
+  .donut-side{display:flex;align-items:center;gap:12px}
+  .legend{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .lg-item{display:flex;align-items:center;gap:7px;font-size:.74rem;font-weight:600}
+  .lg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .lg-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lg-val{margin-left:auto;color:var(--muted2);font-weight:700;font-size:.7rem}
+
+  .chart-box{position:relative;height:200px}
+  .empty{padding:30px 10px;text-align:center;color:var(--muted2);font-size:.78rem}
+
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  th{text-align:left;padding:7px 8px;font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;
+     color:var(--muted2);border-bottom:1px solid var(--border)}
+  td{padding:7px 8px;border-bottom:1px dashed var(--border)}
+  tr:last-child td{border-bottom:none}
+  .rj{color:#ef4444;font-weight:600}
+  .tw-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border)}
+  .tw-row:last-child{border-bottom:none}
+  .tw-av{width:28px;height:28px;border-radius:50%;background:color-mix(in srgb,#7c3aed 14%,transparent);
+       color:#7c3aed;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;flex-shrink:0}
+  .tw-nm{font-size:.8rem;font-weight:700;flex:1}
+  .tw-nums{display:flex;gap:9px;font-size:.74rem;font-weight:800}
+
+  @media (max-width:1500px){.kpi-row{grid-template-columns:repeat(3,1fr)}.rowA,.rowC{grid-template-columns:1fr 1fr}}
+  @media (max-width:980px){.kpi-row{grid-template-columns:repeat(2,1fr)}.rowA,.rowC{grid-template-columns:1fr}.life-wrap{flex-direction:column}}
+</style>
+</head>
+<body>
+{% set page_title = "NPD Dashboard" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"NPD","url":"/npd"},{"label":"Dashboard","url":"#"}] %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <div class="page-root">
+
+    <div class="page-head">
+      <div>
+        <h1>NPD Dashboard</h1>
+        <div class="page-sub">Overview of NPD Projects, Samples, Approvals and Status</div>
+      </div>
+      <select class="range-sel" onchange="location.href='/npd/dashboard?period='+this.value">
+        {% for k, lbl in periods.items() %}
+        <option value="{{ k }}" {% if period==k %}selected{% endif %}>{{ lbl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- ══ KPI ROW 1 ══ -->
+    <div class="kpi-row">
+      <div class="kpi" style="--kc:#8b5cf6"><div class="kpi-ic">📇</div>
+        <div><div class="kpi-lbl">Total Leads Converted</div><div class="kpi-num">{{ a.leads_converted }}</div><div class="kpi-sub">From CRM</div></div></div>
+      <div class="kpi" style="--kc:#16a34a"><div class="kpi-ic">🧪</div>
+        <div><div class="kpi-lbl">Active NPD Projects</div><div class="kpi-num">{{ a.active_projects }}</div><div class="kpi-sub">Running</div></div></div>
+      <div class="kpi" style="--kc:#f59e0b"><div class="kpi-ic">🆕</div>
+        <div><div class="kpi-lbl">New Projects (This Month)</div><div class="kpi-num">{{ a.new_this_month }}</div><div class="kpi-sub">This month</div></div></div>
+      <div class="kpi" style="--kc:#2563eb"><div class="kpi-ic">✅</div>
+        <div><div class="kpi-lbl">Completed Projects</div><div class="kpi-num">{{ a.completed_projects }}</div><div class="kpi-sub">Complete</div></div></div>
+      <div class="kpi" style="--kc:#7c3aed"><div class="kpi-ic">🧫</div>
+        <div><div class="kpi-lbl">Total Samples</div><div class="kpi-num">{{ a.total_samples }}</div><div class="kpi-sub">All samples</div></div></div>
+      <div class="kpi" style="--kc:#ea580c"><div class="kpi-ic">⏳</div>
+        <div><div class="kpi-lbl">Samples In Development</div><div class="kpi-num">{{ a.in_development }}</div><div class="kpi-sub">Pending</div></div></div>
+    </div>
+
+    <!-- ══ KPI ROW 2 ══ -->
+    <div class="kpi-row">
+      <div class="kpi" style="--kc:#16a34a"><div class="kpi-ic">✔️</div>
+        <div><div class="kpi-lbl">Internal Approved Samples</div><div class="kpi-num">{{ a.internal_approved }}</div><div class="kpi-sub">Approved</div></div></div>
+      <div class="kpi" style="--kc:#7c3aed"><div class="kpi-ic">📤</div>
+        <div><div class="kpi-lbl">Samples Dispatched</div><div class="kpi-num">{{ a.samples_dispatched }}</div><div class="kpi-sub">Sent to client</div></div></div>
+      <div class="kpi" style="--kc:#16a34a"><div class="kpi-ic">👍</div>
+        <div><div class="kpi-lbl">Client Approved Samples</div><div class="kpi-num">{{ a.client_approved }}</div><div class="kpi-sub">{% if not a.client_approved %}No data yet{% endif %}</div></div></div>
+      <div class="kpi" style="--kc:#ef4444"><div class="kpi-ic">👎</div>
+        <div><div class="kpi-lbl">Client Rejected Samples</div><div class="kpi-num">{{ a.client_rejected }}</div><div class="kpi-sub">{% if not a.client_rejected %}No data yet{% endif %}</div></div></div>
+      <div class="kpi" style="--kc:#f59e0b"><div class="kpi-ic">🔁</div>
+        <div><div class="kpi-lbl">Rework Samples</div><div class="kpi-num">{{ a.rework_samples }}</div><div class="kpi-sub">{% if not a.rework_samples %}No data yet{% endif %}</div></div></div>
+      <div class="kpi" style="--kc:#db2777"><div class="kpi-ic">💬</div>
+        <div><div class="kpi-lbl">Pending Client Feedback</div><div class="kpi-num">{{ a.pending_feedback }}</div><div class="kpi-sub">{% if not a.pending_feedback %}No data yet{% endif %}</div></div></div>
+    </div>
+
+    <!-- ══ KPI ROW 3 ══ -->
+    <div class="kpi-row">
+      <div class="kpi" style="--kc:#0ea5e9"><div class="kpi-ic">📦</div>
+        <div><div class="kpi-lbl">Total Dispatches</div><div class="kpi-num">{{ a.total_dispatches }}</div><div class="kpi-sub">To client</div></div></div>
+      <div class="kpi" style="--kc:#f59e0b"><div class="kpi-ic">🚚</div>
+        <div><div class="kpi-lbl">In Transit</div><div class="kpi-num">{{ a.in_transit }}</div><div class="kpi-sub">{% if not a.in_transit %}No data yet{% endif %}</div></div></div>
+      <div class="kpi" style="--kc:#16a34a"><div class="kpi-ic">✔️</div>
+        <div><div class="kpi-lbl">Delivered</div><div class="kpi-num">{{ a.delivered }}</div><div class="kpi-sub">{% if not a.delivered %}No data yet{% endif %}</div></div></div>
+      <div class="kpi" style="--kc:#7c3aed"><div class="kpi-ic">⏱️</div>
+        <div><div class="kpi-lbl">Avg Sample Cycle Time</div><div class="kpi-num">{{ a.avg_cycle }}<small> days</small></div><div class="kpi-sub">Dispatch → action</div></div></div>
+      <div class="kpi" style="--kc:#ef4444"><div class="kpi-ic">⚠️</div>
+        <div><div class="kpi-lbl">Overdue Samples</div><div class="kpi-num">{{ a.overdue }}</div><div class="kpi-sub">{% if not a.overdue %}No data yet{% endif %}</div></div></div>
+      <div class="kpi" style="--kc:#0891b2"><div class="kpi-ic">🎯</div>
+        <div><div class="kpi-lbl">On Time Delivery</div><div class="kpi-num">{{ a.on_time }}%</div></div></div>
+    </div>
+
+    <!-- ══ ROW A : lifecycle + sample status + rejection ══ -->
+    <div class="rowA">
+      <div class="card">
+        <h3>NPD Lifecycle Overview</h3>
+        <div class="life-wrap">
+          <div class="donut-box"><canvas id="chLife"></canvas>
+            <div class="donut-center"><b>{{ a.funnel|sum(attribute='value') }}</b><span>Total<br>Lifecycle Count</span></div></div>
+          <div class="fun-list">
+            {% set ftot = a.funnel|sum(attribute='value') %}
+            {% for f in a.funnel %}
+            <div class="fun-row">
+              <span class="fun-dot" style="background:{{ f.color }}"></span>
+              {{ f.label }}
+              <span class="fun-val" style="color:{{ f.color }}">{{ f.value }}</span>
+              <span class="fun-pct">({{ ((f.value / ftot * 100)|round(2)) if ftot else 0 }}%)</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="foot-note">
+          <span>ⓘ Counts flowing through the NPD lifecycle.</span>
+          <a class="btn" href="/npd">View Full Report</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Sample Status Overview</h3>
+        {% if a.sample_status %}
+        <div class="donut-side">
+          <div class="donut-box sm"><canvas id="chSample"></canvas>
+            <div class="donut-center"><b>{{ a.sample_status|sum(attribute='value') }}</b><span>Total</span></div></div>
+          <div class="legend">
+            {% for s in a.sample_status %}
+            <div class="lg-item"><span class="lg-dot" style="background:{{ s.color }}"></span>
+              <span class="lg-name">{{ s.label }}</span><span class="lg-val">{{ s.value }}</span></div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}<div class="empty">No sample data yet</div>{% endif %}
+      </div>
+
+      <div class="card">
+        <h3>Rejection Analysis (Internal)</h3>
+        {% if a.rejection_internal %}
+        <div class="donut-side">
+          <div class="donut-box sm"><canvas id="chRejInt"></canvas>
+            <div class="donut-center"><b>{{ a.rejection_internal|sum(attribute='value') }}</b><span>Total</span></div></div>
+          <div class="legend">
+            {% for s in a.rejection_internal %}
+            <div class="lg-item"><span class="lg-dot" style="background:{{ s.color }}"></span>
+              <span class="lg-name">{{ s.label }}</span><span class="lg-val">{{ s.value }}</span></div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}<div class="empty">No internal rejections yet</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- ══ Project Stage bar ══ -->
+    <div class="rowB">
+      <div class="card">
+        <h3>Project Stage Overview</h3>
+        {% if a.project_stage %}
+        <div class="chart-box"><canvas id="chStage"></canvas></div>
+        {% else %}<div class="empty">No projects yet</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- ══ Client trend ══ -->
+    <div class="rowB">
+      <div class="card">
+        <h3>Client Approval Trend</h3>
+        {% if a.client_trend %}<div class="chart-box"><canvas id="chTrend"></canvas></div>
+        {% else %}<div class="empty">📈<br>Client approval data not available yet</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- ══ ROW C1 ══ -->
+    <div class="rowC">
+      <div class="card">
+        <h3>Top Rework Samples</h3>
+        {% if a.top_rework %}{% else %}<div class="empty">Rework tracking not available yet</div>{% endif %}
+      </div>
+      <div class="card">
+        <h3>Recent Dispatches <a class="view-all" href="/npd">View All</a></h3>
+        {% if a.recent_dispatches %}
+        <table>
+          <thead><tr><th>Dispatch No</th><th>Project</th><th>Client</th><th>Date</th></tr></thead>
+          <tbody>
+          {% for d in a.recent_dispatches %}
+            <tr><td><b>{{ d.no }}</b></td><td>{{ d.project }}</td><td>{{ d.client }}</td><td>{{ d.date }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">No dispatches yet</div>{% endif %}
+      </div>
+      <div class="card">
+        <h3>Pending Client Feedback</h3>
+        {% if a.pending_feedback_rows %}{% else %}<div class="empty">Client feedback tracking not available yet</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- ══ ROW C2 ══ -->
+    <div class="rowC">
+      <div class="card">
+        <h3>Rejection Analysis (Client)</h3>
+        {% if a.rejection_client %}{% else %}<div class="empty">Client rejection data not available yet</div>{% endif %}
+      </div>
+      <div class="card">
+        <h3>Samples Rejected (Recent) <a class="view-all" href="/npd">View All</a></h3>
+        {% if a.rejected_recent %}
+        <table>
+          <thead><tr><th>Sample</th><th>Project</th><th>Reason</th></tr></thead>
+          <tbody>
+          {% for r in a.rejected_recent %}
+            <tr><td><b>{{ r.sample_code }}</b></td><td>{{ r.project }}</td><td class="rj">{{ r.reason }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">No rejected samples yet</div>{% endif %}
+      </div>
+      <div class="card">
+        <h3>Team Workload Overview</h3>
+        {% if a.team_workload %}
+          {% for t in a.team_workload %}
+          <div class="tw-row">
+            <div class="tw-av">{{ t.name[:1]|upper }}</div>
+            <div class="tw-nm">{{ t.name }}</div>
+            <div class="tw-nums">
+              <span style="color:#2563eb" title="In Process">{{ t.in_process }}</span>
+              <span style="color:#16a34a" title="Completed">{{ t.completed }}</span>
+              <span style="color:#ef4444" title="Rejected">{{ t.rejected }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}<div class="empty">No workload data yet</div>{% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const FUNNEL    = {{ a.funnel|tojson }};
+const SAMPLE_ST = {{ a.sample_status|tojson }};
+const REJ_INT   = {{ a.rejection_internal|tojson }};
+const STAGE     = {{ a.project_stage|tojson }};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || undefined;
+const GRID = css('--border') || 'rgba(100,116,139,.18)';
+Chart.defaults.font.family = "'Inter',sans-serif";
+Chart.defaults.color = css('--muted2') || '#64748b';
+
+function donut(id, data, cutout){
+  const el = document.getElementById(id);
+  if (!el || !data.length) return;
+  new Chart(el, {type:'doughnut',
+    data:{labels:data.map(d=>d.label),
+          datasets:[{data:data.map(d=>d.value), backgroundColor:data.map(d=>d.color),
+                     borderWidth:0, cutout:cutout||'70%'}]},
+    options:{plugins:{legend:{display:false}}, responsive:true, maintainAspectRatio:false}});
+}
+donut('chLife', FUNNEL.filter(f=>f.value), '68%');
+donut('chSample', SAMPLE_ST);
+donut('chRejInt', REJ_INT);
+
+if (STAGE.length && document.getElementById('chStage')) {
+  new Chart(document.getElementById('chStage'), {type:'bar',
+    data:{labels:STAGE.map(s=>s.label),
+          datasets:[{data:STAGE.map(s=>s.value), backgroundColor:STAGE.map(s=>s.color),
+                     borderRadius:7, maxBarThickness:46}]},
+    options:{plugins:{legend:{display:false}}, responsive:true, maintainAspectRatio:false,
+      scales:{y:{beginAtZero:true, ticks:{precision:0}, grid:{color:GRID}},
+              x:{grid:{display:false}}}}});
+}
+</script>
+</body>
+</html>

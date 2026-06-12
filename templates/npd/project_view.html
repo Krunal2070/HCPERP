@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ p.code or 'Project' }} | NPD | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<script>(function(){var t=localStorage.getItem('hcp_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  body{font-family:var(--font-body,'Inter',sans-serif);background:var(--bg);color:var(--text);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .layout-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+  .page-root{flex:1;min-width:0;overflow-y:auto;padding:16px 20px 50px;max-width:1750px;margin:0 auto;width:100%}
+  a{text-decoration:none;color:inherit}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)}
+
+  /* ── Header ── */
+  .head{padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .head h1{font-size:1.12rem;font-weight:800;margin:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .head h1 .sep{color:var(--muted2);font-weight:400}
+  .badge{display:inline-block;padding:4px 12px;border-radius:99px;font-size:.7rem;font-weight:700;color:#fff;white-space:nowrap}
+  .type-pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.68rem;font-weight:800;border:1.5px solid}
+  .hmeta-inline{font-size:.76rem;color:var(--muted2);white-space:nowrap}
+  .hmeta-inline b{color:var(--text)}
+  .vline{width:1px;height:22px;background:var(--border2);margin:0 4px;flex-shrink:0}
+  .hbtns{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:7px;height:37px;padding:0 15px;border-radius:10px;
+       font-size:.82rem;font-weight:700;border:1px solid var(--border2);background:var(--surface);
+       cursor:pointer;font-family:inherit;color:var(--text);white-space:nowrap}
+  .btn.green{background:#16a34a;border-color:#16a34a;color:#fff}
+  .btn.purple{background:#7c3aed;border-color:#7c3aed;color:#fff}
+  .btn.red{background:#dc2626;border-color:#dc2626;color:#fff}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  select.st{height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--border2);background:var(--surface);
+       color:var(--text);font-size:.78rem;font-weight:600;font-family:inherit;cursor:pointer}
+
+  /* ── START strip ── */
+  .strip{padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .na-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:10px;font-size:.78rem;
+       font-weight:700;color:#dc2626;background:color-mix(in srgb,#dc2626 9%,transparent);border:1px solid #dc262644}
+  .dur-box{margin:0 auto;text-align:center}
+  .dur-box .lbl{font-size:.66rem;font-weight:800;letter-spacing:.08em;color:var(--muted2);text-transform:uppercase}
+  .dur-box .val{font-size:1.3rem;font-weight:800;letter-spacing:.12em;border:1.5px solid var(--border2);
+       border-radius:99px;padding:7px 26px;margin-top:5px;color:var(--muted2)}
+  .dur-box .val.live{color:#16a34a;border-color:#16a34a66}
+
+  /* ── Tabs ── */
+  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:14px;overflow-x:auto}
+  .tab{padding:10px 16px;font-size:.84rem;font-weight:700;color:var(--muted2);cursor:pointer;border:none;
+       background:none;font-family:inherit;border-bottom:2.5px solid transparent;margin-bottom:-2px;white-space:nowrap}
+  .tab.on{color:#2563eb;border-bottom-color:#2563eb}
+  .pane{display:none}
+  .pane.on{display:block}
+
+  /* ── Info cards ── */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  @media (max-width:1100px){.cols{grid-template-columns:1fr}}
+  .icard{padding:0 0 8px;margin-bottom:14px}
+  .icard h3{margin:0;padding:13px 18px;font-size:.92rem;font-weight:800;border-bottom:1px solid var(--border)}
+  .irow{display:flex;gap:12px;padding:8px 18px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent);font-size:.83rem}
+  .irow:last-child{border-bottom:none}
+  .irow b{width:165px;flex-shrink:0;color:var(--muted2);font-weight:600}
+  .irow span{min-width:0;word-break:break-word}
+
+  /* ── Discussion ── */
+  .cform{padding:16px 18px;border-bottom:1px solid var(--border)}
+  .cform textarea{width:100%;box-sizing:border-box;min-height:74px;padding:10px 12px;border-radius:10px;
+       border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:.85rem;font-family:inherit;resize:vertical}
+  .cform .row{display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap}
+  .cform input[type=file]{font-size:.76rem}
+  .cmt{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+  .cmt:last-child{border-bottom:none}
+  .av{width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,#7c3aed 13%,transparent);color:#7c3aed;
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;flex-shrink:0}
+  .cmt .who{font-size:.8rem;font-weight:800}
+  .cmt .when{font-size:.68rem;color:var(--muted2);margin-left:8px;font-weight:500}
+  .cmt .txt{font-size:.84rem;margin-top:3px;white-space:pre-wrap;word-break:break-word}
+  .cmt .att{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:.74rem;font-weight:700;color:#2563eb}
+  .empty{padding:34px;text-align:center;color:var(--muted2);font-size:.82rem}
+
+  /* ── Activity / attachments ── */
+  .act-row{display:flex;gap:10px;padding:9px 18px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent);font-size:.81rem}
+  .act-row:last-child{border-bottom:none}
+  .act-when{margin-left:auto;color:var(--muted2);font-size:.7rem;white-space:nowrap}
+  table.att{width:100%;border-collapse:collapse;font-size:.81rem}
+  table.att th{text-align:left;padding:9px 18px;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);border-bottom:1px solid var(--border)}
+  table.att td{padding:9px 18px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+
+  /* ── Milestones ── */
+  .prog{height:9px;border-radius:99px;background:var(--border);overflow:hidden;margin:14px 18px}
+  .prog>i{display:block;height:100%;background:#22c55e;border-radius:99px}
+  .ms-row{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+  .ms-row:last-child{border-bottom:none}
+  .ms-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .ms-name{font-size:.85rem;font-weight:700}
+  .ms-date{font-size:.68rem;color:var(--muted2)}
+  .ms-row form{display:flex;gap:6px;margin-left:auto}
+  .ms-row select{height:30px;font-size:.74rem;padding:0 8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit}
+  .ms-row button{height:30px;font-size:.72rem;padding:0 11px;border-radius:8px;border:1px solid var(--border2);
+       background:var(--surface);cursor:pointer;font-weight:700;font-family:inherit;color:var(--text)}
+
+  .flash{padding:11px 16px;border-radius:11px;margin-bottom:12px;font-size:.85rem;font-weight:600}
+  .flash.success{background:color-mix(in srgb,#16a34a 11%,transparent);color:#15803d}
+  .flash.error{background:color-mix(in srgb,#dc2626 10%,transparent);color:#b91c1c}
+</style>
+<script src="{{ url_for('static', filename='js/hcp-modal.js') }}"></script>
+</head>
+<body>
+{% set page_title = "NPD · " ~ (p.code or p.id) %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"NPD","url":"/npd"},{"label":p.code or p.id,"url":"#"}] %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <div class="page-root">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+
+    <!-- ══ HEADER (old system jaisa — single row) ══ -->
+    <div class="card head">
+      <h1>
+        {{ p.code or '#' ~ p.id }}
+        <span class="sep">—</span> {{ p.client_company or p.cm_company or p.client_name or '—' }}
+        <span class="sep">—</span> {{ p.product_name }}
+        <span class="sep">—</span>
+        {% set found = namespace(ok=false) %}
+        {% for s in statuses %}{% if s.slug==p.status %}{% set found.ok=true %}<span class="badge" style="background:{{ s.color }}">{{ s.name }}</span>{% endif %}{% endfor %}
+        {% if not found.ok %}<span class="badge" style="background:#6b7280">{{ (p.status or '—')|replace('_',' ')|title }}</span>{% endif %}
+      </h1>
+      <span class="vline"></span>
+      <span class="hmeta-inline">📅 Create Date: <b>{{ (p.created_at or '')|string|truncate(19,True,'') }}</b></span>
+      <span class="hmeta-inline">📅 Duration: <b>{{ dur_days }} day{{ 's' if dur_days != 1 }}</b></span>
+      <div class="hbtns">
+        <a class="btn" href="/npd/{{ p.id }}/form" target="_blank">🖨 Print</a>
+        <a class="btn green" href="/npd/{{ p.id }}/edit">✏️ Edit NPD Project</a>
+      </div>
+    </div>
+
+    <!-- ══ START / TIMER STRIP ══ -->
+    <div class="card strip">
+      {% if not started %}
+        {% if can_start %}
+        <form method="post" action="/npd/{{ p.id }}/start">
+          <button class="btn purple" type="submit">▶ START</button>
+        </form>
+        {% else %}
+        <button class="btn" disabled>▶ START</button>
+        <span class="na-pill">🔒 Not assigned to you</span>
+        {% endif %}
+      {% elif not finished %}
+        {% if can_start %}
+        <form method="post" action="/npd/{{ p.id }}/finish" onsubmit="return npdFinishConfirm(this)">
+          <button class="btn red" type="submit">⏹ FINISH</button>
+        </form>
+        {% else %}<span class="na-pill">🔒 Not assigned to you</span>{% endif %}
+        <span style="font-size:.78rem;color:#16a34a;font-weight:700">● Running since {{ (p.started_at or '')|string|truncate(19,True,'') }}</span>
+      {% else %}
+        <span style="font-size:.78rem;font-weight:700;color:var(--muted2)">✔ Finished: {{ (p.finished_at or '')|string|truncate(19,True,'') }}</span>
+      {% endif %}
+      <div class="dur-box">
+        <div class="lbl">⏱ Duration</div>
+        <div class="val {{ 'live' if started and not finished }}">
+          {% if started %}{{ dur_days }} day{{ 's' if dur_days != 1 }}{% else %}– – : – – : – –{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TABS ══ -->
+    <div class="tabs">
+      <button class="tab on" data-t="overview">Overview</button>
+      <button class="tab" data-t="discussion">Discussion Board{% if comments %} ({{ comments|length }}){% endif %}</button>
+      <button class="tab" data-t="internal">Internal Discussion Board{% if internal %} ({{ internal|length }}){% endif %}</button>
+      <button class="tab" data-t="activity">Activity Log</button>
+      <button class="tab" data-t="attachments">Attachments List{% if attachments %} ({{ attachments|length }}){% endif %}</button>
+      <button class="tab" data-t="note">Note</button>
+      <button class="tab" data-t="milestones">Milestones ({{ pct }}%)</button>
+    </div>
+
+    <!-- ══ OVERVIEW ══ -->
+    <div class="pane on" id="pane-overview">
+      <div class="cols">
+        <div>
+          <div class="card icard">
+            <h3>Product Information</h3>
+            <div class="irow"><b>Project No</b><span>{{ p.code or '#' ~ p.id }}</span></div>
+            <div class="irow"><b>Product Name</b><span>{{ p.product_name }}</span></div>
+            <div class="irow"><b>Category</b><span>{{ p.product_category or '—' }}</span></div>
+            <div class="irow"><b>Product Range</b><span>{{ p.product_range or '—' }}</span></div>
+            <div class="irow"><b>Reference Product</b><span>{{ p.reference_product_name or p.reference_product or '—' }}</span></div>
+            <div class="irow"><b>Reference Brand</b><span>{{ p.reference_brand or '—' }}</span></div>
+            <div class="irow"><b>Area of Application</b><span>{{ p.area_of_application or '—' }}</span></div>
+            <div class="irow"><b>Variant/Variety/Type</b><span>{{ p.variant_type or '—' }}</span></div>
+            <div class="irow"><b>No of Samples</b><span>{{ p.no_of_samples or 0 }}</span></div>
+            <div class="irow"><b>MOQ</b><span>{{ p.moq or '—' }}</span></div>
+            <div class="irow"><b>Order Quantity</b><span>{{ p.order_quantity or '—' }}</span></div>
+            <div class="irow"><b>Product Size</b><span>{{ p.product_size or '—' }}</span></div>
+            <div class="irow"><b>Market Level</b><span>{{ p.market_level or '—' }}</span></div>
+            <div class="irow"><b>Priority</b><span>{{ p.priority or 'Normal' }}</span></div>
+            <div class="irow"><b>Costing Range</b><span>{{ p.costing_range or '—' }}</span></div>
+            <div class="irow"><b>Ph</b><span>{{ p.ph_value or '—' }}</span></div>
+            <div class="irow"><b>Packaging Type</b><span>{{ p.packaging_type or '—' }}</span></div>
+            <div class="irow"><b>Fragrance / Flavours</b><span>{{ p.fragrance or '—' }}</span></div>
+            <div class="irow"><b>Viscosity</b><span>{{ p.viscosity or '—' }}</span></div>
+            <div class="irow"><b>Appearance</b><span>{{ p.appearance or '—' }}</span></div>
+            <div class="irow"><b>Video Link</b><span>{% if p.video_link %}<a href="{{ p.video_link }}" target="_blank" style="color:#2563eb;font-weight:600">{{ p.video_link|truncate(60) }} ↗</a>{% else %}—{% endif %}</span></div>
+            {% if p.project_type=='npd' %}
+            <div class="irow"><b>NPD Fee</b><span>{% if p.npd_fee_paid %}✅ Paid{% else %}❌ Pending{% endif %} (₹{{ p.npd_fee_amount|int if p.npd_fee_amount else 10000 }})</span></div>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <div class="card icard">
+            <h3>Client Information</h3>
+            <div class="irow"><b>Client Name</b><span>{{ p.client_name or '—' }}</span></div>
+            <div class="irow"><b>Company</b><span style="color:#2563eb;font-weight:700">{{ p.client_company or p.cm_company or '—' }}</span></div>
+            <div class="irow"><b>Co-Ordinator</b><span>{{ p.client_coordinator or '—' }}</span></div>
+            <div class="irow"><b>Email</b><span>{% if p.client_email %}<a href="mailto:{{ p.client_email }}" style="color:#2563eb">{{ p.client_email }}</a>{% else %}—{% endif %}</span></div>
+            <div class="irow"><b>Phone</b><span>{{ p.client_phone or '—' }}</span></div>
+            <div class="irow"><b>Sales Coordinator</b><span>{{ umap.get(p.assigned_sc, '—') }}</span></div>
+            <div class="irow"><b>R&amp;D Person</b><span>{{ umap.get(p.assigned_rd, '—') }}</span></div>
+            <div class="irow"><b>NPD POC</b><span>{{ umap.get(p.npd_poc, '—') }}</span></div>
+            <div class="irow"><b>Created By</b><span>{{ umap.get(p.created_by, '—') }}</span></div>
+          </div>
+          <div class="card icard">
+            <h3>Formulation Details</h3>
+            <div class="irow"><b>Active Ing. req</b><span>{{ p.active_ingredients or '—' }}</span></div>
+            <div class="irow"><b>Ingredients</b><span>{{ p.ingredients or '—' }}</span></div>
+            <div class="irow"><b>Product Claim</b><span>{{ p.product_claim or '—' }}</span></div>
+            <div class="irow"><b>Label Claim</b><span>{{ p.label_claim or '—' }}</span></div>
+            <div class="irow"><b>Requirement Spec</b><span>{{ p.requirement_spec or '—' }}</span></div>
+            <div class="irow"><b>Description</b><span>{{ p.description or '—' }}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DISCUSSION BOARD ══ -->
+    <div class="pane" id="pane-discussion">
+      <div class="card">
+        <form class="cform" method="post" action="/npd/{{ p.id }}/comment" enctype="multipart/form-data">
+          <textarea name="comment" placeholder="Write something in the discussion..." required></textarea>
+          <div class="row">
+            <input type="file" name="file">
+            <span style="flex:1"></span>
+            <button class="btn purple" type="submit" style="height:36px">💬 Post Comment</button>
+          </div>
+        </form>
+        {% for cm in comments %}
+        <div class="cmt">
+          <div class="av">{{ (umap.get(cm.user_id, '?'))[:1]|upper }}</div>
+          <div style="min-width:0;flex:1">
+            <span class="who">{{ umap.get(cm.user_id, 'User') }}</span><span class="when">{{ (cm.created_at or '')|string|truncate(19,True,'') }}</span>
+            <div class="txt">{{ cm.comment }}</div>
+            {% if cm.attachment %}<a class="att" href="/static/uploads/npd/{{ cm.attachment }}" target="_blank">📎 {{ cm.attachment.split('_', 2)[-1] }}</a>{% endif %}
+          </div>
+        </div>
+        {% else %}<div class="empty">No discussion yet — post the first comment.</div>{% endfor %}
+      </div>
+    </div>
+
+    <!-- ══ INTERNAL DISCUSSION ══ -->
+    <div class="pane" id="pane-internal">
+      <div class="card">
+        <form class="cform" method="post" action="/npd/{{ p.id }}/comment" enctype="multipart/form-data">
+          <input type="hidden" name="is_internal" value="1">
+          <textarea name="comment" placeholder="Internal team discussion (not visible to the client)..." required></textarea>
+          <div class="row">
+            <input type="file" name="file">
+            <span style="flex:1"></span>
+            <button class="btn purple" type="submit" style="height:36px">🔒 Post Internal</button>
+          </div>
+        </form>
+        {% for cm in internal %}
+        <div class="cmt">
+          <div class="av" style="background:color-mix(in srgb,#dc2626 11%,transparent);color:#dc2626">{{ (umap.get(cm.user_id, '?'))[:1]|upper }}</div>
+          <div style="min-width:0;flex:1">
+            <span class="who">{{ umap.get(cm.user_id, 'User') }}</span><span class="when">{{ (cm.created_at or '')|string|truncate(19,True,'') }}</span>
+            <div class="txt">{{ cm.comment }}</div>
+            {% if cm.attachment %}<a class="att" href="/static/uploads/npd/{{ cm.attachment }}" target="_blank">📎 {{ cm.attachment.split('_', 2)[-1] }}</a>{% endif %}
+          </div>
+        </div>
+        {% else %}<div class="empty">Internal discussion is empty.</div>{% endfor %}
+      </div>
+    </div>
+
+    <!-- ══ ACTIVITY LOG ══ -->
+    <div class="pane" id="pane-activity">
+      <div class="card">
+        {% for a in acts %}
+        <div class="act-row">
+          <span>{{ a.action }} <span style="color:var(--muted2)">— {{ umap.get(a.user_id, '') }}</span></span>
+          <span class="act-when">{{ (a.created_at or '')|string|truncate(19,True,'') }}</span>
+        </div>
+        {% else %}<div class="empty">No activity yet.</div>{% endfor %}
+      </div>
+    </div>
+
+    <!-- ══ ATTACHMENTS ══ -->
+    <div class="pane" id="pane-attachments">
+      <div class="card">
+        {% if attachments %}
+        <table class="att">
+          <thead><tr><th>File</th><th>Source</th><th>By</th><th>When</th></tr></thead>
+          <tbody>
+          {% for at in attachments %}
+            <tr>
+              <td><a href="/static/uploads/npd/{{ at.name }}" target="_blank" style="color:#2563eb;font-weight:700">📎 {{ at.name.split('_', 2)[-1] }}</a></td>
+              <td>{{ at.src }}</td>
+              <td>{{ umap.get(at.by, '—') }}</td>
+              <td>{{ (at.when or '')|string|truncate(19,True,'') }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">No attachments. You can attach files in Discussion or Milestones.</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- ══ NOTE ══ -->
+    <div class="pane" id="pane-note">
+      <div class="card">
+        <form class="cform" method="post" action="/npd/{{ p.id }}/note" style="border-bottom:none">
+          <textarea name="content" style="min-height:200px" placeholder="Project note (only one note is kept — saving updates it)...">{{ note.content or '' }}</textarea>
+          <div class="row">
+            {% if note.updated_at %}<span style="font-size:.72rem;color:var(--muted2)">Last saved: {{ (note.updated_at or '')|string|truncate(19,True,'') }} — {{ umap.get(note.updated_by, '') }}</span>{% endif %}
+            <span style="flex:1"></span>
+            <button class="btn green" type="submit" style="height:36px">💾 Save Note</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══ MILESTONES ══ -->
+    <div class="pane" id="pane-milestones">
+      <div class="card">
+        <div style="padding:14px 18px 0;font-size:.85rem;font-weight:800">Milestone Progress <span style="color:var(--muted2);font-weight:600">{{ pct }}% approved</span></div>
+        <div class="prog"><i style="width:{{ pct }}%"></i></div>
+        {% for m in miles %}
+        <div class="ms-row">
+          {% for s,l,c in ms_statuses %}{% if s==m.status %}<span class="ms-dot" style="background:{{ c }}"></span>{% endif %}{% endfor %}
+          <div style="min-width:0">
+            <div class="ms-name">{{ m.title }}</div>
+            {% if m.completed_at %}<div class="ms-date">Done: {{ (m.completed_at or '')|string|truncate(19,True,'') }}</div>{% endif %}
+          </div>
+          <form method="post" action="/npd/{{ p.id }}/milestone/{{ m.id }}">
+            <select name="status">
+              {% for s,l,c in ms_statuses %}<option value="{{ s }}" {% if s==m.status %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+            <button type="submit">Save</button>
+          </form>
+        </div>
+        {% else %}<div class="empty">No milestones.</div>{% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── tabs (hash support: /npd/5#internal seedha us tab pe) ──
+const tabs = document.querySelectorAll('.tab');
+function openTab(t){
+  tabs.forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on', p.id==='pane-'+t));
+}
+tabs.forEach(b=>b.addEventListener('click', ()=>{ openTab(b.dataset.t); history.replaceState(null,'','#'+b.dataset.t); }));
+const h = location.hash.replace('#','');
+if (h && document.getElementById('pane-'+h)) openTab(h);
+
+// FINISH confirm — themed modal
+function npdFinishConfirm(form){
+  cmConfirm('Mark this project as finished?', function(){ form.submit(); }, 'Finish', 'purple');
+  return false;
+}
+</script>
+</body>
+</html>
