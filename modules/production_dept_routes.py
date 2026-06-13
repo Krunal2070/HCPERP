@@ -30,14 +30,14 @@ def _login_required(f):
 _ROLE_DEFAULT_PAGES = {
     'admin':      {
                    'dashboard','rd_sampling','qc_sampling','qc_dashboard',
-                   'canteen','task_reminders','task_scheduler','manage_users',
-                   'access_control','lunch_coupons','transaction','loan','scrap',
+                   'task_reminders','task_scheduler','manage_users',
+                   'access_control','transaction','loan','scrap',
                    'production_initiater','cms','procurement','production_dept',
                    'planning','backup','trs_view','packing',
                   },
     'Purchase':   {'dashboard','rd_sampling','qc_sampling','qc_dashboard',
-                   'transaction','loan','scrap','cms','canteen',
-                   'lunch_coupons','task_reminders','trs_view'},
+                   'transaction','loan','scrap','cms',
+                   'task_reminders','trs_view'},
     'RD':         {'dashboard','rd_sampling','task_reminders','trs_view'},
     'QC':         {'dashboard','qc_sampling','qc_dashboard','task_reminders','trs_view','packing'},
     'Planning':   {'dashboard','planning','task_reminders'},
@@ -53,7 +53,7 @@ _ROLE_DEFAULT_PAGES = {
     'Rm_Store':   {'dashboard','production_initiater','task_reminders'},
 }
 _USER_PAGE_GRANTS = {
-    'dharmendra': {'transaction', 'loan', 'scrap', 'lunch_coupons'},
+    'dharmendra': {'transaction', 'loan', 'scrap'},
 }
 
 def _user_allowed_pages():

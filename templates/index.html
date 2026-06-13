@@ -768,21 +768,6 @@ a.nb-card,a.nb-card:visited{color:inherit;text-decoration:none}
     </a>
     {% endif %}
 
-    {% if role in ['admin','Purchase'] or 'canteen' in allowed_sections %}
-    <a class="nb-card teal" href="/canteen">
-      <div class="nb-cover"><span class="nb-icon">🍽️</span></div>
-      <div class="nb-body">
-        <div class="nb-meta">Canteen</div>
-        <div class="nb-title">Canteen Management</div>
-        <div class="nb-desc">Lunch tracking, payments, employee ledger</div>
-        <div class="nb-foot">
-          <span></span>
-          <span class="nb-arrow">→</span>
-        </div>
-      </div>
-    </a>
-    {% endif %}
-
     {% if role in ['admin','Packing'] or 'packing' in allowed_sections %}
     <a class="nb-card green" href="/packing">
       <div class="nb-cover"><span class="nb-icon">📋</span></div>
@@ -854,7 +839,7 @@ a.nb-card,a.nb-card:visited{color:inherit;text-decoration:none}
   #}
 
   <!-- ── MANAGEMENT & ADMIN ── -->
-  {% set _admin_section_keys = ['task_reminders','task_scheduler','lunch_coupons','manage_users','access_control','backup_manager'] %}
+  {% set _admin_section_keys = ['task_reminders','task_scheduler','manage_users','access_control','backup_manager'] %}
   {% if role in ['admin','Purchase'] or (_admin_section_keys | select('in', allowed_sections) | list | length > 0) %}
   <div class="section-head">
     <div class="section-title">
@@ -886,21 +871,6 @@ a.nb-card,a.nb-card:visited{color:inherit;text-decoration:none}
         <div class="nb-meta">Tasks</div>
         <div class="nb-title">Task Scheduler</div>
         <div class="nb-desc">Kanban board, dept-level task management</div>
-        <div class="nb-foot">
-          <span></span>
-          <span class="nb-arrow">→</span>
-        </div>
-      </div>
-    </a>
-    {% endif %}
-
-    {% if role == 'admin' or 'lunch_coupons' in allowed_sections %}
-    <a class="nb-card indigo" href="/lunch_coupons">
-      <div class="nb-cover"><span class="nb-icon">🎫</span></div>
-      <div class="nb-body">
-        <div class="nb-meta">Canteen</div>
-        <div class="nb-title">Lunch Coupons</div>
-        <div class="nb-desc">Print and manage lunch coupon batches</div>
         <div class="nb-foot">
           <span></span>
           <span class="nb-arrow">→</span>

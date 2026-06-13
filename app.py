@@ -781,6 +781,7 @@ def trs_view(record_id):
 @app.route('/dashboard')
 @login_required
 def index():
+    return ("Not Found", 404)  # canteen page removed
 
     role = session.get('User_Type')
 
@@ -1523,6 +1524,7 @@ def delete_canteen_employee():
 @app.route('/canteen')
 @login_required
 def canteen_page():
+    return ("Not Found", 404)  # canteen feature removed
     if not can_access('canteen'): return _denied('Canteen')
 
     role = session.get('User_Type')
@@ -3542,7 +3544,6 @@ INDEX_PERM_KEYS = [
     ('rd_sampling',             'R&D Sampling'),
     ('procurement',             'Procurement Dashboard'),
     ('inventory_mgmt',          'Inventory Management'),
-    ('canteen',                 'Canteen Management'),
     ('packing',                 'Packing Entry'),
     ('invoice_checklist',       'Invoice Document Checklist'),
     ('pm_stock',                'PM Stock'),
@@ -3550,7 +3551,6 @@ INDEX_PERM_KEYS = [
     # Management & Admin
     ('task_reminders',          'Task Reminders'),
     ('task_scheduler',          'Task Scheduler'),
-    ('lunch_coupons',           'Lunch Coupons'),
     ('manage_users',            'Manage Users'),
     ('access_control',          'Access Control'),
     ('backup_manager',          'Backup Manager'),
@@ -3763,6 +3763,7 @@ def api_task_scheduler_status():
 @app.route('/lunch_coupons')
 @login_required
 def lunch_coupons_page():
+    return ("Not Found", 404)  # lunch coupons feature removed
     if not can_access('lunch_coupons'): return _denied('Lunch Coupons')
     return render_template('lunch_coupons.html',
         user_name=session.get('User_Name'),

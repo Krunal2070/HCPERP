@@ -11,14 +11,14 @@ import sampling_portal
 ROLE_DEFAULT_PAGES = {
     'admin':      {
                    'dashboard','rd_sampling','qc_sampling','qc_dashboard',
-                   'canteen','task_reminders','task_scheduler','manage_users',
-                   'access_control','lunch_coupons','transaction','loan','scrap',
+                   'task_reminders','task_scheduler','manage_users',
+                   'access_control','transaction','loan','scrap',
                    'production_initiater','cms','procurement','production_dept',
                    'planning','backup','trs_view','packing','crm',
                   },
     'Purchase':   {'dashboard','rd_sampling','qc_sampling','qc_dashboard',
-                   'transaction','loan','scrap','cms','canteen',
-                   'lunch_coupons','task_reminders','trs_view'},
+                   'transaction','loan','scrap','cms',
+                   'task_reminders','trs_view'},
     'RD':         {'dashboard','rd_sampling','task_reminders','trs_view'},
     'QC':         {'dashboard','qc_sampling','qc_dashboard','task_reminders','trs_view','packing'},
     'Planning':   {'dashboard','planning','task_reminders'},
@@ -36,7 +36,7 @@ ROLE_DEFAULT_PAGES = {
 
 # ── Per-user page overrides (hardcoded grants) ────────────────────────────────
 _USER_PAGE_GRANTS = {
-    'dharmendra': {'transaction', 'loan', 'scrap', 'lunch_coupons'},
+    'dharmendra': {'transaction', 'loan', 'scrap'},
 }
 
 
@@ -59,7 +59,6 @@ def _get_all_permissions():
             'scrap_view','scrap_add','scrap_edit','scrap_delete',
             'rd_view','rd_add','rd_edit','rd_print','rd_approve',
             'qc_view','qc_add','qc_edit','qc_print','qc_reports',
-            'ctn_view','ctn_emp','ctn_lunch','ctn_pay','ctn_exp','ctn_coupon',
             'sch_view','sch_own_add','sch_all_add','sch_edit','sch_delete',
             'usr_view','usr_create','usr_edit','usr_deactivate','usr_reset','usr_access',
             'prod_view','prod_add','prod_print_sheets','prod_print_labels','prod_delete',

@@ -228,8 +228,6 @@ const MODULES = [
       items:[ {id:'proc_view',title:'View',icon:'👁'}, {id:'proc_add',title:'Add PO',icon:'➕'}, {id:'proc_edit',title:'Edit',icon:'✏'}, {id:'proc_approve',title:'Approve',icon:'✅'}, {id:'proc_grn',title:'GRN Entry',icon:'📦'}, {id:'proc_export',title:'Export',icon:'📤'} ] },
     { id:'packing', label:'Packing Entry', icon:'📋', color:'#10b981', bg:'rgba(16,185,129,0.15)',
       items:[ {id:'pck_view',title:'View',icon:'👁'}, {id:'pck_add',title:'Add Entry',icon:'➕'}, {id:'pck_edit',title:'Edit',icon:'✏'}, {id:'pck_delete',title:'Delete',icon:'🗑'}, {id:'pck_export',title:'Export',icon:'📤'} ] },
-    { id:'canteen', label:'Canteen Management', icon:'🍽', color:'#ec4899', bg:'rgba(236,72,153,0.15)',
-      items:[ {id:'ctn_view',title:'View',icon:'👁'}, {id:'ctn_emp',title:'Employees',icon:'👥'}, {id:'ctn_lunch',title:'Lunch Logs',icon:'🍛'}, {id:'ctn_pay',title:'Payments',icon:'💰'}, {id:'ctn_exp',title:'Expenses',icon:'📑'}, {id:'ctn_coupon',title:'Print Coupons',icon:'🎟'} ] },
     { id:'invoice', label:'Invoice Doc Checklist', icon:'📄', color:'#3b82f6', bg:'rgba(59,130,246,0.15)',
       items:[ {id:'inv_view',title:'View',icon:'👁'}, {id:'inv_add',title:'Add',icon:'➕'}, {id:'inv_edit',title:'Edit',icon:'✏'}, {id:'inv_approve',title:'Approve',icon:'✅'}, {id:'inv_export',title:'Export',icon:'📤'} ] },
     { id:'scheduler', label:'Task Scheduler', icon:'📅', color:'#22c55e', bg:'rgba(34,197,94,0.15)',
@@ -240,14 +238,14 @@ const MODULES = [
 
 const ROLE_DEFAULTS = {
     admin:      Object.fromEntries(MODULES.flatMap(m => m.items.map(i => [i.id, true]))),
-    Purchase:   {proc_view:1,proc_add:1,proc_edit:1,proc_grn:1,proc_export:1,inv_view:1,inv_add:1,inv_approve:1,ctn_view:1,ctn_lunch:1,ctn_coupon:1},
+    Purchase:   {proc_view:1,proc_add:1,proc_edit:1,proc_grn:1,proc_export:1,inv_view:1,inv_add:1,inv_approve:1},
     RD:         {rd_view:1,rd_add:1,rd_edit:1,rd_print:1,rd_approve:1,rd_fml_request:1,rd_fml_print:1},
     QC:         {qcs_view:1,qcs_add:1,qcs_edit:1,qcs_print:1,qcs_reports:1,qcd_view:1,qcd_approve:1,qcd_reject:1,qcd_reports:1,qcd_export:1},
     Production: {pd_view:1,pd_log:1,pd_complete:1,sch_view:1},
     Planning:   {pln_view:1,pln_pipeline:1,pln_leaderboard:1,pln_formulations:1,pln_export:1},
     Packing:    {pck_view:1,pck_add:1,pck_edit:1,pck_export:1},
     Stores:     {proc_view:1,pi_view:1,pi_print_sheets:1,pi_print_labels:1,sch_view:1},
-    HR:         {usr_view:1,sch_view:1,ctn_view:1},
+    HR:         {usr_view:1,sch_view:1},
     User:       {sch_view:1},
 };
 
