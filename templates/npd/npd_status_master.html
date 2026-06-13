@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPD Status Master | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<style>
+  .mm-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .mm-head h2{font-size:1.15rem;font-weight:800;display:flex;align-items:center;gap:8px;margin:0}
+  .mm-add{margin-left:auto;background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:.84rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .mm-add:hover{filter:brightness(1.07)}
+  .mm-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  table.mm{width:100%;border-collapse:collapse;font-size:.84rem}
+  table.mm th{text-align:left;padding:11px 14px;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);border-bottom:1px solid var(--border);white-space:nowrap}
+  table.mm td{padding:11px 14px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent);vertical-align:middle}
+  table.mm tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:3px 11px;border-radius:999px;color:#fff;font-size:.74rem;font-weight:700}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:700}
+  .pill.on{background:color-mix(in srgb,#16a34a 14%,transparent);color:#16a34a}
+  .pill.off{background:color-mix(in srgb,#94a3b8 18%,transparent);color:#64748b}
+  .ib{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;font-size:.82rem}
+  .ib.e:hover{border-color:#7c3aed;color:#7c3aed}.ib.d:hover{border-color:#dc2626;color:#dc2626}
+  .modal-ov{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,15,30,.5);backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:18px}
+  .modal-ov.show{display:flex}
+  .modal-bx{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:460px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.28)}
+  .modal-hd{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);font-weight:800}
+  .modal-x{margin-left:auto;width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);cursor:pointer}
+  .modal-bd{padding:18px 20px}
+  .fld{margin-bottom:13px}
+  .fld label{display:block;font-size:.74rem;font-weight:700;color:var(--muted2);margin-bottom:5px}
+  .fld input[type=text],.fld input[type=number],.fld input[type=color]{width:100%;border:1px solid var(--border2);border-radius:9px;padding:9px 11px;font-size:.86rem;font-family:inherit;box-sizing:border-box;background:var(--surface);color:var(--text);outline:none}
+  .fld input:focus{border-color:#7c3aed}
+  .fld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:600;margin-bottom:10px}
+  .modal-ft{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+  .btn-g{background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:9px 18px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-p{background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:9px 20px;font-weight:800;cursor:pointer;font-family:inherit}
+  .flash{padding:11px 16px;border-radius:11px;margin-bottom:12px;font-size:.85rem;font-weight:600}
+  /* professional compact table (override global heavy table styles) */
+  .mm-card table.mm thead tr{background:linear-gradient(135deg,#1e3a8a,#2563eb)!important}
+  .mm-card table.mm thead th{padding:10px 16px!important;font-size:.66rem!important;letter-spacing:.05em;
+       color:#fff!important;font-weight:800;background:transparent!important;border-right:none!important;width:auto!important;position:static!important}
+  .mm-card table.mm tbody td{padding:9px 16px!important;border-right:none!important;width:auto!important;
+       font-size:.85rem!important;color:var(--text)!important;vertical-align:middle}
+  .mm-card table.mm tbody tr{cursor:default!important}
+  .mm-card table.mm tbody tr:hover{background:color-mix(in srgb,#7c3aed 4%,transparent)!important}
+  .mm-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;
+       background:color-mix(in srgb,#7c3aed 10%,transparent);color:#5b21b6;font-size:.74rem;font-weight:800}
+  .acts{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+  td.acts-col{width:96px!important;white-space:nowrap}
+</style>
+</head>
+<body>
+{% set page_title = "NPD Status Master" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"NPD","url":"/npd"},{"label":"NPD Status Master","url":"#"}] %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <div class="page-root">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="flash" style="background:color-mix(in srgb,{{ '#16a34a' if cat=='success' else '#dc2626' }} 11%,transparent);color:{{ '#15803d' if cat=='success' else '#b91c1c' }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="mm-head">
+      <h2>🏷️ NPD Status Master</h2>
+      {% if can_edit %}<button class="mm-add" onclick="stOpen()">+ Add Status</button>{% endif %}
+    </div>
+
+    <div class="mm-card">
+      <table class="mm">
+        <thead><tr><th>#</th><th>Status</th><th>Slug</th><th>Color</th><th>Active</th>{% if can_edit %}<th style="text-align:right">Actions</th>{% endif %}</tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td><span class="mm-num">{{ loop.index }}</span></td>
+            <td><span class="badge" style="background:{{ r.color }}">{{ r.icon }} {{ r.name }}</span></td>
+            <td style="color:var(--muted2)">{{ r.slug }}</td>
+            <td><span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:{{ r.color }};vertical-align:middle"></span> {{ r.color }}</td>
+            <td><span class="pill {{ 'on' if r.is_active else 'off' }}">{{ 'Active' if r.is_active else 'Inactive' }}</span></td>
+            {% if can_edit %}
+            <td class="acts-col"><div class="acts">
+              <button class="ib e" title="Edit" onclick='stOpen({{ r|tojson }})'>✏️</button>
+              <form method="post" action="/npd/status-master/{{ r.id }}/delete" style="display:inline" onsubmit="return appAsk(this,'Delete this status?')">
+                <button class="ib d" title="Delete" type="submit">🗑</button>
+              </form>
+            </div></td>
+            {% endif %}
+          </tr>
+        {% else %}
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted2)">No statuses yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if can_edit %}
+<div class="modal-ov" id="stModal" onclick="if(event.target===this)stClose()">
+  <div class="modal-bx">
+    <div class="modal-hd"><span id="stTitle">Add Status</span><button class="modal-x" onclick="stClose()">✕</button></div>
+    <form class="modal-bd" method="post" action="/npd/status-master/save">
+      <input type="hidden" name="id" id="st_id">
+      <div class="fld"><label>Name *</label><input type="text" name="name" id="st_name" required></div>
+      <div class="fld-row">
+        <div class="fld"><label>Slug (key)</label><input type="text" name="slug" id="st_slug" placeholder="auto from name"></div>
+        <div class="fld"><label>Icon</label><input type="text" name="icon" id="st_icon" value="🔵"></div>
+      </div>
+      <div class="fld-row">
+        <div class="fld"><label>Color</label><input type="color" name="color" id="st_color" value="#6b7280" style="height:42px;padding:4px"></div>
+        <div class="fld"><label>Sort Order</label><input type="number" name="sort_order" id="st_sort" value="0"></div>
+      </div>
+      <label class="chk"><input type="checkbox" name="is_active" id="st_active" checked> Active</label>
+      <div class="modal-ft">
+        <button type="button" class="btn-g" onclick="stClose()">Cancel</button>
+        <button type="submit" class="btn-p">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function stOpen(r){
+  document.getElementById('stTitle').textContent = r ? 'Edit Status' : 'Add Status';
+  document.getElementById('st_id').value    = r ? r.id : '';
+  document.getElementById('st_name').value  = r ? (r.name||'') : '';
+  document.getElementById('st_slug').value  = r ? (r.slug||'') : '';
+  document.getElementById('st_slug').readOnly = !!r;
+  document.getElementById('st_icon').value  = r ? (r.icon||'🔵') : '🔵';
+  document.getElementById('st_color').value = r ? (r.color||'#6b7280') : '#6b7280';
+  document.getElementById('st_sort').value  = r ? (r.sort_order||0) : 0;
+  document.getElementById('st_active').checked = r ? !!r.is_active : true;
+  document.getElementById('stModal').classList.add('show');
+}
+function stClose(){ document.getElementById('stModal').classList.remove('show'); }
+</script>
+{% endif %}
+</body>
+</html>

@@ -29,13 +29,17 @@ DB_NAME     = os.environ.get("HCP_DB_NAME", "erpnew")
 DB_CHARSET  = os.environ.get("HCP_DB_CHARSET", "utf8mb4")
 
 # Ready-made kwargs dict for  pymysql.connect(**DB_CONFIG)
+# Single source of truth for the live DB connection used by core/sampling_portal.py
 DB_CONFIG = {
-    "host":     DB_HOST,
-    "port":     DB_PORT,
-    "user":     DB_USER,
-    "password": DB_PASSWORD,
-    "database": DB_NAME,
-    "charset":  DB_CHARSET,
+    "host":            DB_HOST,
+    "port":            DB_PORT,
+    "user":            DB_USER,
+    "password":        DB_PASSWORD,
+    "database":        DB_NAME,
+    "charset":         DB_CHARSET,
+    "autocommit":      False,
+    "connect_timeout": 10,
+    "init_command":    "SET time_zone = '+05:30'",   # IST — NOW()/CURRENT_TIMESTAMP in Indian time
 }
 
 # SQLAlchemy-style URI, in case any module ever wants it

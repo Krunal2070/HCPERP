@@ -47,7 +47,7 @@
       <div style="overflow-x:auto">
         <table>
           <thead><tr>
-            <th>#</th><th>Date</th><th>Company</th><th>Product Name</th><th>Category</th>
+            <th>#</th><th>Date</th><th>Company</th><th>Lead / Project</th><th>Product Name</th><th>Category</th>
             <th>Size</th><th style="text-align:right">MOQ</th><th style="text-align:right">Cost (₹)</th>
             <th>PM Spec</th><th style="text-align:right">PM Cost (₹)</th><th style="text-align:right">Final Cost (₹)</th>
           </tr></thead>
@@ -57,6 +57,10 @@
               <td>{{ r.sr }}</td>
               <td>{{ r.quot_date }}</td>
               <td style="font-weight:600">{{ r.company }}</td>
+              <td>
+                {% if r.lead_id %}<a href="/crm/leads/{{ r.lead_id }}" style="color:var(--teal,#0d9488);text-decoration:none;font-weight:700" title="Open lead">👁 {{ r.lead_contact or 'Lead' }}</a>
+                {% elif r.proj_id %}<a href="/npd/{{ r.proj_id }}" style="color:#7c3aed;text-decoration:none;font-weight:700" title="Open NPD project">🧪 {{ r.proj_code }}</a>
+                {% else %}—{% endif %}</td>
               <td><a class="pn" href="{{ url_for('crm.quotation_pdf', qid=r.quot_id) }}" target="_blank">{{ r.name }}</a></td>
               <td>{% if r.category and r.category != '—' %}<span class="cat">{{ r.category }}</span>{% else %}—{% endif %}</td>
               <td>{{ r.size }} {{ r.uom }}</td>
@@ -67,7 +71,7 @@
               <td class="fc">{{ '%.2f'|format(r.final_cost or 0) }}</td>
             </tr>
             {% else %}
-            <tr><td colspan="11" class="empty">Abhi koi quotation product nahi.</td></tr>
+            <tr><td colspan="12" class="empty">Abhi koi quotation product nahi.</td></tr>
             {% endfor %}
           </tbody>
         </table>

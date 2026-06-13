@@ -26,7 +26,7 @@ _THIS_DIR = os.path.dirname(os.path.abspath(__file__))   # .../core
 if _THIS_DIR not in _sys.path:
     _sys.path.insert(0, _THIS_DIR)
 try:
-    from config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+    from config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_CONFIG
 except Exception:
     # Fallback so the connection layer never hard-fails if config is missing
     DB_HOST     = "localhost"
@@ -34,6 +34,12 @@ except Exception:
     DB_USER     = "root"
     DB_PASSWORD = "Tarak@2424123"
     DB_NAME     = "hcp_portal"
+    DB_CONFIG = {
+        "host": DB_HOST, "port": DB_PORT, "user": DB_USER,
+        "password": DB_PASSWORD, "database": DB_NAME, "charset": "utf8mb4",
+        "autocommit": False, "connect_timeout": 10,
+        "init_command": "SET time_zone = '+05:30'",   # IST
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -230,16 +236,8 @@ def get_db_connection() -> _ConnectionWrapper:
     """Returns a connection wrapper that mimics sqlite3's API.
     Uses a thread-local cached connection for performance."""
     try:
-        conn = pymysql.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME,
-            charset="utf8mb4",
-            autocommit=False,
-            connect_timeout=10,
-        )
+        # Connection kwargs come from config.py → DB_CONFIG (single source of truth)
+        conn = pymysql.connect(**DB_CONFIG)
         return _ConnectionWrapper(conn)
     except pymysql.Error as e:
         print(f"[{datetime.now()}] DATABASE CONNECTION ERROR: {e}")

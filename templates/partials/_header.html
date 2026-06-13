@@ -568,3 +568,120 @@ window.hcpHdr = (function () {
   setInterval(poll, 60000);
 })();
 </script>
+
+<!-- ===== Global custom alert popup — overrides native alert() app-wide ===== -->
+<div id="appAlertOv" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(15,18,38,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px">
+  <div id="appAlertBx" style="position:relative;background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:18px;max-width:400px;width:100%;box-shadow:0 30px 70px rgba(0,0,0,.32);overflow:hidden;opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s">
+    <button id="appAlertX" aria-label="Close" type="button" style="position:absolute;top:11px;right:13px;width:30px;height:30px;border-radius:50%;border:1px solid var(--border2,#e5e7eb);background:var(--surface,#fff);color:var(--muted2,#64748b);font-size:.95rem;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div style="padding:26px 24px 8px;text-align:center">
+      <div id="appAlertIco" style="width:54px;height:54px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem"></div>
+      <div id="appAlertMsg" style="font-size:.94rem;font-weight:600;color:var(--text,#1e293b);line-height:1.5;word-break:break-word"></div>
+    </div>
+    <div style="padding:14px 24px 22px;text-align:center;display:flex;gap:10px;justify-content:center">
+      <button id="appAlertCancel" style="display:none;background:var(--surface,#fff);border:1px solid var(--border2,#d1d5db);color:var(--text,#334155);border-radius:11px;padding:10px 26px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit;min-width:110px">Cancel</button>
+      <button id="appAlertOk" style="background:#7c3aed;color:#fff;border:none;border-radius:11px;padding:10px 34px;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;min-width:120px">OK</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  if (window.__appAlertReady) return; window.__appAlertReady = true;
+  var ov, bx, ico, msgEl, okBtn, cancelBtn, queue = [], showing = false, bound = false;
+  var onYes = null, onNo = null;
+  function grab(){
+    ov = document.getElementById('appAlertOv');
+    bx = document.getElementById('appAlertBx');
+    ico = document.getElementById('appAlertIco');
+    msgEl = document.getElementById('appAlertMsg');
+    okBtn = document.getElementById('appAlertOk');
+    cancelBtn = document.getElementById('appAlertCancel');
+    var xBtn = document.getElementById('appAlertX');
+    if (!ov || bound) return !!ov;
+    bound = true;
+    okBtn.addEventListener('click', function(){ close(true); });
+    cancelBtn.addEventListener('click', function(){ close(false); });
+    if (xBtn) xBtn.addEventListener('click', function(){ close(false); });
+    // NOTE: clicking the backdrop must NOT close the popup (intentional).
+    document.addEventListener('keydown', function(e){
+      if (ov.style.display !== 'flex') return;
+      if (e.key === 'Escape') { e.preventDefault(); close(false); }
+      else if (e.key === 'Enter') { e.preventDefault(); close(true); }
+    });
+    return true;
+  }
+  function paint(msg, danger){
+    var m = (msg || '').toString().toLowerCase();
+    var err = danger || /(error|fail|invalid|required|must |cannot|can't|denied|not allowed|wrong|unable|empty)/.test(m);
+    if (err) { ico.style.background = '#fef2f2'; ico.style.color = '#dc2626'; ico.textContent = '⚠'; okBtn.style.background = '#dc2626'; }
+    else     { ico.style.background = '#f5f3ff'; ico.style.color = '#7c3aed'; ico.textContent = 'ℹ'; okBtn.style.background = '#7c3aed'; }
+  }
+  function render(item){
+    showing = true;
+    onYes = item.yes || null; onNo = item.no || null;
+    cancelBtn.style.display = item.confirm ? 'inline-block' : 'none';
+    okBtn.textContent = item.okText || 'OK';
+    paint(item.msg, item.confirm);
+    msgEl.textContent = (item.msg === undefined || item.msg === null) ? '' : String(item.msg);
+    ov.style.display = 'flex';
+    requestAnimationFrame(function(){ bx.style.opacity = '1'; bx.style.transform = 'translateY(0)'; });
+    try { (item.confirm ? cancelBtn : okBtn).focus(); } catch (e) {}
+  }
+  function close(result){
+    if (!bx) return;
+    var y = onYes, n = onNo; onYes = null; onNo = null;
+    bx.style.opacity = '0'; bx.style.transform = 'translateY(8px)';
+    setTimeout(function(){
+      if (ov) ov.style.display = 'none';
+      showing = false;
+      if (queue.length) render(queue.shift());
+    }, 160);
+    try { if (result && y) y(); else if (!result && n) n(); } catch (e) {}
+  }
+  function show(item){
+    if (!grab()) { setTimeout(function(){ show(item); }, 60); return; }
+    if (showing) { queue.push(item); return; }
+    render(item);
+  }
+  function appAlert(msg){ show({ msg: msg }); }
+  function appConfirm(msg, yes, no){ show({ msg: msg, confirm: true, yes: yes, no: no }); }
+
+  // Convert inline confirm() on forms into the custom modal — global, no per-page edits
+  function rewireConfirms(root){
+    var forms = (root || document).querySelectorAll('form[onsubmit*="confirm("]');
+    for (var i = 0; i < forms.length; i++) {
+      (function(form){
+        var attr = form.getAttribute('onsubmit') || '';
+        var mm = attr.match(/confirm\((['"])([\s\S]*?)\1\)/);
+        var msg = mm ? mm[2] : 'Are you sure?';
+        form.removeAttribute('onsubmit');
+        form.addEventListener('submit', function(e){
+          e.preventDefault();
+          appConfirm(msg, function(){ form.submit(); });   // form.submit() skips this listener
+        });
+      })(forms[i]);
+    }
+  }
+
+  // Disable "click background to close" on modals that use inline
+  // onclick="if(event.target===this)...close()" — backdrop click must NOT close.
+  function killBackdropClose(root){
+    var els = (root || document).querySelectorAll('[onclick*="target"]');
+    for (var i = 0; i < els.length; i++) {
+      var oc = els[i].getAttribute('onclick') || '';
+      if (/target\s*===\s*this/.test(oc)) els[i].removeAttribute('onclick');
+    }
+  }
+
+  function init(){ grab(); rewireConfirms(document); killBackdropClose(document); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+  window.alert = appAlert;        // every alert("...") shows the styled popup
+  window.appAlert = appAlert;
+  window.appConfirm = appConfirm; // appConfirm(msg, onYes, onNo)
+  window.rewireConfirms = rewireConfirms; // call after injecting dynamic forms
+  window.killBackdropClose = killBackdropClose; // call after injecting dynamic modals
+  // Explicit form-confirm helper: onsubmit="return appAsk(this,'message')"
+  window.appAsk = function(form, msg){ appConfirm(msg, function(){ form.submit(); }); return false; };
+})();
+</script>

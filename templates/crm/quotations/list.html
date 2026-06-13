@@ -92,7 +92,11 @@
               <td><a class="ono" href="{{ url_for('crm.quotation_pdf', qid=o.id) }}" target="_blank">{{ o.quot_number }}</a></td>
               <td>{{ o.quot_date }}</td>
               <td>{{ o.valid_until or '—' }}</td>
-              <td class="lc">{{ o.lead_contact or '—' }}<small>{{ o.bill_company or '' }}</small></td>
+              <td class="lc">
+                {% if o.lead_id %}<a href="/crm/leads/{{ o.lead_id }}" style="color:inherit;text-decoration:none" title="Open lead">{{ o.lead_contact or 'Lead #' ~ o.lead_id }}</a>
+                {% elif o.proj_id %}<a href="/npd/{{ o.proj_id }}" style="color:#7c3aed;text-decoration:none;font-weight:700" title="Open NPD project">🧪 {{ o.proj_code }}</a>
+                {% else %}—{% endif %}
+                <small>{{ o.bill_company or '' }}{% if o.lead_id and o.proj_id %} · <a href="/npd/{{ o.proj_id }}" style="color:#7c3aed;text-decoration:none">{{ o.proj_code }}</a>{% endif %}</small></td>
               <td>{{ (o.subject or '—')|truncate(28) }}</td>
               <td class="amt">₹{{ '%.2f'|format(o.sub_total or 0) }}</td>
               <td class="gst">{{ (o.gst_pct or 0)|int }}%<small>₹{{ '%.2f'|format(o.gst_amount or 0) }}</small></td>
@@ -100,6 +104,8 @@
               <td><span class="sbadge st-{{ o.status or 'draft' }}" onclick="qtCycleStatus({{ o.id }}, this)" title="Click to change">{{ (o.status or 'draft')|capitalize }}</span>{% if o.email_sent_to %}<span class="st-sub">→ {{ o.email_sent_to }}</span>{% endif %}</td>
               <td class="by">{{ o._by }}<small>{{ o.created_at }}</small></td>
               <td><div class="acts">
+                {% if o.lead_id %}<a class="ib vw" title="View Lead" href="/crm/leads/{{ o.lead_id }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
+                {% elif o.proj_id %}<a class="ib vw" title="View NPD Project" href="/npd/{{ o.proj_id }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>{% endif %}
                 <a class="ib dl" title="Download PDF" href="{{ url_for('crm.quotation_pdf', qid=o.id) }}" target="_blank"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
                 {% if not trash %}
                 <button class="ib em" title="Email PDF" onclick="qtEmailOpen({{ o.id }}, this)" data-email="{{ o.bill_email or '' }}" data-quot="{{ o.quot_number }}" data-company="{{ o.bill_company or '' }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></button>
@@ -157,7 +163,7 @@ function qtEmailOpen(id,btn){qtEmlId=id;var em=btn.getAttribute('data-email')||'
 function qtEmlClose(){var bg=document.getElementById('qtEmlBg');bg.classList.remove('show');setTimeout(function(){bg.style.display='none';},200);}
 function qtEmlSend(){if(!qtEmlId)return;var to=document.getElementById('qtEmlTo').value.trim();var subj=document.getElementById('qtEmlSubject').value.trim();var body=document.getElementById('qtEmlBody').innerHTML;if(!to){toast('To email is required',1);return;}if(!subj){toast('Subject is required',1);return;}var b=document.getElementById('qtEmlSendBtn');b.disabled=true;b.textContent='Sending...';var fd=new FormData();fd.append('to',to);fd.append('subject',subj);fd.append('body',body);fetch('/crm/quotations/'+qtEmlId+'/email',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){b.disabled=false;b.textContent='Send Email';if(d.ok){qtEmlClose();toast('📧 Email sent to '+d.to);var row=document.getElementById('qtrow-'+qtEmlId);if(row){var bd=row.querySelector('.sbadge');if(bd){bd.className='sbadge st-sent';bd.textContent='Sent';}}}else toast(d.error||'Email failed',1);}).catch(function(){b.disabled=false;b.textContent='Send Email';toast('Network error',1);});}
 function qtCycleStatus(id,el){var cur=el.textContent.trim().toLowerCase();var i=ST.indexOf(cur);var nx=ST[(i+1)%ST.length];var fd=new FormData();fd.append('status',nx);fetch('/crm/quotations/'+id+'/status',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd}).then(function(r){return r.json();}).then(function(d){if(d.ok){el.className='sbadge st-'+d.status;el.textContent=d.status.charAt(0).toUpperCase()+d.status.slice(1);toast('Status: '+el.textContent);}});}
-document.getElementById('qtEmlBg').addEventListener('click',function(e){if(e.target===this)qtEmlClose();});
+/* backdrop click does not close (intentional) */
 </script>
   <script src="{{ url_for('static', filename='js/crm-mobile-cards.js') }}"></script>
 </body>

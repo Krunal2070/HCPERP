@@ -2681,6 +2681,14 @@ def _ensure_quotations(conn):
         conn.commit()
     except Exception:
         pass
+    # NPD se bhi quotation ban sake (project link; lead optional)
+    for alter in ("ALTER TABLE `quotations` ADD COLUMN project_id INT NULL",
+                  "ALTER TABLE `quotations` MODIFY lead_id INT NULL"):
+        try:
+            conn.execute(alter)
+            conn.commit()
+        except Exception:
+            pass
 
 
 def _fy_qt():
@@ -3004,15 +3012,20 @@ def quotations_list():
         where = "q.is_deleted=%s" % (1 if trash else 0)
         params = []
         if search:
-            where += " AND (q.quot_number LIKE %s OR q.bill_company LIKE %s OR q.subject LIKE %s OR l.contact_name LIKE %s)"
+            where += (" AND (q.quot_number LIKE %s OR q.bill_company LIKE %s"
+                      " OR q.subject LIKE %s OR l.contact_name LIKE %s"
+                      " OR p.code LIKE %s)")
             like = '%' + search + '%'
-            params = [like, like, like, like]
+            params = [like, like, like, like, like]
         if status_f in ('draft', 'sent', 'accepted', 'rejected'):
             where += " AND q.status=%s"
             params.append(status_f)
         rows = conn.execute(
-            "SELECT q.*, l.contact_name AS lead_contact, l.code AS lead_code "
+            "SELECT q.*, l.contact_name AS lead_contact, l.code AS lead_code,"
+            " p.id AS proj_id, p.code AS proj_code, "
+            "p.product_name AS proj_product "
             "FROM `quotations` q LEFT JOIN `leads` l ON l.id=q.lead_id "
+            "LEFT JOIN `npd_projects` p ON p.id=q.project_id "
             "WHERE " + where + " ORDER BY q.id DESC", tuple(params)).fetchall() or []
         cnt = conn.execute("SELECT is_deleted, COUNT(*) c FROM `quotations` "
                            "GROUP BY is_deleted").fetchall() or []
@@ -3371,8 +3384,11 @@ def quotation_products_list():
         _ensure_quotations(conn)
         search = (request.args.get('search') or '').strip()
         qrows = conn.execute(
-            "SELECT q.*, l.contact_name AS lead_contact FROM `quotations` q "
-            "LEFT JOIN `leads` l ON l.id=q.lead_id WHERE q.is_deleted=0 "
+            "SELECT q.*, l.contact_name AS lead_contact, "
+            "p.id AS proj_id, p.code AS proj_code FROM `quotations` q "
+            "LEFT JOIN `leads` l ON l.id=q.lead_id "
+            "LEFT JOIN `npd_projects` p ON p.id=q.project_id "
+            "WHERE q.is_deleted=0 "
             "ORDER BY q.created_at DESC").fetchall() or []
         rows = []
         sr = 0
@@ -3395,6 +3411,8 @@ def quotation_products_list():
                 sr += 1
                 rows.append({'sr': sr, 'quot_number': q['quot_number'], 'quot_id': q['id'],
                              'quot_date': qd, 'company': company, 'lead_id': q['lead_id'],
+                             'lead_contact': q.get('lead_contact'),
+                             'proj_id': q.get('proj_id'), 'proj_code': q.get('proj_code'),
                              'name': it.get('name', '—'), 'size': it.get('size', '') or '—',
                              'uom': it.get('uom', ''), 'cost': it.get('cost', 0),
                              'moq': it.get('moq', '—'), 'pm_spec': it.get('pm_spec', '') or '—',

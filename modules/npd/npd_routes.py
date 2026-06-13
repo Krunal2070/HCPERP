@@ -239,9 +239,7 @@ def projects():
             "SELECT COUNT(*) AS c FROM `npd_projects` p "
             "WHERE p.is_deleted=1" + vis_frag, vis_params)
             .fetchone() or {}).get('c', 0)
-        cats = [r['name'] for r in (conn.execute(
-            "SELECT name FROM `lead_categories` WHERE is_active=1 "
-            "ORDER BY sort_order, name").fetchall() or [])]
+        cats = _npd_cats(conn)
 
         return _render('npd/projects.html', rows=rows, umap=umap,
                        statuses=statuses, cats=cats,
@@ -641,9 +639,7 @@ def _form_context(conn, **extra):
         "SELECT id, COALESCE(NULLIF(full_name,''), username) AS nm "
         "FROM `User_Tbl` WHERE COALESCE(is_active,1)=1 "
         "ORDER BY nm").fetchall() or []
-    cats = [c['name'] for c in (conn.execute(
-        "SELECT name FROM `lead_categories` WHERE is_active=1 "
-        "ORDER BY sort_order, name").fetchall() or [])]
+    cats = _npd_cats(conn)
     templates = conn.execute(
         "SELECT milestone_type, title, icon, applies_to, default_selected "
         "FROM `npd_milestone_templates` WHERE is_active=1 "
@@ -1127,26 +1123,204 @@ def view(pid):
             "ORDER BY created_at DESC LIMIT 50", (pid,)).fetchall() or []
         comments = conn.execute(
             "SELECT * FROM `npd_comments` WHERE project_id=%s "
-            "AND is_internal=0 ORDER BY created_at DESC", (pid,)).fetchall() or []
+            "AND is_internal=0 AND (board IS NULL OR board='') "
+            "ORDER BY created_at DESC", (pid,)).fetchall() or []
         internal = conn.execute(
             "SELECT * FROM `npd_comments` WHERE project_id=%s "
-            "AND is_internal=1 ORDER BY created_at DESC", (pid,)).fetchall() or []
+            "AND is_internal=1 AND (board IS NULL OR board='') "
+            "ORDER BY created_at DESC", (pid,)).fetchall() or []
+        acomments = conn.execute(
+            "SELECT * FROM `npd_comments` WHERE project_id=%s "
+            "AND board='artwork' ORDER BY created_at DESC",
+            (pid,)).fetchall() or []
+        qcomments = conn.execute(
+            "SELECT * FROM `npd_comments` WHERE project_id=%s "
+            "AND board='artwork_qc' ORDER BY created_at DESC",
+            (pid,)).fetchall() or []
         note = conn.execute(
             "SELECT * FROM `npd_notes` WHERE project_id=%s",
             (pid,)).fetchone() or {}
-        # Attachments: comment files + milestone attachments (comma names)
-        attachments = [{'name': c['attachment'], 'src': 'Discussion'
-                        if not c['is_internal'] else 'Internal',
+        umap = _user_map(conn)
+        # Quotations (project se ya project ke lead se bani hui)
+        quots = []
+        try:
+            from crm.crm_leads_routes import _ensure_quotations
+            _ensure_quotations(conn)
+            q_where = "q.is_deleted=0 AND (q.project_id=%s"
+            q_params = [pid]
+            if proj.get('lead_id'):
+                q_where += " OR q.lead_id=%s"
+                q_params.append(proj['lead_id'])
+            q_where += ")"
+            import json as _qjson
+            for q in (conn.execute(
+                    "SELECT q.* FROM `quotations` q WHERE " + q_where +
+                    " ORDER BY q.id DESC", q_params).fetchall() or []):
+                try:
+                    _items = _qjson.loads(q.get('items_json') or '[]')
+                except Exception:
+                    _items = []
+                quots.append({'id': q['id'], 'number': q['quot_number'],
+                              'date': str(q['quot_date'] or '')[:10],
+                              'valid_until': str(q['valid_until'] or '')[:10],
+                              'company': q['bill_company'] or '',
+                              'address': q['bill_address'] or '',
+                              'phone': q['bill_phone'] or '',
+                              'email': q['bill_email'] or '',
+                              'gst_no': q['bill_gst'] or '',
+                              'gst_pct': float(q['gst_pct'] or 18),
+                              'subject': q['subject'] or '',
+                              'terms': q['terms'] or '',
+                              'notes': q['notes'] or '',
+                              'items': _items,
+                              'total': float(q['total_amount'] or 0),
+                              'status': q['status'] or 'draft',
+                              'by': umap.get(q['created_by'], '')})
+        except Exception:
+            quots = []
+        packs = [dict(r) for r in (conn.execute(
+            "SELECT * FROM `npd_packing_rows` WHERE project_id=%s "
+            "ORDER BY id", (pid,)).fetchall() or [])]
+        for pk in packs:
+            pk['cost'] = float(pk['cost']) if pk.get('cost') is not None \
+                else None
+            pk['created_at'] = str(pk.get('created_at') or '')
+            pk['updated_at'] = str(pk.get('updated_at') or '')
+        bom_rows_db = conn.execute(
+            "SELECT b.*, r.id AS rid, r.sr_no, r.inci_name, r.qty_pct "
+            "FROM `npd_boms` b LEFT JOIN `npd_bom_rows` r ON r.bom_id=b.id "
+            "WHERE b.project_id=%s ORDER BY b.id DESC, r.sr_no, r.id",
+            (pid,)).fetchall() or []
+        boms, _bm = [], {}
+        for r in bom_rows_db:
+            b = _bm.get(r['id'])
+            if not b:
+                b = {'id': r['id'], 'product_name': r['product_name'] or '',
+                     'code': r['code'] or '', 'variant': r['variant'] or '',
+                     'by': umap.get(r['created_by'], ''),
+                     'created_at': str(r['created_at'] or '')[:16],
+                     'rows': []}
+                _bm[r['id']] = b
+                boms.append(b)
+            if r['rid']:
+                b['rows'].append({'inci': r['inci_name'] or '',
+                                  'qty': float(r['qty_pct'] or 0)})
+        mrows = conn.execute(
+            "SELECT l.* FROM `milestone_logs` l "
+            "JOIN `milestone_masters` mm ON mm.id = l.milestone_id "
+            "WHERE mm.project_id=%s ORDER BY l.created_at DESC, l.id DESC",
+            (pid,)).fetchall() or []
+        mlogs = {}
+        for r in mrows:
+            mlogs.setdefault(r['milestone_id'], []).append(dict(r))
+        # Har milestone ke log me uske related project activities bhi merge
+        # karo (legacy data + saari activities).
+        def _ms_matcher(mt, title):
+            mp = {
+                'bom': lambda a: a.startswith("BOM '")
+                                  or a.startswith('BOM '),
+                'ingredients':
+                    lambda a: 'Ingredients List' in a,
+                'quotation': lambda a: a.startswith('Quotation '),
+                'packing_material':
+                    lambda a: a.startswith('Packing material'),
+                'artwork': lambda a: a.startswith('Artwork / Design'),
+                'artwork_qc': lambda a: a.startswith('Artwork QC'),
+            }
+            base = mp.get(mt, lambda a: False)
+            tprefix = (f"Milestone '{title}'" if title else None)
+            sprefix = (f"'{title}'" if title else None)
+            return lambda a: base(a) or (tprefix and tprefix in a) \
+                or (sprefix and a.startswith(sprefix))
+
+        for _m in miles:
+            mat = _ms_matcher(_m.get('milestone_type'), _m.get('title'))
+            have = {(lg.get('action'), str(lg.get('created_at') or ''))
+                    for lg in mlogs.get(_m['id'], [])}
+            extra = [{'milestone_id': _m['id'], 'action': a['action'],
+                      'created_by': a['user_id'],
+                      'created_at': a['created_at']}
+                     for a in acts
+                     if mat(str(a.get('action') or ''))
+                     and (a['action'], str(a['created_at'] or ''))
+                     not in have]
+            if extra:
+                merged = mlogs.get(_m['id'], []) + extra
+                merged.sort(key=lambda x: str(x.get('created_at') or ''),
+                            reverse=True)
+                mlogs[_m['id']] = merged
+        pnotes = conn.execute(
+            "SELECT * FROM `npd_personal_notes` "
+            "WHERE project_id=%s AND user_id=%s "
+            "ORDER BY created_at DESC, id DESC", (pid, _uid())).fetchall() or []
+        # comment files (multi-attachment table) + legacy single attachment
+        frows = conn.execute(
+            "SELECT * FROM `npd_comment_files` WHERE project_id=%s "
+            "ORDER BY id", (pid,)).fetchall() or []
+        fmap = {}
+        for fr in frows:
+            fmap.setdefault(fr['comment_id'], []).append(
+                {'id': fr['id'], 'name': fr['file_name'],
+                 'path': fr['file_path']})
+        comments = [dict(c) for c in comments]
+        internal = [dict(c) for c in internal]
+        acomments = [dict(c) for c in acomments]
+        qcomments = [dict(c) for c in qcomments]
+        for c in comments + internal + acomments + qcomments:
+            c['_files'] = list(fmap.get(c['id'], []))
+            if c.get('attachment'):                      # legacy single file
+                c['_files'].append({'id': '', 'name':
+                                    c['attachment'].split('_', 2)[-1],
+                                    'path': c['attachment']})
+        # mentions ke liye users
+        all_users = [{'id': r['id'], 'name': r['nm']} for r in (conn.execute(
+            "SELECT id, COALESCE(NULLIF(full_name,''), username) AS nm "
+            "FROM `User_Tbl` WHERE COALESCE(is_active,1)=1 "
+            "ORDER BY nm").fetchall() or [])]
+        fda_users = [{'id': r['id'], 'name': r['nm'], 'email': r['email']}
+                      for r in (conn.execute(
+            "SELECT id, COALESCE(NULLIF(full_name,''), username) AS nm, "
+            "email FROM `User_Tbl` WHERE COALESCE(is_active,1)=1 "
+            "AND COALESCE(email,'') != '' ORDER BY nm").fetchall() or [])]
+        fda_ms = next((m for m in miles if m.get('milestone_type') == 'fda'), None)
+        fda_request = None
+        fda_entries = []
+        if fda_ms:
+            fda_request = conn.execute(
+                "SELECT * FROM `npd_fda_requests` WHERE project_id=%s "
+                "ORDER BY id DESC LIMIT 1", (pid,)).fetchone()
+            fda_entries = conn.execute(
+                "SELECT * FROM `npd_fda_entries` WHERE project_id=%s "
+                "ORDER BY id", (pid,)).fetchall() or []
+
+        bc_ms = next((m for m in miles if m.get('milestone_type') == 'barcode'), None)
+        bc_designs = []
+        if bc_ms:
+            bc_designs = conn.execute(
+                "SELECT * FROM `npd_barcode_designs` WHERE project_id=%s "
+                "ORDER BY sr_no, id", (pid,)).fetchall() or []
+        # Attachments list: SIRF Discussion board ki files (internal nahi)
+        # + milestone attachments
+        attachments = [{'name': f['name'], 'path': f['path'],
+                        'src': 'Discussion',
                         'when': c['created_at'], 'by': c['user_id']}
-                       for c in (comments + internal) if c.get('attachment')]
+                       for c in comments for f in c['_files']]
+        attachments += [{'name': f['name'], 'path': f['path'],
+                         'src': 'Artwork / Design',
+                         'when': c['created_at'], 'by': c['user_id']}
+                        for c in acomments for f in c['_files']]
+        attachments += [{'name': f['name'], 'path': f['path'],
+                         'src': 'Artwork QC',
+                         'when': c['created_at'], 'by': c['user_id']}
+                        for c in qcomments for f in c['_files']]
         for m in miles:
             for fn in (m.get('attachments') or '').split(','):
                 if fn.strip():
                     attachments.append({'name': fn.strip(),
+                                        'path': fn.strip(),
                                         'src': f"Milestone: {m['title']}",
                                         'when': m.get('updated_at'),
                                         'by': m.get('created_by')})
-        umap = _user_map(conn)
         done = sum(1 for m in miles if m['status'] == 'approved')
         pct = round(done / len(miles) * 100) if miles else 0
 
@@ -1162,16 +1336,28 @@ def view(pid):
             dur_days = ((fin_at or _dt.now()) - st_at).days
         else:
             dur_days = 0
-        can_start = (_has_full_visibility() or _uid() in
-                     (proj.get('assigned_rd'), proj.get('assigned_sc'),
-                      proj.get('npd_poc'), proj.get('created_by')))
+        # elapsed seconds for the live duration timer (visible to all viewers)
+        if st_at and fin_at:
+            elapsed_seconds = int((fin_at - st_at).total_seconds())
+        elif st_at:
+            elapsed_seconds = int((_dt.now() - st_at).total_seconds())
+        else:
+            elapsed_seconds = 0
+        # START/FINISH only after assignment, and only for the assigned R&D person
+        can_start = _is_rd_assignee(conn, pid, _uid())
 
         return _render('npd/project_view.html', p=proj, miles=miles,
                        acts=acts, comments=comments, internal=internal,
-                       note=note, attachments=attachments,
+                       note=note, pnotes=pnotes, mlogs=mlogs, boms=boms,
+                       quots=quots, packs=packs, acomments=acomments, qcomments=qcomments,
+                       attachments=attachments,
                        dur_days=dur_days, can_start=can_start,
+                       elapsed_seconds=elapsed_seconds,
                        started=bool(st_at), finished=bool(fin_at),
-                       umap=umap, pct=pct,
+                       umap=umap, pct=pct, all_users=all_users,
+                       fda_users=fda_users, fda_request=fda_request,
+                       fda_entries=fda_entries, bc_designs=bc_designs,
+                       my_uid=_uid(),
                        statuses=get_npd_statuses(conn), active_item='npd-list')
     finally:
         conn.close()
@@ -1193,33 +1379,209 @@ def _npd_upload_dir():
 def add_comment(pid):
     import os
     from datetime import datetime as _dt
+    from flask import jsonify
     from werkzeug.utils import secure_filename
     is_internal = request.form.get('is_internal', '0') == '1'
+    board = (request.form.get('board') or '').strip().lower()
+    if board not in ('', 'artwork', 'artwork_qc'):
+        board = ''
     comment = (request.form.get('comment') or '').strip()
-    f = request.files.get('file')
-    if not comment and not (f and f.filename):
+    files = request.files.getlist('files')
+    legacy = request.files.get('file')
+    if legacy and legacy.filename:
+        files = files + [legacy]
+    ajax = request.is_json or request.headers.get('X-Requested-With')
+    if not comment and not any(f and f.filename for f in files):
+        if ajax:
+            return jsonify(ok=False, error='A comment or file is required.'), 400
         flash('A comment or file is required.', 'error')
         return redirect(url_for('npd.view', pid=pid)
                         + ('#internal' if is_internal else '#discussion'))
-    stored = None
-    if f and f.filename:
-        fname = secure_filename(f.filename)
-        stored = f"{pid}_{_dt.now():%Y%m%d%H%M%S}_{fname}"
-        f.save(os.path.join(_npd_upload_dir(), stored))
     conn = _db()
     try:
-        conn.execute(
+        aw_ms_id = None
+        if board in _BOARD_MS:
+            aw_ms_id, aw_locked = _board_lock(conn, pid, board)
+            if aw_locked:
+                if ajax:
+                    return jsonify(ok=False,
+                                   error='Milestone is marked as done — '
+                                         'the board is locked.'), 403
+                flash('Milestone is marked as done — the board is locked.',
+                      'error')
+                return redirect(url_for('npd.view', pid=pid) + '#milestones')
+        cur = conn.execute(
             "INSERT INTO `npd_comments` (project_id, user_id, comment, "
-            "is_internal, attachment) VALUES (%s,%s,%s,%s,%s)",
+            "is_internal, board) VALUES (%s,%s,%s,%s,%s)",
             (pid, _uid(), comment or '(file)', 1 if is_internal else 0,
-             stored))
-        _log(conn, pid, ('Internal comment' if is_internal else 'Comment')
-             + ' added')
+             board or None))
+        cid = cur.lastrowid
+        saved = []
+        for fs in files:
+            if not fs or not fs.filename:
+                continue
+            fname = secure_filename(fs.filename)
+            stored = f"{pid}_{cid}_{_dt.now():%Y%m%d%H%M%S}_{fname}"
+            path = os.path.join(_npd_upload_dir(), stored)
+            fs.save(path)
+            c2 = conn.execute(
+                "INSERT INTO `npd_comment_files` (project_id, comment_id, "
+                "file_name, file_path, file_size, created_by) "
+                "VALUES (%s,%s,%s,%s,%s,%s)",
+                (pid, cid, fname, stored, os.path.getsize(path), _uid()))
+            saved.append({'id': c2.lastrowid, 'name': fname, 'path': stored})
+        action = ('Artwork / Design comment added' if board == 'artwork'
+                  else 'Artwork QC comment added' if board == 'artwork_qc'
+                  else ('Internal comment' if is_internal else 'Comment')
+                  + ' added')
+        _log(conn, pid, action)
+        if board in _BOARD_MS and aw_ms_id:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (aw_ms_id, action, _uid()))
         conn.commit()
+        if ajax:
+            return jsonify(ok=True, id=cid, user=_uname(), comment=comment,
+                           created_at=_dt.now().strftime('%d-%m-%Y %I:%M %p'),
+                           files=saved)
     finally:
         conn.close()
     return redirect(url_for('npd.view', pid=pid)
                     + ('#internal' if is_internal else '#discussion'))
+
+
+@npd_bp.route('/comment/<int:cid>/delete', methods=['POST'])
+@login_required
+def comment_delete(cid):
+    import os
+    from flask import jsonify
+    conn = _db()
+    try:
+        d = conn.execute("SELECT * FROM `npd_comments` WHERE id=%s",
+                         (cid,)).fetchone()
+        if not d:
+            return jsonify(ok=False, error='Not found'), 404
+        if d['user_id'] != _uid():
+            return jsonify(ok=False,
+                           error='You can only delete your own comments'), 403
+        if (d.get('board') or '') in _BOARD_MS:
+            _aw, _lk = _board_lock(conn, d['project_id'], d['board'])
+            if _lk:
+                return jsonify(ok=False,
+                               error='Milestone is marked as done — '
+                                     'the board is locked.'), 403
+        for fr in (conn.execute("SELECT file_path FROM `npd_comment_files` "
+                                "WHERE comment_id=%s", (cid,)).fetchall()
+                   or []):
+            try:
+                os.remove(os.path.join(_npd_upload_dir(), fr['file_path']))
+            except Exception:
+                pass
+        conn.execute("DELETE FROM `npd_comment_files` WHERE comment_id=%s",
+                     (cid,))
+        conn.execute("DELETE FROM `npd_comments` WHERE id=%s", (cid,))
+        brd = d.get('board') or ''
+        if brd == 'artwork':
+            act_del = 'Artwork / Design comment removed'
+        elif brd == 'artwork_qc':
+            act_del = 'Artwork QC comment removed'
+        elif d.get('is_internal'):
+            act_del = 'Internal comment removed'
+        else:
+            act_del = 'Comment removed'
+        _log(conn, d['project_id'], act_del)
+        if brd in _BOARD_MS:
+            _bm, _ = _board_lock(conn, d['project_id'], brd)
+            if _bm:
+                conn.execute(
+                    "INSERT INTO `milestone_logs` (milestone_id, action, "
+                    "created_by) VALUES (%s,%s,%s)",
+                    (_bm, act_del, _uid()))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/comment/<int:cid>/edit', methods=['POST'])
+@login_required
+def comment_edit(cid):
+    """Owner-only edit — text + attachments add/remove (lead board jaisa)."""
+    import os
+    from datetime import datetime as _dt
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    conn = _db()
+    try:
+        d = conn.execute("SELECT * FROM `npd_comments` WHERE id=%s",
+                         (cid,)).fetchone()
+        if not d:
+            return jsonify(ok=False, error='Not found'), 404
+        if d['user_id'] != _uid():
+            return jsonify(ok=False,
+                           error='You can only edit your own comments.'), 403
+        if (d.get('board') or '') in _BOARD_MS:
+            _aw, _lk = _board_lock(conn, d['project_id'], d['board'])
+            if _lk:
+                return jsonify(ok=False,
+                               error='Milestone is marked as done — '
+                                     'the board is locked.'), 403
+        comment = (request.form.get('comment') or '').strip()
+        removed = [x for x in (request.form.get('removed') or '').split(',')
+                   if x.strip().isdigit()]
+        conn.execute("UPDATE `npd_comments` SET comment=%s, edited_at=NOW() "
+                     "WHERE id=%s", (comment, cid))
+        for aid in removed:
+            ar = conn.execute(
+                "SELECT file_path FROM `npd_comment_files` "
+                "WHERE id=%s AND comment_id=%s", (aid, cid)).fetchone()
+            if ar:
+                try:
+                    os.remove(os.path.join(_npd_upload_dir(),
+                                           ar['file_path']))
+                except Exception:
+                    pass
+                conn.execute("DELETE FROM `npd_comment_files` WHERE id=%s",
+                             (aid,))
+        for fs in request.files.getlist('files'):
+            if not fs or not fs.filename:
+                continue
+            fname = secure_filename(fs.filename)
+            stored = (f"{d['project_id']}_{cid}_"
+                      f"{_dt.now():%Y%m%d%H%M%S}_{fname}")
+            path = os.path.join(_npd_upload_dir(), stored)
+            fs.save(path)
+            conn.execute(
+                "INSERT INTO `npd_comment_files` (project_id, comment_id, "
+                "file_name, file_path, file_size, created_by) "
+                "VALUES (%s,%s,%s,%s,%s,%s)",
+                (d['project_id'], cid, fname, stored,
+                 os.path.getsize(path), _uid()))
+        brd = d.get('board') or ''
+        if brd == 'artwork':
+            act_ed = 'Artwork / Design comment edited'
+        elif brd == 'artwork_qc':
+            act_ed = 'Artwork QC comment edited'
+        elif d.get('is_internal'):
+            act_ed = 'Internal comment edited'
+        else:
+            act_ed = 'Comment edited'
+        _log(conn, d['project_id'], act_ed)
+        if brd in _BOARD_MS:
+            _bm, _ = _board_lock(conn, d['project_id'], brd)
+            if _bm:
+                conn.execute(
+                    "INSERT INTO `milestone_logs` (milestone_id, action, "
+                    "created_by) VALUES (%s,%s,%s)",
+                    (_bm, act_ed, _uid()))
+        conn.commit()
+        rem = [{'id': r['id'], 'name': r['file_name'], 'path': r['file_path']}
+               for r in (conn.execute(
+                   "SELECT * FROM `npd_comment_files` WHERE comment_id=%s "
+                   "ORDER BY id", (cid,)).fetchall() or [])]
+        return jsonify(ok=True, files=rem)
+    finally:
+        conn.close()
 
 
 @npd_bp.route('/<int:pid>/note', methods=['POST'])
@@ -1240,6 +1602,45 @@ def save_note(pid):
     return redirect(url_for('npd.view', pid=pid) + '#note')
 
 
+@npd_bp.route('/<int:pid>/note/add', methods=['POST'])
+@login_required
+def personal_note_add(pid):
+    """Lead-style personal note (sirf apne ko dikhta hai) — AJAX."""
+    from datetime import datetime as _dt
+    from flask import jsonify
+    note = (request.form.get('note') or '').strip()
+    if not note:
+        return jsonify(ok=False, error='Note cannot be empty.'), 400
+    conn = _db()
+    try:
+        cur = conn.execute(
+            "INSERT INTO `npd_personal_notes` (project_id, user_id, note) "
+            "VALUES (%s,%s,%s)", (pid, _uid(), note))
+        nid = cur.lastrowid
+        conn.commit()
+        return jsonify(ok=True, id=nid, note=note,
+                       created_at=_dt.now().strftime('%d-%m-%Y %I:%M %p'))
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/note/<int:nid>/delete', methods=['POST'])
+@login_required
+def personal_note_delete(nid):
+    from flask import jsonify
+    conn = _db()
+    try:
+        n = conn.execute("SELECT * FROM `npd_personal_notes` WHERE id=%s",
+                         (nid,)).fetchone()
+        if n and (n['user_id'] == _uid() or _is_admin()):
+            conn.execute("DELETE FROM `npd_personal_notes` WHERE id=%s",
+                         (nid,))
+            conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
 @npd_bp.route('/<int:pid>/start', methods=['POST'])
 @login_required
 def start_project(pid):
@@ -1252,10 +1653,9 @@ def start_project(pid):
         if not proj:
             flash('Project not found.', 'error')
             return redirect(url_for('npd.projects'))
-        if not (_has_full_visibility() or _uid() in
-                (proj['assigned_rd'], proj['assigned_sc'],
-                 proj['npd_poc'], proj['created_by'])):
-            flash('This project is not assigned to you.', 'error')
+        if not _is_rd_assignee(conn, pid, _uid()):
+            flash('This project is not assigned to you — only the assigned '
+                  'R&D person can start it.', 'error')
             return redirect(url_for('npd.view', pid=pid))
         if not proj['started_at']:
             conn.execute(
@@ -1263,6 +1663,21 @@ def start_project(pid):
                 "status=CASE WHEN status='not_started' "
                 "THEN 'sample_inprocess' ELSE status END WHERE id=%s", (pid,))
             _log(conn, pid, 'Project STARTED')
+            # ── R&D assignment timer + log (safe if R&D tables absent) ──
+            try:
+                conn.execute(
+                    "UPDATE `rd_sub_assignments` SET "
+                    "started_at=COALESCE(started_at, NOW()), "
+                    "status=CASE WHEN status='not_started' THEN 'in_progress' "
+                    "ELSE status END "
+                    "WHERE project_id=%s AND user_id=%s AND is_active=1",
+                    (pid, _uid()))
+                conn.execute(
+                    "INSERT INTO `rd_project_logs` (project_id, user_id, event, "
+                    "detail) VALUES (%s,%s,'started',%s)",
+                    (pid, _uid(), f"Started by {_uname()}"))
+            except Exception:
+                pass
             conn.commit()
             flash('Project started.', 'success')
     finally:
@@ -1275,15 +1690,34 @@ def start_project(pid):
 def finish_project(pid):
     conn = _db()
     try:
+        if not _is_rd_assignee(conn, pid, _uid()):
+            flash('Only the assigned R&D person can finish this project.', 'error')
+            return redirect(url_for('npd.view', pid=pid))
         cur = conn.execute(
             "UPDATE `npd_projects` SET finished_at=NOW(), "
-            "total_duration_seconds=TIMESTAMPDIFF(SECOND, started_at, NOW()) "
+            "total_duration_seconds=TIMESTAMPDIFF(SECOND, started_at, NOW()), "
+            "status=CASE WHEN status IN ('sample_inprocess','not_started','in_process') "
+            "            THEN 'sample_ready' ELSE status END "
             "WHERE id=%s AND started_at IS NOT NULL "
             "AND finished_at IS NULL", (pid,))
         if cur.rowcount:
-            _log(conn, pid, 'Project FINISHED')
+            _log(conn, pid, 'Project FINISHED — status: Sample Ready')
+            # ── R&D assignment timer + log (safe if R&D tables absent) ──
+            try:
+                conn.execute(
+                    "UPDATE `rd_sub_assignments` SET finished_at=NOW(), "
+                    "status='finished', "
+                    "total_seconds=TIMESTAMPDIFF(SECOND, COALESCE(started_at, NOW()), NOW()) "
+                    "WHERE project_id=%s AND user_id=%s AND is_active=1",
+                    (pid, _uid()))
+                conn.execute(
+                    "INSERT INTO `rd_project_logs` (project_id, user_id, event, "
+                    "detail) VALUES (%s,%s,'finished',%s)",
+                    (pid, _uid(), f"Finished by {_uname()} — Sample Ready"))
+            except Exception:
+                pass
             conn.commit()
-            flash('Project marked as finished.', 'success')
+            flash('Sample marked Ready.', 'success')
     finally:
         conn.close()
     return redirect(url_for('npd.view', pid=pid))
@@ -1321,11 +1755,681 @@ def set_status(pid):
     return redirect(url_for('npd.view', pid=pid))
 
 
+@npd_bp.route('/<int:pid>/bom/save', methods=['POST'])
+@login_required
+def bom_save(pid):
+    """BOM formulation sheet save (naya ya edit) — AJAX JSON."""
+    from flask import jsonify
+    data = request.get_json(silent=True) or {}
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        bid = data.get('id')
+        pn = (data.get('product_name') or '').strip()
+        code = (data.get('code') or '').strip()
+        var = (data.get('variant') or '').strip()
+        rows = [r for r in (data.get('rows') or [])
+                if (r.get('inci') or '').strip() or r.get('qty')]
+        if not pn and not rows:
+            return jsonify(ok=False,
+                           error='Product name or at least one row is '
+                                 'required.'), 400
+        total = 0.0
+        for r in rows:
+            try:
+                total += float(r.get('qty') or 0)
+            except Exception:
+                pass
+        if abs(round(total, 3) - 100.0) > 0.0005:
+            return jsonify(ok=False,
+                           error='BOM total must be exactly 100%% — '
+                                 'current total is %.3f%%.'
+                                 % round(total, 3)), 400
+        ms = conn.execute(
+            "SELECT id, status FROM `milestone_masters` WHERE project_id=%s "
+            "AND (milestone_type='bom' OR title='BOM') LIMIT 1",
+            (pid,)).fetchone()
+        ms_id = (ms or {}).get('id')
+        ms_status = (ms or {}).get('status') if ms else None
+        if ms_status == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'BOM is locked.'), 403
+        if bid:
+            b = conn.execute(
+                "SELECT id FROM `npd_boms` WHERE id=%s AND project_id=%s",
+                (bid, pid)).fetchone()
+            if not b:
+                return jsonify(ok=False, error='BOM not found'), 404
+            conn.execute(
+                "UPDATE `npd_boms` SET product_name=%s, code=%s, variant=%s "
+                "WHERE id=%s", (pn, code, var, bid))
+            conn.execute("DELETE FROM `npd_bom_rows` WHERE bom_id=%s",
+                         (bid,))
+            action = f"BOM '{pn or bid}' updated"
+        else:
+            cur = conn.execute(
+                "INSERT INTO `npd_boms` (project_id, milestone_id, "
+                "product_name, code, variant, created_by) "
+                "VALUES (%s,%s,%s,%s,%s,%s)",
+                (pid, ms_id, pn, code, var, _uid()))
+            bid = cur.lastrowid
+            action = f"BOM '{pn or bid}' created"
+        for i, r in enumerate(rows, start=1):
+            try:
+                qty = round(float(r.get('qty') or 0), 3)
+            except Exception:
+                qty = 0
+            conn.execute(
+                "INSERT INTO `npd_bom_rows` (bom_id, sr_no, inci_name, "
+                "qty_pct) VALUES (%s,%s,%s,%s)",
+                (bid, i, (r.get('inci') or '').strip(), qty))
+        _log(conn, pid, action)
+        if ms_id:  # BOM milestone ke apne log me bhi
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms_id, action, _uid()))
+        conn.commit()
+        out_rows = [{'inci': (r.get('inci') or '').strip(),
+                     'qty': round(float(r.get('qty') or 0), 3)
+                     if str(r.get('qty') or '').strip() else 0}
+                    for r in rows]
+        from datetime import datetime as _dt
+        return jsonify(ok=True, bom={'id': bid, 'product_name': pn,
+                                     'code': code, 'variant': var,
+                                     'by': _uname(),
+                                     'created_at':
+                                     _dt.now().strftime('%Y-%m-%d %H:%M'),
+                                     'rows': out_rows})
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return jsonify(ok=False, error=str(e)), 500
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/bom/<int:bid>/delete', methods=['POST'])
+@login_required
+def bom_delete(bid):
+    from flask import jsonify
+    conn = _db()
+    try:
+        b = conn.execute("SELECT * FROM `npd_boms` WHERE id=%s",
+                         (bid,)).fetchone()
+        if not b:
+            return jsonify(ok=False, error='Not found'), 404
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [b['project_id']] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        ms_st = conn.execute(
+            "SELECT status FROM `milestone_masters` WHERE project_id=%s "
+            "AND (milestone_type='bom' OR title='BOM') LIMIT 1",
+            (b['project_id'],)).fetchone()
+        if ms_st and ms_st.get('status') == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'BOM is locked.'), 403
+        conn.execute("DELETE FROM `npd_bom_rows` WHERE bom_id=%s", (bid,))
+        conn.execute("DELETE FROM `npd_boms` WHERE id=%s", (bid,))
+        action = f"BOM '{b['product_name'] or bid}' deleted"
+        _log(conn, b['project_id'], action)
+        ms_id = b.get('milestone_id') or ((conn.execute(
+            "SELECT id FROM `milestone_masters` WHERE project_id=%s "
+            "AND (milestone_type='bom' OR title='BOM') LIMIT 1",
+            (b['project_id'],)).fetchone() or {}).get('id'))
+        if ms_id:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms_id, action, _uid()))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/<int:pid>/quotation', methods=['POST'])
+@login_required
+def npd_create_quotation(pid):
+    """Lead wale Create Quotation jaisa — NPD project se. PDF return karta hai."""
+    import json as _json
+    from datetime import datetime as _dt
+    from flask import send_file
+    from crm.crm_leads_routes import (_ensure_quotations, _next_quot_number,
+                                      _build_quot_pdf, log_activity)  # noqa
+    conn = _db()
+    try:
+        _ensure_quotations(conn)
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        proj = conn.execute(
+            "SELECT p.* FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not proj:
+            flash('Project not found or you do not have access.', 'error')
+            return redirect(url_for('npd.projects'))
+        qms = conn.execute(
+            "SELECT id, status FROM `milestone_masters` WHERE project_id=%s "
+            "AND (milestone_type='quotation' OR title='Quotation') LIMIT 1",
+            (pid,)).fetchone()
+        if qms and qms['status'] == 'approved':
+            flash('Milestone is marked as done — quotations are locked.',
+                  'error')
+            return redirect(url_for('npd.view', pid=pid) + '#milestones')
+
+        quot_number = ((request.form.get('quot_number') or '').strip()
+                       or _next_quot_number(conn))
+        quot_date = (request.form.get('quot_date')
+                     or _dt.now().strftime('%Y-%m-%d'))
+        valid_until = request.form.get('valid_until') or ''
+        subject = request.form.get('quot_subject', '')
+        bill_company = (request.form.get('bill_company')
+                        or proj.get('client_company') or '').strip()
+        bill_address = (request.form.get('bill_address') or '').strip()
+        bill_phone = (request.form.get('bill_phone')
+                      or proj.get('client_phone') or '').strip()
+        bill_email = (request.form.get('bill_email')
+                      or proj.get('client_email') or '').strip()
+        bill_gst = (request.form.get('bill_gst') or '').strip()
+        try:
+            gst_pct = float(request.form.get('quot_gst_pct') or 18)
+        except Exception:
+            gst_pct = 18.0
+        terms = request.form.get('terms', '')
+        notes = request.form.get('notes', '')
+
+        names = request.form.getlist('item_name[]')
+        sizes = request.form.getlist('item_size[]')
+        codes = request.form.getlist('item_code[]')
+        uoms = request.form.getlist('item_uom[]')
+        costs = request.form.getlist('item_cost[]')
+        moqs = request.form.getlist('item_moq[]')
+        pm_specs = request.form.getlist('item_pm_spec[]')
+        pm_costs = request.form.getlist('item_pm_cost[]')
+        cats = request.form.getlist('item_category[]')
+        finals = request.form.getlist('item_final_cost[]')
+
+        def _f(lst, i):
+            try:
+                return float(lst[i]) if i < len(lst) and lst[i] else 0.0
+            except Exception:
+                return 0.0
+
+        def _s(lst, i):
+            return lst[i] if i < len(lst) else ''
+
+        if not bill_company:
+            flash('Company Name is required.', 'error')
+            return redirect(url_for('npd.view', pid=pid) + '#milestones')
+
+        items, sub_total = [], 0.0
+        for i, nm in enumerate(names):
+            if not nm.strip():
+                continue
+            moq = _f(moqs, i)
+            fc = _f(finals, i)
+            amt = moq * fc
+            sub_total += amt
+            items.append({'name': nm.strip(), 'size': _s(sizes, i),
+                          'uom': _s(uoms, i), 'code': _s(codes, i),
+                          'moq': moq, 'final_cost': fc, 'amount': amt,
+                          'cost': _f(costs, i), 'pm_spec': _s(pm_specs, i),
+                          'pm_cost': _f(pm_costs, i),
+                          'category': _s(cats, i)})
+        if not items:
+            flash('Please add at least one product.', 'error')
+            return redirect(url_for('npd.view', pid=pid) + '#milestones')
+
+        gst_amount = sub_total * gst_pct / 100.0
+        total_amount = sub_total + gst_amount
+        try:
+            qd = _dt.strptime(quot_date, '%Y-%m-%d').strftime('%Y-%m-%d')
+        except Exception:
+            qd = _dt.now().strftime('%Y-%m-%d')
+        vu = None
+        if valid_until:
+            try:
+                vu = _dt.strptime(valid_until,
+                                  '%Y-%m-%d').strftime('%Y-%m-%d')
+            except Exception:
+                vu = None
+        edit_id = (request.form.get('quotation_id') or '').strip()
+        try:
+            if edit_id.isdigit():
+                exists = conn.execute(
+                    "SELECT id, quot_number FROM `quotations` "
+                    "WHERE id=%s AND project_id=%s AND is_deleted=0",
+                    (int(edit_id), pid)).fetchone()
+                if not exists:
+                    flash('Quotation not found.', 'error')
+                    return redirect(url_for('npd.view', pid=pid)
+                                    + '#milestones')
+                quot_number = exists['quot_number']
+                conn.execute(
+                    "UPDATE `quotations` SET quot_date=%s, valid_until=%s, "
+                    "subject=%s, bill_company=%s, bill_address=%s, "
+                    "bill_phone=%s, bill_email=%s, bill_gst=%s, gst_pct=%s, "
+                    "sub_total=%s, gst_amount=%s, total_amount=%s, "
+                    "items_json=%s, terms=%s, notes=%s WHERE id=%s",
+                    (qd, vu, subject, bill_company, bill_address, bill_phone,
+                     bill_email, bill_gst, gst_pct, sub_total, gst_amount,
+                     total_amount, _json.dumps(items), terms, notes,
+                     int(edit_id)))
+                action = f'Quotation updated: {quot_number}'
+                _log(conn, pid, action)
+                if qms:
+                    conn.execute(
+                        "INSERT INTO `milestone_logs` (milestone_id, action, "
+                        "created_by) VALUES (%s,%s,%s)",
+                        (qms['id'], action, _uid()))
+                conn.commit()
+                pdf = _build_quot_pdf({
+                    'quot_number': quot_number,
+                    'quot_date': _dt.strptime(qd, '%Y-%m-%d')
+                    .strftime('%d-%m-%Y'),
+                    'valid_until': (_dt.strptime(vu, '%Y-%m-%d')
+                                    .strftime('%d-%m-%Y') if vu else '-'),
+                    'subject': subject, 'bill_company': bill_company,
+                    'bill_address': bill_address, 'bill_phone': bill_phone,
+                    'bill_email': bill_email, 'bill_gst': bill_gst,
+                    'gst_pct': gst_pct, 'items': items,
+                    'sub_total': sub_total, 'gst_amount': gst_amount,
+                    'total_amount': total_amount, 'terms': terms,
+                    'notes': notes, 'by_name': _uname()})
+                return send_file(pdf, mimetype='application/pdf',
+                                 as_attachment=False,
+                                 download_name='%s.pdf'
+                                 % quot_number.replace('/', '_'))
+            conn.execute(
+                "INSERT INTO `quotations` (quot_number, lead_id, project_id, "
+                "quot_date, valid_until, subject, bill_company, bill_address,"
+                " bill_phone, bill_email, bill_gst, gst_pct, sub_total, "
+                "gst_amount, total_amount, items_json, terms, notes, status, "
+                "created_by, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,"
+                "%s,%s,%s,%s,%s,%s,%s,%s,%s,'draft',%s,NOW())",
+                (quot_number, proj.get('lead_id'), pid, qd, vu, subject,
+                 bill_company, bill_address, bill_phone, bill_email, bill_gst,
+                 gst_pct, sub_total, gst_amount, total_amount,
+                 _json.dumps(items), terms, notes, _uid()))
+            action = f'Quotation generated: {quot_number}'
+            _log(conn, pid, action)
+            if qms:
+                conn.execute(
+                    "INSERT INTO `milestone_logs` (milestone_id, action, "
+                    "created_by) VALUES (%s,%s,%s)",
+                    (qms['id'], action, _uid()))
+            conn.commit()
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            flash('Quotation number "%s" already exists, please retry.'
+                  % quot_number, 'error')
+            return redirect(url_for('npd.view', pid=pid) + '#milestones')
+
+        pdf = _build_quot_pdf({
+            'quot_number': quot_number,
+            'quot_date': _dt.strptime(qd, '%Y-%m-%d').strftime('%d-%m-%Y'),
+            'valid_until': (_dt.strptime(vu, '%Y-%m-%d').strftime('%d-%m-%Y')
+                            if vu else '-'),
+            'subject': subject, 'bill_company': bill_company,
+            'bill_address': bill_address, 'bill_phone': bill_phone,
+            'bill_email': bill_email, 'bill_gst': bill_gst,
+            'gst_pct': gst_pct, 'items': items, 'sub_total': sub_total,
+            'gst_amount': gst_amount, 'total_amount': total_amount,
+            'terms': terms, 'notes': notes, 'by_name': _uname()})
+        return send_file(pdf, mimetype='application/pdf',
+                         as_attachment=False,
+                         download_name='%s.pdf'
+                         % quot_number.replace('/', '_'))
+    finally:
+        conn.close()
+
+
+_BOARD_MS = {
+    'artwork': ('artwork', 'Artwork / Design'),
+    'artwork_qc': ('artwork_qc', 'Artwork QC Approval'),
+}
+
+
+def _board_lock(conn, pid, board):
+    """Board wale milestone (artwork / artwork_qc) ka (id, locked)."""
+    mt, title = _BOARD_MS.get(board, (None, None))
+    if not mt:
+        return (None, False)
+    ms = conn.execute(
+        "SELECT id, status FROM `milestone_masters` WHERE project_id=%s "
+        "AND (milestone_type=%s OR title=%s) LIMIT 1",
+        (pid, mt, title)).fetchone()
+    return ((ms or {}).get('id'),
+            bool(ms and ms.get('status') == 'approved'))
+
+
+def _artwork_lock(conn, pid):
+    return _board_lock(conn, pid, 'artwork')
+
+
+def _packing_lock(conn, pid):
+    """Packing milestone done ho to (id, locked) return karo."""
+    ms = conn.execute(
+        "SELECT id, status FROM `milestone_masters` WHERE project_id=%s "
+        "AND (milestone_type='packing_material' OR title='Packing Material') "
+        "LIMIT 1", (pid,)).fetchone()
+    return ((ms or {}).get('id'),
+            bool(ms and ms.get('status') == 'approved'))
+
+
+@npd_bp.route('/<int:pid>/inline-upload', methods=['POST'])
+@login_required
+def board_inline_upload(pid):
+    """Gmail-style inline image upload — artwork / artwork_qc boards only."""
+    import os
+    from datetime import datetime as _dt
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    board = (request.form.get('board') or '').strip().lower()
+    if board not in ('artwork', 'artwork_qc'):
+        return jsonify(ok=False, error='Inline upload not allowed.'), 400
+    f = request.files.get('file')
+    if not f or not f.filename:
+        return jsonify(ok=False, error='File is required.'), 400
+    if (f.mimetype or '').split('/')[0] != 'image':
+        return jsonify(ok=False, error='Only images allowed inline.'), 400
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        _ms_id, locked = _board_lock(conn, pid, board)
+        if locked:
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'the board is locked.'), 403
+        fname = secure_filename(f.filename) or 'image'
+        stored = f"{pid}_inline_{_dt.now():%Y%m%d%H%M%S}_{fname}"
+        f.save(os.path.join(_npd_upload_dir(), stored))
+        url = '/static/uploads/npd/' + stored
+        ms_id, _lk = _board_lock(conn, pid, board)
+        label = ('Artwork / Design' if board == 'artwork'
+                 else 'Artwork QC')
+        action = f'{label} inline image uploaded'
+        _log(conn, pid, action)
+        if ms_id:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms_id, action, _uid()))
+        conn.commit()
+        return jsonify(ok=True, url=url, path=stored)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/<int:pid>/packing/save', methods=['POST'])
+@login_required
+def packing_save(pid):
+    """Packing Material row add/update (AJAX, auto-save)."""
+    from flask import jsonify
+    data = request.get_json(silent=True) or {}
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        ms_id, locked = _packing_lock(conn, pid)
+        if locked:
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'packing material is locked.'), 403
+        cat = (data.get('category') or 'Primary').strip()[:50]
+        vendor = (data.get('vendor_name') or '').strip()[:200]
+        st = (data.get('filling_status') or 'pending').strip().lower()
+        if st not in ('pending', 'in_process', 'done'):
+            st = 'pending'
+        cost = None
+        try:
+            if str(data.get('cost') or '').strip() != '':
+                cost = float(data.get('cost'))
+        except Exception:
+            cost = None
+        rid = data.get('id')
+        if rid:
+            r = conn.execute(
+                "SELECT id FROM `npd_packing_rows` "
+                "WHERE id=%s AND project_id=%s", (rid, pid)).fetchone()
+            if not r:
+                return jsonify(ok=False, error='Row not found'), 404
+            conn.execute(
+                "UPDATE `npd_packing_rows` SET category=%s, vendor_name=%s, "
+                "cost=%s, filling_status=%s WHERE id=%s",
+                (cat, vendor, cost, st, rid))
+            conn.commit()
+            return jsonify(ok=True, id=int(rid))
+        cur = conn.execute(
+            "INSERT INTO `npd_packing_rows` (project_id, milestone_id, "
+            "category, vendor_name, cost, filling_status, created_by) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (pid, ms_id, cat, vendor, cost, st, _uid()))
+        rid = cur.lastrowid
+        action = 'Packing material row added'
+        _log(conn, pid, action)
+        if ms_id:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms_id, action, _uid()))
+        conn.commit()
+        return jsonify(ok=True, id=rid)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/packing/<int:rid>/upload', methods=['POST'])
+@login_required
+def packing_upload(rid):
+    """Packing row file upload (image / filling / coa)."""
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    import os
+    field = request.form.get('field')
+    col = {'image': 'image_path', 'filling': 'filling_image_path',
+           'coa': 'coa_path'}.get(field)
+    f = request.files.get('file')
+    if not col or not f or not f.filename:
+        return jsonify(ok=False, error='File is required.'), 400
+    conn = _db()
+    try:
+        r = conn.execute("SELECT * FROM `npd_packing_rows` WHERE id=%s",
+                         (rid,)).fetchone()
+        if not r:
+            return jsonify(ok=False, error='Row not found'), 404
+        pid = r['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        ms_id, locked = _packing_lock(conn, pid)
+        if locked:
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'packing material is locked.'), 403
+        sub = os.path.join('packing', str(pid))
+        folder = os.path.join(_npd_upload_dir(), sub)
+        os.makedirs(folder, exist_ok=True)
+        fn = ('%d_%s_%s' % (rid, field,
+                            secure_filename(f.filename) or 'file'))[:120]
+        f.save(os.path.join(folder, fn))
+        rel = (sub + '/' + fn).replace('\\', '/')
+        conn.execute("UPDATE `npd_packing_rows` SET " + col + "=%s "
+                     "WHERE id=%s", (rel, rid))
+        labels = {'image': 'image', 'filling': 'filling image',
+                  'coa': 'COA'}
+        action = f"Packing material {labels[field]} uploaded"
+        _log(conn, pid, action)
+        if ms_id:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms_id, action, _uid()))
+        conn.commit()
+        return jsonify(ok=True, path=rel)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/packing/<int:rid>/delete', methods=['POST'])
+@login_required
+def packing_delete(rid):
+    from flask import jsonify
+    conn = _db()
+    try:
+        r = conn.execute("SELECT * FROM `npd_packing_rows` WHERE id=%s",
+                         (rid,)).fetchone()
+        if not r:
+            return jsonify(ok=False, error='Row not found'), 404
+        pid = r['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        ms_id, locked = _packing_lock(conn, pid)
+        if locked:
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'packing material is locked.'), 403
+        import os
+        for col in ('image_path', 'filling_image_path', 'coa_path'):
+            if r.get(col):
+                try:
+                    os.remove(os.path.join(_npd_upload_dir(), r[col]))
+                except Exception:
+                    pass
+        conn.execute("DELETE FROM `npd_packing_rows` WHERE id=%s", (rid,))
+        action = 'Packing material row deleted'
+        _log(conn, pid, action)
+        if ms_id:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms_id, action, _uid()))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/quotation/<int:qid>/delete', methods=['POST'])
+@login_required
+def npd_quotation_delete(qid):
+    """Quotation soft-delete (NPD panel se) — milestone done ho to locked."""
+    from flask import jsonify
+    conn = _db()
+    try:
+        q = conn.execute(
+            "SELECT * FROM `quotations` WHERE id=%s AND is_deleted=0",
+            (qid,)).fetchone()
+        if not q or not q.get('project_id'):
+            return jsonify(ok=False, error='Quotation not found.'), 404
+        pid = q['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        qms = conn.execute(
+            "SELECT id, status FROM `milestone_masters` WHERE project_id=%s "
+            "AND (milestone_type='quotation' OR title='Quotation') LIMIT 1",
+            (pid,)).fetchone()
+        if qms and qms['status'] == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'quotations are locked.'), 403
+        conn.execute(
+            "UPDATE `quotations` SET is_deleted=1, deleted_at=NOW() "
+            "WHERE id=%s", (qid,))
+        action = f"Quotation deleted: {q['quot_number']}"
+        _log(conn, pid, action)
+        if qms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (qms['id'], action, _uid()))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/<int:pid>/milestone/<int:mid>/sheet', methods=['POST'])
+@login_required
+def milestone_sheet(pid, mid):
+    """Milestone sheet content (rich HTML) save — AJAX.
+    Ingredients List & Marketing Sheet isi se save hoti hai (notes col)."""
+    from flask import jsonify
+    from datetime import datetime as _dt
+    data = request.get_json(silent=True) or {}
+    content = (data.get('content') or '').strip()
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+        m = conn.execute(
+            "SELECT id, title, status FROM `milestone_masters` "
+            "WHERE id=%s AND project_id=%s", (mid, pid)).fetchone()
+        if not m:
+            return jsonify(ok=False, error='Milestone not found.'), 404
+        if m['status'] == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — '
+                                 'sheet is locked.'), 403
+        conn.execute("UPDATE `milestone_masters` SET notes=%s WHERE id=%s",
+                     (content, mid))
+        action = f"'{m['title']}' sheet updated"
+        conn.execute(
+            "INSERT INTO `milestone_logs` (milestone_id, action, "
+            "created_by) VALUES (%s,%s,%s)", (mid, action, _uid()))
+        _log(conn, pid, action)
+        conn.commit()
+        return jsonify(ok=True, action=action, user=_uname(),
+                       at=_dt.now().strftime('%Y-%m-%d %H:%M'))
+    finally:
+        conn.close()
+
+
 @npd_bp.route('/<int:pid>/milestone/<int:mid>', methods=['POST'])
 @login_required
 def set_milestone(pid, mid):
+    from flask import jsonify
+    ajax = request.is_json or request.headers.get('X-Requested-With')
     st = request.form.get('status')
     if st not in [s[0] for s in MS_STATUSES]:
+        if ajax:
+            return jsonify(ok=False, error='Invalid milestone status.'), 400
         flash('Invalid milestone status.', 'error')
         return redirect(url_for('npd.view', pid=pid))
     conn = _db()
@@ -1336,13 +2440,41 @@ def set_milestone(pid, mid):
             "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
             [pid] + vis_params).fetchone()
         if not ok:
+            if ajax:
+                return jsonify(ok=False,
+                               error='You do not have access.'), 403
             flash('You do not have access.', 'error')
             return redirect(url_for('npd.projects'))
 
         row = conn.execute(
-            "SELECT title, status FROM `milestone_masters` "
+            "SELECT title, status, milestone_type FROM `milestone_masters` "
             "WHERE id=%s AND project_id=%s", (mid, pid)).fetchone()
         if row:
+            # barcode milestone: har design ka barcode upload hona zaruri hai
+            if row.get('milestone_type') == 'barcode' and st == 'approved':
+                tot = conn.execute(
+                    "SELECT COUNT(*) AS n FROM `npd_barcode_designs` "
+                    "WHERE project_id=%s", (pid,)).fetchone()
+                pend = conn.execute(
+                    "SELECT COUNT(*) AS n FROM `npd_barcode_designs` "
+                    "WHERE project_id=%s AND (barcode_path IS NULL OR barcode_path='')",
+                    (pid,)).fetchone()
+                total = (tot or {}).get('n', 0)
+                pending = (pend or {}).get('n', 0)
+                if total == 0:
+                    msg = ('Upload at least one design and its barcode '
+                           'before marking this milestone as done.')
+                    if ajax:
+                        return jsonify(ok=False, error=msg), 400
+                    flash(msg, 'error')
+                    return redirect(url_for('npd.view', pid=pid))
+                if pending > 0:
+                    msg = (f'{pending} design(s) still need a barcode upload. '
+                           f'Upload all barcodes before marking this milestone as done.')
+                    if ajax:
+                        return jsonify(ok=False, error=msg), 400
+                    flash(msg, 'error')
+                    return redirect(url_for('npd.view', pid=pid))
             conn.execute(
                 "UPDATE `milestone_masters` SET status=%s, "
                 "completed_at=CASE WHEN %s='approved' THEN NOW() "
@@ -1362,14 +2494,1189 @@ def set_milestone(pid, mid):
                  row['status'], st, _uid()))
             _log(conn, pid, f"Milestone '{row['title']}' -> {st}")
             conn.commit()
+            if ajax:
+                from datetime import datetime as _dt
+                return jsonify(
+                    ok=True, status=st,
+                    action=f"Status: {row['status']} -> {st}",
+                    user=_uname(),
+                    at=_dt.now().strftime('%Y-%m-%d %H:%M'))
             flash('Milestone updated.', 'success')
+        elif ajax:
+            return jsonify(ok=False, error='Milestone not found.'), 404
     finally:
         conn.close()
     return redirect(url_for('npd.view', pid=pid))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# NPD DASHBOARD  (old /npd/npd-dashboard jaisa — samples / dispatch / lifecycle)
+# FDA MILESTONE  (Step 1: send request mail, Step 2: FDA entries + docs)
+# ─────────────────────────────────────────────────────────────────────────────
+def _fda_milestone(conn, pid):
+    return conn.execute(
+        "SELECT * FROM `milestone_masters` WHERE project_id=%s "
+        "AND milestone_type='fda' LIMIT 1", (pid,)).fetchone()
+
+
+@npd_bp.route('/<int:pid>/fda/send-mail', methods=['POST'])
+@login_required
+def fda_send_mail(pid):
+    """Step 1 — send the FDA request mail (To/CC = selected employees)."""
+    from flask import jsonify
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.utils import formataddr
+    from datetime import datetime as _dt
+
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        ms = _fda_milestone(conn, pid)
+
+        to_ids = request.form.getlist('to_ids') or request.form.getlist('to_ids[]')
+        cc_ids = request.form.getlist('cc_ids') or request.form.getlist('cc_ids[]')
+        subject = (request.form.get('subject') or '').strip()
+        body = request.form.get('body') or ''
+
+        if not to_ids:
+            return jsonify(ok=False, error='Please select at least one recipient.'), 400
+        if not subject:
+            return jsonify(ok=False, error='Subject is required.'), 400
+        if not body.strip():
+            return jsonify(ok=False, error='Message body is required.'), 400
+
+        def _emails_for(ids):
+            if not ids:
+                return []
+            placeholders = ','.join(['%s'] * len(ids))
+            rows = conn.execute(
+                "SELECT id, COALESCE(NULLIF(full_name,''), username) AS nm, "
+                "email FROM `User_Tbl` WHERE id IN (" + placeholders + ")",
+                ids).fetchall() or []
+            return [r for r in rows if (r.get('email') or '').strip()]
+
+        to_rows = _emails_for(to_ids)
+        cc_rows = _emails_for(cc_ids)
+        if not to_rows:
+            return jsonify(ok=False, error='Selected recipients have no email address on file.'), 400
+
+        to_emails = [r['email'].strip() for r in to_rows]
+        cc_emails = [r['email'].strip() for r in cc_rows]
+        to_names = ', '.join(r['nm'] for r in to_rows)
+
+        # ── send via shared SMTP config ──
+        try:
+            import core.config as _cfg
+        except Exception:
+            _cfg = None
+        server = getattr(_cfg, 'MAIL_SERVER', 'smtp.gmail.com')
+        port = int(getattr(_cfg, 'MAIL_PORT', 587) or 587)
+        use_tls = getattr(_cfg, 'MAIL_USE_TLS', True)
+        username = getattr(_cfg, 'MAIL_USERNAME', 'no-reply@hcpwellness.in')
+        password = getattr(_cfg, 'MAIL_PASSWORD', '')
+        sender = username or 'no-reply@hcpwellness.in'
+
+        if not password:
+            return jsonify(ok=False, error='SMTP password not configured on server.'), 500
+
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = formataddr(('HCP Wellness Pvt. Ltd.', sender))
+            msg['To'] = ', '.join(to_emails)
+            if cc_emails:
+                msg['Cc'] = ', '.join(cc_emails)
+            msg['Reply-To'] = sender
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+            html_body = body.replace('\n', '<br>')
+            msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+            s = smtplib.SMTP(server, port, timeout=25)
+            if use_tls:
+                s.starttls()
+            s.login(username, password)
+            s.sendmail(sender, to_emails + cc_emails, msg.as_string())
+            s.quit()
+        except Exception as e:
+            return jsonify(ok=False, error='Email bhejne me dikkat: ' + str(e)), 500
+
+        conn.execute(
+            "INSERT INTO `npd_fda_requests` "
+            "(project_id, milestone_id, to_emails, cc_emails, subject, body, sent_by) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (pid, ms['id'] if ms else None, ','.join(to_emails),
+             ','.join(cc_emails), subject, body, _uid()))
+        action = f"FDA request mail sent to {to_names}"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+
+        return jsonify(ok=True, sent_by=_uname(),
+                       sent_at=_dt.now().strftime('%d-%m-%Y %H:%M'),
+                       to=', '.join(to_emails), cc=', '.join(cc_emails),
+                       subject=subject, body=body)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/<int:pid>/fda/entry/add', methods=['POST'])
+@login_required
+def fda_entry_add(pid):
+    """Step 2 — add a new FDA entry (product + 4 document uploads)."""
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    import os
+
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        product_name = (request.form.get('product_name') or '').strip()
+        if not product_name:
+            return jsonify(ok=False, error='Product Name is required.'), 400
+
+        ms = _fda_milestone(conn, pid)
+
+        field_map = {
+            'free_sale_certificate': 'free_sale_certificate',
+            'product_permission': 'product_permission',
+            'msds': 'msds',
+            'dossier': 'dossier',
+        }
+        sub = os.path.join('fda', str(pid))
+        folder = os.path.join(_npd_upload_dir(), sub)
+        os.makedirs(folder, exist_ok=True)
+
+        saved = {}
+        for field, col in field_map.items():
+            f = request.files.get(field)
+            if f and f.filename:
+                fn = ('%s_%s_%s' % (field, _dt_stamp(), secure_filename(f.filename) or 'file'))[:150]
+                f.save(os.path.join(folder, fn))
+                saved[col] = (sub + '/' + fn).replace('\\', '/')
+
+        cols = ['project_id', 'milestone_id', 'product_name'] + list(saved.keys()) + ['created_by']
+        vals = [pid, ms['id'] if ms else None, product_name] + list(saved.values()) + [_uid()]
+        placeholders = ','.join(['%s'] * len(vals))
+        cur = conn.execute(
+            "INSERT INTO `npd_fda_entries` (`" + "`,`".join(cols) + "`) "
+            "VALUES (" + placeholders + ")", vals)
+        eid = cur.lastrowid
+
+        action = f"FDA entry added for '{product_name}'"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+
+        row = conn.execute(
+            "SELECT * FROM `npd_fda_entries` WHERE id=%s", (eid,)).fetchone()
+        return jsonify(ok=True, entry={
+            'id': row['id'], 'product_name': row['product_name'],
+            'free_sale_certificate': row.get('free_sale_certificate'),
+            'product_permission': row.get('product_permission'),
+            'msds': row.get('msds'), 'dossier': row.get('dossier')})
+    finally:
+        conn.close()
+
+
+def _dt_stamp():
+    from datetime import datetime as _dt
+    return _dt.now().strftime('%Y%m%d%H%M%S')
+
+
+@npd_bp.route('/<int:pid>/fda/entry/<int:eid>/delete', methods=['POST'])
+@login_required
+def fda_entry_delete(pid, eid):
+    from flask import jsonify
+    import os
+
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        row = conn.execute(
+            "SELECT * FROM `npd_fda_entries` WHERE id=%s AND project_id=%s",
+            (eid, pid)).fetchone()
+        if not row:
+            return jsonify(ok=False, error='Entry not found.'), 404
+
+        for col in ('free_sale_certificate', 'product_permission', 'msds', 'dossier'):
+            if row.get(col):
+                try:
+                    os.remove(os.path.join(_npd_upload_dir(), row[col]))
+                except Exception:
+                    pass
+
+        conn.execute("DELETE FROM `npd_fda_entries` WHERE id=%s", (eid,))
+        action = f"FDA entry deleted for '{row['product_name']}'"
+        _log(conn, pid, action)
+        ms = _fda_milestone(conn, pid)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BARCODE MILESTONE  (Designer upload 1024x1024 + Barcode Team upload)
+# ─────────────────────────────────────────────────────────────────────────────
+def _barcode_milestone(conn, pid):
+    return conn.execute(
+        "SELECT * FROM `milestone_masters` WHERE project_id=%s "
+        "AND milestone_type='barcode' LIMIT 1", (pid,)).fetchone()
+
+
+def _bc_design_json(conn, row):
+    """Build the JSON payload for one barcode design row (used by JS re-render)."""
+    umap = _user_map(conn)
+    return {
+        'id': row['id'], 'sr_no': row['sr_no'],
+        'design_path': row.get('design_path'),
+        'design_width': row.get('design_width'),
+        'design_height': row.get('design_height'),
+        'barcode_path': row.get('barcode_path'),
+        'by': umap.get(row.get('created_by'), ''),
+        'created_at': str(row.get('created_at') or '')[:16],
+    }
+
+
+@npd_bp.route('/<int:pid>/barcode/upload-design', methods=['POST'])
+@login_required
+def barcode_upload_design(pid):
+    """Designer uploads a new barcode design (must be exactly 1024x1024 px)."""
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    from PIL import Image
+    import os
+
+    f = request.files.get('design')
+    if not f or not f.filename:
+        return jsonify(ok=False, error='Please choose an image to upload.'), 400
+
+    conn = _db()
+    try:
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p "
+            "WHERE p.id=%s AND p.is_deleted=0" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        ms = _barcode_milestone(conn, pid)
+        if ms and ms.get('status') == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — barcode is locked.'), 403
+
+        # validate dimensions (must be exactly 1024 x 1024)
+        try:
+            img = Image.open(f.stream)
+            w, h = img.size
+        except Exception:
+            return jsonify(ok=False, error='Could not read the image file.'), 400
+        if w != 1024 or h != 1024:
+            return jsonify(ok=False,
+                           error=f'Image must be exactly 1024 x 1024 px '
+                                 f'(uploaded image is {w} x {h} px).'), 400
+
+        f.stream.seek(0)
+        sub = os.path.join('barcode', str(pid))
+        folder = os.path.join(_npd_upload_dir(), sub)
+        os.makedirs(folder, exist_ok=True)
+        fn = ('design_%s_%s' % (_dt_stamp(), secure_filename(f.filename) or 'file'))[:150]
+        f.save(os.path.join(folder, fn))
+        rel = (sub + '/' + fn).replace('\\', '/')
+
+        nxt = conn.execute(
+            "SELECT COALESCE(MAX(sr_no),0)+1 AS n FROM `npd_barcode_designs` "
+            "WHERE project_id=%s", (pid,)).fetchone()
+        sr_no = nxt['n'] if nxt else 1
+
+        cur = conn.execute(
+            "INSERT INTO `npd_barcode_designs` "
+            "(project_id, milestone_id, sr_no, design_path, design_width, "
+            "design_height, created_by) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (pid, ms['id'] if ms else None, sr_no, rel, w, h, _uid()))
+        did = cur.lastrowid
+
+        action = f"Barcode design #{sr_no} uploaded"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+
+        row = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        return jsonify(ok=True, design=_bc_design_json(conn, row))
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/barcode/<int:did>/upload-barcode', methods=['POST'])
+@login_required
+def barcode_upload_barcode(did):
+    """Barcode Team uploads the barcode file against an existing design row."""
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    import os
+
+    f = request.files.get('barcode')
+    if not f or not f.filename:
+        return jsonify(ok=False, error='Please choose a file to upload.'), 400
+
+    conn = _db()
+    try:
+        row = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        if not row:
+            return jsonify(ok=False, error='Design not found.'), 404
+        pid = row['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        ms = _barcode_milestone(conn, pid)
+        if ms and ms.get('status') == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — barcode is locked.'), 403
+
+        sub = os.path.join('barcode', str(pid))
+        folder = os.path.join(_npd_upload_dir(), sub)
+        os.makedirs(folder, exist_ok=True)
+        fn = ('barcode_%d_%s_%s' % (did, _dt_stamp(), secure_filename(f.filename) or 'file'))[:150]
+        f.save(os.path.join(folder, fn))
+        rel = (sub + '/' + fn).replace('\\', '/')
+
+        conn.execute(
+            "UPDATE `npd_barcode_designs` SET barcode_path=%s WHERE id=%s",
+            (rel, did))
+        action = f"Barcode file uploaded for design #{row['sr_no']}"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+        out = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        return jsonify(ok=True, path=rel, design=_bc_design_json(conn, out))
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/barcode/<int:did>/delete', methods=['POST'])
+@login_required
+def barcode_delete(did):
+    from flask import jsonify
+    import os
+
+    conn = _db()
+    try:
+        row = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        if not row:
+            return jsonify(ok=False, error='Design not found.'), 404
+        pid = row['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        ms = _barcode_milestone(conn, pid)
+        if ms and ms.get('status') == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — barcode is locked.'), 403
+
+        if row.get('barcode_path'):
+            return jsonify(ok=False,
+                           error='Barcode already uploaded — designer image is locked. '
+                                 'Delete the barcode first to remove this design.'), 403
+
+        for col in ('design_path', 'barcode_path'):
+            if row.get(col):
+                try:
+                    os.remove(os.path.join(_npd_upload_dir(), row[col]))
+                except Exception:
+                    pass
+
+        conn.execute("DELETE FROM `npd_barcode_designs` WHERE id=%s", (did,))
+        action = f"Barcode design #{row['sr_no']} deleted"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+        return jsonify(ok=True)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/barcode/<int:did>/change-design', methods=['POST'])
+@login_required
+def barcode_change_design(did):
+    """Designer re-uploads (changes) the design image (must be 1024x1024 px)."""
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    from PIL import Image
+    import os
+
+    f = request.files.get('design')
+    if not f or not f.filename:
+        return jsonify(ok=False, error='Please choose an image to upload.'), 400
+
+    conn = _db()
+    try:
+        row = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        if not row:
+            return jsonify(ok=False, error='Design not found.'), 404
+        pid = row['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        ms = _barcode_milestone(conn, pid)
+        if ms and ms.get('status') == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — barcode is locked.'), 403
+
+        if row.get('barcode_path'):
+            return jsonify(ok=False,
+                           error='Barcode already uploaded — designer image is locked. '
+                                 'Delete the barcode first to change the design.'), 403
+
+        # validate dimensions (must be exactly 1024 x 1024)
+        try:
+            img = Image.open(f.stream)
+            w, h = img.size
+        except Exception:
+            return jsonify(ok=False, error='Could not read the image file.'), 400
+        if w != 1024 or h != 1024:
+            return jsonify(ok=False,
+                           error=f'Image must be exactly 1024 x 1024 px '
+                                 f'(uploaded image is {w} x {h} px).'), 400
+
+        f.stream.seek(0)
+        sub = os.path.join('barcode', str(pid))
+        folder = os.path.join(_npd_upload_dir(), sub)
+        os.makedirs(folder, exist_ok=True)
+        fn = ('design_%s_%s' % (_dt_stamp(), secure_filename(f.filename) or 'file'))[:150]
+        f.save(os.path.join(folder, fn))
+        rel = (sub + '/' + fn).replace('\\', '/')
+
+        old = row.get('design_path')
+        conn.execute(
+            "UPDATE `npd_barcode_designs` SET design_path=%s, design_width=%s, "
+            "design_height=%s WHERE id=%s", (rel, w, h, did))
+        if old:
+            try:
+                os.remove(os.path.join(_npd_upload_dir(), old))
+            except Exception:
+                pass
+
+        action = f"Barcode design #{row['sr_no']} image changed"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+
+        out = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        return jsonify(ok=True, design=_bc_design_json(conn, out))
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/barcode/<int:did>/change-barcode', methods=['POST'])
+@login_required
+def barcode_change_barcode(did):
+    """Barcode Team re-uploads (changes) the barcode file against a design."""
+    from flask import jsonify
+    from werkzeug.utils import secure_filename
+    import os
+
+    f = request.files.get('barcode')
+    if not f or not f.filename:
+        return jsonify(ok=False, error='Please choose a file to upload.'), 400
+
+    conn = _db()
+    try:
+        row = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        if not row:
+            return jsonify(ok=False, error='Design not found.'), 404
+        pid = row['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        ms = _barcode_milestone(conn, pid)
+        if ms and ms.get('status') == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — barcode is locked.'), 403
+
+        sub = os.path.join('barcode', str(pid))
+        folder = os.path.join(_npd_upload_dir(), sub)
+        os.makedirs(folder, exist_ok=True)
+        fn = ('barcode_%d_%s_%s' % (did, _dt_stamp(), secure_filename(f.filename) or 'file'))[:150]
+        f.save(os.path.join(folder, fn))
+        rel = (sub + '/' + fn).replace('\\', '/')
+
+        old = row.get('barcode_path')
+        conn.execute(
+            "UPDATE `npd_barcode_designs` SET barcode_path=%s WHERE id=%s",
+            (rel, did))
+        if old:
+            try:
+                os.remove(os.path.join(_npd_upload_dir(), old))
+            except Exception:
+                pass
+
+        action = f"Barcode file changed for design #{row['sr_no']}"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+        return jsonify(ok=True, path=rel)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/barcode/<int:did>/delete-barcode', methods=['POST'])
+@login_required
+def barcode_delete_barcode(did):
+    """Barcode Team deletes ONLY the barcode file (design row stays)."""
+    from flask import jsonify
+    import os
+
+    conn = _db()
+    try:
+        row = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        if not row:
+            return jsonify(ok=False, error='Design not found.'), 404
+        pid = row['project_id']
+        vis_frag, vis_params = _proj_visibility_sql('p')
+        ok = conn.execute(
+            "SELECT p.id FROM `npd_projects` p WHERE p.id=%s" + vis_frag,
+            [pid] + vis_params).fetchone()
+        if not ok:
+            return jsonify(ok=False, error='You do not have access.'), 403
+
+        ms = _barcode_milestone(conn, pid)
+        if ms and ms.get('status') == 'approved':
+            return jsonify(ok=False,
+                           error='Milestone is marked as done — barcode is locked.'), 403
+
+        if row.get('barcode_path'):
+            try:
+                os.remove(os.path.join(_npd_upload_dir(), row['barcode_path']))
+            except Exception:
+                pass
+
+        conn.execute(
+            "UPDATE `npd_barcode_designs` SET barcode_path=NULL WHERE id=%s",
+            (did,))
+        action = f"Barcode file deleted for design #{row['sr_no']}"
+        _log(conn, pid, action)
+        if ms:
+            conn.execute(
+                "INSERT INTO `milestone_logs` (milestone_id, action, "
+                "created_by) VALUES (%s,%s,%s)", (ms['id'], action, _uid()))
+        conn.commit()
+
+        out = conn.execute(
+            "SELECT * FROM `npd_barcode_designs` WHERE id=%s", (did,)).fetchone()
+        return jsonify(ok=True, design=_bc_design_json(conn, out))
+    finally:
+        conn.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# R&D PROJECTS  (Unallotted / Allotted / Closed tabs + member chips + Log)
+# ─────────────────────────────────────────────────────────────────────────────
+# Closed statuses (project considered finished/cancelled)
+_RD_CLOSED = {'completed', 'complete', 'closed', 'done', 'project_closed',
+              'cancelled', 'finish', 'finished'}
+
+_RD_DEPT_OK = {'rd', 'randd', 'rnd', 'researchanddevelopment',
+               'researchdevelopment', 'researchndevelopment'}
+
+
+def _is_rd_dept(dept):
+    import re as _re
+    if not dept:
+        return False
+    n = _re.sub(r'[^a-z]', '', str(dept).lower())
+    return (n in _RD_DEPT_OK or n.startswith('researchdevelop')
+            or n.startswith('researchanddevelop'))
+
+
+def _rd_people(conn):
+    """Active R&D-department users from User_Tbl (for the Assign modal)."""
+    rows = conn.execute(
+        "SELECT id, full_name, username, designation, department "
+        "FROM `User_Tbl` WHERE is_active=1 ORDER BY full_name") .fetchall() or []
+    out = []
+    for r in rows:
+        if _is_rd_dept(r.get('department')):
+            out.append({
+                'id': r['id'],
+                'name': r.get('full_name') or r.get('username') or f"#{r['id']}",
+                'designation': r.get('designation') or 'R&D',
+            })
+    return out
+
+
+def _is_rd_assignee(conn, pid, uid):
+    """True only if `uid` is an active R&D assignee of project `pid`.
+    Used to gate START/FINISH — project must be assigned AND only the
+    assigned R&D person can start/finish. Safe if R&D tables absent."""
+    try:
+        r = conn.execute(
+            "SELECT 1 FROM `rd_sub_assignments` "
+            "WHERE project_id=%s AND user_id=%s AND is_active=1 LIMIT 1",
+            (pid, uid)).fetchone()
+        return bool(r)
+    except Exception:
+        return False
+
+
+@npd_bp.route('/rd-projects')
+@login_required
+def rd_projects():
+    """R&D Manager view — assign R&D team to projects (3 tabs)."""
+    conn = _db()
+    try:
+        q = (request.args.get('q') or '').strip()
+        umap = _user_map(conn)
+
+        # status badges (name/slug/color) — same as NPD projects list
+        statuses = conn.execute(
+            "SELECT name, slug, color FROM `npd_statuses` ORDER BY sort_order"
+        ).fetchall()
+
+        where = "WHERE p.is_deleted=0"
+        params = []
+        if q:
+            where += (" AND (p.product_name LIKE %s OR p.code LIKE %s "
+                      "OR p.client_company LIKE %s OR p.client_name LIKE %s)")
+            like = f"%{q}%"
+            params += [like, like, like, like]
+        rows = conn.execute(
+            "SELECT * FROM `npd_projects` p " + where + " ORDER BY p.id DESC",
+            params).fetchall()
+
+        # active sub-assignments → member chips + which projects are allotted
+        subs = conn.execute(
+            "SELECT project_id, user_id, variant_code, status "
+            "FROM `rd_sub_assignments` WHERE is_active=1").fetchall()
+        assigned_pids = set()
+        members = {}          # pid -> [ {name, variant_code, status} ]
+        assign_map = {}       # pid -> [ {user_id, variant_code} ]  (for prefill)
+        my_pids = set()
+        uid = _uid()
+        for s in subs:
+            pid = s['project_id']
+            assigned_pids.add(pid)
+            members.setdefault(pid, []).append({
+                'name': umap.get(s['user_id'], '—'),
+                'variant_code': s.get('variant_code') or '',
+                'status': s.get('status') or 'not_started',
+            })
+            assign_map.setdefault(pid, []).append({
+                'user_id': s['user_id'],
+                'variant_code': s.get('variant_code') or '',
+            })
+            if s['user_id'] == uid:
+                my_pids.add(pid)
+        for pid in members:
+            members[pid].sort(key=lambda m: (m['name'] or '').lower())
+
+        full = _has_full_visibility()
+
+        def _visible(p):
+            # Manager / admin → all. Else only projects assigned to me.
+            if full:
+                return True
+            if p['id'] in my_pids:
+                return True
+            if (p.get('assigned_rd') == uid or p.get('assigned_sc') == uid
+                    or p.get('npd_poc') == uid):
+                return True
+            return False
+
+        unallotted, allotted, closed = [], [], []
+        for p in rows:
+            stt = (p.get('status') or '').lower()
+            if stt in _RD_CLOSED:
+                if _visible(p):
+                    closed.append(p)
+            elif p['id'] in assigned_pids:
+                if _visible(p):
+                    allotted.append(p)
+            else:
+                # Unallotted is the assign pool — only managers act on it.
+                if full:
+                    unallotted.append(p)
+
+        return _render('npd/rd_projects.html',
+                       sidebar_menu=get_menu('rd', role=_role(),
+                                             is_admin=_is_admin()),
+                       active_item='rd-list',
+                       q=q, statuses=statuses,
+                       unallotted=unallotted, allotted=allotted, closed=closed,
+                       members=members, assign_map=assign_map,
+                       rd_people=_rd_people(conn),
+                       umap=umap, is_manager=full)
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/rd-projects/<int:pid>/log')
+@login_required
+def rd_project_log(pid):
+    """JSON for the R&D Project Log modal — team summary + activity timeline."""
+    from flask import jsonify
+    conn = _db()
+    try:
+        umap = _user_map(conn)
+        subs = conn.execute(
+            "SELECT * FROM `rd_sub_assignments` WHERE project_id=%s "
+            "ORDER BY id", (pid,)).fetchall()
+        logs = conn.execute(
+            "SELECT * FROM `rd_project_logs` WHERE project_id=%s "
+            "ORDER BY id", (pid,)).fetchall()
+
+        def _dur(s):
+            tot = s.get('total_seconds') or 0
+            if not tot and s.get('started_at') and s.get('finished_at'):
+                try:
+                    tot = int((s['finished_at'] - s['started_at']).total_seconds())
+                except Exception:
+                    tot = 0
+            h, rem = divmod(int(tot), 3600)
+            m, sec = divmod(rem, 60)
+            return '%02d:%02d:%02d' % (h, m, sec)
+
+        return jsonify(
+            ok=True,
+            members=[{
+                'name': umap.get(s['user_id'], '—'),
+                'variant_code': s.get('variant_code') or '',
+                'status': s.get('status') or 'not_started',
+                'started': str(s.get('started_at') or '')[:19],
+                'finished': str(s.get('finished_at') or '')[:19],
+                'duration': _dur(s),
+            } for s in subs],
+            logs=[{
+                'event': (l.get('event') or '').replace('_', ' ').title(),
+                'detail': l.get('detail') or '',
+                'user': umap.get(l.get('user_id'), 'System'),
+                'at': str(l.get('created_at') or '')[:19],
+            } for l in logs])
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/rd-projects/<int:pid>/assign', methods=['POST'])
+@login_required
+def rd_assign(pid):
+    """Assign / reassign R&D team (manager only). Body: {members:[{user_id,variant_code}]}"""
+    from flask import jsonify
+    if not _has_full_visibility():
+        return jsonify(ok=False,
+                       error='Only R&D Manager can assign or reassign projects.'), 403
+
+    data = request.get_json(silent=True) or {}
+    items = data.get('members') or []
+
+    conn = _db()
+    try:
+        proj = conn.execute(
+            "SELECT id FROM `npd_projects` WHERE id=%s AND is_deleted=0",
+            (pid,)).fetchone()
+        if not proj:
+            return jsonify(ok=False, error='Project not found.'), 404
+
+        umap = _user_map(conn)
+        allowed = {p['id'] for p in _rd_people(conn)}
+
+        keep_ids, names = [], []
+        for it in items:
+            try:
+                uid = int(it.get('user_id'))
+            except (TypeError, ValueError):
+                continue
+            if uid not in allowed:
+                continue
+            variant = (str(it.get('variant_code') or '').strip())[:100]
+            keep_ids.append(uid)
+            names.append(umap.get(uid, f'#{uid}'))
+            ex = conn.execute(
+                "SELECT id FROM `rd_sub_assignments` "
+                "WHERE project_id=%s AND user_id=%s", (pid, uid)).fetchone()
+            if ex:
+                conn.execute(
+                    "UPDATE `rd_sub_assignments` SET variant_code=%s, "
+                    "assigned_by=%s, assigned_at=NOW(), is_active=1 WHERE id=%s",
+                    (variant, _uid(), ex['id']))
+            else:
+                conn.execute(
+                    "INSERT INTO `rd_sub_assignments` "
+                    "(project_id, user_id, variant_code, assigned_by, "
+                    "assigned_at, status, is_active) "
+                    "VALUES (%s,%s,%s,%s,NOW(),'not_started',1)",
+                    (pid, uid, variant, _uid()))
+
+        if not keep_ids:
+            return jsonify(ok=False,
+                           error='Select at least one R&D person.'), 400
+
+        # deactivate stale (un-checked) assignments
+        removed = []
+        stale = conn.execute(
+            "SELECT id, user_id FROM `rd_sub_assignments` "
+            "WHERE project_id=%s AND is_active=1", (pid,)).fetchall()
+        for s in stale:
+            if s['user_id'] not in keep_ids:
+                conn.execute(
+                    "UPDATE `rd_sub_assignments` SET is_active=0 WHERE id=%s",
+                    (s['id'],))
+                removed.append(umap.get(s['user_id'], f"#{s['user_id']}"))
+
+        # backward-compat project fields
+        members_str = ','.join('u_%d' % u for u in keep_ids)
+        conn.execute(
+            "UPDATE `npd_projects` SET assigned_rd=%s, assigned_rd_members=%s "
+            "WHERE id=%s", (keep_ids[0], members_str, pid))
+
+        # logs
+        detail = ("Members: " + ', '.join(names)
+                  + (" — Removed: " + ', '.join(removed) if removed else '')
+                  + " — by " + _uname())
+        _log(conn, pid, "R&D team assigned: " + ', '.join(names))
+        conn.execute(
+            "INSERT INTO `rd_project_logs` (project_id, user_id, event, detail) "
+            "VALUES (%s,%s,'assigned',%s)", (pid, _uid(), detail))
+        conn.commit()
+
+        subs = conn.execute(
+            "SELECT user_id, variant_code, status FROM `rd_sub_assignments` "
+            "WHERE project_id=%s AND is_active=1 ORDER BY id", (pid,)).fetchall()
+        out = [{'name': umap.get(s['user_id'], '—'),
+                'variant_code': s.get('variant_code') or '',
+                'status': s.get('status') or 'not_started',
+                'user_id': s['user_id']} for s in subs]
+        out.sort(key=lambda m: (m['name'] or '').lower())
+        return jsonify(ok=True, members=out, removed=removed)
+    finally:
+        conn.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NPD MASTERS  (Milestone Master · NPD Status Master · NPD Category Master)
+# ─────────────────────────────────────────────────────────────────────────────
+def _masters_guard():
+    """Only admin / manager can manage masters."""
+    return _has_full_visibility()
+
+
+def _slugify(s):
+    import re as _re
+    return _re.sub(r'_+', '_', _re.sub(r'[^a-z0-9]+', '_',
+                   (s or '').strip().lower())).strip('_')
+
+
+def _npd_cats(conn):
+    """Category options for the NPD form — strictly from NPD Category Master.
+    No fallback: whatever is in npd_categories (active) is what the form shows."""
+    try:
+        rows = conn.execute(
+            "SELECT name FROM `npd_categories` WHERE is_active=1 "
+            "ORDER BY sort_order, name").fetchall()
+        return [r['name'] for r in (rows or [])]
+    except Exception:
+        return []
+
+
+# ── Milestone Master ─────────────────────────────────────────────────────────
+@npd_bp.route('/milestone-master')
+@login_required
+def milestone_master():
+    conn = _db()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM `npd_milestone_templates` "
+            "ORDER BY sort_order, id").fetchall()
+        return _render('npd/milestone_master.html', rows=rows,
+                       can_edit=_masters_guard(), active_item='npd-ms-master')
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/milestone-master/save', methods=['POST'])
+@login_required
+def milestone_master_save():
+    if not _masters_guard():
+        flash('You do not have access.', 'error')
+        return redirect(url_for('npd.milestone_master'))
+    f = request.form
+    mid = (f.get('id') or '').strip()
+    title = (f.get('title') or '').strip()
+    mtype = (f.get('milestone_type') or '').strip().lower().replace(' ', '_') \
+        or _slugify(title)
+    if not title or not mtype:
+        flash('Type and Title are required.', 'error')
+        return redirect(url_for('npd.milestone_master'))
+    desc = (f.get('description') or '').strip()
+    icon = (f.get('icon') or '📌').strip() or '📌'
+    applies = f.get('applies_to') or 'both'
+    dflt = 1 if f.get('default_selected') else 0
+    mand = 1 if f.get('is_mandatory') else 0
+    sort = int(f.get('sort_order') or 0)
+    active = 1 if f.get('is_active') else 0
+    conn = _db()
+    try:
+        if mid:
+            conn.execute(
+                "UPDATE `npd_milestone_templates` SET title=%s, description=%s, "
+                "icon=%s, applies_to=%s, default_selected=%s, is_mandatory=%s, "
+                "sort_order=%s, is_active=%s, modified_by=%s, modified_at=NOW() "
+                "WHERE id=%s",
+                (title, desc, icon, applies, dflt, mand, sort, active,
+                 _uid(), mid))
+            flash('Milestone updated.', 'success')
+        else:
+            dup = conn.execute(
+                "SELECT id FROM `npd_milestone_templates` WHERE milestone_type=%s",
+                (mtype,)).fetchone()
+            if dup:
+                flash(f'Milestone type "{mtype}" already exists.', 'error')
+                return redirect(url_for('npd.milestone_master'))
+            conn.execute(
+                "INSERT INTO `npd_milestone_templates` (milestone_type, title, "
+                "description, icon, applies_to, default_selected, is_mandatory, "
+                "sort_order, is_active, created_by) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (mtype, title, desc, icon, applies, dflt, mand, sort, active,
+                 _uid()))
+            flash('Milestone added.', 'success')
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for('npd.milestone_master'))
+
+
+@npd_bp.route('/milestone-master/<int:mid>/delete', methods=['POST'])
+@login_required
+def milestone_master_delete(mid):
+    if not _masters_guard():
+        flash('You do not have access.', 'error')
+        return redirect(url_for('npd.milestone_master'))
+    conn = _db()
+    try:
+        conn.execute("DELETE FROM `npd_milestone_templates` WHERE id=%s", (mid,))
+        conn.commit()
+        flash('Milestone deleted.', 'success')
+    finally:
+        conn.close()
+    return redirect(url_for('npd.milestone_master'))
+
+
+# ── NPD Status Master ────────────────────────────────────────────────────────
+@npd_bp.route('/status-master')
+@login_required
+def status_master():
+    conn = _db()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM `npd_statuses` ORDER BY sort_order, id").fetchall()
+        return _render('npd/npd_status_master.html', rows=rows,
+                       can_edit=_masters_guard(), active_item='npd-st-master')
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/status-master/save', methods=['POST'])
+@login_required
+def status_master_save():
+    if not _masters_guard():
+        flash('You do not have access.', 'error')
+        return redirect(url_for('npd.status_master'))
+    f = request.form
+    sid = (f.get('id') or '').strip()
+    name = (f.get('name') or '').strip()
+    if not name:
+        flash('Name is required.', 'error')
+        return redirect(url_for('npd.status_master'))
+    slug = (f.get('slug') or '').strip().lower() or _slugify(name)
+    color = (f.get('color') or '#6b7280').strip() or '#6b7280'
+    icon = (f.get('icon') or '🔵').strip() or '🔵'
+    sort = int(f.get('sort_order') or 0)
+    active = 1 if f.get('is_active') else 0
+    conn = _db()
+    try:
+        if sid:
+            conn.execute(
+                "UPDATE `npd_statuses` SET name=%s, slug=%s, color=%s, icon=%s, "
+                "sort_order=%s, is_active=%s, modified_by=%s, modified_at=NOW() "
+                "WHERE id=%s",
+                (name, slug, color, icon, sort, active, _uid(), sid))
+            flash('Status updated.', 'success')
+        else:
+            dup = conn.execute(
+                "SELECT id FROM `npd_statuses` WHERE name=%s OR slug=%s",
+                (name, slug)).fetchone()
+            if dup:
+                flash('A status with this name/slug already exists.', 'error')
+                return redirect(url_for('npd.status_master'))
+            conn.execute(
+                "INSERT INTO `npd_statuses` (name, slug, color, icon, "
+                "sort_order, is_active, created_by) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                (name, slug, color, icon, sort, active, _uid()))
+            flash('Status added.', 'success')
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for('npd.status_master'))
+
+
+@npd_bp.route('/status-master/<int:sid>/delete', methods=['POST'])
+@login_required
+def status_master_delete(sid):
+    if not _masters_guard():
+        flash('You do not have access.', 'error')
+        return redirect(url_for('npd.status_master'))
+    conn = _db()
+    try:
+        conn.execute("DELETE FROM `npd_statuses` WHERE id=%s", (sid,))
+        conn.commit()
+        flash('Status deleted.', 'success')
+    finally:
+        conn.close()
+    return redirect(url_for('npd.status_master'))
+
+
+# ── NPD Category Master ──────────────────────────────────────────────────────
+@npd_bp.route('/category-master')
+@login_required
+def category_master():
+    conn = _db()
+    try:
+        try:
+            rows = conn.execute(
+                "SELECT * FROM `npd_categories` ORDER BY sort_order, name"
+            ).fetchall()
+        except Exception:
+            rows = []
+        return _render('npd/npd_category_master.html', rows=rows,
+                       can_edit=_masters_guard(), active_item='npd-cat-master')
+    finally:
+        conn.close()
+
+
+@npd_bp.route('/category-master/save', methods=['POST'])
+@login_required
+def category_master_save():
+    if not _masters_guard():
+        flash('You do not have access.', 'error')
+        return redirect(url_for('npd.category_master'))
+    f = request.form
+    cid = (f.get('id') or '').strip()
+    name = (f.get('name') or '').strip()
+    if not name:
+        flash('Name is required.', 'error')
+        return redirect(url_for('npd.category_master'))
+    sort = int(f.get('sort_order') or 0)
+    active = 1 if f.get('is_active') else 0
+    conn = _db()
+    try:
+        if cid:
+            conn.execute(
+                "UPDATE `npd_categories` SET name=%s, sort_order=%s, is_active=%s "
+                "WHERE id=%s", (name, sort, active, cid))
+            flash('Category updated.', 'success')
+        else:
+            dup = conn.execute(
+                "SELECT id FROM `npd_categories` WHERE name=%s", (name,)).fetchone()
+            if dup:
+                flash('This category already exists.', 'error')
+                return redirect(url_for('npd.category_master'))
+            conn.execute(
+                "INSERT INTO `npd_categories` (name, sort_order, is_active, "
+                "created_by) VALUES (%s,%s,%s,%s)", (name, sort, active, _uid()))
+            flash('Category added.', 'success')
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for('npd.category_master'))
+
+
+@npd_bp.route('/category-master/<int:cid>/delete', methods=['POST'])
+@login_required
+def category_master_delete(cid):
+    if not _masters_guard():
+        flash('You do not have access.', 'error')
+        return redirect(url_for('npd.category_master'))
+    conn = _db()
+    try:
+        conn.execute("DELETE FROM `npd_categories` WHERE id=%s", (cid,))
+        conn.commit()
+        flash('Category deleted.', 'success')
+    finally:
+        conn.close()
+    return redirect(url_for('npd.category_master'))
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 PERIODS = {'all': 'All Time', 'today': 'Today', 'yesterday': 'Yesterday',
            'last_7_days': 'Last 7 Days', 'last_30_days': 'Last 30 Days'}
@@ -1600,6 +3907,13 @@ def dashboard():
         except Exception:
             pass
 
+        # When reached from the R&D menu (?nav=rd) show the R&D sidebar
+        if (request.args.get('nav') or '') == 'rd':
+            return _render('npd/npd_dashboard.html', a=a, period=period,
+                           periods=PERIODS,
+                           sidebar_menu=get_menu('rd', role=_role(),
+                                                 is_admin=_is_admin()),
+                           active_item='rd-dash')
         return _render('npd/npd_dashboard.html', a=a, period=period,
                        periods=PERIODS, active_item='npd-dash')
     finally:

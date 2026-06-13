@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R&D Projects | HCP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hcptheme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/common-sidebar.css') }}">
+<style>
+  .rd-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .rd-head .ttl{font-size:1.15rem;font-weight:800;display:flex;align-items:center;gap:8px}
+  .rd-head .tag{background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:999px;
+       padding:3px 10px;font-size:.72rem;font-weight:800}
+  .rd-head .sub{font-size:.8rem;color:var(--muted2)}
+  .rd-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);
+       border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+  .rd-tab{display:inline-flex;align-items:center;gap:7px;padding:.4rem .95rem;border-radius:999px;
+       border:1px solid transparent;background:transparent;color:var(--muted2);font-size:.82rem;
+       font-weight:700;cursor:pointer;font-family:inherit}
+  .rd-tab .dot{width:7px;height:7px;border-radius:99px;flex:0 0 auto}
+  .dot-red{background:#ef4444}.dot-green{background:#16a34a}.dot-grey{background:#94a3b8}
+  .rd-tab .cnt{padding:1px 8px;border-radius:999px;font-size:.7rem;font-weight:800;
+       background:color-mix(in srgb,var(--border) 50%,transparent);color:var(--text)}
+  .rd-tab.on{background:#7c3aed;color:#fff}
+  .rd-tab.on .cnt{background:rgba(255,255,255,.25);color:#fff}
+  .rd-search{margin-left:auto;display:flex;align-items:center;gap:6px;border:1px solid var(--border2);
+       border-radius:10px;padding:6px 11px;background:var(--surface)}
+  .rd-search input{border:none;outline:none;background:none;font-family:inherit;font-size:.84rem;
+       color:var(--text);width:200px}
+  .rd-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  table.rd-tbl{width:100%;border-collapse:collapse;font-size:.84rem}
+  table.rd-tbl th{text-align:left;padding:11px 16px;font-size:.66rem;text-transform:uppercase;
+       letter-spacing:.05em;color:var(--muted2);border-bottom:1px solid var(--border);white-space:nowrap}
+  table.rd-tbl td{padding:13px 16px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent);
+       vertical-align:middle}
+  table.rd-tbl tr:last-child td{border-bottom:none}
+  .rd-code{font-weight:800;color:#7c3aed;letter-spacing:.02em}
+  .rd-prod{font-weight:700}
+  .badge{display:inline-block;padding:3px 11px;border-radius:999px;color:#fff;font-size:.72rem;font-weight:700}
+  .badge.lite{background:transparent;border:1px solid var(--border2);color:var(--muted2)}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:color-mix(in srgb,#7c3aed 10%,transparent);
+       border:1px solid color-mix(in srgb,#7c3aed 28%,transparent);color:#5b21b6;border-radius:999px;
+       padding:3px 10px;font-size:.74rem;font-weight:700;margin:2px 3px 2px 0}
+  .chip .av{width:18px;height:18px;border-radius:50%;background:#7c3aed;color:#fff;font-size:.6rem;
+       font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .chip .vr{color:#7c3aed;font-weight:800}
+  .rd-act{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border2);background:var(--surface);
+       color:var(--text);border-radius:9px;padding:6px 13px;font-size:.76rem;font-weight:700;cursor:pointer;
+       font-family:inherit;text-decoration:none}
+  .rd-act:hover{border-color:#7c3aed;color:#7c3aed}
+  .rd-act.log:hover{border-color:#16a34a;color:#16a34a}
+  .rd-act.soon{opacity:.55;cursor:not-allowed}
+  .rd-empty{padding:46px 20px;text-align:center;color:var(--muted2);font-size:.88rem}
+  /* Log modal */
+  .rdm{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,15,30,.5);
+       backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:18px}
+  .rdm.show{display:flex}
+  .rdm-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;max-width:680px;
+       width:100%;max-height:86vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.28)}
+  .rdm-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);
+       position:sticky;top:0;background:var(--surface);z-index:2}
+  .rdm-head .h{font-size:.98rem;font-weight:800;display:flex;align-items:center;gap:8px}
+  .rdm-head .h .pn{color:#7c3aed}
+  .rdm-x{margin-left:auto;width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);
+       background:var(--surface);cursor:pointer;font-size:.9rem;color:var(--muted2)}
+  .rdm-body{padding:16px 20px}
+  .rdm-sec{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);
+       font-weight:800;margin:4px 0 10px}
+  table.rdm-sum{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:18px}
+  table.rdm-sum th{text-align:left;padding:8px 10px;font-size:.64rem;text-transform:uppercase;
+       letter-spacing:.04em;color:var(--muted2);border-bottom:1px solid var(--border)}
+  table.rdm-sum td{padding:9px 10px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+  .rdm-tl{position:relative;padding:4px 0 0 8px}
+  .rdm-it{position:relative;display:flex;gap:13px;padding:0 0 16px 16px;border-left:2px solid var(--border2)}
+  .rdm-it:last-child{border-left-color:transparent;padding-bottom:0}
+  .rdm-dot{position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:#7c3aed;
+       box-shadow:0 0 0 3px color-mix(in srgb,#7c3aed 18%,transparent)}
+  .rdm-ev{font-weight:800;font-size:.84rem;color:#4f46e5}
+  .rdm-meta{font-size:.7rem;font-weight:700;color:var(--muted2)}
+  .rdm-detail{font-size:.82rem;color:var(--muted2);margin-top:2px}
+  /* Assign modal */
+  .rda-proj{display:grid;grid-template-columns:1fr auto;gap:7px 18px;background:color-mix(in srgb,#7c3aed 6%,transparent);
+       border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+  .rda-lbl{font-size:.64rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);font-weight:800}
+  .rda-val{font-weight:700;font-size:.9rem}
+  .rda-code{font-weight:800;color:#7c3aed;font-size:.9rem}
+  .rda-sec{font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-bottom:11px}
+  .rda-person{border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:border-color .12s,background .12s}
+  .rda-person.on{border-color:#7c3aed;background:color-mix(in srgb,#7c3aed 5%,transparent)}
+  .rda-row{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+  .rda-av{width:38px;height:38px;border-radius:9px;background:color-mix(in srgb,#7c3aed 12%,transparent);color:#5b21b6;
+       font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .rda-info{flex:1;min-width:0}
+  .rda-info b{display:block;font-size:.88rem}
+  .rda-info small{color:var(--muted2);font-size:.7rem;text-transform:uppercase;letter-spacing:.02em}
+  .rda-tick{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;
+       display:flex;align-items:center;justify-content:center;color:#fff;font-size:.78rem;font-weight:800}
+  .rda-tick.on{background:#7c3aed;border-color:#7c3aed}
+  .rda-variant{width:calc(100% - 28px);margin:0 14px 12px;border:1px solid var(--border2);border-radius:9px;
+       padding:9px 12px;font-size:.84rem;font-family:inherit;outline:none;box-sizing:border-box;background:var(--surface);color:var(--text)}
+  .rda-variant:focus{border-color:#7c3aed;box-shadow:0 0 0 3px color-mix(in srgb,#7c3aed 14%,transparent)}
+  .rda-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;position:sticky;bottom:0;
+       background:var(--surface);padding:10px 0 2px}
+  .rda-submit{background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:.86rem;
+       font-weight:800;cursor:pointer;font-family:inherit}
+  .rda-submit:hover{filter:brightness(1.07)}.rda-submit:disabled{opacity:.6;cursor:not-allowed}
+</style>
+</head>
+<body>
+{% set page_title = "R&D Projects" %}
+{% set breadcrumb = [{"label":"Home","url":"/"},{"label":"R&D","url":"/npd/dashboard"},{"label":"Projects","url":"#"}] %}
+{% include 'partials/_header.html' %}
+<div class="layout-wrap">
+  {% include 'partials/_sidebar.html' %}
+  <div class="page-root">
+
+    {% set ns = namespace() %}
+    {% macro status_badge(slug) -%}
+      {%- set found = namespace(ok=false) -%}
+      {%- for s in statuses %}{% if s.slug == slug %}{% set found.ok = true %}<span class="badge" style="background:{{ s.color }}">{{ s.name }}</span>{% endif %}{% endfor -%}
+      {%- if not found.ok %}<span class="badge lite">{{ (slug or '—')|replace('_',' ')|title }}</span>{% endif -%}
+    {%- endmacro %}
+    {% macro chips(pid) -%}
+      {%- for m in members.get(pid, []) -%}
+        <span class="chip" title="{{ m.name }}{% if m.variant_code %} — {{ m.variant_code }}{% endif %}">
+          <span class="av">{{ (m.name[:2])|upper }}</span>{{ m.name }}{% if m.variant_code %} <span class="vr">({{ m.variant_code }})</span>{% endif %}
+        </span>
+      {%- else -%}<span style="color:var(--muted2)">—</span>{%- endfor -%}
+    {%- endmacro %}
+
+    <div class="rd-head">
+      <span class="ttl">🔬 R&amp;D Projects</span>
+      <span class="tag">R&amp;D Manager View</span>
+      <span class="sub">— Assign R&amp;D team to projects</span>
+    </div>
+
+    <div class="rd-bar">
+      <button type="button" class="rd-tab {{ 'on' if is_manager else '' }}" id="tab-unallotted" onclick="rdTab('unallotted')">
+        <span class="dot dot-red"></span> Unalloted NPD <span class="cnt">{{ unallotted|length }}</span>
+      </button>
+      <button type="button" class="rd-tab {{ 'on' if not is_manager else '' }}" id="tab-allotted" onclick="rdTab('allotted')">
+        <span class="dot dot-green"></span> Alloted NPD <span class="cnt">{{ allotted|length }}</span>
+      </button>
+      <button type="button" class="rd-tab" id="tab-closed" onclick="rdTab('closed')">
+        <span class="dot dot-grey"></span> Closed NPD <span class="cnt">{{ closed|length }}</span>
+      </button>
+      <form class="rd-search" method="get" action="/npd/rd-projects">
+        🔍 <input type="text" name="q" value="{{ q }}" placeholder="Global Search...">
+      </form>
+    </div>
+
+    {# ── UNALLOTTED ── #}
+    <div class="rd-card rd-pane" id="pane-unallotted" style="display:none">
+      <table class="rd-tbl">
+        <thead><tr><th>#</th><th>Project No</th><th>Product Name</th><th>Client</th><th>Status</th><th>Duration</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody>
+        {% for p in unallotted %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><span class="rd-code">{{ p.code }}</span></td>
+            <td class="rd-prod">{{ p.product_name }}</td>
+            <td>{{ p.client_company or p.client_name or '—' }}</td>
+            <td>{{ status_badge(p.status) }}</td>
+            <td>{{ (p.project_lead_days ~ 'd') if p.project_lead_days else '—' }}</td>
+            <td style="text-align:right"><button type="button" class="rd-act" onclick="rdOpenAssign({{ p.id }})">👥 Assign</button></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7"><div class="rd-empty">No unallotted projects.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# ── ALLOTTED ── #}
+    <div class="rd-card rd-pane" id="pane-allotted" style="display:none">
+      <table class="rd-tbl">
+        <thead><tr><th>#</th><th>Project No</th><th>Product Name</th><th>Client</th><th>Assigned To</th><th>Status</th><th>Duration</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody>
+        {% for p in allotted %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><span class="rd-code">{{ p.code }}</span></td>
+            <td class="rd-prod">{{ p.product_name }}</td>
+            <td>{{ p.client_company or p.client_name or '—' }}</td>
+            <td>{{ chips(p.id) }}</td>
+            <td>{{ status_badge(p.status) }}</td>
+            <td>{{ (p.project_lead_days ~ 'd') if p.project_lead_days else '—' }}</td>
+            <td style="text-align:right;white-space:nowrap">
+              {% if is_manager %}<button type="button" class="rd-act" onclick="rdOpenAssign({{ p.id }})">✏️ Reassign</button>{% endif %}
+              <button type="button" class="rd-act log" onclick="rdLog({{ p.id }}, '{{ p.code }}', '{{ (p.product_name or '')|replace("'","\\'") }}')">📋 Log</button>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8"><div class="rd-empty">No allotted projects.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# ── CLOSED ── #}
+    <div class="rd-card rd-pane" id="pane-closed" style="display:none">
+      <table class="rd-tbl">
+        <thead><tr><th>#</th><th>Project No</th><th>Product Name</th><th>Client</th><th>Assigned To</th><th>Status</th><th>Duration</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody>
+        {% for p in closed %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><span class="rd-code">{{ p.code }}</span></td>
+            <td class="rd-prod">{{ p.product_name }}</td>
+            <td>{{ p.client_company or p.client_name or '—' }}</td>
+            <td>{{ chips(p.id) }}</td>
+            <td>{{ status_badge(p.status) }}</td>
+            <td>{{ (p.project_lead_days ~ 'd') if p.project_lead_days else '—' }}</td>
+            <td style="text-align:right"><button type="button" class="rd-act log" onclick="rdLog({{ p.id }}, '{{ p.code }}', '{{ (p.product_name or '')|replace("'","\\'") }}')">📋 Log</button></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8"><div class="rd-empty">No closed projects.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ R&D Project Log modal ══ -->
+<div class="rdm" id="rdLogModal" onclick="if(event.target===this)rdLogClose()">
+  <div class="rdm-box">
+    <div class="rdm-head">
+      <span class="h">📋 R&amp;D Project Log — <span class="pn" id="rdLogTitle"></span></span>
+      <button type="button" class="rdm-x" onclick="rdLogClose()">✕</button>
+    </div>
+    <div class="rdm-body" id="rdLogBody">
+      <div class="rd-empty">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function rdTab(t){
+  ['unallotted','allotted','closed'].forEach(function(x){
+    document.getElementById('pane-'+x).style.display = (x===t) ? 'block' : 'none';
+    document.getElementById('tab-'+x).classList.toggle('on', x===t);
+  });
+}
+// initial tab: manager → unallotted, executive → allotted
+rdTab({{ 'true' if is_manager else 'false' }} === true ? 'unallotted' : 'allotted');
+
+function dEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function rdLog(pid, code, name){
+  var m = document.getElementById('rdLogModal');
+  document.getElementById('rdLogTitle').textContent = code + ' - ' + name;
+  document.getElementById('rdLogBody').innerHTML = '<div class="rd-empty">Loading…</div>';
+  m.classList.add('show');
+  fetch('/npd/rd-projects/' + pid + '/log', {headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(function(r){ return r.json(); }).then(function(d){
+      if (!d.ok){ document.getElementById('rdLogBody').innerHTML = '<div class="rd-empty">Could not load log.</div>'; return; }
+      var html = '';
+      // team summary
+      html += '<div class="rdm-sec">R&D Team Summary</div>';
+      if (d.members && d.members.length){
+        html += '<table class="rdm-sum"><thead><tr><th>Member</th><th>Variant</th><th>Started</th><th>Ended</th><th>Duration</th><th>Status</th></tr></thead><tbody>';
+        d.members.forEach(function(m){
+          html += '<tr><td><b>' + dEsc(m.name) + '</b></td>'
+                + '<td>' + (m.variant_code ? '<span class="vr" style="color:#7c3aed;font-weight:800">'+dEsc(m.variant_code)+'</span>' : '—') + '</td>'
+                + '<td>' + (dEsc(m.started) || '—') + '</td>'
+                + '<td>' + (dEsc(m.finished) || '—') + '</td>'
+                + '<td><b>' + dEsc(m.duration) + '</b></td>'
+                + '<td><span class="badge lite">' + dEsc((m.status||'').replace(/_/g,' ')) + '</span></td></tr>';
+        });
+        html += '</tbody></table>';
+      } else {
+        html += '<div class="rd-empty" style="padding:18px">No team assigned yet.</div>';
+      }
+      // activity timeline
+      html += '<div class="rdm-sec">Activity Timeline</div>';
+      if (d.logs && d.logs.length){
+        html += '<div class="rdm-tl">';
+        d.logs.forEach(function(l){
+          html += '<div class="rdm-it"><div class="rdm-dot"></div><div>'
+                + '<div><span class="rdm-ev">' + dEsc(l.event) + '</span> '
+                + '<span class="rdm-meta">· ' + dEsc(l.at) + ' · ' + dEsc(l.user) + '</span></div>'
+                + (l.detail ? '<div class="rdm-detail">' + dEsc(l.detail) + '</div>' : '')
+                + '</div></div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="rd-empty" style="padding:18px">No activity logged yet.</div>';
+      }
+      document.getElementById('rdLogBody').innerHTML = html;
+    }).catch(function(){ document.getElementById('rdLogBody').innerHTML = '<div class="rd-empty">Network error.</div>'; });
+}
+function rdLogClose(){ document.getElementById('rdLogModal').classList.remove('show'); }
+</script>
+<!-- ══ Assign R&D Team modal ══ -->
+<div class="rdm" id="rdAssignModal" onclick="if(event.target===this)rdAssignClose()">
+  <div class="rdm-box" style="max-width:560px">
+    <div class="rdm-head">
+      <span class="h">👥 Assign R&amp;D Team</span>
+      <button type="button" class="rdm-x" onclick="rdAssignClose()">✕</button>
+    </div>
+    <div class="rdm-body">
+      <div class="rda-proj">
+        <div><div class="rda-lbl">Project</div><div class="rda-val" id="rdaName"></div></div>
+        <div style="text-align:right"><div class="rda-lbl">Code</div><div class="rda-code" id="rdaCode"></div></div>
+        <div><div class="rda-lbl">Client</div><div class="rda-val" id="rdaClient"></div></div>
+        <div style="text-align:right;align-self:end" id="rdaStatus"></div>
+      </div>
+      <div class="rda-sec">SELECT R&amp;D PERSON(S) <span style="color:var(--muted2);font-weight:600">(multiple allowed)</span></div>
+      <div id="rdaList"></div>
+      <div class="rda-foot">
+        <button type="button" class="rd-act" onclick="rdAssignClose()">Cancel</button>
+        <button type="button" class="rda-submit" id="rdaSubmit" onclick="rdAssignSubmit()">✓ Assign Team</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var RD_PEOPLE = {{ rd_people|tojson }};
+var RD_ASSIGN = {{ assign_map|tojson }};
+var RD_ST = {};
+{% for s in statuses %}RD_ST[{{ s.slug|tojson }}] = {name: {{ s.name|tojson }}, color: {{ s.color|tojson }}};
+{% endfor %}
+var RD_PROJ = {};
+{% for p in (unallotted + allotted) %}RD_PROJ[{{ p.id }}] = {code: {{ p.code|tojson }}, name: {{ p.product_name|tojson }}, client: {{ (p.client_company or p.client_name or '—')|tojson }}, status: {{ (p.status or '')|tojson }}};
+{% endfor %}
+
+function rdStatusBadge(slug){
+  var m = RD_ST[slug];
+  if (m) return '<span class="badge" style="background:' + m.color + '">' + dEsc(m.name) + '</span>';
+  return '<span class="badge lite">' + dEsc((slug||'').replace(/_/g,' ')) + '</span>';
+}
+function rdInitials(name){
+  return (name||'').trim().split(/\s+/).map(function(x){ return x[0]||''; }).slice(0,2).join('').toUpperCase();
+}
+var rdAssignPid = null;
+function rdOpenAssign(pid){
+  rdAssignPid = pid;
+  var meta = RD_PROJ[pid] || {};
+  document.getElementById('rdaName').textContent = meta.name || '';
+  document.getElementById('rdaCode').textContent = meta.code || '';
+  document.getElementById('rdaClient').textContent = meta.client || '—';
+  document.getElementById('rdaStatus').innerHTML = rdStatusBadge(meta.status);
+  var existing = {};
+  (RD_ASSIGN[String(pid)] || []).forEach(function(a){ existing[a.user_id] = a.variant_code || ''; });
+  var html = '';
+  RD_PEOPLE.forEach(function(u){
+    var on = existing.hasOwnProperty(u.id);
+    var vc = existing[u.id] || '';
+    html += '<div class="rda-person' + (on?' on':'') + '" data-uid="' + u.id + '">'
+      + '<div class="rda-row" onclick="rdaToggle(' + u.id + ')">'
+      + '<span class="rda-av">' + dEsc(rdInitials(u.name)) + '</span>'
+      + '<span class="rda-info"><b>' + dEsc(u.name) + '</b><small>' + dEsc(u.designation) + '</small></span>'
+      + '<span class="rda-tick' + (on?' on':'') + '">' + (on?'✓':'') + '</span></div>'
+      + '<input class="rda-variant" placeholder="Variant / Code (e.g. V1, Batch-A, Formula-01)..." value="' + dEsc(vc) + '" style="display:' + (on?'block':'none') + '">'
+      + '</div>';
+  });
+  document.getElementById('rdaList').innerHTML = html || '<div class="rd-empty">No R&D-department users found. Set their department to R&D in User management.</div>';
+  document.getElementById('rdaSubmit').disabled = false;
+  document.getElementById('rdaSubmit').textContent = '✓ Assign Team';
+  document.getElementById('rdAssignModal').classList.add('show');
+}
+function rdaToggle(uid){
+  var row = document.querySelector('.rda-person[data-uid="' + uid + '"]');
+  if (!row) return;
+  var on = !row.classList.contains('on');
+  row.classList.toggle('on', on);
+  var tick = row.querySelector('.rda-tick'); tick.classList.toggle('on', on); tick.textContent = on ? '✓' : '';
+  var inp = row.querySelector('.rda-variant'); inp.style.display = on ? 'block' : 'none';
+  if (on) inp.focus();
+}
+function rdAssignClose(){ document.getElementById('rdAssignModal').classList.remove('show'); }
+function rdAssignSubmit(){
+  var members = [];
+  document.querySelectorAll('#rdaList .rda-person.on').forEach(function(r){
+    members.push({user_id: parseInt(r.getAttribute('data-uid'), 10),
+                  variant_code: (r.querySelector('.rda-variant').value || '').trim()});
+  });
+  if (!members.length){ alert('Select at least one R&D person.'); return; }
+  var btn = document.getElementById('rdaSubmit'); btn.disabled = true; btn.textContent = 'Saving…';
+  fetch('/npd/rd-projects/' + rdAssignPid + '/assign', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+    body: JSON.stringify({members: members})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (!d.ok){ btn.disabled = false; btn.textContent = '✓ Assign Team'; alert(d.error || 'Failed to assign.'); return; }
+    location.reload();
+  }).catch(function(){ btn.disabled = false; btn.textContent = '✓ Assign Team'; alert('Network error'); });
+}
+</script>
+</body>
+</html>

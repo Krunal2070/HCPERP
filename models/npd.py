@@ -213,6 +213,113 @@ def ensure_npd_tables():
             KEY idx_nc_proj (project_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
 
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_boms` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            project_id INT NOT NULL,
+            milestone_id INT NULL,
+            product_name VARCHAR(255) NULL,
+            code VARCHAR(100) NULL,
+            variant VARCHAR(150) NULL,
+            created_by INT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP,
+            KEY ix_nb_proj (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_bom_rows` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            bom_id INT NOT NULL,
+            sr_no INT DEFAULT 1,
+            inci_name VARCHAR(300) NULL,
+            qty_pct DECIMAL(9,3) DEFAULT 0,
+            KEY ix_nbr_bom (bom_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_packing_rows` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            project_id INT NOT NULL,
+            milestone_id INT NULL,
+            category VARCHAR(50) DEFAULT 'Primary',
+            vendor_name VARCHAR(200),
+            cost DECIMAL(12,2) NULL,
+            image_path VARCHAR(300),
+            filling_image_path VARCHAR(300),
+            coa_path VARCHAR(300),
+            filling_status VARCHAR(30) DEFAULT 'pending',
+            created_by INT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_pack_proj (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_personal_notes` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            project_id INT NOT NULL,
+            user_id INT NOT NULL,
+            note TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY ix_npn_proj_user (project_id, user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_fda_requests` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            project_id INT NOT NULL,
+            milestone_id INT NULL,
+            to_emails TEXT NOT NULL,
+            cc_emails TEXT NULL,
+            subject VARCHAR(300) NOT NULL,
+            body TEXT NOT NULL,
+            attachments TEXT NULL,
+            sent_by INT NULL,
+            sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY ix_nfr_proj (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_fda_entries` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            project_id INT NOT NULL,
+            milestone_id INT NULL,
+            product_name VARCHAR(300) NOT NULL,
+            free_sale_certificate VARCHAR(500) NULL,
+            product_permission VARCHAR(500) NULL,
+            msds VARCHAR(500) NULL,
+            dossier VARCHAR(500) NULL,
+            created_by INT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP,
+            KEY ix_nfe_proj (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_barcode_designs` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            project_id INT NOT NULL,
+            milestone_id INT NULL,
+            sr_no INT NOT NULL DEFAULT 1,
+            design_path VARCHAR(500) NULL,
+            barcode_path VARCHAR(500) NULL,
+            design_width INT NULL, design_height INT NULL,
+            created_by INT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP,
+            KEY ix_nbd_proj (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
+        conn.execute("""CREATE TABLE IF NOT EXISTS `npd_comment_files` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            project_id INT NOT NULL,
+            comment_id INT NOT NULL,
+            file_name VARCHAR(255) NOT NULL,
+            file_path VARCHAR(500) NOT NULL,
+            file_size INT NULL,
+            created_by INT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY ix_ncf_comment (comment_id),
+            KEY ix_ncf_project (project_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
+
         conn.execute("""CREATE TABLE IF NOT EXISTS `npd_notes` (
             id INT AUTO_INCREMENT PRIMARY KEY,
             project_id INT NOT NULL UNIQUE,
@@ -259,6 +366,14 @@ def ensure_npd_tables():
                     "INSERT INTO `npd_statuses` (name, slug, color, sort_order) "
                     "VALUES (%s,%s,%s,%s)", (nm, sl, col, so))
         conn.commit()
+        # discussion boards: artwork board support
+        try:
+            conn.execute("ALTER TABLE `npd_comments` "
+                         "ADD COLUMN board VARCHAR(20) NULL")
+            conn.commit()
+        except Exception:
+            pass
+
         print("[npd] tables ready (old-system compatible schema).")
     finally:
         conn.close()

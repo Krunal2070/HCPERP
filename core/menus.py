@@ -335,6 +335,25 @@ MENUS = {
                 {"id": "npd-dash", "text": "NPD Dashboard",  "icon": _IC["grid"],  "href": "/npd/dashboard", "color": "#7c3aed"},
                 {"id": "npd-list", "text": "NPD Projects",   "icon": _IC["list"],  "href": "/npd",      "color": "#2563eb"},
             ]},
+            {"label": "NPD Masters", "items": [
+                {"id": "npd-ms-master",  "text": "Milestone Master",    "icon": _IC["target"], "href": "/npd/milestone-master", "color": "#7c3aed"},
+                {"id": "npd-st-master",  "text": "NPD Status Master",   "icon": _IC["tag"],    "href": "/npd/status-master",    "color": "#0d9488"},
+                {"id": "npd-cat-master", "text": "NPD Category Master", "icon": _IC["tag"],    "href": "/npd/category-master",  "color": "#ea580c"},
+            ]},
+        ],
+    },
+    # ===== R&D (separate module — not merged into NPD) ====================
+    "rd": {
+        "brand": "HCP Wellness",
+        "tag":   "R&D",
+        "search": False,
+        "item_class": "sb-item",
+        "sections": [
+            {"label": "R&D", "items": [
+                {"id": "home",    "text": "Back to Portal", "icon": _IC["home"],  "href": "/",               "color": "#64748b"},
+                {"id": "rd-dash", "text": "R&D Dashboard",  "icon": _IC["chart"], "href": "/npd/dashboard?nav=rd", "color": "#7c3aed"},
+                {"id": "rd-list", "text": "R&D Projects",   "icon": _IC["flask"], "href": "/npd/rd-projects", "color": "#16a34a"},
+            ]},
         ],
     },
 }

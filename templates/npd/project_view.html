@@ -48,7 +48,7 @@
   .dur-box .val.live{color:#16a34a;border-color:#16a34a66}
 
   /* ── Tabs ── */
-  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:14px;overflow-x:auto}
+  .tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:2px solid var(--border);margin-bottom:14px}
   .tab{padding:10px 16px;font-size:.84rem;font-weight:700;color:var(--muted2);cursor:pointer;border:none;
        background:none;font-family:inherit;border-bottom:2.5px solid transparent;margin-bottom:-2px;white-space:nowrap}
   .tab.on{color:#2563eb;border-bottom-color:#2563eb}
@@ -65,7 +65,53 @@
   .irow b{width:165px;flex-shrink:0;color:var(--muted2);font-weight:600}
   .irow span{min-width:0;word-break:break-word}
 
-  /* ── Discussion ── */
+  /* ── Discussion (lead-style board) ── */
+  .disc-composer{display:flex;gap:12px;position:relative;margin:16px 18px 20px}
+  .dc-avatar,.di-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;flex-shrink:0}
+  .dc-box{flex:1;border:1px solid var(--border2);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .dc-box.drag{border-color:#7c3aed;box-shadow:0 0 0 3px color-mix(in srgb,#7c3aed 18%,transparent)}
+  .dc-toolbar{display:flex;align-items:center;gap:2px;padding:7px 10px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--border) 30%,transparent)}
+  .dc-toolbar button{width:30px;height:28px;border:none;background:none;border-radius:6px;cursor:pointer;color:var(--muted2);font-size:.9rem;display:inline-flex;align-items:center;justify-content:center;font-family:inherit}
+  .dc-toolbar button:hover{background:color-mix(in srgb,#7c3aed 10%,transparent);color:#7c3aed}
+  .dc-sep{width:1px;height:18px;background:var(--border2);margin:0 4px}
+  .dc-edit{min-height:80px;max-height:260px;overflow-y:auto;padding:12px 14px;font-size:.9rem;line-height:1.55;outline:none;color:var(--text)}
+  .dc-edit:empty:before{content:attr(data-ph);color:var(--muted2)}
+  .dc-edit img{max-width:220px;border-radius:8px;margin:4px 0}
+  .dc-files{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px}
+  .dc-files:empty{display:none}
+  .dc-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:color-mix(in srgb,var(--border) 35%,transparent);border:1px solid var(--border2);font-size:.76rem;font-weight:600}
+  .dc-chip b{cursor:pointer;color:#dc2626}
+  .dc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--border);background:color-mix(in srgb,var(--border) 30%,transparent)}
+  .dc-hint{font-size:.72rem;color:var(--muted2)}
+  .dc-send{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .dc-send:disabled{opacity:.6;cursor:default}
+  .mention-pop{position:absolute;min-width:200px;max-height:220px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md,0 8px 24px rgba(0,0,0,.14));z-index:90;display:none}
+  .mention-pop.open{display:block}
+  .mention-item{padding:9px 13px;font-size:.85rem;font-weight:600;cursor:pointer}
+  .mention-item:hover,.mention-item.sel{background:color-mix(in srgb,#7c3aed 10%,transparent);color:#7c3aed}
+  .disc-list{padding:0 18px 14px}
+  .disc-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+  .disc-item:last-child{border-bottom:none}
+  .di-body{flex:1;min-width:0}
+  .di-head{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  .di-name{font-weight:800;font-size:.86rem}
+  .di-time{font-size:.72rem;color:var(--muted2)}
+  .di-acts{margin-left:auto;display:flex;gap:2px}
+  .di-edit,.di-del{background:none;border:none;cursor:pointer;color:var(--muted2);font-size:.85rem;width:26px;height:26px;border-radius:6px;font-family:inherit}
+  .di-edit:hover{color:#7c3aed;background:color-mix(in srgb,#7c3aed 10%,transparent)}
+  .di-del:hover{color:#dc2626;background:color-mix(in srgb,#dc2626 10%,transparent)}
+  .di-text{font-size:.88rem;line-height:1.55;word-break:break-word}
+  .di-text .mention{color:#2563eb;font-weight:700;background:rgba(37,99,235,.08);padding:0 3px;border-radius:4px}
+  .di-files{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+  .di-file{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;background:color-mix(in srgb,var(--border) 35%,transparent);border:1px solid var(--border2);font-size:.76rem;font-weight:600;color:var(--text)}
+  .di-file:hover{border-color:#7c3aed;color:#7c3aed}
+  .disc-empty{padding:30px;text-align:center;color:var(--muted2);font-size:.86rem}
+  .di-editbox-wrap .dc-box{margin-top:4px}
+  .di-eb{padding:5px 14px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;border:1px solid var(--border);font-family:inherit}
+  .di-eb.save{background:#7c3aed;color:#fff;border:none}
+  .di-eb.cancel{background:color-mix(in srgb,var(--border) 35%,transparent);color:var(--muted2)}
+
+  /* ── Discussion (legacy simple form) ── */
   .cform{padding:16px 18px;border-bottom:1px solid var(--border)}
   .cform textarea{width:100%;box-sizing:border-box;min-height:74px;padding:10px 12px;border-radius:10px;
        border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:.85rem;font-family:inherit;resize:vertical}
@@ -80,6 +126,299 @@
   .cmt .txt{font-size:.84rem;margin-top:3px;white-space:pre-wrap;word-break:break-word}
   .cmt .att{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:.74rem;font-weight:700;color:#2563eb}
   .empty{padding:34px;text-align:center;color:var(--muted2);font-size:.82rem}
+
+  /* ── Milestones (old system jaisa: left list + right detail) ── */
+  .ms-grid{display:grid;grid-template-columns:270px 1fr;gap:18px;align-items:start}
+  @media(max-width:900px){.ms-grid{grid-template-columns:1fr}}
+  .ms-side{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .ms-side-head{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;
+       border-bottom:1px solid var(--border);font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+  .ms-side-head small{font-size:.72rem;font-weight:700;color:var(--muted2);text-transform:none;letter-spacing:0}
+  .ms-it{display:flex;gap:10px;align-items:center;width:100%;padding:11px 15px;border:none;background:none;
+       cursor:pointer;text-align:left;font-family:inherit;color:var(--text);
+       border-left:3px solid transparent;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+  .ms-it:last-child{border-bottom:none}
+  .ms-it:hover{background:color-mix(in srgb,var(--border) 25%,transparent)}
+  .ms-it.on{background:color-mix(in srgb,#0ea5e9 9%,transparent);border-left-color:#0ea5e9}
+  .ms-it .ic{font-size:.95rem;flex-shrink:0}
+  .ms-it .nm{font-size:.82rem;font-weight:800;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ms-it .stt{font-size:.68rem;font-weight:700;margin-top:1px}
+  .ms-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;min-height:340px}
+  .ms-panel.on{display:block}
+  .msp-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 18px;border-bottom:1px solid var(--border)}
+  .msp-title{font-size:1rem;font-weight:800;margin-right:auto}
+  .msp-done{display:inline-flex;align-items:center;gap:7px;background:#2563eb;color:#fff;border:none;
+       border-radius:9px;padding:9px 16px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .msp-done:hover{filter:brightness(1.07)}
+  .msp-body{padding:16px 18px}
+  .msp-sec{font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted2);
+       margin:16px 0 8px}
+  .msp-empty{padding:22px;border:1px dashed var(--border2);border-radius:10px;text-align:center;
+       color:var(--muted2);font-size:.82rem}
+
+  /* ── BOM formulation sheet (old system jaisa) ── */
+  .bom-bar{display:flex;gap:9px;align-items:center;margin-bottom:13px}
+  .bom-btn{display:inline-flex;align-items:center;gap:6px;height:33px;padding:0 13px;border-radius:8px;
+       border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:.78rem;
+       font-weight:700;cursor:pointer;font-family:inherit}
+  .bom-btn.primary{background:#111827;border-color:#111827;color:#fff}
+  .bom-btn.blue{background:#2563eb;border-color:#2563eb;color:#fff}
+  .bom-sheet{border:1px solid #111827;border-radius:6px;overflow:hidden;background:var(--surface)}
+  .bom-co{background:#111827;color:#fff;text-align:center;font-weight:800;font-size:.92rem;padding:10px;letter-spacing:.02em}
+  .bom-fields{display:flex;flex-wrap:wrap;gap:14px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:.82rem}
+  .bom-fields label{font-weight:800;white-space:nowrap}
+  .bom-fields input{border:none;border-bottom:1px solid var(--border2);background:none;outline:none;
+       color:var(--text);font-family:inherit;font-size:.82rem;padding:2px 4px;min-width:90px}
+  .bom-fields input:focus{border-bottom-color:#0d9488}
+  .bom-fields .bf-pn{flex:1;min-width:200px;display:flex;gap:7px;align-items:center}
+  .bom-fields .bf-pn input{flex:1}
+  .bom-band{background:color-mix(in srgb,#0d9488 16%,transparent);text-align:center;font-weight:800;
+       font-size:.82rem;padding:8px;border-bottom:1px solid var(--border)}
+  table.bomt{width:100%;border-collapse:collapse;font-size:.82rem}
+  table.bomt th{background:color-mix(in srgb,#0d9488 14%,transparent);text-align:left;padding:8px 11px;
+       font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+  table.bomt td{padding:5px 11px;border-bottom:1px solid color-mix(in srgb,var(--border) 60%,transparent)}
+  table.bomt .bsr{width:56px;color:var(--muted2);font-weight:700}
+  table.bomt input{width:100%;border:none;background:none;outline:none;color:var(--text);font-family:inherit;
+       font-size:.84rem;padding:5px 0}
+  table.bomt .bqty{width:130px;text-align:right}
+  table.bomt .bqty input{text-align:right;width:74px}
+  table.bomt .brm{width:36px;text-align:center}
+  table.bomt .brm button{border:none;background:none;cursor:pointer;color:var(--muted2);font-size:.82rem}
+  table.bomt .brm button:hover{color:#dc2626}
+  table.bomt tr.btotal td{background:color-mix(in srgb,#0d9488 10%,transparent);font-weight:800;border-bottom:none}
+  .bom-foot{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;gap:10px}
+  .bom-list table{width:100%;border-collapse:collapse;font-size:.82rem}
+  .bom-list th{text-align:left;padding:8px 11px;font-size:.68rem;font-weight:800;text-transform:uppercase;
+       letter-spacing:.05em;color:var(--muted2);border-bottom:1px solid var(--border)}
+  .bom-list td{padding:9px 11px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+  .bom-list .ba{display:inline-flex;width:28px;height:28px;border-radius:7px;border:1px solid var(--border2);
+       background:var(--surface);cursor:pointer;align-items:center;justify-content:center;font-size:.8rem;
+       color:var(--muted2);font-family:inherit;margin-left:4px}
+  .bom-list .ba:hover{color:#7c3aed;border-color:#7c3aed}
+  .bom-list .ba.del:hover{color:#dc2626;border-color:#dc2626}
+
+  /* ── BOM view popup ── */
+  .bv-ov{display:none;position:fixed;inset:0;z-index:500;background:rgba(15,23,42,.5);
+       align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(2px)}
+  .bv-ov.open{display:flex}
+  .bv-card{width:1040px;max-width:100%;max-height:90vh;overflow-y:auto;background:var(--surface);
+       border:1px solid var(--border);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.3);padding:16px}
+  .bv-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .bv-top b{font-size:.95rem}
+  .bv-x{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);
+       cursor:pointer;font-weight:800;color:var(--muted2);font-family:inherit}
+  .bv-meta{font-size:.78rem;color:var(--muted2);font-weight:600;margin-top:10px;text-align:right}
+
+  /* ── Packing Material ── */
+  #pkTable .pk-i{width:100%;box-sizing:border-box;border:1px solid var(--border2);border-radius:7px;
+       padding:7px 9px;font-size:.8rem;font-family:inherit;background:var(--surface);color:var(--text);outline:none}
+  #pkTable .pk-i:focus{border-color:var(--purple,#7c3aed)}
+  #pkTable .pk-i:disabled{opacity:.65;cursor:not-allowed}
+  #pkTable td{vertical-align:middle}
+  .pk-fc{font-size:.76rem;white-space:nowrap}
+
+  /* ── Quotation modal (lead jaisa, so-*) ── */
+  .so-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:16px}
+  .so-bg.open{display:flex}
+  .so-card{background:#fff;border-radius:16px;width:min(940px,96vw);max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+  .so-head{background:#1e3a5f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;font-size:1.05rem;font-weight:800;position:sticky;top:0;z-index:3}
+  .so-x{background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:1.1rem;cursor:pointer}
+  .so-body{padding:18px 20px}
+  .so-top{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:14px}
+  @media(max-width:600px){.so-top{grid-template-columns:1fr}}
+  .so-sec{font-size:.74rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:9px}
+  .so-l{font-size:.72rem;font-weight:700;color:#64748b;display:block;margin:9px 0 4px}
+  .so-i{width:100%;box-sizing:border-box;border:1px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:.85rem;font-family:inherit;color:#1e293b;margin-bottom:10px;outline:none;background:#fff}
+  .so-i:focus{border-color:#1e3a5f;box-shadow:0 0 0 3px rgba(30,58,95,.12)}
+  .so-2col{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .so-tbl-wrap{border:1px solid #e2e8f0;border-radius:9px;overflow:hidden;overflow-x:auto}
+  .so-tbl{width:100%;border-collapse:collapse}
+  .so-tbl th{background:#f1f5f9;padding:8px 10px;font-size:.74rem;font-weight:800;color:#374151;text-align:left;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+  .so-tbl td{padding:5px 7px;border-bottom:1px solid #f1f5f9}
+  .so-tbl input{width:100%;box-sizing:border-box;border:1px solid #e2e8f0;border-radius:6px;padding:7px 8px;font-size:.83rem;outline:none;background:#fff;color:#1e293b}
+  .so-tbl select{width:100%;box-sizing:border-box;border:1px solid #e2e8f0;border-radius:6px;padding:7px 6px;font-size:.83rem;outline:none;background:#fff;color:#1e293b}
+  .so-tbl input:focus,.so-tbl select:focus{border-color:#1e3a5f}
+  .so-rm{background:none;border:none;color:#dc2626;cursor:pointer;font-size:1rem}
+  .so-add{width:100%;background:#fff;color:#1e3a5f;border:1.5px dashed #1e3a5f;padding:9px;border-radius:9px;font-size:.84rem;font-weight:800;cursor:pointer;margin:12px 0 14px}
+  .so-totals{border:1px solid #e2e8f0;border-radius:9px;overflow:hidden}
+  .so-trow{display:flex;justify-content:space-between;padding:9px 14px;font-size:.85rem;color:#64748b;border-bottom:1px solid #f1f5f9}
+  .so-trow span:last-child{font-weight:700;color:#1e293b}
+  .so-trow.final{background:#e8f0fe;border-bottom:none;font-weight:800;color:#1e3a5f}
+  .so-trow.final span:last-child{color:#1e3a5f;font-size:1rem}
+  .so-foot{display:flex;justify-content:flex-end;gap:10px;padding:13px 20px;border-top:1px solid #eef0f4;background:#f9fafb;position:sticky;bottom:0;z-index:3}
+  .so-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:9px;font-size:.86rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .so-btn.cancel{background:#fff;border:1px solid #e2e8f0;color:#475569}
+  .so-btn.send{background:#1e3a5f;border:none;color:#fff}
+  .so-err{display:none;color:#dc2626;font-size:.74rem;font-weight:700;margin:-6px 0 8px}
+  .so-err.show{display:block}
+  .so-i.invalid{border-color:#dc2626}
+  .qt-status{display:inline-flex;padding:3px 10px;border-radius:99px;font-size:.68rem;font-weight:800;text-transform:capitalize}
+
+  /* ── FDA milestone ── */
+  .msel{position:relative}
+  .msel-btn{width:100%;height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--border2);
+       background:var(--bg);color:var(--text);font-size:.85rem;font-family:inherit;cursor:pointer;
+       display:flex;align-items:center;justify-content:space-between;text-align:left}
+  .msel-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:80;
+       max-height:240px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);
+       border-radius:11px;box-shadow:var(--shadow-md,0 8px 24px rgba(0,0,0,.14));padding:6px}
+  .msel.open .msel-panel{display:block}
+  .msel-panel label{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;
+       font-size:.82rem;font-weight:600;cursor:pointer;margin:0}
+  .msel-panel label:hover{background:color-mix(in srgb,#2563eb 7%,transparent)}
+  .msel-panel input[type=checkbox]{width:15px;height:15px;accent-color:#2563eb}
+  .fda-step{display:flex;align-items:center;gap:9px;background:#0b1220;color:#fff;border:1px solid #0b1220;
+       border-radius:10px 10px 0 0;padding:11px 16px;font-size:.82rem;font-weight:800}
+  .fda-step .ttl{display:flex;align-items:center;gap:8px}
+  .fda-badge{margin-left:auto;display:inline-flex;padding:4px 12px;border-radius:99px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+  .fda-badge.pending{background:#f59e0b;color:#fff}
+  .fda-badge.completed{background:#16a34a;color:#fff}
+  .fda-box{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:18px;background:var(--surface)}
+  .fda-box.done{background:color-mix(in srgb,#16a34a 6%,transparent)}
+  .fda-box.done .fda-step{background:#064e3b;border-color:#064e3b}
+  .fda-row{margin-bottom:14px}
+  .fda-row label{display:block;font-size:.76rem;font-weight:800;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
+  .fda-row label .req{color:#dc2626}
+  .fda-row label .opt{color:var(--muted2);font-weight:600;text-transform:none;letter-spacing:0}
+  .fda-i{width:100%;box-sizing:border-box;border:1px solid var(--border2);border-radius:9px;padding:10px 12px;
+       font-size:.85rem;font-family:inherit;background:var(--bg);color:var(--text);outline:none}
+  .fda-i:focus{border-color:#2563eb}
+  .fda-i.area{min-height:140px;resize:vertical;line-height:1.5}
+  .fda-foot{display:flex;justify-content:flex-end}
+  .fda-send{display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;border:none;
+       border-radius:9px;padding:11px 20px;font-size:.85rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .fda-send:hover{filter:brightness(1.07)}
+  .fda-send:disabled{opacity:.6;cursor:not-allowed}
+  .fda-sent-box{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+  .fda-sent-head{display:flex;align-items:center;gap:9px;background:#064e3b;color:#fff;padding:11px 16px;font-size:.82rem;font-weight:800}
+  .fda-sent-body{padding:14px 16px;background:color-mix(in srgb,#16a34a 6%,transparent);font-size:.83rem;line-height:1.7}
+  .fda-sent-body b{font-weight:800}
+  .fda-sent-toggle{color:#16a34a;font-weight:800;cursor:pointer;font-size:.82rem;background:none;border:none;font-family:inherit;padding:0;margin-top:6px}
+  .fda-sent-msg{display:none;margin-top:8px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;white-space:pre-wrap;font-size:.82rem}
+  .fda-sent-msg.open{display:block}
+  .fda-entries-head{display:flex;align-items:center;gap:9px;background:#0b1220;color:#fff;border-radius:10px 10px 0 0;padding:11px 16px;font-size:.82rem;font-weight:800}
+  .fda-entries-body{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:16px}
+  .fda-entry-card{border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:10px}
+  .fda-entry-card .nm{font-size:.88rem;font-weight:800;margin-bottom:8px}
+  .fda-doc-list{display:flex;flex-wrap:wrap;gap:8px}
+  .fda-doc{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;font-weight:700;padding:6px 11px;
+       border-radius:99px;border:1px solid var(--border2);text-decoration:none;color:var(--text)}
+  .fda-doc.has{border-color:#16a34a;color:#16a34a}
+  .fda-doc.missing{color:var(--muted2);opacity:.6}
+
+  /* New FDA Entry modal */
+  .fda-m-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);
+       border-radius:9px;padding:11px 13px;margin-bottom:10px;font-size:.84rem;font-weight:700}
+  .fda-m-file{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);border-radius:8px;
+       padding:7px 13px;font-size:.78rem;font-weight:800;color:#2563eb;cursor:pointer;background:var(--surface);font-family:inherit}
+  .fda-m-file.chosen{color:#16a34a;border-color:#16a34a}
+  .fda-m-file input{display:none}
+
+  /* ── Barcode milestone ── */
+  .bc-bar{display:flex;align-items:center;gap:9px;background:#1e1b3a;color:#fff;border:1px solid #1e1b3a;
+       border-radius:10px 10px 0 0;padding:11px 16px;font-size:.82rem;font-weight:800}
+  .bc-hint{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;background:color-mix(in srgb,#7c3aed 9%,transparent);
+       border:1px solid var(--border);border-top:none;padding:9px 16px;font-size:.78rem;font-weight:600;color:var(--muted2)}
+  .bc-hint b{color:var(--text)}
+  .bc-hint .sep{color:var(--border2)}
+  .bc-body{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:16px;background:var(--surface)}
+  .bc-upload{display:inline-flex;align-items:center;gap:7px;background:#7c3aed;color:#fff;border:none;
+       border-radius:9px;padding:9px 16px;font-size:.8rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .bc-upload:hover{filter:brightness(1.07)}
+  .bc-upload:disabled{opacity:.6;cursor:not-allowed}
+  .bc-upload input{display:none}
+  .bc-card{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+  .bc-card-head{display:flex;align-items:center;gap:10px;padding:11px 15px;border-bottom:1px solid var(--border);
+       font-size:.84rem;flex-wrap:wrap}
+  .bc-card-head .bc-meta{color:var(--muted2);font-size:.78rem;font-weight:600}
+  .bc-card-head .ba.del{margin-left:auto}
+  .bc-cols{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  @media(max-width:760px){.bc-cols{grid-template-columns:1fr}}
+  .bc-col{padding:14px 15px}
+  .bc-col + .bc-col{border-left:1px solid var(--border)}
+  @media(max-width:760px){.bc-col + .bc-col{border-left:none;border-top:1px solid var(--border)}}
+  .bc-col-h{font-size:.74rem;font-weight:800;letter-spacing:.04em;margin-bottom:9px}
+  .bc-col-h.designer{color:#7c3aed}
+  .bc-col-h.team{color:#16a34a}
+  .bc-img{display:block;max-width:140px;border:1px solid var(--border2);border-radius:8px}
+  .bc-dims{display:flex;align-items:center;gap:5px;font-size:.74rem;color:var(--muted2);margin-top:7px;font-weight:600}
+  .bc-link{display:inline-flex;align-items:center;gap:5px;font-size:.83rem;font-weight:700;color:var(--text);text-decoration:none}
+  .bc-upload-team{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed #16a34a;color:#16a34a;
+       background:color-mix(in srgb,#16a34a 6%,transparent);border-radius:9px;padding:9px 16px;
+       font-size:.8rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .bc-upload-team:hover{filter:brightness(1.03)}
+  .bc-upload-team input{display:none}
+  .bc-err{color:#dc2626;font-size:.76rem;font-weight:700;margin-top:8px}
+  /* per-column Change / Delete actions */
+  .bc-acts{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .bc-mini{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border2);background:var(--surface);
+       color:var(--text);border-radius:8px;padding:5px 10px;font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .bc-mini:hover{border-color:#7c3aed;color:#7c3aed}
+  .bc-mini.del:hover{border-color:#dc2626;color:#dc2626}
+  .bc-mini input{display:none}
+  .bc-lock{display:inline-flex;align-items:center;gap:6px;margin-left:auto;
+       background:color-mix(in srgb,#16a34a 14%,transparent);color:#16a34a;
+       border:1px solid color-mix(in srgb,#16a34a 38%,transparent);border-radius:999px;
+       padding:4px 12px;font-size:.74rem;font-weight:800}
+  /* error / confirm modal popup */
+  .bc-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,15,30,.5);
+       backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:18px}
+  .bc-modal.show{display:flex}
+  .bc-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;
+       max-width:380px;width:100%;padding:28px 26px 24px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.28);
+       animation:bcPop .16s ease}
+  @keyframes bcPop{from{transform:translateY(10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+  .bc-modal-chip{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+  .bc-modal-chip svg{width:26px;height:26px;stroke-width:2}
+  .bc-modal-chip.danger{background:color-mix(in srgb,#dc2626 13%,transparent);color:#dc2626}
+  .bc-modal-chip.warn{background:color-mix(in srgb,#f59e0b 18%,transparent);color:#d97706}
+  .bc-modal-h{font-size:1.05rem;font-weight:800;margin:0 0 6px;color:var(--text)}
+  .bc-modal-msg{font-size:.875rem;color:var(--muted2);line-height:1.55;margin-bottom:20px}
+  .bc-modal-actions{display:flex;gap:10px}
+  .bc-modal-btn{flex:1;background:#7c3aed;color:#fff;border:none;border-radius:11px;padding:11px 22px;
+       font-size:.86rem;font-weight:800;cursor:pointer;font-family:inherit;transition:filter .12s,border-color .12s,color .12s}
+  .bc-modal-btn:hover{filter:brightness(1.07)}
+  .bc-modal-btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--border2)}
+  .bc-modal-btn.ghost:hover{filter:none;border-color:#7c3aed;color:#7c3aed}
+  .bc-modal-btn.danger{background:#dc2626}
+  .bc-modal-btn.danger:hover{filter:brightness(1.07)}
+
+  /* ── Personal Notes (lead jaisa) ── */
+  .rn-grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+  @media(max-width:900px){.rn-grid{grid-template-columns:1fr}}
+  .rn-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;
+       border-bottom:1px solid var(--border);font-size:.9rem;font-weight:800}
+  .rn-head small{font-size:.74rem;font-weight:600;color:var(--muted2)}
+  .rn-body{padding:14px 18px}
+  .nt-item{padding:13px 14px;border:1px solid var(--border);border-radius:10px;
+       background:color-mix(in srgb,var(--border) 22%,transparent);margin-bottom:10px}
+  .nt-item:last-child{margin-bottom:0}
+  .nt-text{font-size:.88rem;white-space:pre-wrap;line-height:1.5;word-break:break-word}
+  .nt-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+  .nt-time{font-size:.72rem;color:var(--muted2)}
+  .rm-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);
+       background:var(--surface);cursor:pointer;font-size:.8rem;flex-shrink:0;font-family:inherit}
+  .rm-btn.del:hover{color:#dc2626;border-color:#dc2626}
+  .fld-i{width:100%;border:1px solid var(--border2);border-radius:9px;padding:9px 12px;font-size:.86rem;
+       font-family:inherit;color:var(--text);background:var(--surface);box-sizing:border-box;outline:none;resize:vertical}
+  .fld-i:focus{border-color:#7c3aed;box-shadow:0 0 0 3px color-mix(in srgb,#7c3aed 16%,transparent)}
+  .rn-submit{margin-top:12px;width:100%;background:#7c3aed;color:#fff;border:none;border-radius:9px;
+       padding:11px;font-size:.86rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .rn-submit:disabled{opacity:.6}
+
+  /* ── Activity timeline (lead jaisa) ── */
+  .al-tl{position:relative;padding:18px 22px 18px 26px}
+  .al-item{position:relative;display:flex;gap:14px;padding:0 0 18px 18px;border-left:2px solid var(--border2)}
+  .al-item:last-child{border-left-color:transparent;padding-bottom:0}
+  .al-dot{position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:#7c3aed;
+       box-shadow:0 0 0 3px color-mix(in srgb,#7c3aed 18%,transparent)}
+  .al-body{flex:1}
+  .al-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .al-user{font-weight:800;font-size:.86rem}
+  .al-time{font-size:.7rem;font-weight:700;color:var(--muted2);background:color-mix(in srgb,var(--border) 38%,transparent);
+       padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em}
+  .al-action{font-size:.86rem;color:var(--muted2);margin-top:2px}
 
   /* ── Activity / attachments ── */
   .act-row{display:flex;gap:10px;padding:9px 18px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent);font-size:.81rem}
@@ -163,11 +502,31 @@
       {% endif %}
       <div class="dur-box">
         <div class="lbl">⏱ Duration</div>
-        <div class="val {{ 'live' if started and not finished }}">
-          {% if started %}{{ dur_days }} day{{ 's' if dur_days != 1 }}{% else %}– – : – – : – –{% endif %}
+        <div class="val {{ 'live' if started and not finished }}" id="durVal">
+          {% if started %}--:--:--{% else %}– – : – – : – –{% endif %}
         </div>
       </div>
     </div>
+    <script>
+    (function(){
+      var el = document.getElementById('durVal');
+      if (!el) return;
+      var started  = {{ 'true' if started else 'false' }};
+      var running  = {{ 'true' if (started and not finished) else 'false' }};
+      var secs     = {{ elapsed_seconds | int }};
+      function fmt(s){
+        s = Math.max(0, Math.floor(s));
+        var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+        return (h<10?'0':'')+h + ':' + (m<10?'0':'')+m + ':' + (x<10?'0':'')+x;
+      }
+      if (started){
+        el.textContent = fmt(secs);
+        if (running){
+          setInterval(function(){ secs++; el.textContent = fmt(secs); }, 1000);
+        }
+      }
+    })();
+    </script>
 
     <!-- ══ TABS ══ -->
     <div class="tabs">
@@ -176,7 +535,7 @@
       <button class="tab" data-t="internal">Internal Discussion Board{% if internal %} ({{ internal|length }}){% endif %}</button>
       <button class="tab" data-t="activity">Activity Log</button>
       <button class="tab" data-t="attachments">Attachments List{% if attachments %} ({{ attachments|length }}){% endif %}</button>
-      <button class="tab" data-t="note">Note</button>
+      <button class="tab" data-t="note">Personal Notes</button>
       <button class="tab" data-t="milestones">Milestones ({{ pct }}%)</button>
     </div>
 
@@ -207,9 +566,6 @@
             <div class="irow"><b>Viscosity</b><span>{{ p.viscosity or '—' }}</span></div>
             <div class="irow"><b>Appearance</b><span>{{ p.appearance or '—' }}</span></div>
             <div class="irow"><b>Video Link</b><span>{% if p.video_link %}<a href="{{ p.video_link }}" target="_blank" style="color:#2563eb;font-weight:600">{{ p.video_link|truncate(60) }} ↗</a>{% else %}—{% endif %}</span></div>
-            {% if p.project_type=='npd' %}
-            <div class="irow"><b>NPD Fee</b><span>{% if p.npd_fee_paid %}✅ Paid{% else %}❌ Pending{% endif %} (₹{{ p.npd_fee_amount|int if p.npd_fee_amount else 10000 }})</span></div>
-            {% endif %}
           </div>
         </div>
         <div>
@@ -231,8 +587,31 @@
             <div class="irow"><b>Ingredients</b><span>{{ p.ingredients or '—' }}</span></div>
             <div class="irow"><b>Product Claim</b><span>{{ p.product_claim or '—' }}</span></div>
             <div class="irow"><b>Label Claim</b><span>{{ p.label_claim or '—' }}</span></div>
-            <div class="irow"><b>Requirement Spec</b><span>{{ p.requirement_spec or '—' }}</span></div>
             <div class="irow"><b>Description</b><span>{{ p.description or '—' }}</span></div>
+            <div class="irow"><b>Requirement Spec</b><span>{{ p.requirement_spec or '—' }}</span></div>
+            {% set selms = miles|selectattr('is_selected')|list %}
+            {% set done = selms|selectattr('status','equalto','approved')|list|length %}
+            <div class="irow"><b>Milestones</b><span>{{ done }}/{{ selms|length }} done ({{ pct }}%)</span></div>
+            {% if p.project_type=='npd' %}
+            <div class="irow"><b>NPD Fee</b><span>
+              {% if p.npd_fee_paid %}<span style="color:#16a34a;font-weight:700">✅ Paid ₹{{ '{:,.0f}'.format(p.npd_fee_amount|float) if p.npd_fee_amount else '10,000' }}</span>
+              {% if p.npd_fee_receipt %} · <a href="/static/uploads/npd/{{ p.npd_fee_receipt }}" target="_blank" style="color:#2563eb;font-weight:600">receipt ↗</a>{% endif %}
+              {% else %}<span style="color:#dc2626;font-weight:700">❌ Pending (₹{{ '{:,.0f}'.format(p.npd_fee_amount|float) if p.npd_fee_amount else '10,000' }})</span>{% endif %}
+            </span></div>
+            {% endif %}
+            {% set mids = namespace(seen=[]) %}
+            {% for tok in ((p.assigned_members or '') ~ ',' ~ (p.assigned_rd_members or '') ~ ',' ~ (p.assigned_sc or '') ~ ',' ~ (p.assigned_rd or '') ~ ',' ~ (p.npd_poc or '')).split(',') %}
+              {% set t = tok|trim %}
+              {% if t and t|int(-1) != -1 and t|int not in mids.seen %}{% set mids.seen = mids.seen + [t|int] %}{% endif %}
+            {% endfor %}
+            <div class="irow"><b>Team Members</b><span style="display:flex;gap:5px;flex-wrap:wrap">
+              {% for mid in mids.seen %}{% set nm = umap.get(mid, '?') %}
+              <span title="{{ nm }}" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:color-mix(in srgb,#7c3aed 13%,transparent);color:#7c3aed;font-size:.6rem;font-weight:800;cursor:default">
+                {%- set parts = nm.split() -%}
+                {{- (parts[0][:1] ~ (parts[1][:1] if parts|length > 1 else ''))|upper -}}
+              </span>
+              {% else %}—{% endfor %}
+            </span></div>
           </div>
         </div>
       </div>
@@ -241,61 +620,126 @@
     <!-- ══ DISCUSSION BOARD ══ -->
     <div class="pane" id="pane-discussion">
       <div class="card">
-        <form class="cform" method="post" action="/npd/{{ p.id }}/comment" enctype="multipart/form-data">
-          <textarea name="comment" placeholder="Write something in the discussion..." required></textarea>
-          <div class="row">
-            <input type="file" name="file">
-            <span style="flex:1"></span>
-            <button class="btn purple" type="submit" style="height:36px">💬 Post Comment</button>
+        <div class="disc-composer" id="dcWrap-discussion">
+          <div class="dc-avatar">{{ (user_name or 'U')[:2]|upper }}</div>
+          <div class="dc-box" id="dcBox-discussion">
+            <div class="dc-toolbar">
+              <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+              <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+              <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+              <span class="dc-sep"></span>
+              <button type="button" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+              <button type="button" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+              <span class="dc-sep"></span>
+              <button type="button" class="dc-attach" title="Attach file">📎</button>
+            </div>
+            <div class="dc-edit" contenteditable="true" data-ph="Write a message... (use @ to tag)"></div>
+            <div class="dc-files"></div>
+            <div class="dc-foot">
+              <span class="dc-hint">Use @ to tag an employee · you can also drag &amp; drop files here</span>
+              <button type="button" class="dc-send">Send ➤</button>
+            </div>
           </div>
-        </form>
-        {% for cm in comments %}
-        <div class="cmt">
-          <div class="av">{{ (umap.get(cm.user_id, '?'))[:1]|upper }}</div>
-          <div style="min-width:0;flex:1">
-            <span class="who">{{ umap.get(cm.user_id, 'User') }}</span><span class="when">{{ (cm.created_at or '')|string|truncate(19,True,'') }}</span>
-            <div class="txt">{{ cm.comment }}</div>
-            {% if cm.attachment %}<a class="att" href="/static/uploads/npd/{{ cm.attachment }}" target="_blank">📎 {{ cm.attachment.split('_', 2)[-1] }}</a>{% endif %}
-          </div>
+          <input type="file" class="dc-file-input" multiple style="display:none">
+          <div class="mention-pop"></div>
         </div>
-        {% else %}<div class="empty">No discussion yet — post the first comment.</div>{% endfor %}
+        <div class="disc-list" id="discList-discussion">
+          {% for cm in comments %}
+          <div class="disc-item" data-id="{{ cm.id }}">
+            <div class="di-avatar">{{ (umap.get(cm.user_id, '?'))[:2]|upper }}</div>
+            <div class="di-body">
+              <div class="di-head">
+                <span class="di-name">{{ umap.get(cm.user_id, 'User') }}</span>
+                <span class="di-time">{{ (cm.created_at or '')|string|truncate(19,True,'') }}{% if cm.edited_at %} · edited{% endif %}</span>
+                {% if cm.user_id == my_uid %}
+                <span class="di-acts">
+                  <button class="di-edit" title="Edit" onclick="discEdit({{ cm.id }}, this)">✎</button>
+                  <button class="di-del" title="Delete" onclick="discDelete({{ cm.id }}, this)">🗑</button>
+                </span>
+                {% endif %}
+              </div>
+              <div class="di-text">{{ cm.comment | safe }}</div>
+              {% if cm._files %}<div class="di-files">{% for f in cm._files %}<a class="di-file" href="/static/uploads/npd/{{ f.path }}" target="_blank" data-att-id="{{ f.id }}" data-fname="{{ f.name }}">📎 {{ f.name }}</a>{% endfor %}</div>{% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="disc-empty">No comments yet. Add the first comment above.</div>
+          {% endfor %}
+        </div>
       </div>
     </div>
 
     <!-- ══ INTERNAL DISCUSSION ══ -->
     <div class="pane" id="pane-internal">
       <div class="card">
-        <form class="cform" method="post" action="/npd/{{ p.id }}/comment" enctype="multipart/form-data">
-          <input type="hidden" name="is_internal" value="1">
-          <textarea name="comment" placeholder="Internal team discussion (not visible to the client)..." required></textarea>
-          <div class="row">
-            <input type="file" name="file">
-            <span style="flex:1"></span>
-            <button class="btn purple" type="submit" style="height:36px">🔒 Post Internal</button>
+        <div class="disc-composer" id="dcWrap-internal">
+          <div class="dc-avatar">{{ (user_name or 'U')[:2]|upper }}</div>
+          <div class="dc-box" id="dcBox-internal">
+            <div class="dc-toolbar">
+              <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+              <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+              <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+              <span class="dc-sep"></span>
+              <button type="button" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+              <button type="button" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+              <span class="dc-sep"></span>
+              <button type="button" class="dc-attach" title="Attach file">📎</button>
+            </div>
+            <div class="dc-edit" contenteditable="true" data-ph="Internal team discussion (not visible to the client)... (use @ to tag)"></div>
+            <div class="dc-files"></div>
+            <div class="dc-foot">
+              <span class="dc-hint">Use @ to tag an employee · you can also drag &amp; drop files here</span>
+              <button type="button" class="dc-send">🔒 Post Internal</button>
+            </div>
           </div>
-        </form>
-        {% for cm in internal %}
-        <div class="cmt">
-          <div class="av" style="background:color-mix(in srgb,#dc2626 11%,transparent);color:#dc2626">{{ (umap.get(cm.user_id, '?'))[:1]|upper }}</div>
-          <div style="min-width:0;flex:1">
-            <span class="who">{{ umap.get(cm.user_id, 'User') }}</span><span class="when">{{ (cm.created_at or '')|string|truncate(19,True,'') }}</span>
-            <div class="txt">{{ cm.comment }}</div>
-            {% if cm.attachment %}<a class="att" href="/static/uploads/npd/{{ cm.attachment }}" target="_blank">📎 {{ cm.attachment.split('_', 2)[-1] }}</a>{% endif %}
-          </div>
+          <input type="file" class="dc-file-input" multiple style="display:none">
+          <div class="mention-pop"></div>
         </div>
-        {% else %}<div class="empty">Internal discussion is empty.</div>{% endfor %}
+        <div class="disc-list" id="discList-internal">
+          {% for cm in internal %}
+          <div class="disc-item" data-id="{{ cm.id }}">
+            <div class="di-avatar" style="background:linear-gradient(135deg,#dc2626,#f97316)">{{ (umap.get(cm.user_id, '?'))[:2]|upper }}</div>
+            <div class="di-body">
+              <div class="di-head">
+                <span class="di-name">{{ umap.get(cm.user_id, 'User') }}</span>
+                <span class="di-time">{{ (cm.created_at or '')|string|truncate(19,True,'') }}{% if cm.edited_at %} · edited{% endif %}</span>
+                {% if cm.user_id == my_uid %}
+                <span class="di-acts">
+                  <button class="di-edit" title="Edit" onclick="discEdit({{ cm.id }}, this)">✎</button>
+                  <button class="di-del" title="Delete" onclick="discDelete({{ cm.id }}, this)">🗑</button>
+                </span>
+                {% endif %}
+              </div>
+              <div class="di-text">{{ cm.comment | safe }}</div>
+              {% if cm._files %}<div class="di-files">{% for f in cm._files %}<a class="di-file" href="/static/uploads/npd/{{ f.path }}" target="_blank" data-att-id="{{ f.id }}" data-fname="{{ f.name }}">📎 {{ f.name }}</a>{% endfor %}</div>{% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="disc-empty">No comments yet. Add the first comment above.</div>
+          {% endfor %}
+        </div>
       </div>
     </div>
 
     <!-- ══ ACTIVITY LOG ══ -->
     <div class="pane" id="pane-activity">
       <div class="card">
-        {% for a in acts %}
-        <div class="act-row">
-          <span>{{ a.action }} <span style="color:var(--muted2)">— {{ umap.get(a.user_id, '') }}</span></span>
-          <span class="act-when">{{ (a.created_at or '')|string|truncate(19,True,'') }}</span>
+        {% if acts %}
+        <div class="al-tl">
+          {% for a in acts %}
+          <div class="al-item">
+            <div class="al-dot"></div>
+            <div class="al-body">
+              <div class="al-head">
+                <span class="al-user">{{ umap.get(a.user_id, 'System') }}</span>
+                <span class="al-time">{{ (a.created_at or '')|string|truncate(19,True,'') }}</span>
+              </div>
+              <div class="al-action">{{ a.action }}</div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
-        {% else %}<div class="empty">No activity yet.</div>{% endfor %}
+        {% else %}<div class="empty">No activity yet.</div>{% endif %}
       </div>
     </div>
 
@@ -308,7 +752,7 @@
           <tbody>
           {% for at in attachments %}
             <tr>
-              <td><a href="/static/uploads/npd/{{ at.name }}" target="_blank" style="color:#2563eb;font-weight:700">📎 {{ at.name.split('_', 2)[-1] }}</a></td>
+              <td><a href="/static/uploads/npd/{{ at.path or at.name }}" download="{{ at.name }}" target="_blank" style="color:#2563eb;font-weight:700">📎 {{ at.name }}</a></td>
               <td>{{ at.src }}</td>
               <td>{{ umap.get(at.by, '—') }}</td>
               <td>{{ (at.when or '')|string|truncate(19,True,'') }}</td>
@@ -316,51 +760,674 @@
           {% endfor %}
           </tbody>
         </table>
-        {% else %}<div class="empty">No attachments. You can attach files in Discussion or Milestones.</div>{% endif %}
+        {% else %}<div class="empty">No attachments. Files attached in the Discussion board will appear here.</div>{% endif %}
       </div>
     </div>
 
-    <!-- ══ NOTE ══ -->
+    <!-- ══ PERSONAL NOTES (lead jaisa) ══ -->
     <div class="pane" id="pane-note">
-      <div class="card">
-        <form class="cform" method="post" action="/npd/{{ p.id }}/note" style="border-bottom:none">
-          <textarea name="content" style="min-height:200px" placeholder="Project note (only one note is kept — saving updates it)...">{{ note.content or '' }}</textarea>
-          <div class="row">
-            {% if note.updated_at %}<span style="font-size:.72rem;color:var(--muted2)">Last saved: {{ (note.updated_at or '')|string|truncate(19,True,'') }} — {{ umap.get(note.updated_by, '') }}</span>{% endif %}
-            <span style="flex:1"></span>
-            <button class="btn green" type="submit" style="height:36px">💾 Save Note</button>
+      <div class="rn-grid">
+        <div class="card">
+          <div class="rn-head">📝 Personal Notes <small>Only visible to you</small></div>
+          <div class="rn-body">
+            <div id="ntList">
+              {% for n in pnotes %}
+              <div class="nt-item" data-id="{{ n.id }}">
+                <div class="nt-text">{{ n.note }}</div>
+                <div class="nt-foot"><span class="nt-time">{{ (n.created_at or '')|string|truncate(19,True,'') }}</span>
+                  <button class="rm-btn del" title="Delete" onclick="ntDelete({{ n.id }}, this)">🗑</button></div>
+              </div>
+              {% else %}
+              <div class="disc-empty" id="ntEmpty">No personal notes yet.</div>
+              {% endfor %}
+            </div>
           </div>
-        </form>
+        </div>
+        <div class="card">
+          <div class="rn-head">+ Add Note</div>
+          <div class="rn-body">
+            <textarea id="ntText" class="fld-i" rows="5" placeholder="Write your private note here..."></textarea>
+            <button class="rn-submit" id="ntAdd" type="button">Save Note</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- ══ MILESTONES ══ -->
+    <!-- ══ MILESTONES (old system jaisa) ══ -->
     <div class="pane" id="pane-milestones">
-      <div class="card">
-        <div style="padding:14px 18px 0;font-size:.85rem;font-weight:800">Milestone Progress <span style="color:var(--muted2);font-weight:600">{{ pct }}% approved</span></div>
-        <div class="prog"><i style="width:{{ pct }}%"></i></div>
-        {% for m in miles %}
-        <div class="ms-row">
-          {% for s,l,c in ms_statuses %}{% if s==m.status %}<span class="ms-dot" style="background:{{ c }}"></span>{% endif %}{% endfor %}
-          <div style="min-width:0">
-            <div class="ms-name">{{ m.title }}</div>
-            {% if m.completed_at %}<div class="ms-date">Done: {{ (m.completed_at or '')|string|truncate(19,True,'') }}</div>{% endif %}
-          </div>
-          <form method="post" action="/npd/{{ p.id }}/milestone/{{ m.id }}">
-            <select name="status">
-              {% for s,l,c in ms_statuses %}<option value="{{ s }}" {% if s==m.status %}selected{% endif %}>{{ l }}</option>{% endfor %}
-            </select>
-            <button type="submit">Save</button>
-          </form>
+      {% set done = miles|selectattr('status','equalto','approved')|list|length %}
+      {% if miles %}
+      <div class="ms-grid">
+        <div class="ms-side">
+          <div class="ms-side-head">Milestones <small>{{ done }} / {{ miles|length }} done</small></div>
+          {% for m in miles %}
+          <button type="button" class="ms-it {{ 'on' if loop.first }}" data-mid="{{ m.id }}" onclick="msOpen({{ m.id }}, this)">
+            <span class="ic">{% if m.status=='approved' %}✅{% elif m.status=='rejected' %}❌{% elif m.status=='skipped' %}⏭️{% else %}⏳{% endif %}</span>
+            <span style="min-width:0">
+              <span class="nm" style="display:block">{{ m.title }}</span>
+              {% for s,l,c in ms_statuses %}{% if s==m.status %}<span class="stt" style="color:{{ c }}">{{ 'Done' if s == 'approved' else l }}</span>{% endif %}{% endfor %}
+            </span>
+          </button>
+          {% endfor %}
         </div>
-        {% else %}<div class="empty">No milestones.</div>{% endfor %}
+        <div style="min-width:0">
+          {% for m in miles %}
+          <div class="ms-panel {{ 'on' if loop.first }}" id="msp-{{ m.id }}">
+            <div class="msp-head">
+              <span class="msp-title">{{ m.title }}</span>
+              {% if m.status != 'approved' %}
+              <button type="button" class="msp-done" onclick="msDone({{ m.id }}, this)">✓ Mark as Done</button>
+              {% endif %}
+            </div>
+            <div class="msp-body">
+              {% if m.milestone_type == 'bom' %}
+              <!-- ── BOM (old system jaisa) ── -->
+              <script>window.NPD_BOM_LOCKED = {{ 'true' if m.status == 'approved' else 'false' }};</script>
+              <div id="bomList">
+                <div class="bom-bar">
+                  <span style="font-size:.82rem;font-weight:800">📑 BOM List</span>
+                  <span style="flex:1"></span>
+                  {% if m.status != 'approved' %}<button type="button" class="bom-btn primary" id="bomNewBtn" onclick="bomNew()">+ New BOM</button>{% endif %}
+                </div>
+                <div class="bom-list" id="bomListBody"></div>
+              </div>
+              <div id="bomSheet" style="display:none">
+                <div class="bom-bar">
+                  <button type="button" class="bom-btn" onclick="bomBack()">← Back</button>
+                  <span style="flex:1"></span>
+                </div>
+                <div class="bom-sheet">
+                  <div class="bom-co">HCP Wellness PVT LTD</div>
+                  <div class="bom-fields">
+                    <span class="bf-pn"><label>Product Name:</label><input id="bomPn" placeholder="Enter product name"></span>
+                    <span><label>Code:</label> <input id="bomCode" placeholder="Code" style="width:110px"></span>
+                    <span><label>Variant:</label> <input id="bomVar" placeholder="Variant" style="width:130px"></span>
+                  </div>
+                  <div class="bom-band">📄 NPD BOM — Formulation Sheet</div>
+                  <table class="bomt">
+                    <thead><tr><th class="bsr">Sr. No.</th><th>INCI Names</th><th class="bqty">Std. Qty. in % w/w</th><th class="brm"></th></tr></thead>
+                    <tbody id="bomRows"></tbody>
+                    <tfoot><tr class="btotal"><td></td><td style="text-align:right">TOTAL</td><td class="bqty"><span id="bomTotal">0.000</span>%</td><td></td></tr></tfoot>
+                  </table>
+                  <div class="bom-foot">
+                    <button type="button" class="bom-btn" onclick="bomAddRow()">+ Add Row</button>
+                    <button type="button" class="bom-btn blue" id="bomSaveBtn" onclick="bomSave()">💾 Save BOM</button>
+                  </div>
+                </div>
+              </div>
+              <div style="height:18px"></div>
+
+              <!-- BOM view popup -->
+              <div class="bv-ov" id="bvOv">
+                <div class="bv-card">
+                  <div class="bv-top"><b id="bvTitle">👁 BOM</b>
+                    <button type="button" class="bv-x" onclick="bomViewClose()">✕</button></div>
+                  <div class="bom-sheet">
+                    <div class="bom-co">HCP Wellness PVT LTD</div>
+                    <div class="bom-fields">
+                      <span class="bf-pn"><label>Product Name:</label> <span style="font-weight:600" id="bvPn">—</span></span>
+                      <span><label>Code:</label> <span style="font-weight:600" id="bvCode">—</span></span>
+                      <span><label>Variant:</label> <span style="font-weight:600" id="bvVar">—</span></span>
+                    </div>
+                    <div class="bom-band">📄 NPD BOM — Formulation Sheet</div>
+                    <table class="bomt">
+                      <thead><tr><th class="bsr">Sr. No.</th><th>INCI Names</th><th class="bqty">Std. Qty. in % w/w</th></tr></thead>
+                      <tbody id="bvRows"></tbody>
+                      <tfoot><tr class="btotal"><td></td><td style="text-align:right">TOTAL</td><td class="bqty"><span id="bvTotal">0.000</span>%</td></tr></tfoot>
+                    </table>
+                  </div>
+                  <div class="bv-meta" id="bvMeta"></div>
+                </div>
+              </div>
+              {% endif %}
+              {% if m.milestone_type == 'artwork' %}
+              <!-- ── Artwork / Design board (discussion jaisa, alag data) ── -->
+              <div class="bom-bar" style="margin-bottom:12px">
+                <span style="font-size:.82rem;font-weight:800">🎨 ARTWORK / DESIGN DISCUSSION</span>
+              </div>
+              {% if m.status != 'approved' %}
+              <div class="disc-composer" id="dcWrap-artwork">
+                <div class="dc-avatar">{{ (user_name or 'U')[:2]|upper }}</div>
+                <div class="dc-box" id="dcBox-artwork">
+                  <div class="dc-toolbar">
+                    <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                    <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+                    <span class="dc-sep"></span>
+                    <button type="button" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+                    <button type="button" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+                    <span class="dc-sep"></span>
+                    <button type="button" class="dc-attach" title="Attach file">📎</button>
+                  </div>
+                  <div class="dc-edit" contenteditable="true" data-ph="Share artwork / design files and feedback... (use @ to tag)"></div>
+                  <div class="dc-files"></div>
+                  <div class="dc-foot">
+                    <span class="dc-hint">Use @ to tag an employee · you can also drag &amp; drop files here</span>
+                    <button type="button" class="dc-send">🎨 Post</button>
+                  </div>
+                </div>
+                <input type="file" class="dc-file-input" multiple style="display:none">
+                <div class="mention-pop"></div>
+              </div>
+              {% endif %}
+              <div class="disc-list" id="discList-artwork">
+                {% for cm in acomments %}
+                <div class="disc-item" data-id="{{ cm.id }}">
+                  <div class="di-avatar" style="background:linear-gradient(135deg,#7c3aed,#2563eb)">{{ (umap.get(cm.user_id, '?'))[:2]|upper }}</div>
+                  <div class="di-body">
+                    <div class="di-head">
+                      <span class="di-name">{{ umap.get(cm.user_id, 'User') }}</span>
+                      <span class="di-time">{{ (cm.created_at or '')|string|truncate(19,True,'') }}{% if cm.edited_at %} · edited{% endif %}</span>
+                      {% if cm.user_id == my_uid and m.status != 'approved' %}
+                      <span class="di-acts">
+                        <button class="di-edit" title="Edit" onclick="discEdit({{ cm.id }}, this)">✎</button>
+                        <button class="di-del" title="Delete" onclick="discDelete({{ cm.id }}, this)">🗑</button>
+                      </span>
+                      {% endif %}
+                    </div>
+                    <div class="di-text">{{ cm.comment | safe }}</div>
+                    {% if cm._files %}<div class="di-files">{% for f in cm._files %}<a class="di-file" href="/static/uploads/npd/{{ f.path }}" target="_blank" data-att-id="{{ f.id }}" data-fname="{{ f.name }}">📎 {{ f.name }}</a>{% endfor %}</div>{% endif %}
+                  </div>
+                </div>
+                {% else %}
+                <div class="disc-empty">No artwork / design posts yet.{% if m.status != 'approved' %} Share the first one above.{% endif %}</div>
+                {% endfor %}
+              </div>
+              <div style="height:18px"></div>
+              {% endif %}
+              {% if m.milestone_type == 'artwork_qc' %}
+              <!-- ── Artwork QC Approval board (discussion jaisa, alag data) ── -->
+              <div class="bom-bar" style="margin-bottom:12px">
+                <span style="font-size:.82rem;font-weight:800">✅ ARTWORK QC APPROVAL DISCUSSION</span>
+              </div>
+              {% if m.status != 'approved' %}
+              <div class="disc-composer" id="dcWrap-artworkqc">
+                <div class="dc-avatar">{{ (user_name or 'U')[:2]|upper }}</div>
+                <div class="dc-box" id="dcBox-artworkqc">
+                  <div class="dc-toolbar">
+                    <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                    <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+                    <span class="dc-sep"></span>
+                    <button type="button" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+                    <button type="button" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+                    <span class="dc-sep"></span>
+                    <button type="button" class="dc-attach" title="Attach file">📎</button>
+                  </div>
+                  <div class="dc-edit" contenteditable="true" data-ph="Artwork QC review, approvals and corrections... (use @ to tag)"></div>
+                  <div class="dc-files"></div>
+                  <div class="dc-foot">
+                    <span class="dc-hint">Use @ to tag an employee · you can also drag &amp; drop files here</span>
+                    <button type="button" class="dc-send">✅ Post</button>
+                  </div>
+                </div>
+                <input type="file" class="dc-file-input" multiple style="display:none">
+                <div class="mention-pop"></div>
+              </div>
+              {% endif %}
+              <div class="disc-list" id="discList-artworkqc">
+                {% for cm in qcomments %}
+                <div class="disc-item" data-id="{{ cm.id }}">
+                  <div class="di-avatar" style="background:linear-gradient(135deg,#16a34a,#0d9488)">{{ (umap.get(cm.user_id, '?'))[:2]|upper }}</div>
+                  <div class="di-body">
+                    <div class="di-head">
+                      <span class="di-name">{{ umap.get(cm.user_id, 'User') }}</span>
+                      <span class="di-time">{{ (cm.created_at or '')|string|truncate(19,True,'') }}{% if cm.edited_at %} · edited{% endif %}</span>
+                      {% if cm.user_id == my_uid and m.status != 'approved' %}
+                      <span class="di-acts">
+                        <button class="di-edit" title="Edit" onclick="discEdit({{ cm.id }}, this)">✎</button>
+                        <button class="di-del" title="Delete" onclick="discDelete({{ cm.id }}, this)">🗑</button>
+                      </span>
+                      {% endif %}
+                    </div>
+                    <div class="di-text">{{ cm.comment | safe }}</div>
+                    {% if cm._files %}<div class="di-files">{% for f in cm._files %}<a class="di-file" href="/static/uploads/npd/{{ f.path }}" target="_blank" data-att-id="{{ f.id }}" data-fname="{{ f.name }}">📎 {{ f.name }}</a>{% endfor %}</div>{% endif %}
+                  </div>
+                </div>
+                {% else %}
+                <div class="disc-empty">No artwork QC posts yet.{% if m.status != 'approved' %} Share the first one above.{% endif %}</div>
+                {% endfor %}
+              </div>
+              <div style="height:18px"></div>
+              {% endif %}
+              {% if m.milestone_type == 'packing_material' %}
+              <!-- ── Packing Material (old system jaisa) ── -->
+              <div class="bom-bar" style="background:#0b1220;color:#fff;border-color:#0b1220">
+                <span style="font-size:.82rem;font-weight:800;color:#fff">📦 PACKING MATERIAL</span>
+                <span style="flex:1"></span>
+                {% if m.status != 'approved' %}<button type="button" class="bom-btn" id="pkAddBtn" onclick="pkAddRow()" style="background:#f97316;border-color:#f97316;color:#fff">+ Add Row</button>{% endif %}
+              </div>
+              <div class="bom-list" style="border-top:none;border-radius:0 0 10px 10px">
+                <table id="pkTable">
+                  <thead><tr>
+                    <th style="width:34px">#</th><th style="min-width:130px">Category</th>
+                    <th style="min-width:170px">Vendor Name</th><th style="width:120px">Cost</th>
+                    <th style="width:110px">Image</th><th style="width:110px">Filling Image</th>
+                    <th style="width:110px">COA</th><th style="width:140px">Filling Status</th>
+                    <th style="width:40px"></th>
+                  </tr></thead>
+                  <tbody id="pkBody"></tbody>
+                </table>
+                <div class="msp-empty" id="pkEmpty" style="display:none">No rows yet. Click <b>+ Add Row</b> to begin.</div>
+              </div>
+              <div style="height:18px"></div>
+              {% endif %}
+              {% if m.milestone_type == 'quotation' %}
+              <!-- ── Quotations (lead jaisa) ── -->
+              <div class="bom-bar">
+                <span style="font-size:.82rem;font-weight:800">📄 Quotations</span>
+                <span style="flex:1"></span>
+                {% if m.status != 'approved' %}<button type="button" class="bom-btn primary" id="qtNewBtn" onclick="openQuotation()">+ New Quotation</button>{% endif %}
+              </div>
+              <div class="bom-list">
+                {% if quots %}
+                <table>
+                  <thead><tr><th>Quotation No</th><th>Date</th><th>Company</th><th style="text-align:right">Total ₹</th><th>Status</th><th>By</th><th style="text-align:right">Actions</th></tr></thead>
+                  <tbody>
+                  {% for q in quots %}
+                    <tr id="qtRow-{{ q.id }}">
+                      <td style="font-weight:700">{{ q.number }}</td>
+                      <td style="white-space:nowrap">{{ q.date }}</td>
+                      <td>{{ q.company or '—' }}</td>
+                      <td style="text-align:right;font-weight:700">{{ '{:,.2f}'.format(q.total) }}</td>
+                      <td><span class="qt-status" style="background:color-mix(in srgb,{{ '#16a34a' if q.status=='accepted' else '#2563eb' if q.status=='sent' else '#dc2626' if q.status=='rejected' else '#64748b' }} 14%,transparent);color:{{ '#16a34a' if q.status=='accepted' else '#2563eb' if q.status=='sent' else '#dc2626' if q.status=='rejected' else '#64748b' }}">{{ q.status }}</span></td>
+                      <td>{{ q.by }}</td>
+                      <td style="text-align:right;white-space:nowrap">
+                        <a class="ba" title="Open PDF" href="/crm/quotations/{{ q.id }}/pdf" target="_blank" style="text-decoration:none">👁</a>
+                        {% if m.status != 'approved' %}
+                        <button type="button" class="ba qt-act" title="Edit" onclick="qtEdit({{ q.id }})">✎</button>
+                        <button type="button" class="ba del qt-act" title="Delete" onclick="qtDelete({{ q.id }})">🗑</button>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+                {% else %}
+                <div class="msp-empty">No quotations yet. Click <b>+ New Quotation</b> to create one.</div>
+                {% endif %}
+              </div>
+              <div style="height:18px"></div>
+              {% endif %}
+              {% if m.milestone_type == 'ingredients' %}
+              <!-- ── Ingredients List & Marketing Sheet (old system jaisa) ── -->
+              <div class="bom-bar" style="margin-bottom:10px">
+                <span style="font-size:.82rem;font-weight:800">📋 INGREDIENTS LIST &amp; MARKETING SHEET</span>
+              </div>
+              <div class="dc-box" id="ingBox" data-mid="{{ m.id }}">
+                {% if m.status != 'approved' %}
+                <div class="dc-toolbar" id="ingTb">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+                  <span class="dc-sep"></span>
+                  <button type="button" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+                  <button type="button" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+                  <span class="dc-sep"></span>
+                  <button type="button" data-cmd="insertHorizontalRule" title="Divider">─</button>
+                  <button type="button" data-cmd="removeFormat" title="Clear formatting">✕</button>
+                </div>
+                {% endif %}
+                <div class="dc-edit" id="ingEdit" {% if m.status != 'approved' %}contenteditable="true"{% endif %} style="min-height:170px"
+                     data-ph="Write ingredients list and marketing sheet content...">{{ (m.notes or '') | safe }}</div>
+                {% if m.status != 'approved' %}
+                <div class="dc-foot">
+                  <span class="dc-hint">Formatting: bold / lists / divider supported</span>
+                  <button type="button" class="dc-send" id="ingSave">💾 Save Sheet</button>
+                </div>
+                {% endif %}
+              </div>
+              <div style="height:18px"></div>
+              {% endif %}
+              {% if m.milestone_type == 'fda' %}
+              <!-- ── FDA (request mail + entries) ── -->
+              {% if fda_request %}
+              <div class="fda-sent-box">
+                <div class="fda-sent-head">✅ FDA REQUEST MAIL SENT
+                  <span class="fda-badge completed" style="margin-left:auto">Completed</span>
+                </div>
+                <div class="fda-sent-body">
+                  <div><b>Sent by:</b> {{ umap.get(fda_request.sent_by, '') }}&nbsp;&nbsp;
+                    <b>Sent at:</b> {{ fda_request.sent_at }}</div>
+                  <div><b>To:</b> {{ fda_request.to_emails }}</div>
+                  {% if fda_request.cc_emails %}<div><b>Cc:</b> {{ fda_request.cc_emails }}</div>{% endif %}
+                  <div><b>Subject:</b> {{ fda_request.subject }}</div>
+                  <button type="button" class="fda-sent-toggle" onclick="fdaToggleBody(this)">▶ View message body</button>
+                  <div class="fda-sent-msg">{{ fda_request.body }}</div>
+                </div>
+              </div>
+              <div class="fda-entries-head">📁 FDA ENTRIES
+                {% if m.status != 'approved' %}
+                <button type="button" class="bom-btn primary" style="margin-left:auto" onclick="fdaEntryOpen()">+ Add FDA</button>
+                {% endif %}
+              </div>
+              <div class="fda-entries-body" id="fdaEntriesBody">
+                {% if fda_entries %}
+                {% for e in fda_entries %}
+                <div class="fda-entry-card" id="fdaEntry-{{ e.id }}">
+                  <div class="nm">{{ e.product_name }}
+                    {% if m.status != 'approved' %}
+                    <button type="button" class="ba del" title="Delete" style="float:right" onclick="fdaEntryDelete({{ e.id }})">🗑</button>
+                    {% endif %}
+                  </div>
+                  <div class="fda-doc-list">
+                    {% for col, label in [('free_sale_certificate','Free Sale Certificate'),('product_permission','Product Permission'),('msds','MSDS'),('dossier','Dossier')] %}
+                    {% if e[col] %}
+                    <a class="fda-doc has" href="/static/uploads/npd/{{ e[col] }}" target="_blank">📎 {{ label }}</a>
+                    {% else %}
+                    <span class="fda-doc missing">— {{ label }}</span>
+                    {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="msp-empty" id="fdaEntriesEmpty">No FDA entries yet.<br>Click <b>+ Add FDA</b> to add one.</div>
+                {% endif %}
+              </div>
+              {% else %}
+              <div class="fda-step">
+                <span class="ttl">⬜ STEP 1 — SEND FDA REQUEST MAIL</span>
+                <span class="fda-badge pending">Pending</span>
+              </div>
+              <div class="fda-box">
+                <div class="fda-row">
+                  <label>To <span class="req">*</span> <span class="opt">(select employees)</span></label>
+                  <div class="msel" id="fdaToMsel">
+                    <button type="button" class="msel-btn" onclick="mselToggle('fdaToMsel')"><span class="lbl">Select recipients</span><span>▾</span></button>
+                    <div class="msel-panel">
+                      {% for u in fda_users %}
+                      <label><input type="checkbox" name="fda_to" value="{{ u.id }}"> {{ u.name }} <span style="color:var(--muted2);font-weight:600">({{ u.email }})</span></label>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                <div class="fda-row">
+                  <label>CC <span class="opt">(optional)</span></label>
+                  <div class="msel" id="fdaCcMsel">
+                    <button type="button" class="msel-btn" onclick="mselToggle('fdaCcMsel')"><span class="lbl">Select CC recipients</span><span>▾</span></button>
+                    <div class="msel-panel">
+                      {% for u in fda_users %}
+                      <label><input type="checkbox" name="fda_cc" value="{{ u.id }}"> {{ u.name }} <span style="color:var(--muted2);font-weight:600">({{ u.email }})</span></label>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                <div class="fda-row">
+                  <label>Subject <span class="req">*</span></label>
+                  <input type="text" class="fda-i" id="fdaSubject" value="Request for FDA | {{ p.product_name }}">
+                </div>
+                <div class="fda-row">
+                  <label>Message Body <span class="req">*</span></label>
+                  <textarea class="fda-i area" id="fdaBody">Dear Team,
+
+Kindly initiate the FDA processing for the following product:
+
+Product Name: {{ p.product_name }}
+Product Size: {{ p.product_size or '' }}
+
+Please let me know if you have any questions.</textarea>
+                </div>
+                <div class="fda-foot">
+                  <button type="button" class="fda-send" id="fdaSendBtn" onclick="fdaSendMail({{ m.id }})">✉ Send FDA Request Mail</button>
+                </div>
+              </div>
+              {% endif %}
+              <div id="fdaEntryModal" class="so-bg">
+                <div class="so-card" style="width:560px">
+                  <div class="so-head">+ New FDA Entry
+                    <button type="button" class="so-x" onclick="fdaEntryClose()">✕</button>
+                  </div>
+                  <div class="so-body">
+                    <label class="so-l">Product Name <span class="req">*</span></label>
+                    <input type="text" class="so-i" id="fdaEntryProduct" placeholder="Enter Product Name...">
+                    <label class="so-l" style="margin-bottom:9px">Document Types</label>
+                    {% for col, label in [('free_sale_certificate','Free Sale Certificate'),('product_permission','Product Permission'),('msds','MSDS'),('dossier','Dossier')] %}
+                    <div class="fda-m-row">
+                      <span>{{ label }}</span>
+                      <label class="fda-m-file" id="fdaFileLbl-{{ col }}">📎 <span>Choose File</span>
+                        <input type="file" data-field="{{ col }}" onchange="fdaFileChosen(this)">
+                      </label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <div class="so-foot">
+                    <button type="button" class="so-btn cancel" onclick="fdaEntryClose()">Cancel</button>
+                    <button type="button" class="so-btn send" id="fdaEntrySaveBtn" onclick="fdaEntrySave({{ m.id }})">💾 Save</button>
+                  </div>
+                </div>
+              </div>
+              <div style="height:18px"></div>
+              {% endif %}
+              {% if m.milestone_type == 'barcode' %}
+              <!-- ── Barcode Designs ── -->
+              <div class="bc-bar">
+                <span>🔢 BARCODE DESIGNS</span>
+                {% if m.status != 'approved' %}
+                <label class="bc-upload" style="margin-left:auto" id="bcUploadBtn">
+                  <span id="bcUploadLbl">📤 Upload Design</span>
+                  <input type="file" accept="image/*" onchange="bcDesignUpload(this, {{ m.id }})">
+                </label>
+                {% endif %}
+              </div>
+              <div class="bc-hint">
+                <span>✏️ <b>Designer:</b> Upload 1024 × 1024 px image only</span>
+                <span class="sep">|</span>
+                <span>🔢 <b>Barcode Team:</b> Upload barcode file against each design</span>
+              </div>
+              <div class="bc-body" id="bcBody">
+                <div class="bc-err" id="bcErr" style="display:none"></div>
+                {% if bc_designs %}
+                {% for d in bc_designs %}
+                <div class="bc-card" id="bcCard-{{ d.id }}">
+                  <div class="bc-card-head">
+                    <b>Design #{{ d.sr_no }}</b>
+                    <span class="bc-meta">By {{ umap.get(d.created_by, '') }} · {{ d.created_at }}</span>
+                  </div>
+                  <div class="bc-cols">
+                    <div class="bc-col">
+                      <div class="bc-col-h designer">DESIGNER UPLOAD</div>
+                      {% if d.design_path %}
+                      <a class="bc-link" href="/static/uploads/npd/{{ d.design_path }}" target="_blank">
+                        <img class="bc-img" src="/static/uploads/npd/{{ d.design_path }}" alt="Design"> 
+                      </a>
+                      <div class="bc-dims">📐 {{ d.design_width }} × {{ d.design_height }} px</div>
+                      {% if m.status != 'approved' and not d.barcode_path %}
+                      <div class="bc-acts" id="bcDesignActs-{{ d.id }}">
+                        <label class="bc-mini" title="Change design (1024 × 1024 px)">🔄 Change
+                          <input type="file" accept="image/*" onchange="bcChangeDesign(this, {{ d.id }})">
+                        </label>
+                        <button type="button" class="bc-mini del" onclick="bcDesignDelete({{ d.id }})">🗑 Delete</button>
+                      </div>
+                      {% endif %}
+                      {% else %}
+                      <span style="color:var(--muted2);font-size:.83rem">No design uploaded</span>
+                      {% endif %}
+                    </div>
+                    <div class="bc-col">
+                      <div class="bc-col-h team">BARCODE TEAM UPLOAD</div>
+                      {% if d.barcode_path %}
+                      <a class="bc-link" id="bcFile-{{ d.id }}" href="/static/uploads/npd/{{ d.barcode_path }}" target="_blank" download>📎 {{ d.barcode_path.split('_', 2)[-1] }}</a>
+                      {% if m.status != 'approved' %}
+                      <div class="bc-acts" id="bcTeamActs-{{ d.id }}">
+                        <label class="bc-mini" title="Change barcode file">🔄 Change
+                          <input type="file" onchange="bcChangeBarcode(this, {{ d.id }})">
+                        </label>
+                        <button type="button" class="bc-mini del" onclick="bcDeleteBarcode({{ d.id }})">🗑 Delete</button>
+                      </div>
+                      {% endif %}
+                      {% elif m.status != 'approved' %}
+                      <label class="bc-upload-team" id="bcTeamBtn-{{ d.id }}">
+                        <span>📎 Upload Barcode</span>
+                        <input type="file" onchange="bcBarcodeUpload(this, {{ d.id }})">
+                      </label>
+                      {% else %}
+                      <span style="color:var(--muted2);font-size:.83rem">Not uploaded</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="msp-empty" id="bcEmpty">No designs uploaded yet.<br>Designer can upload using the <b>Upload Design</b> button above.</div>
+                {% endif %}
+              </div>
+              <!-- ── Barcode error modal popup ── -->
+              <div class="bc-modal" id="bcModal" onclick="if(event.target===this)bcCloseModal()">
+                <div class="bc-modal-box">
+                  <div class="bc-modal-chip warn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  </div>
+                  <div class="bc-modal-h" id="bcModalH">Upload Error</div>
+                  <div class="bc-modal-msg" id="bcModalMsg"></div>
+                  <div class="bc-modal-actions">
+                    <button type="button" class="bc-modal-btn" onclick="bcCloseModal()">OK</button>
+                  </div>
+                </div>
+              </div>
+              <!-- ── Barcode confirm (delete) modal popup ── -->
+              <div class="bc-modal" id="bcConfirm" onclick="if(event.target===this)bcConfirmNo()">
+                <div class="bc-modal-box">
+                  <div class="bc-modal-chip danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                  </div>
+                  <div class="bc-modal-h" id="bcConfirmH">Confirm Delete</div>
+                  <div class="bc-modal-msg" id="bcConfirmMsg"></div>
+                  <div class="bc-modal-actions">
+                    <button type="button" class="bc-modal-btn ghost" onclick="bcConfirmNo()">Cancel</button>
+                    <button type="button" class="bc-modal-btn danger" id="bcConfirmYesBtn" onclick="bcConfirmYes()">Delete</button>
+                  </div>
+                </div>
+              </div>
+              <div style="height:18px"></div>
+              {% endif %}
+              {% if m.description %}<div class="msp-sec">Description</div>
+              <div style="font-size:.86rem;line-height:1.55">{{ m.description }}</div>{% endif %}
+              {% if m.notes and m.milestone_type not in ('ingredients',) %}<div class="msp-sec">Notes</div>
+              <div style="font-size:.86rem;line-height:1.55;white-space:pre-wrap">{{ m.notes }}</div>{% endif %}
+              {% if m.reject_reason %}<div class="msp-sec" style="color:#dc2626">Reject Reason</div>
+              <div style="font-size:.86rem;line-height:1.55;color:#dc2626">{{ m.reject_reason }}</div>{% endif %}
+              {% if (m.attachments or '').strip(',').strip() %}<div class="msp-sec">Attachments</div>
+              <div class="di-files">{% for fn in (m.attachments or '').split(',') %}{% if fn.strip() %}<a class="di-file" href="/static/uploads/npd/{{ fn.strip() }}" target="_blank" download>📎 {{ fn.strip().split('_', 2)[-1] }}</a>{% endif %}{% endfor %}</div>{% endif %}
+              <div class="msp-sec">Milestone Log</div>
+              {% set lgs = mlogs.get(m.id, []) %}
+              {% if lgs %}
+              <div class="al-tl" style="padding:4px 0 0 8px">
+                {% for lg in lgs %}
+                <div class="al-item">
+                  <div class="al-dot"></div>
+                  <div class="al-body">
+                    <div class="al-head">
+                      <span class="al-user">{{ umap.get(lg.created_by, 'System') }}</span>
+                      <span class="al-time">{{ (lg.created_at or '')|string|truncate(19,True,'') }}</span>
+                    </div>
+                    <div class="al-action">{{ lg.action }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}<div class="msp-empty">No activity on this milestone yet.</div>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
       </div>
+      {% else %}<div class="card"><div class="empty">No milestones selected for this project.</div></div>{% endif %}
     </div>
 
   </div>
 </div>
 
+<!-- Quotation modal (lead jaisa) -->
+<div class="so-bg" id="qtModal">
+  <div class="so-card" style="width:min(1320px,98vw)">
+    <div class="so-head"><span id="qtModalTitle">📄 Create Quotation</span><button type="button" class="so-x" onclick="closeQuotation()">&times;</button></div>
+    <form method="POST" action="/npd/{{ p.id }}/quotation" id="qtForm" target="_blank" onsubmit="return qtBeforeSubmit()">
+      <input type="hidden" name="quotation_id" id="qtEditId" value="">
+      <div class="so-body">
+        <div class="so-top">
+          <div>
+            <div class="so-sec">Bill To</div>
+            <input type="text" name="bill_company" id="qtCompany" class="so-i" placeholder="Company Name *" value="{{ p.client_company or p.cm_company or '' }}" style="font-weight:600">
+            <span class="so-err" id="qtErrCo">Company Name is required</span>
+            <textarea name="bill_address" class="so-i" rows="2" placeholder="Address"></textarea>
+            <div class="so-2col">
+              <input type="text" name="bill_phone" class="so-i" placeholder="Phone" value="{{ p.client_phone or '' }}">
+              <input type="text" name="bill_email" class="so-i" placeholder="Email" value="{{ p.client_email or '' }}">
+            </div>
+            <input type="text" name="bill_gst" class="so-i" placeholder="GST Number (optional)">
+          </div>
+          <div>
+            <div class="so-sec">Quotation Details</div>
+            <label class="so-l">Quotation No *</label>
+            <input type="text" name="quot_number" id="qtNumber" class="so-i" style="background:#f1f5f9" readonly>
+            <div class="so-2col">
+              <div><label class="so-l" style="margin-top:0">Date *</label><input type="date" name="quot_date" id="qtDate" class="so-i"></div>
+              <div><label class="so-l" style="margin-top:0">Valid Until</label><input type="date" name="valid_until" id="qtValid" class="so-i"></div>
+            </div>
+            <label class="so-l">GST %</label>
+            <select name="quot_gst_pct" id="qtGstPct" class="so-i" onchange="qtCalc()">
+              <option value="0">0% (No GST)</option><option value="5">5%</option>
+              <option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option>
+            </select>
+            <label class="so-l">Subject</label>
+            <input type="text" name="quot_subject" class="so-i" value="Quotation for {{ p.client_company or p.cm_company or p.client_name or '' }}">
+          </div>
+        </div>
+        <div class="so-sec" style="margin-top:6px">Products / Items</div>
+        <div class="so-tbl-wrap">
+          <table class="so-tbl"><thead><tr>
+            <th style="min-width:150px">Product Name</th><th style="width:70px">Size</th>
+            <th style="width:90px">Code</th><th style="width:90px">UOM</th>
+            <th style="width:90px">Cost (₹)</th><th style="width:75px">MOQ</th>
+            <th style="min-width:130px">PM Spec</th><th style="width:90px">PM Cost (₹)</th>
+            <th style="min-width:120px">Category</th><th style="width:140px">Final Cost (₹)</th>
+          </tr></thead><tbody id="qtItems"></tbody></table>
+        </div>
+        <span class="so-err" id="qtErrItems" style="margin:0 0 6px">At least one product is required</span>
+        <button type="button" class="so-add" onclick="qtAddRow()">+ Add Item</button>
+        <div class="so-totals">
+          <div class="so-trow"><span>Sub Total</span><span id="qtSub">0.00</span></div>
+          <div class="so-trow"><span>GST (<span id="qtGstLbl">18</span>%)</span><span id="qtGstAmt">0.00</span></div>
+          <div class="so-trow final"><span>Total Amount</span><span id="qtTotal">0.00</span></div>
+        </div>
+        <textarea name="notes" class="so-i" rows="2" placeholder="Notes (optional)" style="margin-top:10px"></textarea>
+        <div class="so-sec" style="margin-top:10px">Terms &amp; Conditions</div>
+        <textarea name="terms" class="so-i" rows="4" style="resize:vertical">Payment: Advance
+Delivery: 7-10 working days
+Prices are exclusive of GST and transportation charges.
+Quotation valid for 30 days from date of issue.</textarea>
+      </div>
+      <div class="so-foot">
+        <button type="button" class="so-btn cancel" onclick="closeQuotation()">Cancel</button>
+        <button type="submit" class="so-btn send"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg> Generate PDF</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
 <script>
+// ── multi-select dropdowns (FDA To/CC) ──
+function ddCloseAll(except){
+  document.querySelectorAll('.msel.open').forEach(m=>{ if(m!==except) m.classList.remove('open'); });
+}
+document.addEventListener('click', e=>{
+  if (!e.target.closest('.msel')) ddCloseAll();
+});
+function mselToggle(id){
+  const el = document.getElementById(id);
+  ddCloseAll(el);
+  el.classList.toggle('open');
+}
+document.querySelectorAll('.msel').forEach(el=>{
+  el.querySelectorAll('input[type=checkbox]').forEach(i=>i.addEventListener('change', ()=>{
+    const n = el.querySelectorAll('input[type=checkbox]:checked').length;
+    const lbl = el.querySelector('.lbl');
+    const base = lbl.dataset.base || (lbl.dataset.base = lbl.textContent);
+    lbl.textContent = n ? n + ' selected' : base;
+  }));
+});
 // ── tabs (hash support: /npd/5#internal seedha us tab pe) ──
 const tabs = document.querySelectorAll('.tab');
 function openTab(t){
@@ -370,6 +1437,1205 @@ function openTab(t){
 tabs.forEach(b=>b.addEventListener('click', ()=>{ openTab(b.dataset.t); history.replaceState(null,'','#'+b.dataset.t); }));
 const h = location.hash.replace('#','');
 if (h && document.getElementById('pane-'+h)) openTab(h);
+
+function msOpen(mid, el){
+  document.querySelectorAll('.ms-it').forEach(b=>b.classList.toggle('on', b===el));
+  document.querySelectorAll('.ms-panel').forEach(p=>p.classList.toggle('on', p.id==='msp-'+mid));
+}
+
+function msDone(mid, btn){
+  btn.disabled = true; btn.textContent = 'Saving…';
+  var fd = new FormData(); fd.append('status', 'approved');
+  fetch('/npd/{{ p.id }}/milestone/' + mid, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body: fd})
+    .then(function(r){ return r.json(); }).then(function(d){
+      if (!d.ok){
+        btn.disabled = false; btn.textContent = '✓ Mark as Done';
+        var p0 = document.getElementById('msp-' + mid);
+        if (p0 && p0.querySelector('#bcBody') && typeof bcShowErr === 'function')
+          bcShowErr(d.error || 'Failed', 'Cannot Mark as Done');
+        else alert(d.error || 'Failed');
+        return;
+      }
+      // button hatao
+      btn.remove();
+      // sidebar item: icon + status label + active rahe
+      var it = document.querySelector('.ms-it[data-mid="' + mid + '"]');
+      if (it){
+        var ic = it.querySelector('.ic'); if (ic) ic.textContent = '✅';
+        var stt = it.querySelector('.stt');
+        if (stt){ stt.textContent = 'Done'; stt.style.color = '#22c55e'; }
+      }
+      // count "x / y done" update
+      var cnt = document.querySelector('.ms-side-head small');
+      if (cnt){
+        var m2 = cnt.textContent.match(/(\d+)\s*\/\s*(\d+)/);
+        if (m2) cnt.textContent = (Math.min(+m2[1] + 1, +m2[2])) + ' / ' + m2[2] + ' done';
+      }
+      // milestone log me naya entry prepend
+      var panel = document.getElementById('msp-' + mid);
+      if (panel){
+        var tl = panel.querySelector('.al-tl');
+        if (!tl){
+          // log wala empty state (BOM list ke empty se confuse na ho)
+          var empty = null;
+          panel.querySelectorAll('.msp-empty').forEach(function(e){
+            if (!e.closest('#bomList') && !e.closest('#bomListBody')) empty = e;
+          });
+          tl = document.createElement('div'); tl.className = 'al-tl'; tl.style.padding = '4px 0 0 8px';
+          if (empty){ empty.replaceWith(tl); } else { panel.querySelector('.msp-body').appendChild(tl); }
+        }
+        var item = document.createElement('div'); item.className = 'al-item';
+        item.innerHTML = '<div class="al-dot"></div><div class="al-body">'
+          + '<div class="al-head"><span class="al-user">' + dEsc({{ (user_name or 'You')|tojson }}) + '</span>'
+          + '<span class="al-time">' + dEsc(d.at || '') + '</span></div>'
+          + '<div class="al-action">' + dEsc(d.action || 'Status -> approved') + '</div></div>';
+        tl.prepend(item);
+      }
+      // BOM milestone done -> lock (edit/delete -> 🔒) + sheet band
+      if (panel && panel.querySelector('#bomList')){
+        window.NPD_BOM_LOCKED = true;
+        var nb = document.getElementById('bomNewBtn'); if (nb) nb.remove();
+        if (typeof bomRenderList === 'function') bomRenderList();
+        if (typeof bomBack === 'function') bomBack();
+      }
+      // artwork QC board done -> composer + edit/delete lock
+      if (panel && panel.querySelector('#discList-artworkqc')){
+        var qwc = document.getElementById('dcWrap-artworkqc'); if (qwc) qwc.remove();
+        panel.querySelectorAll('#discList-artworkqc .di-acts').forEach(function(a){ a.remove(); });
+      }
+      // artwork board done -> composer + edit/delete lock
+      if (panel && panel.querySelector('#discList-artwork')){
+        var awc = document.getElementById('dcWrap-artwork'); if (awc) awc.remove();
+        panel.querySelectorAll('#discList-artwork .di-acts').forEach(function(a){ a.remove(); });
+      }
+      // packing panel done -> add/edit/delete lock
+      if (panel && panel.querySelector('#pkTable')){
+        window.NPD_PACK_LOCKED = true;
+        var pab = document.getElementById('pkAddBtn'); if (pab) pab.remove();
+        if (typeof pkRenderList === 'function') pkRenderList();
+      }
+      // quotation panel done -> New + Edit/Delete lock
+      if (panel){
+        var qnb = panel.querySelector('#qtNewBtn'); if (qnb) qnb.remove();
+        panel.querySelectorAll('.qt-act').forEach(function(b){ b.remove(); });
+      }
+      // ingredients sheet done -> editor lock
+      if (panel && panel.querySelector('#ingBox')){
+        var ie2 = panel.querySelector('#ingEdit');
+        if (ie2) ie2.removeAttribute('contenteditable');
+        var tb2 = panel.querySelector('#ingTb'); if (tb2) tb2.remove();
+        var sv2 = panel.querySelector('#ingSave'); if (sv2) sv2.closest('.dc-foot').remove();
+      }
+      // barcode panel done -> upload / change / delete sab lock
+      if (panel && panel.querySelector('#bcBody')){
+        var bub = document.getElementById('bcUploadBtn'); if (bub) bub.remove();
+        // designer + barcode dono columns ke Change/Delete actions hatao
+        panel.querySelectorAll('#bcBody .bc-acts').forEach(function(a){ a.remove(); });
+        // jin designs me barcode pending tha -> "Not uploaded"
+        panel.querySelectorAll('#bcBody .bc-upload-team').forEach(function(l){
+          var s = document.createElement('span');
+          s.style.color = 'var(--muted2)'; s.style.fontSize = '.83rem';
+          s.textContent = 'Not uploaded';
+          l.replaceWith(s);
+        });
+        // bc-bar me locked badge
+        var bcbar = panel.querySelector('.bc-bar');
+        if (bcbar && !bcbar.querySelector('.bc-lock')){
+          var lk = document.createElement('span');
+          lk.className = 'bc-lock'; lk.textContent = '🔒 Locked';
+          bcbar.appendChild(lk);
+        }
+      }
+    }).catch(function(){ btn.disabled = false; btn.textContent = '✓ Mark as Done'; alert('Network error'); });
+}
+
+// ── FDA milestone ──
+function fdaToggleBody(btn){
+  var box = btn.nextElementSibling;
+  var open = box.classList.toggle('open');
+  btn.textContent = (open ? '▼' : '▶') + ' View message body';
+}
+function fdaSendMail(mid){
+  var btn = document.getElementById('fdaSendBtn');
+  var toIds = [...document.querySelectorAll('#fdaToMsel input[name="fda_to"]:checked')].map(i=>i.value);
+  var ccIds = [...document.querySelectorAll('#fdaCcMsel input[name="fda_cc"]:checked')].map(i=>i.value);
+  var subject = document.getElementById('fdaSubject').value.trim();
+  var body = document.getElementById('fdaBody').value;
+  if (!toIds.length){ alert('Please select at least one recipient in To.'); return; }
+  if (!subject){ alert('Subject is required.'); return; }
+  if (!body.trim()){ alert('Message body is required.'); return; }
+  btn.disabled = true; btn.textContent = 'Sending…';
+  var fd = new FormData();
+  toIds.forEach(id=>fd.append('to_ids', id));
+  ccIds.forEach(id=>fd.append('cc_ids', id));
+  fd.append('subject', subject); fd.append('body', body);
+  fetch('/npd/{{ p.id }}/fda/send-mail', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body: fd})
+    .then(r=>r.json()).then(d=>{
+      if (!d.ok){ btn.disabled = false; btn.textContent = '✉ Send FDA Request Mail'; alert(d.error || 'Failed to send mail.'); return; }
+      location.reload();
+    }).catch(()=>{ btn.disabled = false; btn.textContent = '✉ Send FDA Request Mail'; alert('Network error'); });
+}
+function fdaEntryOpen(){
+  document.getElementById('fdaEntryModal').classList.add('open');
+  document.getElementById('fdaEntryProduct').value = '';
+  document.querySelectorAll('#fdaEntryModal .fda-m-file').forEach(function(lbl){
+    lbl.classList.remove('chosen');
+    lbl.querySelector('span').textContent = 'Choose File';
+    lbl.querySelector('input').value = '';
+  });
+}
+function fdaEntryClose(){
+  document.getElementById('fdaEntryModal').classList.remove('open');
+}
+function fdaFileChosen(input){
+  var lbl = input.closest('.fda-m-file');
+  if (input.files && input.files[0]){
+    lbl.classList.add('chosen');
+    lbl.querySelector('span').textContent = input.files[0].name;
+  } else {
+    lbl.classList.remove('chosen');
+    lbl.querySelector('span').textContent = 'Choose File';
+  }
+}
+function fdaEntrySave(mid){
+  var btn = document.getElementById('fdaEntrySaveBtn');
+  var product = document.getElementById('fdaEntryProduct').value.trim();
+  if (!product){ alert('Product Name is required.'); return; }
+  var fd = new FormData();
+  fd.append('product_name', product);
+  document.querySelectorAll('#fdaEntryModal input[type=file]').forEach(function(inp){
+    if (inp.files && inp.files[0]) fd.append(inp.dataset.field, inp.files[0]);
+  });
+  btn.disabled = true; btn.textContent = 'Saving…';
+  fetch('/npd/{{ p.id }}/fda/entry/add', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body: fd})
+    .then(r=>r.json()).then(d=>{
+      btn.disabled = false; btn.textContent = '💾 Save';
+      if (!d.ok){ alert(d.error || 'Failed to save entry.'); return; }
+      fdaEntryClose();
+      location.reload();
+    }).catch(()=>{ btn.disabled = false; btn.textContent = '💾 Save'; alert('Network error'); });
+}
+function fdaEntryDelete(eid){
+  if (!confirm('Delete this FDA entry?')) return;
+  fetch('/npd/{{ p.id }}/fda/entry/' + eid + '/delete', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(r=>r.json()).then(d=>{
+      if (!d.ok){ alert(d.error || 'Failed to delete.'); return; }
+      var card = document.getElementById('fdaEntry-' + eid);
+      if (card) card.remove();
+      var body = document.getElementById('fdaEntriesBody');
+      if (body && !body.querySelector('.fda-entry-card')){
+        var empty = document.createElement('div');
+        empty.className = 'msp-empty'; empty.id = 'fdaEntriesEmpty';
+        empty.innerHTML = 'No FDA entries yet.<br>Click <b>+ Add FDA</b> to add one.';
+        body.appendChild(empty);
+      }
+    }).catch(()=>alert('Network error'));
+}
+
+// ── Barcode milestone ──
+function bcShowErr(msg, title){
+  var ov = document.getElementById('bcModal');
+  var bd = document.getElementById('bcModalMsg');
+  if (!ov || !bd){ alert(msg); return; }
+  var h = document.getElementById('bcModalH');
+  if (h) h.textContent = title || 'Upload Error';
+  bd.textContent = msg;
+  ov.classList.add('show');
+}
+function bcCloseModal(){
+  var ov = document.getElementById('bcModal');
+  if (ov) ov.classList.remove('show');
+}
+function bcClearErr(){ bcCloseModal(); }
+// ── custom confirm modal (native confirm() ke jagah) ──
+var _bcConfirmCb = null;
+function bcAsk(msg, onYes){
+  var ov = document.getElementById('bcConfirm');
+  var bd = document.getElementById('bcConfirmMsg');
+  if (!ov || !bd){ if (confirm(msg)) onYes(); return; }
+  bd.textContent = msg;
+  _bcConfirmCb = onYes;
+  ov.classList.add('show');
+}
+function bcConfirmNo(){
+  var ov = document.getElementById('bcConfirm');
+  if (ov) ov.classList.remove('show');
+  _bcConfirmCb = null;
+}
+function bcConfirmYes(){
+  var cb = _bcConfirmCb;
+  bcConfirmNo();
+  if (typeof cb === 'function') cb();
+}
+function bcCardHtml(d, locked){
+  // ── Designer column ──
+  var dz;
+  if (d.design_path){
+    var dw = d.design_width || 1024, dh = d.design_height || 1024;
+    dz = '<a class="bc-link" href="/static/uploads/npd/' + d.design_path + '" target="_blank">'
+       + '<img class="bc-img" src="/static/uploads/npd/' + d.design_path + '" alt="Design"></a>'
+       + '<div class="bc-dims">📐 ' + dw + ' × ' + dh + ' px</div>';
+    if (!locked && !d.barcode_path){
+      dz += '<div class="bc-acts" id="bcDesignActs-' + d.id + '">'
+          + '<label class="bc-mini" title="Change design (1024 × 1024 px)">🔄 Change'
+          + '<input type="file" accept="image/*" onchange="bcChangeDesign(this, ' + d.id + ')"></label>'
+          + '<button type="button" class="bc-mini del" onclick="bcDesignDelete(' + d.id + ')">🗑 Delete</button>'
+          + '</div>';
+    }
+  } else {
+    dz = '<span style="color:var(--muted2);font-size:.83rem">No design uploaded</span>';
+  }
+  // ── Barcode Team column ──
+  var bz;
+  if (d.barcode_path){
+    var fname = d.barcode_path.split('_').slice(2).join('_') || d.barcode_path;
+    bz = '<a class="bc-link" id="bcFile-' + d.id + '" href="/static/uploads/npd/' + d.barcode_path + '" target="_blank" download>📎 ' + dEsc(fname) + '</a>';
+    if (!locked){
+      bz += '<div class="bc-acts" id="bcTeamActs-' + d.id + '">'
+          + '<label class="bc-mini" title="Change barcode file">🔄 Change'
+          + '<input type="file" onchange="bcChangeBarcode(this, ' + d.id + ')"></label>'
+          + '<button type="button" class="bc-mini del" onclick="bcDeleteBarcode(' + d.id + ')">🗑 Delete</button>'
+          + '</div>';
+    }
+  } else if (!locked){
+    bz = '<label class="bc-upload-team" id="bcTeamBtn-' + d.id + '"><span>📎 Upload Barcode</span>'
+       + '<input type="file" onchange="bcBarcodeUpload(this, ' + d.id + ')"></label>';
+  } else {
+    bz = '<span style="color:var(--muted2);font-size:.83rem">Not uploaded</span>';
+  }
+  return '<div class="bc-card" id="bcCard-' + d.id + '">'
+       + '<div class="bc-card-head"><b>Design #' + d.sr_no + '</b>'
+       + '<span class="bc-meta">By ' + dEsc(d.by || '') + ' · ' + dEsc(d.created_at || '') + '</span></div>'
+       + '<div class="bc-cols">'
+       + '<div class="bc-col"><div class="bc-col-h designer">DESIGNER UPLOAD</div>' + dz + '</div>'
+       + '<div class="bc-col"><div class="bc-col-h team">BARCODE TEAM UPLOAD</div>' + bz + '</div>'
+       + '</div></div>';
+}
+function bcReplaceCard(did, design){
+  var card = document.getElementById('bcCard-' + did);
+  if (!card) return;
+  var w = document.createElement('div');
+  w.innerHTML = bcCardHtml(design, false);
+  card.replaceWith(w.firstElementChild);
+}
+function bcDesignUpload(input, mid){
+  bcClearErr();
+  if (!input.files || !input.files[0]) return;
+  var lbl = document.getElementById('bcUploadLbl');
+  var prev = lbl.textContent;
+  lbl.textContent = 'Uploading…';
+  var fd = new FormData();
+  fd.append('design', input.files[0]);
+  fetch('/npd/{{ p.id }}/barcode/upload-design', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body: fd})
+    .then(r=>r.json()).then(d=>{
+      lbl.textContent = prev; input.value = '';
+      if (!d.ok){ bcShowErr(d.error || 'Failed to upload design.'); return; }
+      var body = document.getElementById('bcBody');
+      var empty = document.getElementById('bcEmpty');
+      if (empty) empty.remove();
+      var wrap = document.createElement('div');
+      wrap.innerHTML = bcCardHtml(d.design, false);
+      body.appendChild(wrap.firstElementChild);
+    }).catch(()=>{ lbl.textContent = prev; input.value = ''; bcShowErr('Network error'); });
+}
+function bcBarcodeUpload(input, did){
+  bcClearErr();
+  if (!input.files || !input.files[0]) return;
+  var btn = document.getElementById('bcTeamBtn-' + did);
+  var span = btn.querySelector('span');
+  var prev = span.textContent;
+  span.textContent = 'Uploading…';
+  var fd = new FormData();
+  fd.append('barcode', input.files[0]);
+  fetch('/npd/barcode/' + did + '/upload-barcode', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body: fd})
+    .then(r=>r.json()).then(d=>{
+      if (!d.ok){ span.textContent = prev; input.value = ''; bcShowErr(d.error || 'Failed to upload barcode.'); return; }
+      // re-render card with barcode file + Change/Delete actions
+      bcReplaceCard(did, d.design);
+    }).catch(()=>{ span.textContent = prev; input.value = ''; bcShowErr('Network error'); });
+}
+function bcChangeDesign(input, did){
+  bcClearErr();
+  if (!input.files || !input.files[0]) return;
+  var fd = new FormData(); fd.append('design', input.files[0]);
+  fetch('/npd/barcode/' + did + '/change-design', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body: fd})
+    .then(r=>r.json()).then(d=>{
+      input.value = '';
+      if (!d.ok){ bcShowErr(d.error || 'Failed to change design.'); return; }
+      bcReplaceCard(did, d.design);
+    }).catch(()=>{ input.value=''; bcShowErr('Network error'); });
+}
+function bcChangeBarcode(input, did){
+  bcClearErr();
+  if (!input.files || !input.files[0]) return;
+  var fd = new FormData(); fd.append('barcode', input.files[0]);
+  fetch('/npd/barcode/' + did + '/change-barcode', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body: fd})
+    .then(r=>r.json()).then(d=>{
+      input.value = '';
+      if (!d.ok){ bcShowErr(d.error || 'Failed to change barcode.'); return; }
+      var a = document.getElementById('bcFile-' + did);
+      if (a){ var fn = d.path.split('_').slice(2).join('_') || d.path; a.href = '/static/uploads/npd/' + d.path; a.textContent = '📎 ' + fn; }
+    }).catch(()=>{ input.value=''; bcShowErr('Network error'); });
+}
+function bcDeleteBarcode(did){
+  bcAsk('Delete this barcode file?', function(){
+    fetch('/npd/barcode/' + did + '/delete-barcode', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(r=>r.json()).then(d=>{
+        if (!d.ok){ bcShowErr(d.error || 'Failed to delete barcode.'); return; }
+        bcReplaceCard(did, d.design);
+      }).catch(()=>bcShowErr('Network error'));
+  });
+}
+function bcDesignDelete(did){
+  bcAsk('Delete this entire design row?', function(){
+    fetch('/npd/barcode/' + did + '/delete', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(r=>r.json()).then(d=>{
+        if (!d.ok){ bcShowErr(d.error || 'Failed to delete.'); return; }
+        var card = document.getElementById('bcCard-' + did);
+        if (card) card.remove();
+        var body = document.getElementById('bcBody');
+        if (body && !body.querySelector('.bc-card')){
+          var empty = document.createElement('div');
+          empty.className = 'msp-empty'; empty.id = 'bcEmpty';
+          empty.innerHTML = 'No designs uploaded yet.<br>Designer can upload using the <b>Upload Design</b> button above.';
+          body.appendChild(empty);
+        }
+      }).catch(()=>bcShowErr('Network error'));
+  });
+}
+
+window.NPD_USERS = {{ (all_users or []) | tojson }};
+window.NPD_BOMS = {{ (boms or []) | tojson }};
+
+// ── BOM formulation sheets (old system jaisa) ──
+var NPD_BOMS = window.NPD_BOMS || [];
+var _bomEditId = null;
+
+function bomFmt(n){ return (Math.round((+n || 0) * 1000) / 1000).toFixed(3); }
+function bomTotalOf(b){ var t = 0; (b.rows || []).forEach(function(r){ t += (+r.qty || 0); }); return t; }
+
+function bomRenderList(){
+  var el = document.getElementById('bomListBody');
+  if (!el) return;
+  if (!NPD_BOMS.length){
+    el.innerHTML = '<div class="msp-empty">No BOMs yet. Click <b>+ New BOM</b> to create one.</div>';
+    return;
+  }
+  var h = '<table><thead><tr><th>Product Name</th><th>Code</th><th>Variant</th>'
+        + '<th style="text-align:right">Rows</th><th style="text-align:right">Total %</th>'
+        + '<th>By</th><th>Date</th><th style="text-align:right">Actions</th></tr></thead><tbody>';
+  NPD_BOMS.forEach(function(b){
+    h += '<tr><td style="font-weight:700">' + dEsc(b.product_name || '—') + '</td>'
+       + '<td>' + dEsc(b.code || '—') + '</td>'
+       + '<td>' + dEsc(b.variant || '—') + '</td>'
+       + '<td style="text-align:right">' + (b.rows || []).length + '</td>'
+       + '<td style="text-align:right;font-weight:700">' + bomFmt(bomTotalOf(b)) + '%</td>'
+       + '<td>' + dEsc(b.by || '') + '</td>'
+       + '<td style="white-space:nowrap">' + dEsc(b.created_at || '') + '</td>'
+       + '<td style="text-align:right;white-space:nowrap">'
+       + '<button type="button" class="ba" title="View" onclick="bomView(' + b.id + ')">👁</button>'
+       + (window.NPD_BOM_LOCKED
+          ? '<span class="ba" title="Milestone is done — BOM locked" style="cursor:default;opacity:.55">🔒</span>'
+          : '<button type="button" class="ba" title="Edit" onclick="bomEdit(' + b.id + ')">✎</button>'
+            + '<button type="button" class="ba del" title="Delete" onclick="bomDelete(' + b.id + ')">🗑</button>')
+       + '</td></tr>';
+  });
+  el.innerHTML = h + '</tbody></table>';
+}
+
+function bomShow(sheet){
+  document.getElementById('bomList').style.display = sheet ? 'none' : '';
+  document.getElementById('bomSheet').style.display = sheet ? '' : 'none';
+}
+function bomBack(){ bomShow(false); }
+
+function bomRowHtml(inci, qty){
+  return '<td class="bsr"></td>'
+       + '<td><input class="binci" placeholder="Enter INCI Name..." value="' + dEsc(inci || '') + '"></td>'
+       + '<td class="bqty"><input class="bq" type="number" step="0.001" min="0" value="' + (qty !== undefined && qty !== '' ? bomFmt(qty) : '') + '" placeholder="0.000"> %</td>'
+       + '<td class="brm"><button type="button" title="Remove row" onclick="bomRmRow(this)">✕</button></td>';
+}
+function bomRenumber(){
+  var i = 1;
+  document.querySelectorAll('#bomRows tr').forEach(function(tr){ tr.querySelector('.bsr').textContent = i++; });
+}
+function bomAddRow(inci, qty){
+  var tb = document.getElementById('bomRows');
+  var tr = document.createElement('tr');
+  tr.innerHTML = bomRowHtml(inci, qty);
+  tb.appendChild(tr);
+  bomRenumber(); bomRecalc();
+  return tr;
+}
+function bomRmRow(btn){
+  var tb = document.getElementById('bomRows');
+  if (tb.children.length <= 1){ btn.closest('tr').querySelectorAll('input').forEach(function(i){ i.value = ''; }); bomRecalc(); return; }
+  btn.closest('tr').remove();
+  bomRenumber(); bomRecalc();
+}
+function bomRecalc(){
+  var t = 0;
+  document.querySelectorAll('#bomRows .bq').forEach(function(i){ t += (+i.value || 0); });
+  document.getElementById('bomTotal').textContent = bomFmt(t);
+}
+document.addEventListener('input', function(e){ if (e.target.classList && e.target.classList.contains('bq')) bomRecalc(); });
+
+function bomNew(){
+  _bomEditId = null;
+  document.getElementById('bomPn').value = '';
+  document.getElementById('bomCode').value = '';
+  document.getElementById('bomVar').value = '';
+  document.getElementById('bomRows').innerHTML = '';
+  bomAddRow();
+  bomShow(true);
+}
+function bomEdit(id){
+  var b = NPD_BOMS.find(function(x){ return x.id === id; });
+  if (!b) return;
+  _bomEditId = id;
+  document.getElementById('bomPn').value = b.product_name || '';
+  document.getElementById('bomCode').value = b.code || '';
+  document.getElementById('bomVar').value = b.variant || '';
+  document.getElementById('bomRows').innerHTML = '';
+  if ((b.rows || []).length) b.rows.forEach(function(r){ bomAddRow(r.inci, r.qty); });
+  else bomAddRow();
+  bomShow(true);
+}
+function bomSave(){
+  var rows = [];
+  document.querySelectorAll('#bomRows tr').forEach(function(tr){
+    var inci = tr.querySelector('.binci').value.trim();
+    var qty = tr.querySelector('.bq').value;
+    if (inci || qty) rows.push({inci: inci, qty: +qty || 0});
+  });
+  var payload = {
+    id: _bomEditId,
+    product_name: document.getElementById('bomPn').value.trim(),
+    code: document.getElementById('bomCode').value.trim(),
+    variant: document.getElementById('bomVar').value.trim(),
+    rows: rows
+  };
+  if (!payload.product_name && !rows.length){ alert('Product name or at least one row is required.'); return; }
+  var total = 0;
+  rows.forEach(function(r){ total += (+r.qty || 0); });
+  total = Math.round(total * 1000) / 1000;
+  if (total !== 100){
+    alert('BOM total must be exactly 100% — current total is ' + bomFmt(total) + '%.');
+    return;
+  }
+  var btn = document.getElementById('bomSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  fetch('/npd/{{ p.id }}/bom/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(d){
+    btn.disabled = false; btn.textContent = '💾 Save BOM';
+    if (d.ok){
+      var i = NPD_BOMS.findIndex(function(x){ return x.id === d.bom.id; });
+      if (i >= 0) NPD_BOMS[i] = d.bom; else NPD_BOMS.unshift(d.bom);
+      bomRenderList(); bomShow(false);
+    } else { alert(d.error || 'Save failed'); }
+  }).catch(function(){ btn.disabled = false; btn.textContent = '💾 Save BOM'; alert('Network error'); });
+}
+function bomDelete(id){
+  cmConfirm('Delete this BOM? This cannot be undone.', function(){
+    fetch('/npd/bom/' + id + '/delete', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok){ NPD_BOMS = NPD_BOMS.filter(function(x){ return x.id !== id; }); bomRenderList(); }
+        else { alert(d.error || 'Failed'); }
+      }).catch(function(){ alert('Request failed'); });
+  }, 'Delete', 'danger');
+}
+// ── Ingredients List & Marketing Sheet ──
+(function(){
+  var ed = document.getElementById('ingEdit'); if (!ed) return;
+  document.querySelectorAll('#ingTb [data-cmd]').forEach(function(b){
+    b.addEventListener('mousedown', function(e){ e.preventDefault(); document.execCommand(b.getAttribute('data-cmd'), false, null); ed.focus(); });
+  });
+  var btn = document.getElementById('ingSave');
+  if (!btn) return;
+  btn.onclick = function(){
+    var box = document.getElementById('ingBox');
+    var mid = box.getAttribute('data-mid');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    fetch('/npd/{{ p.id }}/milestone/' + mid + '/sheet', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+      body: JSON.stringify({content: ed.innerHTML.trim()})
+    }).then(function(r){ return r.json(); }).then(function(d){
+      btn.disabled = false;
+      if (d.ok){
+        btn.textContent = '✓ Saved';
+        setTimeout(function(){ btn.textContent = '💾 Save Sheet'; }, 1400);
+        // milestone log me prepend
+        var panel = box.closest('.ms-panel');
+        if (panel){
+          var tl = panel.querySelector('.al-tl');
+          if (!tl){
+            var empty = null;
+            panel.querySelectorAll('.msp-empty').forEach(function(e2){
+              if (!e2.closest('#bomList') && !e2.closest('#bomListBody')) empty = e2;
+            });
+            tl = document.createElement('div'); tl.className = 'al-tl'; tl.style.padding = '4px 0 0 8px';
+            if (empty){ empty.replaceWith(tl); } else { panel.querySelector('.msp-body').appendChild(tl); }
+          }
+          var item = document.createElement('div'); item.className = 'al-item';
+          item.innerHTML = '<div class="al-dot"></div><div class="al-body">'
+            + '<div class="al-head"><span class="al-user">' + dEsc(d.user || '') + '</span>'
+            + '<span class="al-time">' + dEsc(d.at || '') + '</span></div>'
+            + '<div class="al-action">' + dEsc(d.action || 'Sheet updated') + '</div></div>';
+          tl.prepend(item);
+        }
+      } else {
+        btn.textContent = '💾 Save Sheet';
+        alert(d.error || 'Save failed');
+      }
+    }).catch(function(){ btn.disabled = false; btn.textContent = '💾 Save Sheet'; alert('Network error'); });
+  };
+})();
+
+/* ── Quotation (lead jaisa) ── */
+var QT_UOM = ['PCS','GM','ML','KG','LTR','BOX','BTL','JAR','TUBE','SACHET','SET','NOS'];
+var QT_CAT = ['Skin Care','Hair Care','Baby Care','Face Wash','Body Care','Personal Care','Cosmetics','Wellness','Soap','Serum','Cream','Other'];
+function qtSel(name, opts, ph){
+  var h = '<select name="' + name + '"><option value="">' + ph + '</option>';
+  opts.forEach(function(o){ h += '<option value="' + o + '">' + o + '</option>'; });
+  return h + '</select>';
+}
+function qtRowHtml(canDelete){
+  return '<tr>'
+    + '<td><input type="text" name="item_name[]" placeholder="Product name" oninput="qtCalc()"></td>'
+    + '<td><input type="text" name="item_size[]" placeholder="-"></td>'
+    + '<td><input type="text" name="item_code[]" placeholder="-"></td>'
+    + '<td>' + qtSel('item_uom[]', QT_UOM, '-- UOM --') + '</td>'
+    + '<td><input type="number" name="item_cost[]" min="0" step="0.01" placeholder="0.00" oninput="qtCalc()" style="text-align:right"></td>'
+    + '<td><input type="number" name="item_moq[]" min="0" step="1" placeholder="0" oninput="qtCalc()" style="text-align:center"></td>'
+    + '<td><input type="text" name="item_pm_spec[]" placeholder="PM spec..."></td>'
+    + '<td><input type="number" name="item_pm_cost[]" min="0" step="0.01" placeholder="0.00" oninput="qtCalc()" style="text-align:right"></td>'
+    + '<td>' + qtSel('item_category[]', QT_CAT, '-- Category --') + '</td>'
+    + '<td><div style="display:flex;align-items:center;gap:6px"><input type="number" name="item_final_cost[]" min="0" step="0.01" placeholder="0.00" readonly title="Cost + PM Cost (auto)" style="text-align:right;background:#f1f5f9">'
+    + (canDelete ? '<button type="button" class="so-rm" onclick="qtDelRow(this)" title="Remove" style="flex:0 0 auto">🗑</button>' : '') + '</div></td>'
+    + '</tr>';
+}
+function qtAddRow(){
+  var tb = document.getElementById('qtItems');
+  tb.insertAdjacentHTML('beforeend', qtRowHtml(tb.querySelector('tr') !== null));
+}
+function qtDelRow(btn){ btn.closest('tr').remove(); qtCalc(); }
+function qtCalc(){
+  var sub = 0;
+  document.querySelectorAll('#qtItems tr').forEach(function(tr){
+    var cost = parseFloat(tr.querySelector('[name="item_cost[]"]').value) || 0;
+    var pmc = parseFloat(tr.querySelector('[name="item_pm_cost[]"]').value) || 0;
+    var moq = parseFloat(tr.querySelector('[name="item_moq[]"]').value) || 0;
+    var fc = cost + pmc;
+    var fcEl = tr.querySelector('[name="item_final_cost[]"]'); if (fcEl) fcEl.value = fc.toFixed(2);
+    sub += moq * fc;
+  });
+  var gp = parseFloat(document.getElementById('qtGstPct').value) || 0;
+  var gst = sub * gp / 100, tot = sub + gst;
+  document.getElementById('qtSub').textContent = sub.toFixed(2);
+  document.getElementById('qtGstLbl').textContent = gp;
+  document.getElementById('qtGstAmt').textContent = gst.toFixed(2);
+  document.getElementById('qtTotal').textContent = tot.toFixed(2);
+}
+var NPD_QUOTS = {{ (quots or []) | tojson }};
+function qtFillRow(tr, it){
+  tr.querySelector('[name="item_name[]"]').value = it.name || '';
+  tr.querySelector('[name="item_size[]"]').value = it.size || '';
+  tr.querySelector('[name="item_code[]"]').value = it.code || '';
+  tr.querySelector('[name="item_uom[]"]').value = it.uom || '';
+  tr.querySelector('[name="item_cost[]"]').value = it.cost || '';
+  tr.querySelector('[name="item_moq[]"]').value = it.moq || '';
+  tr.querySelector('[name="item_pm_spec[]"]').value = it.pm_spec || '';
+  tr.querySelector('[name="item_pm_cost[]"]').value = it.pm_cost || '';
+  tr.querySelector('[name="item_category[]"]').value = it.category || '';
+}
+function qtEdit(id){
+  var q = NPD_QUOTS.find(function(x){ return x.id === id; });
+  if (!q) return;
+  var f = document.getElementById('qtForm');
+  document.getElementById('qtEditId').value = q.id;
+  document.getElementById('qtModalTitle').textContent = '✎ Edit Quotation — ' + q.number;
+  document.getElementById('qtCompany').value = q.company || '';
+  f.querySelector('[name="bill_address"]').value = q.address || '';
+  f.querySelector('[name="bill_phone"]').value = q.phone || '';
+  f.querySelector('[name="bill_email"]').value = q.email || '';
+  f.querySelector('[name="bill_gst"]').value = q.gst_no || '';
+  document.getElementById('qtNumber').value = q.number || '';
+  document.getElementById('qtDate').value = q.date || '';
+  document.getElementById('qtValid').value = q.valid_until || '';
+  document.getElementById('qtGstPct').value = String(Math.round(q.gst_pct || 18));
+  f.querySelector('[name="quot_subject"]').value = q.subject || '';
+  f.querySelector('[name="notes"]').value = q.notes || '';
+  if (q.terms) f.querySelector('[name="terms"]').value = q.terms;
+  var tb = document.getElementById('qtItems');
+  tb.innerHTML = '';
+  (q.items && q.items.length ? q.items : [{}]).forEach(function(it){
+    qtAddRow();
+    qtFillRow(tb.lastElementChild, it);
+  });
+  qtCalc();
+  document.getElementById('qtModal').classList.add('open');
+}
+function qtDelete(id){
+  cmConfirm('Delete this quotation? It will move to the Deleted tab in Quotations.', function(){
+    fetch('/npd/quotation/' + id + '/delete', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok){
+          var tr = document.getElementById('qtRow-' + id);
+          if (tr) tr.remove();
+          NPD_QUOTS = NPD_QUOTS.filter(function(x){ return x.id !== id; });
+        } else { alert(d.error || 'Failed'); }
+      }).catch(function(){ alert('Request failed'); });
+  }, 'Delete', 'danger');
+}
+function openQuotation(){
+  // naya quotation — edit state reset
+  document.getElementById('qtEditId').value = '';
+  document.getElementById('qtModalTitle').textContent = '📄 Create Quotation';
+  var tb = document.getElementById('qtItems');
+  if (!tb.querySelector('tr')){
+    qtAddRow();
+    // project ka product prefill (lead products jaisa)
+    var first = tb.querySelector('[name="item_name[]"]');
+    if (first && !first.value) first.value = {{ (p.product_name or '')|tojson }};
+    var moqIn = tb.querySelector('[name="item_moq[]"]');
+    if (moqIn && !moqIn.value && {{ (p.moq or 0)|int }} > 0) moqIn.value = {{ (p.moq or 0)|int }};
+    var catSel = tb.querySelector('[name="item_category[]"]');
+    var pcat = {{ (p.product_category or '')|tojson }};
+    if (catSel && pcat){
+      for (var i = 0; i < catSel.options.length; i++)
+        if (catSel.options[i].value === pcat){ catSel.value = pcat; break; }
+    }
+  }
+  var dt = document.getElementById('qtDate');
+  if (dt && !dt.value) dt.value = new Date().toISOString().slice(0, 10);
+  var nf = document.getElementById('qtNumber');
+  fetch('/crm/quotations/next-number', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ nf.value = (d && d.quot_number) ? d.quot_number : 'QT-001'; })
+    .catch(function(){ if (!nf.value) nf.value = 'QT-001'; });
+  qtCalc();
+  document.getElementById('qtModal').classList.add('open');
+}
+function closeQuotation(){ document.getElementById('qtModal').classList.remove('open'); }
+function qtBeforeSubmit(){
+  var ok = true;
+  var co = document.getElementById('qtCompany');
+  if (!co.value.trim()){ co.classList.add('invalid'); document.getElementById('qtErrCo').classList.add('show'); ok = false; }
+  else { co.classList.remove('invalid'); document.getElementById('qtErrCo').classList.remove('show'); }
+  var has = false;
+  document.querySelectorAll('#qtItems [name="item_name[]"]').forEach(function(i){ if (i.value.trim()) has = true; });
+  var ei = document.getElementById('qtErrItems');
+  if (!has){ ei.classList.add('show'); ok = false; } else { ei.classList.remove('show'); }
+  if (!ok) return false;
+  closeQuotation();
+  cmAlert('📄 Quotation created — the PDF will open in a new tab. Refresh to see it in the list.');
+  setTimeout(function(){ location.reload(); }, 1800);
+  return true;
+}
+document.addEventListener('input', function(e){ if (e.target && e.target.id === 'qtCompany'){ e.target.classList.remove('invalid'); document.getElementById('qtErrCo').classList.remove('show'); } });
+document.addEventListener('click', function(e){ if (e.target && e.target.id === 'qtModal') closeQuotation(); });
+
+/* ── Packing Material (old system jaisa) ── */
+var NPD_PACKS = {{ (packs or []) | tojson }};
+var NPD_PACK_LOCKED = {{ 'true' if (miles | selectattr('milestone_type', 'equalto', 'packing_material') | map(attribute='status') | first | default('')) == 'approved' else 'false' }};
+var PK_CATS = ['Primary', 'Secondary', 'Legendry'];
+var PK_STS = [['pending','Pending'], ['in_process','In Process'], ['done','Done']];
+
+function pkFileCell(r, field, col){
+  var path = r[col];
+  var h = '';
+  if (path){
+    h += '<a href="/static/uploads/npd/' + path + '" target="_blank" title="Open file" style="color:var(--purple,#7c3aed);text-decoration:none;font-weight:700">👁 View</a>';
+  }
+  if (!NPD_PACK_LOCKED){
+    h += (path ? ' ' : '') + '<a href="javascript:void(0)" onclick="pkUpload(' + r.id + ', \'' + field + '\', this)" style="color:#2563eb;text-decoration:none;font-weight:700">📤 ' + (path ? 'Replace' : 'Upload') + '</a>';
+  }
+  if (!h) h = '—';
+  return h;
+}
+function pkSelHtml(opts, val, attrs){
+  var h = '<select ' + attrs + (NPD_PACK_LOCKED ? ' disabled' : '') + '>';
+  opts.forEach(function(o){
+    var v = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o;
+    h += '<option value="' + v + '"' + (String(val) === String(v) ? ' selected' : '') + '>' + l + '</option>';
+  });
+  return h + '</select>';
+}
+function pkRenderRow(r, idx){
+  var dis = NPD_PACK_LOCKED ? ' disabled' : '';
+  return '<tr data-rid="' + r.id + '">'
+    + '<td style="color:var(--muted2);font-weight:700">' + idx + '</td>'
+    + '<td>' + pkSelHtml(PK_CATS, r.category || 'Primary', 'class="pk-i" data-f="category" onchange="pkSave(this)"') + '</td>'
+    + '<td><input type="text" class="pk-i" data-f="vendor_name" placeholder="Vendor name..." value="' + dEsc(r.vendor_name || '') + '" onchange="pkSave(this)"' + dis + '></td>'
+    + '<td><input type="number" class="pk-i" data-f="cost" placeholder="₹ Cost..." min="0" step="0.01" value="' + (r.cost != null ? r.cost : '') + '" onchange="pkSave(this)" style="text-align:right"' + dis + '></td>'
+    + '<td class="pk-fc" data-col="image_path">' + pkFileCell(r, 'image', 'image_path') + '</td>'
+    + '<td class="pk-fc" data-col="filling_image_path">' + pkFileCell(r, 'filling', 'filling_image_path') + '</td>'
+    + '<td class="pk-fc" data-col="coa_path">' + pkFileCell(r, 'coa', 'coa_path') + '</td>'
+    + '<td>' + pkSelHtml(PK_STS, r.filling_status || 'pending', 'class="pk-i" data-f="filling_status" onchange="pkSave(this)" style="background:#fff7ed;border-color:#fdba74"') + '</td>'
+    + '<td style="text-align:right">' + (NPD_PACK_LOCKED ? '<span class="ba" title="Milestone is done — locked" style="cursor:default;opacity:.55">🔒</span>'
+        : '<button type="button" class="ba del" title="Remove" onclick="pkDelete(' + r.id + ')">✕</button>') + '</td>'
+    + '</tr>';
+}
+function pkRenderList(){
+  var tb = document.getElementById('pkBody');
+  if (!tb) return;
+  var h = '';
+  NPD_PACKS.forEach(function(r, i){ h += pkRenderRow(r, i + 1); });
+  tb.innerHTML = h;
+  document.getElementById('pkEmpty').style.display = NPD_PACKS.length ? 'none' : 'block';
+}
+function pkAddRow(){
+  if (NPD_PACK_LOCKED) return;
+  fetch('/npd/{{ p.id }}/packing/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+    body: JSON.stringify({category: 'Primary', vendor_name: '', filling_status: 'pending'})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (d.ok){
+      NPD_PACKS.push({id: d.id, category: 'Primary', vendor_name: '', cost: null,
+                      image_path: null, filling_image_path: null, coa_path: null,
+                      filling_status: 'pending'});
+      pkRenderList();
+      pkLogPrepend('Packing material row added');
+    } else { alert(d.error || 'Failed'); }
+  }).catch(function(){ alert('Network error'); });
+}
+function pkSave(el){
+  var tr = el.closest('tr');
+  var rid = +tr.getAttribute('data-rid');
+  var row = NPD_PACKS.find(function(x){ return x.id === rid; });
+  if (!row) return;
+  var payload = {id: rid};
+  tr.querySelectorAll('.pk-i').forEach(function(i){
+    payload[i.getAttribute('data-f')] = i.value;
+    row[i.getAttribute('data-f')] = i.value === '' && i.getAttribute('data-f') === 'cost' ? null : i.value;
+  });
+  fetch('/npd/{{ p.id }}/packing/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (!d.ok) alert(d.error || 'Save failed');
+  }).catch(function(){ alert('Network error'); });
+}
+function pkUpload(rid, field, link){
+  if (NPD_PACK_LOCKED) return;
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  if (field !== 'coa') inp.accept = 'image/*';
+  inp.onchange = function(){
+    if (!inp.files.length) return;
+    var fd = new FormData();
+    fd.append('field', field);
+    fd.append('file', inp.files[0]);
+    link.textContent = 'Uploading…';
+    fetch('/npd/packing/' + rid + '/upload', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: fd})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok){
+          var row = NPD_PACKS.find(function(x){ return x.id === rid; });
+          var col = {image: 'image_path', filling: 'filling_image_path', coa: 'coa_path'}[field];
+          if (row) row[col] = d.path;
+          pkRenderList();
+          pkLogPrepend('Packing material ' + ({image: 'image', filling: 'filling image', coa: 'COA'}[field]) + ' uploaded');
+        } else { alert(d.error || 'Upload failed'); pkRenderList(); }
+      }).catch(function(){ alert('Network error'); pkRenderList(); });
+  };
+  inp.click();
+}
+function pkDelete(rid){
+  cmConfirm('Remove this packing material row?', function(){
+    fetch('/npd/packing/' + rid + '/delete', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok){
+          NPD_PACKS = NPD_PACKS.filter(function(x){ return x.id !== rid; });
+          pkRenderList();
+          pkLogPrepend('Packing material row deleted');
+        } else { alert(d.error || 'Failed'); }
+      }).catch(function(){ alert('Request failed'); });
+  }, 'Remove', 'danger');
+}
+function pkLogPrepend(action){
+  var tb = document.getElementById('pkBody');
+  if (!tb) return;
+  var panel = tb.closest('.ms-panel');
+  if (!panel) return;
+  var tl = panel.querySelector('.al-tl');
+  if (!tl){
+    var empty = null;
+    panel.querySelectorAll('.msp-empty').forEach(function(e2){
+      if (e2.id !== 'pkEmpty') empty = e2;
+    });
+    tl = document.createElement('div'); tl.className = 'al-tl'; tl.style.padding = '4px 0 0 8px';
+    if (empty){ empty.replaceWith(tl); } else { panel.querySelector('.msp-body').appendChild(tl); }
+  }
+  var now = new Date();
+  var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+  var at = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+  var item = document.createElement('div'); item.className = 'al-item';
+  item.innerHTML = '<div class="al-dot"></div><div class="al-body">'
+    + '<div class="al-head"><span class="al-user">' + dEsc({{ (user_name or 'You')|tojson }}) + '</span>'
+    + '<span class="al-time">' + at + '</span></div>'
+    + '<div class="al-action">' + dEsc(action) + '</div></div>';
+  tl.prepend(item);
+}
+pkRenderList();
+
+function bomView(id){
+  var b = NPD_BOMS.find(function(x){ return String(x.id) === String(id); });
+  var ov = document.getElementById('bvOv');
+  if (!b || !ov) return;
+  document.getElementById('bvTitle').textContent = '👁 BOM — ' + (b.product_name || ('#' + b.id));
+  document.getElementById('bvPn').textContent = b.product_name || '—';
+  document.getElementById('bvCode').textContent = b.code || '—';
+  document.getElementById('bvVar').textContent = b.variant || '—';
+  var tb = document.getElementById('bvRows'), t = 0;
+  tb.innerHTML = '';
+  (b.rows || []).forEach(function(r, i){
+    t += (+r.qty || 0);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="bsr">' + (i + 1) + '</td><td></td><td class="bqty">' + bomFmt(r.qty) + ' %</td>';
+    tr.children[1].textContent = r.inci || '—';
+    tb.appendChild(tr);
+  });
+  if (!(b.rows || []).length)
+    tb.innerHTML = '<tr><td class="bsr">—</td><td style="color:var(--muted2)">No rows</td><td class="bqty">—</td></tr>';
+  document.getElementById('bvTotal').textContent = bomFmt(t);
+  document.getElementById('bvMeta').textContent = 'Created by ' + (b.by || '—') + ' · ' + (b.created_at || '');
+  ov.classList.add('open');
+}
+function bomViewClose(){
+  var ov = document.getElementById('bvOv');
+  if (ov) ov.classList.remove('open');
+}
+(function(){
+  var ov = document.getElementById('bvOv');
+  if (!ov) return;
+  ov.addEventListener('click', function(e){ if (e.target === ov) bomViewClose(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') bomViewClose(); });
+})();
+bomRenderList();
+
+// ── Discussion boards (lead-style): composer + mentions + drag-drop + AJAX ──
+var NPD_USERS = window.NPD_USERS || [];
+function dEsc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function setupBoard(pane, isInternal, board){
+  var wrap = document.getElementById('dcWrap-' + pane);
+  if (!wrap) return;
+  var box = wrap.querySelector('.dc-box');
+  var edit = wrap.querySelector('.dc-edit');
+  var filesC = wrap.querySelector('.dc-files');
+  var input = wrap.querySelector('.dc-file-input');
+  var pop = wrap.querySelector('.mention-pop');
+  var send = wrap.querySelector('.dc-send');
+  var files = [];
+
+  wrap.querySelectorAll('.dc-toolbar [data-cmd]').forEach(function(b){
+    b.addEventListener('mousedown', function(e){ e.preventDefault(); document.execCommand(b.getAttribute('data-cmd'), false, null); edit.focus(); });
+  });
+
+  function renderFiles(){
+    filesC.innerHTML = files.map(function(f, i){ return '<span class="dc-chip">📎 ' + dEsc(f.name) + ' <b data-i="' + i + '">✕</b></span>'; }).join('');
+    filesC.querySelectorAll('b[data-i]').forEach(function(b){ b.onclick = function(){ files.splice(+b.dataset.i, 1); renderFiles(); }; });
+  }
+  function addFiles(list){ for (var i = 0; i < list.length; i++) files.push(list[i]); renderFiles(); }
+  wrap.querySelector('.dc-attach').onclick = function(){ input.click(); };
+  input.onchange = function(){ addFiles(this.files); this.value = ''; };
+
+  ['dragenter','dragover'].forEach(function(ev){ box.addEventListener(ev, function(e){ e.preventDefault(); box.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(ev){ box.addEventListener(ev, function(e){ e.preventDefault(); box.classList.remove('drag'); }); });
+
+  // Artwork boards: image drop/paste -> inline preview (Gmail jaisa)
+  var INLINE_BOARDS = ['artwork', 'artwork_qc'];
+  function isImage(f){ return f && f.type && f.type.indexOf('image/') === 0; }
+  function insertInlineImg(url){
+    edit.focus();
+    var img = document.createElement('img');
+    img.src = url;
+    img.style.maxWidth = '100%';
+    img.style.borderRadius = '8px';
+    img.style.margin = '6px 0';
+    img.setAttribute('data-inline', '1');
+    var s = window.getSelection();
+    if (s.rangeCount){
+      var r = s.getRangeAt(0);
+      if (edit.contains(r.startContainer)){
+        r.deleteContents();
+        r.insertNode(img);
+        r.setStartAfter(img); r.collapse(true);
+        s.removeAllRanges(); s.addRange(r);
+        return;
+      }
+    }
+    edit.appendChild(img);
+  }
+  function inlineUploadImg(file){
+    var fd = new FormData(); fd.append('file', file); fd.append('board', board);
+    var ph = document.createElement('span');
+    ph.textContent = '⏳ uploading image…';
+    ph.style.cssText = 'display:inline-block;padding:4px 9px;background:#eef;border-radius:6px;font-size:.78rem;color:var(--muted2);margin:6px 0';
+    edit.appendChild(ph);
+    fetch('/npd/{{ p.id }}/inline-upload', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: fd})
+      .then(function(r){ return r.json(); }).then(function(d){
+        ph.remove();
+        if (d.ok){ insertInlineImg(d.url); }
+        else { alert(d.error || 'Upload failed'); }
+      }).catch(function(){ ph.remove(); alert('Network error'); });
+  }
+  function splitDrop(fileList){
+    if (INLINE_BOARDS.indexOf(board) === -1){ addFiles(fileList); return; }
+    var others = [];
+    for (var i = 0; i < fileList.length; i++){
+      var f = fileList[i];
+      if (isImage(f)) inlineUploadImg(f);
+      else others.push(f);
+    }
+    if (others.length) addFiles(others);
+  }
+  box.addEventListener('drop', function(e){
+    e.preventDefault(); box.classList.remove('drag');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) splitDrop(e.dataTransfer.files);
+  });
+  // paste (Ctrl+V or screenshot)
+  edit.addEventListener('paste', function(e){
+    if (INLINE_BOARDS.indexOf(board) === -1) return;
+    if (!e.clipboardData || !e.clipboardData.items) return;
+    var imgs = [];
+    for (var i = 0; i < e.clipboardData.items.length; i++){
+      var it = e.clipboardData.items[i];
+      if (it.kind === 'file' && it.type.indexOf('image/') === 0){
+        var f = it.getAsFile(); if (f) imgs.push(f);
+      }
+    }
+    if (imgs.length){ e.preventDefault(); imgs.forEach(inlineUploadImg); }
+  });
+
+  // @mention
+  var mRange = null;
+  edit.addEventListener('input', handleMention);
+  edit.addEventListener('keydown', function(e){
+    if (!pop.classList.contains('open')) return;
+    var items = pop.querySelectorAll('.mention-item'), sel = pop.querySelector('.mention-item.sel'), idx = -1;
+    items.forEach(function(it, i){ if (it === sel) idx = i; });
+    if (e.key === 'ArrowDown'){ e.preventDefault(); idx = (idx + 1) % items.length; setSel(items, idx); }
+    else if (e.key === 'ArrowUp'){ e.preventDefault(); idx = (idx - 1 + items.length) % items.length; setSel(items, idx); }
+    else if (e.key === 'Enter'){ e.preventDefault(); (sel || items[0]).click(); }
+    else if (e.key === 'Escape'){ hideM(); }
+  });
+  function setSel(items, i){ items.forEach(function(it){ it.classList.remove('sel'); }); if (items[i]) items[i].classList.add('sel'); }
+  function handleMention(){
+    var s = window.getSelection(); if (!s.rangeCount){ hideM(); return; }
+    var r = s.getRangeAt(0), node = r.startContainer;
+    if (node.nodeType !== 3){ hideM(); return; }
+    var before = node.textContent.slice(0, r.startOffset), m = before.match(/@([\w.\-]*)$/);
+    if (!m){ hideM(); return; }
+    var q = m[1].toLowerCase();
+    var list = NPD_USERS.filter(function(u){ return (u.name || '').toLowerCase().indexOf(q) !== -1; }).slice(0, 8);
+    if (!list.length){ hideM(); return; }
+    pop.innerHTML = list.map(function(u){ return '<div class="mention-item" data-name="' + dEsc(u.name) + '">@' + dEsc(u.name) + '</div>'; }).join('');
+    pop.querySelectorAll('.mention-item').forEach(function(it){ it.onclick = function(){ insertM(it.getAttribute('data-name')); }; });
+    setSel(pop.querySelectorAll('.mention-item'), 0);
+    var rect = r.getBoundingClientRect(), bb = wrap.getBoundingClientRect();
+    pop.style.left = Math.max(0, rect.left - bb.left) + 'px';
+    pop.style.top = (rect.bottom - bb.top + 4) + 'px';
+    pop.classList.add('open');
+    mRange = {node: node, start: r.startOffset - m[0].length, end: r.startOffset};
+  }
+  function insertM(name){
+    if (!mRange) return;
+    var node = mRange.node, t = node.textContent;
+    node.textContent = t.slice(0, mRange.start) + '@' + name + '\u00A0' + t.slice(mRange.end);
+    var s = window.getSelection(), r = document.createRange(), pos = mRange.start + name.length + 2;
+    try { r.setStart(node, Math.min(pos, node.textContent.length)); r.collapse(true); s.removeAllRanges(); s.addRange(r); } catch(e){}
+    hideM(); edit.focus();
+  }
+  function hideM(){ pop.classList.remove('open'); mRange = null; }
+  document.addEventListener('click', function(e){ if (!pop.contains(e.target) && e.target !== edit) hideM(); });
+
+  function appendItem(d, html){
+    var list = document.getElementById('discList-' + pane);
+    var empty = list.querySelector('.disc-empty'); if (empty) empty.remove();
+    var item = document.createElement('div'); item.className = 'disc-item'; item.dataset.id = d.id;
+    var fhtml = '';
+    if (d.files && d.files.length){
+      fhtml = '<div class="di-files">' + d.files.map(function(f){
+        return '<a class="di-file" href="/static/uploads/npd/' + encodeURI(f.path) + '" target="_blank" data-att-id="' + (f.id || '') + '" data-fname="' + dEsc(f.name) + '">📎 ' + dEsc(f.name) + '</a>';
+      }).join('') + '</div>';
+    }
+    var avStyle = isInternal ? ' style="background:linear-gradient(135deg,#dc2626,#f97316)"'
+      : (board === 'artwork' ? ' style="background:linear-gradient(135deg,#7c3aed,#2563eb)"'
+      : (board === 'artwork_qc' ? ' style="background:linear-gradient(135deg,#16a34a,#0d9488)"' : ''));
+    item.innerHTML = '<div class="di-avatar"' + avStyle + '>' + dEsc((d.user || 'U').slice(0, 2).toUpperCase()) + '</div><div class="di-body">'
+      + '<div class="di-head"><span class="di-name">' + dEsc(d.user) + '</span>'
+      + '<span class="di-time">' + dEsc(d.created_at) + '</span>'
+      + '<span class="di-acts"><button class="di-edit" title="Edit" onclick="discEdit(' + d.id + ', this)">✎</button>'
+      + '<button class="di-del" title="Delete" onclick="discDelete(' + d.id + ', this)">🗑</button></span></div>'
+      + '<div class="di-text">' + html + '</div>' + fhtml + '</div>';
+    list.prepend(item);
+  }
+
+  send.onclick = function(){
+    var html = edit.innerHTML.trim(), text = (edit.innerText || '').trim();
+    if (!text && !files.length){ edit.focus(); return; }
+    var fd = new FormData();
+    fd.append('comment', html);
+    fd.append('is_internal', isInternal ? '1' : '0');
+    if (board) fd.append('board', board);
+    files.forEach(function(f){ fd.append('files', f); });
+    var lbl = send.textContent;
+    send.disabled = true; send.textContent = 'Sending…';
+    fetch('/npd/{{ p.id }}/comment', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: fd})
+      .then(function(r){ return r.json(); }).then(function(d){
+        send.disabled = false; send.textContent = lbl;
+        if (d.ok){ appendItem(d, html); edit.innerHTML = ''; files = []; renderFiles(); hideM(); }
+        else { alert(d.error || 'Failed'); }
+      }).catch(function(){ send.disabled = false; send.textContent = lbl; alert('Network error'); });
+  };
+}
+setupBoard('discussion', false);
+setupBoard('internal', true);
+setupBoard('artwork', false, 'artwork');
+setupBoard('artworkqc', false, 'artwork_qc');
+
+// ── Personal Notes (lead jaisa) ──
+(function(){
+  var addBtn = document.getElementById('ntAdd'); if (!addBtn) return;
+  addBtn.onclick = function(){
+    var ta = document.getElementById('ntText');
+    var txt = ta.value.trim();
+    if (!txt){ alert('Note cannot be empty.'); return; }
+    var fd = new FormData(); fd.append('note', txt);
+    addBtn.disabled = true; addBtn.textContent = 'Saving…';
+    fetch('/npd/{{ p.id }}/note/add', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: fd})
+      .then(function(r){ return r.json(); }).then(function(d){
+        addBtn.disabled = false; addBtn.textContent = 'Save Note';
+        if (d.ok){ ntAppend(d); ta.value = ''; }
+        else { alert(d.error || 'Failed'); }
+      }).catch(function(){ addBtn.disabled = false; addBtn.textContent = 'Save Note'; alert('Network error'); });
+  };
+})();
+function ntAppend(d){
+  var list = document.getElementById('ntList'), e = document.getElementById('ntEmpty'); if (e) e.remove();
+  var item = document.createElement('div'); item.className = 'nt-item'; item.setAttribute('data-id', d.id);
+  item.innerHTML = '<div class="nt-text">' + dEsc(d.note) + '</div><div class="nt-foot"><span class="nt-time">' + dEsc(d.created_at) + '</span>'
+    + '<button class="rm-btn del" title="Delete" onclick="ntDelete(' + d.id + ', this)">🗑</button></div>';
+  list.insertBefore(item, list.firstChild);
+}
+function ntDelete(id, el){
+  cmConfirm('Delete this note?', function(){
+    fetch('/npd/note/' + id + '/delete', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok){
+          var it = el.closest('.nt-item'); if (it) it.remove();
+          var l = document.getElementById('ntList');
+          if (l && !l.querySelector('.nt-item'))
+            l.innerHTML = '<div class="disc-empty" id="ntEmpty">No personal notes yet.</div>';
+        }
+      });
+  }, 'Delete', 'danger');
+}
+
+function discDelete(id, el){
+  cmConfirm('Delete your comment?', function(){
+    fetch('/npd/comment/' + id + '/delete', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok){
+          var item = el ? el.closest('.disc-item') : null;
+          var list = item ? item.closest('.disc-list') : null;
+          if (item) item.remove();
+          if (list && !list.querySelector('.disc-item'))
+            list.innerHTML = '<div class="disc-empty">No comments yet. Add the first comment above.</div>';
+        } else { alert(d.error || 'Failed'); }
+      }).catch(function(){ alert('Request failed'); });
+  }, 'Delete', 'danger');
+}
+
+function discEdit(id, el){
+  var item = el ? el.closest('.disc-item') : null; if (!item) return;
+  var body = item.querySelector('.di-body');
+  var textEl = item.querySelector('.di-text');
+  var filesEl = item.querySelector('.di-files');
+  if (body.querySelector('.di-editwrap')) return;
+  var origHtml = textEl.innerHTML;
+  var existing = [];
+  if (filesEl){
+    filesEl.querySelectorAll('a.di-file').forEach(function(a){
+      if (a.getAttribute('data-att-id'))
+        existing.push({id: a.getAttribute('data-att-id'), name: a.getAttribute('data-fname') || a.textContent.replace('📎', '').trim()});
+    });
+  }
+  var removed = [], newFiles = [];
+
+  var wrap = document.createElement('div'); wrap.className = 'di-editwrap di-editbox-wrap';
+  wrap.innerHTML =
+    '<div class="dc-box ee-box">'
+    + '<div class="dc-toolbar">'
+      + '<button type="button" data-cmd="bold"><b>B</b></button>'
+      + '<button type="button" data-cmd="italic"><i>I</i></button>'
+      + '<button type="button" data-cmd="underline"><u>U</u></button>'
+      + '<span class="dc-sep"></span>'
+      + '<button type="button" data-cmd="insertUnorderedList">•≡</button>'
+      + '<button type="button" data-cmd="insertOrderedList">1≡</button>'
+      + '<span class="dc-sep"></span>'
+      + '<button type="button" class="ee-attach" title="Attach file">📎</button>'
+    + '</div>'
+    + '<div class="dc-edit ee-edit" contenteditable="true"></div>'
+    + '<div class="dc-files ee-files"></div>'
+    + '<div class="dc-foot"><span class="dc-hint">you can add/remove files · drag &amp; drop works too</span>'
+      + '<span style="display:flex;gap:8px"><button class="di-eb cancel" type="button">Cancel</button><button class="di-eb save" type="button">Save</button></span></div>'
+    + '</div><input type="file" class="ee-input" multiple style="display:none">';
+  textEl.style.display = 'none'; if (filesEl) filesEl.style.display = 'none';
+  body.appendChild(wrap);
+  var editBox = wrap.querySelector('.ee-edit'); editBox.innerHTML = origHtml; editBox.focus();
+  var dcbox = wrap.querySelector('.ee-box'), efiles = wrap.querySelector('.ee-files'), input = wrap.querySelector('.ee-input');
+
+  wrap.querySelectorAll('.dc-toolbar [data-cmd]').forEach(function(b){
+    b.addEventListener('mousedown', function(e){ e.preventDefault(); document.execCommand(b.getAttribute('data-cmd'), false, null); editBox.focus(); });
+  });
+  function renderEF(){
+    var h = '';
+    existing.forEach(function(f){ if (removed.indexOf(f.id) === -1) h += '<span class="dc-chip">📎 ' + dEsc(f.name) + ' <b data-rmex="' + f.id + '">✕</b></span>'; });
+    newFiles.forEach(function(f, i){ h += '<span class="dc-chip">📎 ' + dEsc(f.name) + ' <b data-rmnew="' + i + '">✕</b></span>'; });
+    efiles.innerHTML = h;
+    efiles.querySelectorAll('[data-rmex]').forEach(function(b){ b.onclick = function(){ removed.push(b.getAttribute('data-rmex')); renderEF(); }; });
+    efiles.querySelectorAll('[data-rmnew]').forEach(function(b){ b.onclick = function(){ newFiles.splice(+b.getAttribute('data-rmnew'), 1); renderEF(); }; });
+  }
+  renderEF();
+  wrap.querySelector('.ee-attach').onclick = function(){ input.click(); };
+  input.onchange = function(){ for (var i = 0; i < this.files.length; i++) newFiles.push(this.files[i]); this.value = ''; renderEF(); };
+  ['dragenter','dragover'].forEach(function(ev){ dcbox.addEventListener(ev, function(e){ e.preventDefault(); dcbox.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(ev){ dcbox.addEventListener(ev, function(e){ e.preventDefault(); dcbox.classList.remove('drag'); }); });
+  dcbox.addEventListener('drop', function(e){ e.preventDefault(); dcbox.classList.remove('drag'); if (e.dataTransfer && e.dataTransfer.files){ for (var i = 0; i < e.dataTransfer.files.length; i++) newFiles.push(e.dataTransfer.files[i]); renderEF(); } });
+
+  wrap.querySelector('.cancel').onclick = function(){ wrap.remove(); textEl.style.display = ''; if (filesEl) filesEl.style.display = ''; };
+  wrap.querySelector('.save').onclick = function(){
+    var html = editBox.innerHTML.trim(), text = (editBox.innerText || '').trim();
+    var remain = existing.length - removed.length + newFiles.length;
+    if (!text && remain <= 0){ alert('A comment or file is required.'); return; }
+    var fd = new FormData();
+    fd.append('comment', html);
+    fd.append('removed', removed.join(','));
+    newFiles.forEach(function(f){ fd.append('files', f); });
+    var sb = this; sb.textContent = 'Saving…'; sb.disabled = true;
+    fetch('/npd/comment/' + id + '/edit', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: fd})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok){
+          textEl.innerHTML = html; textEl.style.display = '';
+          var fh = (d.files || []).map(function(f){ return '<a class="di-file" href="/static/uploads/npd/' + encodeURI(f.path) + '" target="_blank" data-att-id="' + f.id + '" data-fname="' + dEsc(f.name) + '">📎 ' + dEsc(f.name) + '</a>'; }).join('');
+          if (filesEl){ filesEl.innerHTML = fh; filesEl.style.display = fh ? '' : 'none'; }
+          else if (fh){ var nd = document.createElement('div'); nd.className = 'di-files'; nd.innerHTML = fh; body.insertBefore(nd, wrap); }
+          var t = item.querySelector('.di-time');
+          if (t && t.textContent.indexOf('edited') === -1) t.textContent += ' · edited';
+          wrap.remove();
+        } else { sb.textContent = 'Save'; sb.disabled = false; alert(d.error || 'Failed'); }
+      }).catch(function(){ sb.textContent = 'Save'; sb.disabled = false; alert('Network error'); });
+  };
+}
+
 
 // FINISH confirm — themed modal
 function npdFinishConfirm(form){
